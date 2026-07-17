@@ -1,0 +1,31 @@
+{
+  "name": "@tomind/editor",
+  "version": "0.1.0",
+  "description": "Snowbrush \u7f16\u8f91\u5668 \u2014 SheetEditor, CommandChain",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tomind/schema": "workspace:*",
+    "@tomind/state": "workspace:*",
+    "@tomind/view": "workspace:*",
+    "@tomind/extension": "workspace:*",
+    "@tomind/commands": "workspace:*",
+    "@tomind/layout": "workspace:*",
+    "@tomind/style": "workspace:*",
+    "@tomind/assets": "workspace:*",
+    "@tomind/plugins": "workspace:*",
+    "@tomind/xap": "workspace:*",
+    "@leafer-in/scroll": "^2.1.8",
+    "mitt": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "leafer-ui": "^2.1.8"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@tomind/core",
+  "version": "0.1.0",
+  "description": "Snowbrush core — unified re-export barrel",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tomind/schema": "workspace:*",
+    "@tomind/state": "workspace:*",
+    "@tomind/view": "workspace:*",
+    "@tomind/commands": "workspace:*",
+    "@tomind/layout": "workspace:*",
+    "@tomind/style": "workspace:*",
+    "@tomind/extension": "workspace:*",
+    "@tomind/assets": "workspace:*",
+    "@tomind/plugins": "workspace:*",
+    "@tomind/editor": "workspace:*",
+    "@tomind/xap": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "vitest-canvas-mock": "^1.1.4",
+    "@types/node": "^22.0.0",
+    "canvas": "^3.2.3",
+    "jsdom": "^29.1.1"
+  }
+}

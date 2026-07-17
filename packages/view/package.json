@@ -1,0 +1,23 @@
+{
+  "name": "@tomind/view",
+  "version": "0.1.0",
+  "description": "Snowbrush \u89c6\u56fe\u5c42 \u2014 ViewDesc, NodeViewDesc, \u6e32\u67d3\u5668, \u4e8b\u4ef6\u7cfb\u7edf",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tomind/schema": "workspace:*",
+    "@tomind/state": "workspace:*",
+    "@tomind/layout": "workspace:*",
+    "@tomind/style": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "leafer-ui": "^2.1.8"
+  }
+}
