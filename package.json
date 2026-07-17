@@ -1,0 +1,20 @@
+{
+  "name": "tomind",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "vitest run",
+    "typecheck": "turbo typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "turbo": "^2.0.0",
+    "vitest": "^3.0.0",
+    "vitest-canvas-mock": "^1.1.4",
+    "jsdom": "^29.0.0"
+  }
+}

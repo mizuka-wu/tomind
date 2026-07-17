@@ -1,0 +1,21 @@
+{
+  "name": "@tomind/layout",
+  "version": "0.1.0",
+  "description": "Snowbrush \u5e03\u5c40\u5f15\u64ce",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tomind/schema": "workspace:*",
+    "@tomind/state": "workspace:*",
+    "@tomind/style": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

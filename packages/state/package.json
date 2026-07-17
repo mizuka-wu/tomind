@@ -1,0 +1,19 @@
+{
+  "name": "@tomind/state",
+  "version": "0.1.0",
+  "description": "Snowbrush SheetState, Transaction, Transform, Step",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tomind/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

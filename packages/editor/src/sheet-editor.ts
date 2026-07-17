@@ -1,0 +1,572 @@
+/**
+ * SheetEditor — 编辑器主类（对标 ProseMirror EditorView）
+ *
+ * 职责：
+ * 1. 基础设施（DOM、App、滚动条、viewport 监听、事务分发）
+ * 2. 共享引擎（StyleEngine、LayoutEngine）
+ * 3. 事件系统（内部 mitt，对外暴露 on/off/emit）
+ * 4. ViewDesc 树管理
+ * 5. Extension 系统（扩展管理）
+ *
+ * 设计原则：
+ * - 组合优于继承（内部持有一个 mitt 实例）
+ * - 唯一事务入口（dispatch）
+ * - 响应式更新（LeaferJS viewport → state.viewport）
+ */
+
+import { App } from 'leafer-ui'
+import { ScrollBar } from '@leafer-in/scroll'
+import type { IAppConfig } from 'leafer-ui'
+import mitt from 'mitt'
+import { SheetState, Transaction, PluginKey } from '@tomind/state'
+import type { Plugin } from '@tomind/state'
+import type { NodeDesc, SelectionState, Viewport } from '@tomind/schema'
+import { ViewDesc } from '@tomind/view'
+import { analyzeSteps } from '@tomind/view'
+import {
+  TopicNodeViewDesc,
+  RelationshipNodeViewDesc,
+  BoundaryNodeViewDesc,
+  SummaryNodeViewDesc,
+} from '@tomind/view'
+import type { StyleEngine } from '@tomind/style'
+import type { LayoutEngine } from '@tomind/layout'
+import { CommandManager } from '@tomind/commands'
+import type { CommandResult } from '@tomind/commands'
+import { ExtensionManager } from '@tomind/extension'
+import type { Extension, ExtensionContext, CommandFn, EventHandler } from '@tomind/extension'
+
+// ==================== 事件类型 ====================
+
+export interface SheetEditorEvents {
+  viewportChange: Viewport
+  stateUpdate: SheetState
+  layoutUpdated: void
+  dispatch: Transaction
+}
+
+/** 滚动条配置 */
+interface ScrollbarConfig {
+  theme?: 'light' | 'dark'
+  padding?: number | number[]
+  minSize?: number
+}
+
+// ==================== 工厂函数 ====================
+
+// NodeViewDesc 注册表（Tiptap 风格：Extension 注册 NodeView）
+const nodeViewDescRegistry = new Map<string, new (node: NodeDesc, role: string) => ViewDesc>()
+
+// 注册默认的 NodeViewDesc
+nodeViewDescRegistry.set('topic', TopicNodeViewDesc as any)
+nodeViewDescRegistry.set('relationship', RelationshipNodeViewDesc as any)
+nodeViewDescRegistry.set('boundary', BoundaryNodeViewDesc as any)
+nodeViewDescRegistry.set('summary', SummaryNodeViewDesc as any)
+
+/** 注册 NodeViewDesc（供 Extension 调用） */
+export function registerNodeViewDesc(nodeType: string, viewDescClass: new (node: NodeDesc, role: string) => ViewDesc): void {
+  nodeViewDescRegistry.set(nodeType, viewDescClass)
+}
+
+/** 注销 NodeViewDesc */
+export function unregisterNodeViewDesc(nodeType: string): void {
+  nodeViewDescRegistry.delete(nodeType)
+}
+
+function createViewDesc(node: NodeDesc): ViewDesc | null {
+  const ViewDescClass = nodeViewDescRegistry.get(node.type)
+  if (!ViewDescClass) return null
+  return new ViewDescClass(node, node.type)
+}
+
+// ==================== SheetEditor ====================
+
+export class SheetEditor {
+  readonly dom: HTMLElement
+  readonly app: App
+  readonly scrollbar: ScrollBar | null
+  readonly plugins: readonly Plugin[]
+  readonly styleEngine: StyleEngine
+  readonly layoutEngine: LayoutEngine
+  readonly commands: EditorCommands
+  readonly extensionManager: ExtensionManager
+
+  private _state: SheetState
+  private _docView: ViewDesc | null = null
+  private _emitter: ReturnType<typeof mitt>
+  private _commandManager: CommandManager
+  _workbookEditor: any = null
+
+  constructor(options: {
+    dom: HTMLElement
+    state: SheetState
+    plugins?: Plugin[]
+    extensions?: Extension[]
+    styleEngine: StyleEngine
+    layoutEngine: LayoutEngine
+    commandManager?: CommandManager
+    appConfig?: IAppConfig
+    scrollbarConfig?: ScrollbarConfig
+  }) {
+    this.dom = options.dom
+    this._state = options.state
+    this.plugins = options.plugins || []
+    this.styleEngine = options.styleEngine
+    this.layoutEngine = options.layoutEngine
+    this._commandManager = options.commandManager || CommandManager.empty()
+
+    // 创建 LeaferJS App
+    this.app = new App({ view: this.dom, ...options.appConfig })
+
+    // 创建滚动条
+    this.scrollbar = this.app.tree
+      ? new ScrollBar(this.app.tree, options.scrollbarConfig)
+      : null
+
+    // 初始化 mitt
+    this._emitter = mitt()
+
+    // 注入静态引用到 NodeViewDesc
+    TopicNodeViewDesc.styleEngine = this.styleEngine
+    TopicNodeViewDesc.state = this._state
+    // 注入事件发射器，让 NodeView 能向扩展系统发事件
+    TopicNodeViewDesc._eventEmitter = { emit: (event: string, ...args: unknown[]) => this.emit(event as any, args[0] as any) }
+
+    // 创建 commands 代理
+    this.commands = this.createCommandsProxy()
+
+    // 初始化 ExtensionManager
+    this.extensionManager = new ExtensionManager()
+
+    // 注册扩展
+    if (options.extensions) {
+      for (const ext of options.extensions) {
+        this.extensionManager.register(ext)
+      }
+    }
+
+    // 初始化 ViewDesc 树
+    this._docView = this.createDocView()
+
+    // 监听 viewport 变化
+    this.setupViewportSync()
+
+    // 初始化扩展
+    this.setupExtensions()
+  }
+
+  // ==================== mitt 事件 ====================
+
+  on<K extends keyof SheetEditorEvents>(event: K, callback: (data: SheetEditorEvents[K]) => void): void {
+    this._emitter.on(event as string, callback as (data: unknown) => void)
+  }
+
+  off<K extends keyof SheetEditorEvents>(event: K, callback: (data: SheetEditorEvents[K]) => void): void {
+    this._emitter.off(event as string, callback as (data: unknown) => void)
+  }
+
+  emit<K extends keyof SheetEditorEvents>(event: K, data: SheetEditorEvents[K]): void {
+    this._emitter.emit(event as string, data)
+  }
+
+  // ==================== 状态管理 ====================
+
+  get state(): SheetState {
+    return this._state
+  }
+
+  get docView(): ViewDesc | null {
+    return this._docView
+  }
+
+  updateState(newState: SheetState, tr?: Transaction): void {
+    this._state = newState
+    // 更新静态引用
+    TopicNodeViewDesc.state = newState
+    this.updateDocView(newState.doc, tr)
+    this.emit('stateUpdate', newState)
+  }
+
+  // ==================== 事务分发 ====================
+
+  dispatch(tr: Transaction): void {
+    const newState = this._state.apply(tr)
+    this.updateState(newState, tr)
+    this.emit('dispatch', tr)
+  }
+
+  // ==================== Extension 管理 ====================
+
+  /**
+   * 注册扩展
+   */
+  registerExtension(extension: Extension): void {
+    this.extensionManager.register(extension)
+
+    // 如果已经 setup 过，单独初始化这个扩展
+    const ctx = this.createExtensionContext()
+    extension.onCreate?.(ctx)
+  }
+
+  /**
+   * 注销扩展
+   */
+  unregisterExtension(name: string): void {
+    this.extensionManager.unregister(name)
+  }
+
+  /**
+   * 获取扩展
+   */
+  getExtension(name: string): Extension | undefined {
+    return this.extensionManager.getExtension(name)
+  }
+
+  /**
+   * 初始化扩展系统
+   */
+  private setupExtensions(): void {
+    const ctx = this.createExtensionContext()
+    this.extensionManager.setup(ctx)
+  }
+
+  /**
+   * 创建扩展上下文
+   */
+  private createExtensionContext(): ExtensionContext {
+    const editor = this
+    return {
+      storage: {},
+      getWorkbook: () => editor._workbookEditor as any,
+      getState: () => editor._state,
+      dispatch: (tr: unknown) => editor.dispatch(tr as Transaction),
+      getView: () => editor._docView,
+      executeCommand: (name: string, args?: unknown) => {
+        const result = editor.executeCommand(name, args)
+        return result.success
+      },
+      registerCommand: (name: string, command: CommandFn) => {
+        // 注册到 CommandManager
+        editor._commandManager.add({
+          name,
+          description: `Extension command: ${name}`,
+          inputSchema: { type: 'object' },
+          execute: (params: unknown, state: SheetState, dispatch?: (tr: Transaction) => void) => {
+            const wrappedDispatch = dispatch ? (tr: unknown) => dispatch(tr as Transaction) : null
+            const success = command(state, wrappedDispatch, params)
+            return { success }
+          },
+        })
+      },
+      unregisterCommand: (_name: string) => {
+        // CommandManager 没有 unregister 方法，暂时忽略
+        // TODO: 添加 unregister 方法
+      },
+      on: (event: string, handler: EventHandler) => {
+        editor.on(event as keyof SheetEditorEvents, handler as (data: unknown) => void)
+      },
+      off: (event: string, handler: EventHandler) => {
+        editor.off(event as keyof SheetEditorEvents, handler as (data: unknown) => void)
+      },
+      emit: (event: string, ...args: unknown[]) => {
+        editor.emit(event as keyof SheetEditorEvents, args[0] as never)
+      },
+      registerNodeView: (_nodeType: string, _viewDesc: unknown) => {
+        // Extension 注册 NodeViewDesc
+        if (typeof _viewDesc === 'function') {
+          registerNodeViewDesc(_nodeType, _viewDesc as any)
+        }
+      },
+      unregisterNodeView: (_nodeType: string) => {
+        unregisterNodeViewDesc(_nodeType)
+      },
+      registerLayout: (algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => {
+        // 注册布局算法
+        const { registerLayout } = require('../core/layout-engine')
+        registerLayout(algorithm)
+      },
+      unregisterLayout: (name: string) => {
+        // 注销布局算法
+        const { unregisterLayout } = require('../core/layout-engine')
+        unregisterLayout(name)
+      },
+      registerPartView: (_partType: string, _viewDesc: unknown) => {
+        // TODO: 注册 PartViewDesc
+      },
+      unregisterPartView: (_partType: string) => {
+        // TODO: 注销 PartViewDesc
+      },
+    }
+  }
+
+  // ==================== ViewDesc 管理 ====================
+
+  private createDocView(): ViewDesc | null {
+    const doc = this._state.doc
+    if (!doc) return null
+
+    // 创建根 ViewDesc
+    const rootView = createViewDesc(doc)
+    if (!rootView) return null
+
+    // 递归创建子 ViewDesc
+    this.buildChildrenViews(rootView, doc)
+
+    // 添加到 LeaferJS 根
+    if (rootView.element && this.app.tree) {
+      this.app.tree.add(rootView.element)
+    }
+
+    return rootView
+  }
+
+  private buildChildrenViews(parentView: ViewDesc, parentNode: NodeDesc): void {
+    const children = parentNode.children
+    if (!children) return
+
+    // children 是 Record<string, NodeDesc[]>
+    for (const [, childNodes] of Object.entries(children)) {
+      if (!Array.isArray(childNodes)) continue
+      for (const childNode of childNodes) {
+        const childView = createViewDesc(childNode)
+        if (!childView) continue
+        parentView.addChild(childView)
+        this.buildChildrenViews(childView, childNode)
+      }
+    }
+  }
+
+  private updateDocView(newDoc: NodeDesc, tr?: Transaction): void {
+    if (!this._docView) {
+      this._docView = this.createDocView()
+      return
+    }
+
+    // 分析 Transaction steps，推理标脏
+    if (tr) {
+      const analysis = analyzeSteps(tr.steps)
+      if (analysis.globalDirty) {
+        // 全局变化，标记所有节点
+        this._docView.markAllDirty(analysis.globalFlag)
+      } else {
+        // 按节点标记
+        for (const [nodeId, flag] of analysis.nodeFlags) {
+          const view = this._docView.findById(nodeId)
+          if (view) {
+            view.markDirty(flag)
+          }
+        }
+      }
+    }
+
+    // 递归更新 ViewDesc 树
+    this.updateChildrenViews(this._docView, newDoc)
+  }
+
+  private updateChildrenViews(parentView: ViewDesc, newParentNode: NodeDesc): void {
+    const children = newParentNode.children
+    if (!children) return
+
+    // 收集所有新子节点
+    const newChildren: NodeDesc[] = []
+    for (const [, childNodes] of Object.entries(children)) {
+      if (Array.isArray(childNodes)) {
+        newChildren.push(...childNodes)
+      }
+    }
+
+    // 逐个比较更新
+    const oldChildren = [...parentView.children]
+    for (let i = 0; i < newChildren.length; i++) {
+      const newChild = newChildren[i]
+      const oldView = oldChildren[i]
+
+      if (oldView && oldView.node.type === newChild.type) {
+        // 尝试更新
+        if (oldView.update(newChild)) {
+          this.updateChildrenViews(oldView, newChild)
+          continue
+        }
+      }
+
+      // 需要重建
+      if (oldView) {
+        parentView.removeChild(oldView)
+        oldView.destroy()
+      }
+
+      const newView = createViewDesc(newChild)
+      if (newView) {
+        parentView.addChild(newView, i)
+        this.buildChildrenViews(newView, newChild)
+      }
+    }
+
+    // 移除多余的旧 ViewDesc
+    while (parentView.children.length > newChildren.length) {
+      const lastChild = parentView.children[parentView.children.length - 1]
+      parentView.removeChild(lastChild)
+      lastChild.destroy()
+    }
+  }
+
+  // ==================== Viewport 同步 ====================
+
+  private setupViewportSync(): void {
+    if (!this.app.tree) return
+
+    // 监听 LeaferJS 的 viewport 变化事件
+    this.app.tree.on_('viewport', (e: { x: number; y: number; zoom: number }) => {
+      const viewport: Viewport = {
+        x: e.x,
+        y: e.y,
+        zoom: e.zoom,
+      }
+      // 更新 state 但不触发重新渲染（避免循环）
+      const tr = Transaction.empty(this._state.doc).setViewport(viewport)
+      const newState = this._state.apply(tr)
+      this._state = newState
+      TopicNodeViewDesc.state = newState
+      this.emit('viewportChange', viewport)
+    })
+  }
+
+  get viewport(): Viewport {
+    return this._state.viewport
+  }
+
+  setViewport(viewport: Viewport): void {
+    const tr = Transaction.empty(this._state.doc).setViewport(viewport)
+    this.dispatch(tr)
+  }
+
+  // ==================== 选区管理 ====================
+
+  get selection(): SelectionState {
+    return this._state.selection
+  }
+
+  setSelection(selection: SelectionState): void {
+    const tr = Transaction.empty(this._state.doc).setSelection(selection)
+    this.dispatch(tr)
+  }
+
+  // ==================== 插件状态 ====================
+
+  field<T>(key: PluginKey<T>): T {
+    return this._state.field(key)
+  }
+
+  // ==================== 生命周期 ====================
+
+  destroy(): void {
+    // 销毁扩展
+    this.extensionManager.destroy()
+
+    this._docView?.destroy()
+    this._docView = null
+    this._emitter.all.clear()
+  }
+
+  // ==================== Commands 代理 ====================
+
+  /**
+   * 创建 commands 代理
+   *
+   * 使用 Proxy 动态生成命令方法，支持：
+   * - editor.commands.addNode(params)
+   * - editor.commands.addClass(params)
+   */
+  private createCommandsProxy(): EditorCommands {
+    const editor = this
+    const handler: ProxyHandler<Record<string, unknown>> = {
+      get(_target, prop: string) {
+        // 返回一个函数，执行对应的命令
+        return (params: unknown): CommandResult => {
+          return editor._commandManager.execute(prop, params, editor._state, (tr) => editor.dispatch(tr))
+        }
+      },
+    }
+    return new Proxy({}, handler) as EditorCommands
+  }
+
+  /**
+   * 创建链式调用上下文
+   *
+   * 支持：
+   * - editor.chain().addNode(params).addClass(params).run()
+   */
+  chain(): CommandChain {
+    return new CommandChain(this)
+  }
+
+  /**
+   * 执行命令
+   */
+  executeCommand(name: string, params: unknown): CommandResult {
+    return this._commandManager.execute(name, params, this._state, (tr) => this.dispatch(tr))
+  }
+}
+
+// ==================== EditorCommands ====================
+
+/**
+ * EditorCommands 接口
+ *
+ * 动态类型，所有命令都可以通过 editor.commands.xxx(params) 调用
+ */
+export interface EditorCommands {
+  [commandName: string]: (params: unknown) => CommandResult
+}
+
+// ==================== CommandChain ====================
+
+/**
+ * 命令链式调用上下文
+ *
+ * 支持：
+ * editor.chain()
+ *   .addNode({ parentId: 'root', type: 'topic' })
+ *   .addClass({ nodeId: 'n1', className: 'highlight' })
+ *   .run()
+ */
+export class CommandChain {
+  private _editor: SheetEditor
+  private _commands: Array<{ name: string; params: unknown }> = []
+
+  constructor(editor: SheetEditor) {
+    this._editor = editor
+
+    // 使用 Proxy 动态生成命令方法
+    return new Proxy(this, {
+      get(target, prop: string) {
+        // 如果是已有的方法，返回它
+        if (prop in target) {
+          return target[prop as keyof CommandChain]
+        }
+
+        // 否则返回一个函数，将命令添加到链中
+        return (params: unknown): CommandChain => {
+          target._commands.push({ name: prop, params })
+          return target
+        }
+      },
+    }) as CommandChain
+  }
+
+  /**
+   * 执行链中的所有命令
+   */
+  run(): CommandResult {
+    let lastResult: CommandResult = { success: true }
+
+    for (const { name, params } of this._commands) {
+      lastResult = this._editor.executeCommand(name, params)
+      if (!lastResult.success) {
+        return lastResult
+      }
+    }
+
+    return lastResult
+  }
+}

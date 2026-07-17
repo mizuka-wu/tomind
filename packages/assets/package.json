@@ -1,0 +1,17 @@
+{
+  "name": "@tomind/assets",
+  "version": "0.1.0",
+  "description": "Snowbrush 资源处理",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
