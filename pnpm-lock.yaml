@@ -194,15 +194,6 @@ importers:
 
   packages/formats:
     dependencies:
-      '@tomind/core':
-        specifier: workspace:*
-        version: link:../core
-      '@tomind/schema':
-        specifier: workspace:*
-        version: link:../schema
-      '@tomind/state':
-        specifier: workspace:*
-        version: link:../state
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
