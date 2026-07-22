@@ -1,0 +1,21 @@
+{
+  "name": "@tomind/app-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tomind/core": "workspace:*",
+    "@tomind/starter-vanilla": "workspace:*",
+    "@tomind/extensions": "workspace:*",
+    "leafer-ui": "^2.1.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
+  }
+}
