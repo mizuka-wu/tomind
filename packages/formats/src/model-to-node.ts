@@ -4,7 +4,14 @@
  * 统一中间格式：每个格式解析器输出 ModelTree，再由 modelToState 转为 NodeDesc。
  */
 
-import type { NodeDesc } from '@tomind/schema'
+// ==================== NodeDesc 类型（避免依赖 @tomind/schema） ====================
+
+interface NodeDesc {
+  readonly id: string
+  readonly type: string
+  readonly attrs: Readonly<Record<string, unknown>>
+  readonly children: Readonly<Record<string, readonly NodeDesc[]>>
+}
 
 // ==================== 中间格式 ====================
 
