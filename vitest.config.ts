@@ -18,6 +18,12 @@ export default defineConfig({
       '@tomind/core': path.resolve(__dirname, 'packages/core/src'),
       '@tomind/extensions': path.resolve(__dirname, 'packages/extensions/src'),
       '@tomind/formats': path.resolve(__dirname, 'packages/formats/src'),
+      '@tomind/formats/opml': path.resolve(__dirname, 'packages/formats/src/opml.ts'),
+      '@tomind/formats/freemind': path.resolve(__dirname, 'packages/formats/src/freemind.ts'),
+      '@tomind/formats/markdown': path.resolve(__dirname, 'packages/formats/src/markdown.ts'),
+      '@tomind/formats/lighten': path.resolve(__dirname, 'packages/formats/src/lighten.ts'),
+      '@tomind/formats/mindnode': path.resolve(__dirname, 'packages/formats/src/mindnode.ts'),
+      '@tomind/formats/model-to-node': path.resolve(__dirname, 'packages/formats/src/model-to-node.ts'),
     },
   },
   test: {

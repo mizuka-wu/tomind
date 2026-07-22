@@ -1,17 +1,25 @@
 {
   "name": "@tomind/formats",
   "version": "0.1.0",
-  "description": "格式转换 — XMind/OPML/FreeMind/Markdown 导入导出",
+  "description": "思维导图格式转换工具包 — XMind/OPML/FreeMind/Markdown/MindManager/Lighten/MindNode",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./xmind": "./src/xmind.ts",
+    "./opml": "./src/opml.ts",
+    "./freemind": "./src/freemind.ts",
+    "./markdown": "./src/markdown.ts",
+    "./mindmanager": "./src/mindmanager.ts",
+    "./lighten": "./src/lighten.ts",
+    "./mindnode": "./src/mindnode.ts",
+    "./model-to-node": "./src/model-to-node.ts"
+  },
   "files": ["src"],
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tomind/core": "workspace:*",
-    "@tomind/schema": "workspace:*",
-    "@tomind/state": "workspace:*",
     "jszip": "^3.10.1"
   },
   "devDependencies": {

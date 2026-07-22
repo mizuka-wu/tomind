@@ -1,40 +1,20 @@
 /**
- * @tomind/formats — 格式转换模块
+ * @tomind/formats — 思维导图格式转换工具包
  *
- * 支持 7 种格式的导入/导出：
- * - XMind (.xmind) — ZIP + content.json
- * - OPML (.opml) — XML 大纲格式
- * - FreeMind (.mm) — XML 思维导图
- * - Markdown (.md) — 标题 + 列表
- * - MindManager (.mmap) — ZIP + Document.xml
- * - Lighten (.lighten) — JSON
- * - MindNode (.mindnode) — JSON
+ * 纯函数，无副作用，支持摇树优化。
+ * 每个格式独立子路径导入：
+ *
+ * ```ts
+ * import { parseXMind, exportXMind } from '@tomind/formats/xmind'
+ * import { parseOPML, exportOPML } from '@tomind/formats/opml'
+ * import { parseFreeMind, exportFreeMind } from '@tomind/formats/freemind'
+ * import { parseMarkdown, exportMarkdown } from '@tomind/formats/markdown'
+ * import { parseMindManager } from '@tomind/formats/mindmanager'
+ * import { parseLighten, exportLighten } from '@tomind/formats/lighten'
+ * import { parseMindNode, exportMindNode } from '@tomind/formats/mindnode'
+ * import { modelToNodeDesc } from '@tomind/formats/model-to-node'
+ * ```
  */
 
-// 中间格式
 export { modelToNodeDesc } from './model-to-node'
 export type { ModelTree, ModelNode } from './model-to-node'
-
-// 解析器 + 导出器
-export { parseXMind, exportXMind } from './xmind'
-export { parseOPML, exportOPML } from './opml'
-export { parseFreeMind, exportFreeMind } from './freemind'
-export { parseMarkdown, exportMarkdown } from './markdown'
-export { parseMindManager } from './mindmanager'
-export { parseLighten, exportLighten } from './lighten'
-export { parseMindNode, exportMindNode } from './mindnode'
-
-// Extension（基础格式）
-export {
-  XmindFormatExtension,
-  OpmlFormatExtension,
-  FreemarkFormatExtension,
-  MarkdownFormatExtension,
-} from './extensions'
-
-// Extension（扩展格式）
-export {
-  MindManagerFormatExtension,
-  LightenFormatExtension,
-  MindNodeFormatExtension,
-} from './extensions-extra'
