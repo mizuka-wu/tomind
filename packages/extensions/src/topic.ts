@@ -6,7 +6,6 @@
  * - topic.addSibling: 添加同级主题（Enter）
  * - topic.addSiblingBefore: 添加同级主题（前）（Shift+Enter）
  * - topic.delete: 删除选中节点（Delete/Backspace）
- * - topic.edit: 进入文本编辑模式（Space/F2）
  *
  * 同时注册导航命令：
  * - navigation.up/down/left/right: 方向键导航
@@ -245,25 +244,6 @@ export const TopicExtension = createExtension<TopicOptions>({
       tr.setSelection({ elements: [{ id: parent.id, type: 'topic' }] })
 
       dispatch(tr)
-      return true
-    })
-
-    // ==================== topic.edit ====================
-    ctx.registerCommand('topic.edit', (
-      state: unknown,
-      _dispatch: ((tr: unknown) => void) | null,
-      params?: unknown,
-    ): boolean => {
-      const sheetState = state as SheetState
-      const { nodeId } = (params ?? {}) as { nodeId?: string }
-      const targetId = nodeId ?? getSelectedNodeId(sheetState)
-      if (!targetId) return false
-
-      const targetNode = findInTree(sheetState.doc, targetId)
-      if (!targetNode || !isTopicNode(targetNode)) return false
-
-      // 发出进入编辑模式的事件（由 View 层处理）
-      ctx.emit('topic:startEdit', targetId)
       return true
     })
 

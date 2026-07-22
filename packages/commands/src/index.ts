@@ -4,5 +4,3 @@
 
 export * from './command-def'
 export * from './command-manager'
-export * from './node-commands'
-export * from './class-commands'
