@@ -1,0 +1,20 @@
+{
+  "name": "@tomind/formats",
+  "version": "0.1.0",
+  "description": "格式转换 — XMind/OPML/FreeMind/Markdown 导入导出",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": ["src"],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tomind/core": "workspace:*",
+    "@tomind/schema": "workspace:*",
+    "@tomind/state": "workspace:*",
+    "jszip": "^3.10.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
