@@ -21,8 +21,7 @@
     "@tomind/assets": "workspace:*",
     "@tomind/plugins": "workspace:*",
     "@tomind/xap": "workspace:*",
-    "@leafer-in/scroll": "^2.1.8",
-    "mitt": "^3.0.0"
+    "@leafer-in/scroll": "^2.1.8"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

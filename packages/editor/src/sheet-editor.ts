@@ -4,12 +4,12 @@
  * 职责：
  * 1. 基础设施（DOM、App、滚动条、viewport 监听、事务分发）
  * 2. 共享引擎（StyleEngine、LayoutEngine）
- * 3. 事件系统（内部 mitt，对外暴露 on/off/emit）
+ * 3. 事件系统（原生 EventTarget，对外暴露 on/off/emit）
  * 4. ViewDesc 树管理
  * 5. Extension 系统（扩展管理）
  *
  * 设计原则：
- * - 组合优于继承（内部持有一个 mitt 实例）
+ * - 组合优于继承（内部持有一个 EventTarget 实例）
  * - 唯一事务入口（dispatch）
  * - 响应式更新（LeaferJS viewport → state.viewport）
  */
@@ -17,7 +17,7 @@
 import { App } from 'leafer-ui'
 import { ScrollBar } from '@leafer-in/scroll'
 import type { IAppConfig } from 'leafer-ui'
-import mitt from 'mitt'
+
 import { SheetState, Transaction, PluginKey } from '@tomind/state'
 import type { Plugin } from '@tomind/state'
 import type { NodeDesc, SelectionState, Viewport } from '@tomind/schema'
@@ -93,7 +93,8 @@ export class SheetEditor {
 
   private _state: SheetState
   private _docView: ViewDesc | null = null
-  private _emitter: ReturnType<typeof mitt>
+  private _emitter = new EventTarget()
+  private _handlerMap = new Map<Function, EventListener>()
   private _commandManager: CommandManager
   _workbookEditor: any = null
 
@@ -122,9 +123,6 @@ export class SheetEditor {
     this.scrollbar = this.app.tree
       ? new ScrollBar(this.app.tree, options.scrollbarConfig)
       : null
-
-    // 初始化 mitt
-    this._emitter = mitt()
 
     // 注入静态引用到 NodeViewDesc
     TopicNodeViewDesc.styleEngine = this.styleEngine
@@ -155,18 +153,24 @@ export class SheetEditor {
     this.setupExtensions()
   }
 
-  // ==================== mitt 事件 ====================
+  // ==================== 事件 ====================
 
   on<K extends keyof SheetEditorEvents>(event: K, callback: (data: SheetEditorEvents[K]) => void): void {
-    this._emitter.on(event as string, callback as (data: unknown) => void)
+    const handler = (e: Event) => callback((e as CustomEvent<SheetEditorEvents[K]>).detail)
+    this._emitter.addEventListener(event, handler)
+    this._handlerMap.set(callback, handler)
   }
 
   off<K extends keyof SheetEditorEvents>(event: K, callback: (data: SheetEditorEvents[K]) => void): void {
-    this._emitter.off(event as string, callback as (data: unknown) => void)
+    const handler = this._handlerMap.get(callback)
+    if (handler) {
+      this._emitter.removeEventListener(event, handler)
+      this._handlerMap.delete(callback)
+    }
   }
 
   emit<K extends keyof SheetEditorEvents>(event: K, data: SheetEditorEvents[K]): void {
-    this._emitter.emit(event as string, data)
+    this._emitter.dispatchEvent(new CustomEvent(event, { detail: data }))
   }
 
   // ==================== 状态管理 ====================
@@ -465,7 +469,8 @@ export class SheetEditor {
 
     this._docView?.destroy()
     this._docView = null
-    this._emitter.all.clear()
+    this._emitter = new EventTarget()
+    this._handlerMap.clear()
   }
 
   // ==================== Commands 代理 ====================
