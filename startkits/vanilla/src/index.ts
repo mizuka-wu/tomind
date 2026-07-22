@@ -85,13 +85,11 @@ function createStarterKit(options: StarterKitOptions = {}) {
     defaultOptions: { enabled: true },
 
     onCreate(ctx) {
-      // 注册所有子扩展
       const cleanupFns: (() => void)[] = []
 
       for (const ext of allExtensions) {
         if (!ext.isEnabled()) continue
 
-        // 注册扩展的命令
         if (ext.commands) {
           for (const [cmdName, cmdFactory] of Object.entries(ext.commands)) {
             const fullName = `${ext.name}.${cmdName}`
@@ -99,7 +97,11 @@ function createStarterKit(options: StarterKitOptions = {}) {
           }
         }
 
-        // 调用扩展的 onCreate
+        if (ext.addLayout) {
+          const algorithm = ext.addLayout()
+          ctx.registerLayout(algorithm)
+        }
+
         if (ext.onCreate) {
           const cleanup = ext.onCreate(ctx)
           if (cleanup) {
