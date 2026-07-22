@@ -127,7 +127,7 @@ export const BoundaryExtension = createExtension<BoundaryOptions>({
       }
       const tr = new Transaction(sheetState.doc, [
         new RemoveNodeStep(nodeId),
-        new InsertNodeStep(node.parentId ?? '', updated),
+        new InsertNodeStep(updated.id, updated),
       ], [sheetState.doc], new Map())
 
       dispatch(tr)

@@ -82,8 +82,9 @@ export const CollapseExtension = createExtension<CollapseOptions>({
       if (!node) return false
 
       const newCollapsed = !node.attrs?.collapsed
+      const oldAttrs = { collapsed: node.attrs?.collapsed }
       const tr = new Transaction(sheetState.doc, [
-        new UpdateNodeStep(targetId, { collapsed: newCollapsed }),
+        new UpdateNodeStep(targetId, { collapsed: newCollapsed }, oldAttrs),
       ], [sheetState.doc], new Map())
 
       dispatch(tr)
@@ -97,8 +98,10 @@ export const CollapseExtension = createExtension<CollapseOptions>({
       const { nodeId } = (params ?? {}) as { nodeId?: string }
       if (!nodeId) return false
 
+      const node = findInTree(sheetState.doc, nodeId)
+      const oldAttrs = { collapsed: node?.attrs?.collapsed }
       const tr = new Transaction(sheetState.doc, [
-        new UpdateNodeStep(nodeId, { collapsed: false }),
+        new UpdateNodeStep(nodeId, { collapsed: false }, oldAttrs ?? {}),
       ], [sheetState.doc], new Map())
 
       dispatch(tr)
@@ -112,8 +115,10 @@ export const CollapseExtension = createExtension<CollapseOptions>({
       const { nodeId } = (params ?? {}) as { nodeId?: string }
       if (!nodeId) return false
 
+      const collapseNode = findInTree(sheetState.doc, nodeId)
+      const collapseOldAttrs = { collapsed: collapseNode?.attrs?.collapsed }
       const tr = new Transaction(sheetState.doc, [
-        new UpdateNodeStep(nodeId, { collapsed: true }),
+        new UpdateNodeStep(nodeId, { collapsed: true }, collapseOldAttrs ?? {}),
       ], [sheetState.doc], new Map())
 
       dispatch(tr)
