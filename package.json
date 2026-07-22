@@ -5,7 +5,11 @@
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "turbo dev",
+    "dev:demo": "pnpm --filter @tomind/app-demo dev",
+    "dev:docs": "pnpm --filter @tomind/docs dev",
     "build": "turbo build",
+    "build:demo": "pnpm --filter @tomind/app-demo build",
+    "build:docs": "pnpm --filter @tomind/docs build",
     "test": "vitest run",
     "typecheck": "turbo typecheck"
   },

@@ -17,8 +17,12 @@ export default defineConfig({
       '@tomind/starter-vanilla': path.resolve(__dirname, '../../startkits/vanilla/src'),
     },
   },
+  base: process.env.VITE_BASE ?? '/',
   server: {
     port: 3000,
     open: true,
+  },
+  build: {
+    outDir: 'dist',
   },
 })
