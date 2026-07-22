@@ -17,6 +17,7 @@ export default defineConfig({
       '@tomind/editor': path.resolve(__dirname, 'packages/editor/src'),
       '@tomind/core': path.resolve(__dirname, 'packages/core/src'),
       '@tomind/extensions': path.resolve(__dirname, 'packages/extensions/src'),
+      '@tomind/formats': path.resolve(__dirname, 'packages/formats/src'),
     },
   },
   test: {
