@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # 1. 构建文档站
+      - run: pnpm --filter @tomind/docs build
+
+      # 2. 构建 demo（带 base path）
+      - run: pnpm --filter @tomind/app-demo build
+        env:
+          VITE_BASE: /tomind/demo/
+
+      # 3. 合并 demo 到 docs 输出
+      - name: Merge demo into docs output
+        run: |
+          mkdir -p apps/docs/docs/.vitepress/dist/demo
+          cp -r apps/demo/dist/. apps/docs/docs/.vitepress/dist/demo/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/docs/docs/.vitepress/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
