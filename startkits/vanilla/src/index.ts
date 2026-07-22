@@ -33,7 +33,7 @@ import type { Extension, StarterKitOptions } from '@tomind/core'
 import { createExtension } from '@tomind/core'
 
 // 具体扩展
-import { KeymapExtension, ViewportExtension, TreeLayoutExtension } from '@tomind/extensions'
+import { KeymapExtension, ViewportExtension, TreeLayoutExtension, HistoryExtension, BoundaryExtension, SummaryExtension, CollapseExtension } from '@tomind/extensions'
 
 // ==================== 内置扩展列表 ====================
 
@@ -41,6 +41,10 @@ const builtInExtensions: Extension<any>[] = [
   TreeLayoutExtension,
   KeymapExtension,
   ViewportExtension,
+  HistoryExtension,
+  BoundaryExtension,
+  SummaryExtension,
+  CollapseExtension,
 ]
 
 // ==================== StarterKit ====================
