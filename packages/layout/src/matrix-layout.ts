@@ -22,7 +22,7 @@ export const matrixLayoutAlgorithm: LayoutAlgorithm = {
 
   layout(
     node: NodeDesc,
-    options: LayoutOptions,
+    _options: LayoutOptions,
   ): LayoutResult {
     const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
 

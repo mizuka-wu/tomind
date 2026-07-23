@@ -12,14 +12,14 @@ export class BoundaryRenderer implements Renderer {
   private group: Group | null = null
   private rect: Rect | null = null
   private titleText: Text | null = null
-  private nodeId: string
+
 
   /** 边界范围（由 setBounds 设置） */
   private bounds = { x: 0, y: 0, width: 0, height: 0 }
   private title = ''
 
-  constructor(nodeId: string) {
-    this.nodeId = nodeId
+  constructor(_nodeId: string) {
+
   }
 
   create(parent: Group): void {

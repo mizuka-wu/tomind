@@ -276,12 +276,10 @@ export class MatrixRenderer implements Renderer {
   private _plusViews: MatrixPlusView[] = []
   private _labelViews: MatrixLabelView[] = []
   private _columnMap: ColumnMap | null = null
-  private _nodeId: string
   private _onCellClick: ((cell: MatrixCell) => void) | null = null
   private _onCellDblClick: ((cell: MatrixCell) => void) | null = null
 
-  constructor(nodeId: string) {
-    this._nodeId = nodeId
+  constructor(_nodeId: string) {
   }
 
   create(parent: Group): void {
@@ -316,7 +314,7 @@ export class MatrixRenderer implements Renderer {
    */
   updateMatrix(
     children: any[],
-    getNode: (id: string) => any,
+    _getNode: (id: string) => any,
   ): void {
     if (!this._parent) return
 
@@ -423,9 +421,7 @@ export class MatrixRenderer implements Renderer {
     matrix.getCells().forEach((cell) => {
       if (cell.item) {
         // 设置位置
-        const _pos = cell.getAbsPos()
-        // 这里需要将位置应用到实际的视图
-        // 暂时只记录位置
+        void cell.getAbsPos()
       }
     })
   }

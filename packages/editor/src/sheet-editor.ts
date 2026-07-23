@@ -425,7 +425,7 @@ export class SheetEditor {
     if (!children) return
 
     // children 是 Record<string, NodeDesc[]>
-    for (const [slot, childNodes] of Object.entries(children)) {
+    for (const [_slot, childNodes] of Object.entries(children)) {
       if (!Array.isArray(childNodes)) continue
       for (const childNode of childNodes) {
         const childView = this.createViewDesc(childNode)
