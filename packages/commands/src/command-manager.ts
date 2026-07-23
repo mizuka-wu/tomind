@@ -120,6 +120,13 @@ export class CommandManager {
   }
 
   /**
+   * 删除命令
+   */
+  remove(name: string): boolean {
+    return this.commands.delete(name)
+  }
+
+  /**
    * 检查命令是否可执行
    */
   canExecute(name: string, params: unknown, state: SheetState): boolean {

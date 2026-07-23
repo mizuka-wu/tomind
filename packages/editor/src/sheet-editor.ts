@@ -207,6 +207,10 @@ export class SheetEditor {
     return this._docView
   }
 
+  get commandManager(): CommandManager {
+    return this._commandManager
+  }
+
   updateState(newState: SheetState, tr?: Transaction): void {
     this._state = newState
     // 更新静态引用
@@ -276,21 +280,10 @@ export class SheetEditor {
         return result.success
       },
       registerCommand: (name: string, command: CommandFn) => {
-        // 注册到 CommandManager
-        editor._commandManager.add({
-          name,
-          description: `Extension command: ${name}`,
-          inputSchema: { type: 'object' },
-          execute: (params: unknown, state: SheetState, dispatch?: (tr: Transaction) => void) => {
-            const wrappedDispatch = dispatch ? (tr: unknown) => dispatch(tr as Transaction) : null
-            const success = command(state, wrappedDispatch, params)
-            return { success }
-          },
-        })
+        editor.registerCommand(name, command)
       },
-      unregisterCommand: (_name: string) => {
-        // CommandManager 没有 unregister 方法，暂时忽略
-        // TODO: 添加 unregister 方法
+      unregisterCommand: (name: string) => {
+        editor.unregisterCommand(name)
       },
       on: (event: string, handler: EventHandler) => {
         editor.onAny(event, handler)
@@ -565,6 +558,29 @@ export class SheetEditor {
    */
   executeCommand(name: string, params: unknown): CommandResult {
     return this._commandManager.execute(name, params, this._state, (tr) => this.dispatch(tr))
+  }
+
+  /**
+   * 注册命令到 CommandManager
+   */
+  registerCommand(name: string, command: CommandFn): void {
+    this._commandManager.add({
+      name,
+      description: `Extension command: ${name}`,
+      inputSchema: { type: 'object' },
+      execute: (params: unknown, state: SheetState, dispatch?: (tr: Transaction) => void) => {
+        const wrappedDispatch = dispatch ? (tr: unknown) => dispatch(tr as Transaction) : null
+        const success = command(state, wrappedDispatch, params)
+        return { success }
+      },
+    })
+  }
+
+  /**
+   * 从 CommandManager 注销命令
+   */
+  unregisterCommand(name: string): void {
+    this._commandManager.remove(name)
   }
 }
 

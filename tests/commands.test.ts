@@ -77,6 +77,24 @@ describe('CommandManager', () => {
     expect(manager.has('test_fail')).toBe(true)
   })
 
+  it('should remove commands', () => {
+    const manager = CommandManager.empty()
+    manager.add(testCommand as any)
+    manager.add(testFailCommand as any)
+
+    expect(manager.size).toBe(2)
+
+    const removed = manager.remove('test_double')
+    expect(removed).toBe(true)
+    expect(manager.size).toBe(1)
+    expect(manager.has('test_double')).toBe(false)
+    expect(manager.has('test_fail')).toBe(true)
+
+    // remove nonexistent returns false
+    const notRemoved = manager.remove('nonexistent')
+    expect(notRemoved).toBe(false)
+  })
+
   it('should add commands via addCommands', () => {
     const manager = CommandManager.empty()
     manager.addCommands([testCommand, testFailCommand] as any)
