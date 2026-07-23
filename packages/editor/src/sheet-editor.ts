@@ -55,14 +55,36 @@ interface ScrollbarConfig {
 
 // ==================== 工厂函数 ====================
 
-// NodeViewDesc 注册表（Tiptap 风格：Extension 注册 NodeView）
-const nodeViewDescRegistry = new Map<string, new (node: NodeDesc, role: string) => ViewDesc>()
+type ViewDescClass = new (node: NodeDesc, role: string) => ViewDesc
 
-// 注册默认的 NodeViewDesc
-nodeViewDescRegistry.set('topic', TopicNodeViewDesc as any)
-nodeViewDescRegistry.set('relationship', RelationshipNodeViewDesc as any)
-nodeViewDescRegistry.set('boundary', BoundaryNodeViewDesc as any)
-nodeViewDescRegistry.set('summary', SummaryNodeViewDesc as any)
+// NodeViewDesc 默认注册表（Tiptap 风格：Extension 注册 NodeView）
+function createDefaultNodeViewDescRegistry(): Map<string, ViewDescClass> {
+  const registry = new Map<string, ViewDescClass>()
+  registry.set('topic', TopicNodeViewDesc as any)
+  registry.set('relationship', RelationshipNodeViewDesc as any)
+  registry.set('boundary', BoundaryNodeViewDesc as any)
+  registry.set('summary', SummaryNodeViewDesc as any)
+  return registry
+}
+
+// PartViewDesc 默认注册表
+function createDefaultPartViewDescRegistry(): Map<string, ViewDescClass> {
+  return new Map<string, ViewDescClass>()
+}
+
+// 模块级默认注册表（供独立 SheetEditor 使用）
+const nodeViewDescRegistry = createDefaultNodeViewDescRegistry()
+const partViewDescRegistry = createDefaultPartViewDescRegistry()
+
+/** 创建带默认值的 NodeViewDesc 注册表（供 WorkbookEditor 使用） */
+export function createNodeViewDescRegistry(): Map<string, ViewDescClass> {
+  return createDefaultNodeViewDescRegistry()
+}
+
+/** 创建带默认值的 PartViewDesc 注册表（供 WorkbookEditor 使用） */
+export function createPartViewDescRegistry(): Map<string, ViewDescClass> {
+  return createDefaultPartViewDescRegistry()
+}
 
 /** 注册 NodeViewDesc（供 Extension 调用） */
 export function registerNodeViewDesc(nodeType: string, viewDescClass: new (node: NodeDesc, role: string) => ViewDesc): void {
@@ -74,8 +96,21 @@ export function unregisterNodeViewDesc(nodeType: string): void {
   nodeViewDescRegistry.delete(nodeType)
 }
 
-function createViewDesc(node: NodeDesc): ViewDesc | null {
-  const ViewDescClass = nodeViewDescRegistry.get(node.type)
+// PartViewDesc 注册表
+const partViewDescRegistry = new Map<string, new (node: NodeDesc, role: string) => ViewDesc>()
+
+/** 注册 PartViewDesc（供 Extension 调用） */
+export function registerPartViewDesc(partType: string, viewDescClass: new (node: NodeDesc, role: string) => ViewDesc): void {
+  partViewDescRegistry.set(partType, viewDescClass)
+}
+
+/** 注销 PartViewDesc */
+export function unregisterPartViewDesc(partType: string): void {
+  partViewDescRegistry.delete(partType)
+}
+
+function _createViewDesc(node: NodeDesc, registry: Map<string, new (node: NodeDesc, role: string) => ViewDesc>): ViewDesc | null {
+  const ViewDescClass = registry.get(node.type)
   if (!ViewDescClass) return null
   return new ViewDescClass(node, node.type)
 }
@@ -97,6 +132,8 @@ export class SheetEditor {
   private _emitter = new EventTarget()
   private _handlerMap = new Map<Function, EventListener>()
   private _commandManager: CommandManager
+  private _nodeViewDescRegistry: Map<string, new (node: NodeDesc, role: string) => ViewDesc>
+  private _partViewDescRegistry: Map<string, new (node: NodeDesc, role: string) => ViewDesc>
   _workbookEditor: any = null
 
   constructor(options: {
@@ -107,6 +144,8 @@ export class SheetEditor {
     styleEngine: StyleEngine
     layoutEngine: LayoutEngine
     commandManager?: CommandManager
+    nodeViewDescRegistry?: Map<string, new (node: NodeDesc, role: string) => ViewDesc>
+    partViewDescRegistry?: Map<string, new (node: NodeDesc, role: string) => ViewDesc>
     appConfig?: IAppConfig
     scrollbarConfig?: ScrollbarConfig
   }) {
@@ -116,6 +155,8 @@ export class SheetEditor {
     this.styleEngine = options.styleEngine
     this.layoutEngine = options.layoutEngine
     this._commandManager = options.commandManager || CommandManager.empty()
+    this._nodeViewDescRegistry = options.nodeViewDescRegistry || nodeViewDescRegistry
+    this._partViewDescRegistry = options.partViewDescRegistry || partViewDescRegistry
 
     // 创建 LeaferJS App
     this.app = new App({ view: this.dom, ...options.appConfig })
@@ -294,14 +335,14 @@ export class SheetEditor {
       emit: (event: string, ...args: unknown[]) => {
         editor.emitAny(event, ...args)
       },
-      registerNodeView: (_nodeType: string, _viewDesc: unknown) => {
+      registerNodeView: (nodeType: string, viewDesc: unknown) => {
         // Extension 注册 NodeViewDesc
-        if (typeof _viewDesc === 'function' && _viewDesc.length <= 2) {
-          registerNodeViewDesc(_nodeType, _viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
+        if (typeof viewDesc === 'function' && viewDesc.length <= 2) {
+          editor.registerNodeView(nodeType, viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
         }
       },
-      unregisterNodeView: (_nodeType: string) => {
-        unregisterNodeViewDesc(_nodeType)
+      unregisterNodeView: (nodeType: string) => {
+        editor.unregisterNodeView(nodeType)
       },
       registerLayout: (algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => {
         registerLayoutAlg(algorithm)
@@ -309,23 +350,29 @@ export class SheetEditor {
       unregisterLayout: (name: string) => {
         unregisterLayoutAlg(name)
       },
-      registerPartView: (_partType: string, _viewDesc: unknown) => {
-        // TODO: 注册 PartViewDesc
+      registerPartView: (partType: string, viewDesc: unknown) => {
+        if (typeof viewDesc === 'function' && viewDesc.length <= 2) {
+          editor.registerPartView(partType, viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
+        }
       },
-      unregisterPartView: (_partType: string) => {
-        // TODO: 注销 PartViewDesc
+      unregisterPartView: (partType: string) => {
+        editor.unregisterPartView(partType)
       },
     }
   }
 
   // ==================== ViewDesc 管理 ====================
 
+  private createViewDesc(node: NodeDesc): ViewDesc | null {
+    return _createViewDesc(node, this._nodeViewDescRegistry)
+  }
+
   private createDocView(): ViewDesc | null {
     const doc = this._state.doc
     if (!doc) return null
 
     // 创建根 ViewDesc
-    const rootView = createViewDesc(doc)
+    const rootView = this.createViewDesc(doc)
     if (!rootView) return null
 
     // 递归创建子 ViewDesc
@@ -347,7 +394,7 @@ export class SheetEditor {
     for (const [, childNodes] of Object.entries(children)) {
       if (!Array.isArray(childNodes)) continue
       for (const childNode of childNodes) {
-        const childView = createViewDesc(childNode)
+        const childView = this.createViewDesc(childNode)
         if (!childView) continue
         parentView.addChild(childView)
         this.buildChildrenViews(childView, childNode)
@@ -424,7 +471,7 @@ export class SheetEditor {
         oldView.destroy()
       }
 
-      const newView = createViewDesc(newChild)
+      const newView = this.createViewDesc(newChild)
       if (newView) {
         this.buildChildrenViews(newView, newChild)
         newViewList.push(newView)
@@ -581,6 +628,34 @@ export class SheetEditor {
    */
   unregisterCommand(name: string): void {
     this._commandManager.remove(name)
+  }
+
+  /**
+   * 注册 NodeViewDesc
+   */
+  registerNodeView(nodeType: string, viewDescClass: new (node: NodeDesc, role: string) => ViewDesc): void {
+    this._nodeViewDescRegistry.set(nodeType, viewDescClass)
+  }
+
+  /**
+   * 注销 NodeViewDesc
+   */
+  unregisterNodeView(nodeType: string): void {
+    this._nodeViewDescRegistry.delete(nodeType)
+  }
+
+  /**
+   * 注册 PartViewDesc
+   */
+  registerPartView(partType: string, viewDescClass: new (node: NodeDesc, role: string) => ViewDesc): void {
+    this._partViewDescRegistry.set(partType, viewDescClass)
+  }
+
+  /**
+   * 注销 PartViewDesc
+   */
+  unregisterPartView(partType: string): void {
+    this._partViewDescRegistry.delete(partType)
   }
 }
 

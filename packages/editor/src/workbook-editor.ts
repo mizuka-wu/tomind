@@ -15,7 +15,9 @@
  */
 
 import type { SheetState } from '@tomind/state'
-import { SheetEditor } from './sheet-editor'
+import type { NodeDesc } from '@tomind/schema'
+import { ViewDesc } from '@tomind/view'
+import { SheetEditor, createNodeViewDescRegistry, createPartViewDescRegistry } from './sheet-editor'
 import { ExtensionManager } from '@tomind/extension'
 import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEditorInterface } from '@tomind/extension'
 import type { StyleEngine } from '@tomind/style'
@@ -127,6 +129,8 @@ export class WorkbookEditor implements WorkbookEditorInterface {
   private _sheets = new Map<string, SheetEditor>()
   private _activeSheetId: string | null = null
   private _extensionContext: ExtensionContext | null = null
+  private _nodeViewDescRegistry = createNodeViewDescRegistry()
+  private _partViewDescRegistry = createPartViewDescRegistry()
 
   constructor(options: WorkbookEditorOptions) {
     this.styleEngine = options.styleEngine
@@ -187,6 +191,8 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       styleEngine: this.styleEngine,
       layoutEngine: this.layoutEngine,
       commandManager: this.commandManager,
+      nodeViewDescRegistry: this._nodeViewDescRegistry,
+      partViewDescRegistry: this._partViewDescRegistry,
     })
 
     // 注入 WorkbookEditor 引用
@@ -398,17 +404,22 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       emit: (event: string, ...args: unknown[]) => {
         workbook.emit(event, ...args)
       },
-      registerNodeView: (_nodeType: string, _viewDesc: unknown) => {
-        // TODO: 注册到所有 Sheet
+      registerNodeView: (nodeType: string, viewDesc: unknown) => {
+        // 注册到 workbook 级注册表（所有 sheet 共享同一引用）
+        if (typeof viewDesc === 'function' && viewDesc.length <= 2) {
+          workbook._nodeViewDescRegistry.set(nodeType, viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
+        }
       },
-      unregisterNodeView: (_nodeType: string) => {
-        // TODO: 注销从所有 Sheet
+      unregisterNodeView: (nodeType: string) => {
+        workbook._nodeViewDescRegistry.delete(nodeType)
       },
-      registerPartView: (_partType: string, _viewDesc: unknown) => {
-        // TODO: 注册到所有 Sheet
+      registerPartView: (partType: string, viewDesc: unknown) => {
+        if (typeof viewDesc === 'function' && viewDesc.length <= 2) {
+          workbook._partViewDescRegistry.set(partType, viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
+        }
       },
-      unregisterPartView: (_partType: string) => {
-        // TODO: 注销从所有 Sheet
+      unregisterPartView: (partType: string) => {
+        workbook._partViewDescRegistry.delete(partType)
       },
       registerLayout: (algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => {
         registerLayout(algorithm)
