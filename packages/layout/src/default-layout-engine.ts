@@ -1,7 +1,7 @@
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
 import { layout, DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
-import type { LayoutEngine, LayoutResult, LayoutAlgorithm } from './layout-engine'
+import type { LayoutEngine, LayoutResult } from './layout-engine'
 
 export class DefaultLayoutEngine implements LayoutEngine {
   private _styleEngine: StyleEngine | null = null
@@ -24,9 +24,5 @@ export class DefaultLayoutEngine implements LayoutEngine {
 
   getLayoutResult(): LayoutResult {
     return this._lastResult
-  }
-
-  registerAlgorithm(_algorithm: LayoutAlgorithm): void {
-    // TODO: 支持动态注册
   }
 }
