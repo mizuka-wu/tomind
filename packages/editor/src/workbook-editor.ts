@@ -140,7 +140,7 @@ export class WorkbookEditor implements WorkbookEditorInterface {
 
     // 加载主题
     if (options.displayConfig) {
-      const { themes, defaultThemeId, defaultSkeletonId } = options.displayConfig
+      const { themes, defaultThemeId } = options.displayConfig
       if (themes && themes.length > 0) {
         for (const theme of themes) {
           this.styleEngine.loadTheme(theme)

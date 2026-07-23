@@ -334,7 +334,7 @@ export class ExtensionManager implements IExtensionManager {
   /**
    * 设置快捷键（Tiptap 风格）
    */
-  private setupKeyboardShortcuts(ctx: ExtensionContext): void {
+  private setupKeyboardShortcuts(_ctx: ExtensionContext): void {
     this._keyboardShortcuts.clear()
 
     for (const [, extension] of this._extensions) {

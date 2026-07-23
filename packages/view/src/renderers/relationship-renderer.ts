@@ -12,16 +12,16 @@ export class RelationshipRenderer implements Renderer {
   private group: Group | null = null
   private pathRect: Rect | null = null
   private titleText: Text | null = null
-  private nodeId: string
+
 
   /** 起止点坐标（由 setEndpoints 设置） */
   private from = { x: 0, y: 0 }
   private to = { x: 0, y: 0 }
-  private controlPoints: ReadonlyArray<{ x: number; y: number }> | null = null
+
   private title = ''
 
-  constructor(nodeId: string) {
-    this.nodeId = nodeId
+  constructor(_nodeId: string) {
+
   }
 
   create(parent: Group): void {
@@ -54,12 +54,12 @@ export class RelationshipRenderer implements Renderer {
   setEndpoints(
     from: { x: number; y: number },
     to: { x: number; y: number },
-    controlPoints?: ReadonlyArray<{ x: number; y: number }>,
+    _controlPoints?: ReadonlyArray<{ x: number; y: number }>,
     title?: string,
   ): void {
     this.from = from
     this.to = to
-    this.controlPoints = controlPoints ?? null
+
     this.title = title ?? ''
   }
 
