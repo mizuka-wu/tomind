@@ -59,17 +59,32 @@ export class TopicRenderer implements Renderer {
     // 更新 Text — 直接用 LeaferJS 属性
     this.text.text = getTitleText(style)
     
-    // fontColor → fill
-    if (style.fill !== undefined) this.text.fill = style.fill as string
+    // 字体颜色：优先用 fontColor，fallback 到 color
+    const fontColor = style.fontColor ?? style.color ?? '#333'
+    this.text.fill = fontColor as string
+
     if (style.fontFamily !== undefined) this.text.fontFamily = style.fontFamily as string
     if (style.fontSize !== undefined) this.text.fontSize = style.fontSize as number
     if (style.fontWeight !== undefined) this.text.fontWeight = style.fontWeight as any
     if (style.textAlign !== undefined) this.text.textAlign = style.textAlign as any
 
-    // 文本位置 — 居中
-    this.text.x = 0
-    this.text.y = 0
-    // TODO: 根据 textAlign 和 verticalAlign 计算位置
+    // 文本居中
+    const textAlign = (style.textAlign as string) ?? 'center'
+    const fontSize = (style.fontSize as number) ?? 14
+    const textWidth = this.text.width || nodeLayout.titleWidth || nodeLayout.width
+    const textHeight = this.text.height || nodeLayout.titleHeight || fontSize
+
+    // 水平居中
+    if (textAlign === 'center' || textAlign === undefined) {
+      this.text.x = (nodeLayout.width - textWidth) / 2
+    } else if (textAlign === 'right') {
+      this.text.x = nodeLayout.width - textWidth - 8
+    } else {
+      this.text.x = 8
+    }
+
+    // 垂直居中
+    this.text.y = (nodeLayout.height - textHeight) / 2
   }
 
   destroy(): void {

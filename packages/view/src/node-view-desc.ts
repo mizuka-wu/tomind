@@ -311,7 +311,7 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
 
   protected createElement(): Group {
     const group = new Group()
-    this.renderer = new RelationshipRenderer()
+    this.renderer = new RelationshipRenderer(this.node.id)
     this.renderer.create(group)
 
     // 注册事件
@@ -434,7 +434,7 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
 
   protected createElement(): Group {
     const group = new Group()
-    this.renderer = new BoundaryRenderer()
+    this.renderer = new BoundaryRenderer(this.node.id)
     this.renderer.create(group)
     
     // 注册事件
@@ -571,7 +571,7 @@ export class SummaryNodeViewDesc extends NodeViewDesc {
     this.topicRenderer.create(group)
     
     // Summary 括号线
-    this.summaryRenderer = new SummaryRenderer()
+    this.summaryRenderer = new SummaryRenderer(this.node.id)
     this.summaryRenderer.create(group)
     
     return group

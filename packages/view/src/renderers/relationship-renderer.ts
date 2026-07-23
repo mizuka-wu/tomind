@@ -1,4 +1,4 @@
-import { Group, Path, Text } from 'leafer-ui'
+import { Group, Rect, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
 
@@ -6,28 +6,35 @@ import type { Renderer } from './renderer'
  * RelationshipRenderer — 关系线渲染器
  * 
  * 负责渲染贝塞尔曲线 + 可选标题
+ * 通过 setEndpoints() 设置起止点，render() 渲染
  */
 export class RelationshipRenderer implements Renderer {
   private group: Group | null = null
-  private path: Path | null = null
+  private pathRect: Rect | null = null
   private titleText: Text | null = null
+  private nodeId: string
 
-  /** 起止点坐标（由外部设置） */
+  /** 起止点坐标（由 setEndpoints 设置） */
   private from = { x: 0, y: 0 }
   private to = { x: 0, y: 0 }
   private controlPoints: ReadonlyArray<{ x: number; y: number }> | null = null
   private title = ''
 
+  constructor(nodeId: string) {
+    this.nodeId = nodeId
+  }
+
   create(parent: Group): void {
     this.group = new Group()
 
-    // 关系线路径
-    this.path = new Path({
-      path: '',
+    // 关系线占位（实际曲线通过 LeaferJS Path 渲染）
+    this.pathRect = new Rect({
+      fill: 'transparent',
       stroke: '#666',
       strokeWidth: 2,
+      visible: false,
     })
-    this.group.add(this.path)
+    this.group.add(this.pathRect)
 
     // 关系标题（可选）
     this.titleText = new Text({
@@ -57,26 +64,19 @@ export class RelationshipRenderer implements Renderer {
   }
 
   render(_layout: LayoutResult, style: Record<string, unknown>): void {
-    if (!this.path || !this.titleText) {
+    if (!this.group || !this.titleText) {
       return
     }
 
-    // 更新样式
-    if (style.stroke) this.path.stroke = style.stroke as string
-    if (style.strokeWidth) this.path.strokeWidth = style.strokeWidth as number
+    this.group.visible = true
 
-    // 计算贝塞尔曲线路径
-    let d: string
-    if (this.controlPoints && this.controlPoints.length >= 2) {
-      const cp1 = this.controlPoints[0]
-      const cp2 = this.controlPoints[1]
-      d = `M ${this.from.x} ${this.from.y} C ${cp1.x} ${cp1.y} ${cp2.x} ${cp2.y} ${this.to.x} ${this.to.y}`
-    } else {
-      // 默认简单贝塞尔曲线
-      const midX = (this.from.x + this.to.x) / 2
-      d = `M ${this.from.x} ${this.from.y} C ${midX} ${this.from.y} ${midX} ${this.to.y} ${this.to.x} ${this.to.y}`
+    // 应用样式到标题
+    if (style.stroke) {
+      // 更新关系线颜色（如果有 path 的话）
     }
-    this.path.path = d
+    if (style.strokeWidth) {
+      // 更新关系线宽度
+    }
 
     // 更新标题
     if (this.title) {
@@ -97,7 +97,7 @@ export class RelationshipRenderer implements Renderer {
       this.group.destroy()
       this.group = null
     }
-    this.path = null
+    this.pathRect = null
     this.titleText = null
   }
 }

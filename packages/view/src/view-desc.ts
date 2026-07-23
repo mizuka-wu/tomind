@@ -68,9 +68,18 @@ export abstract class ViewDesc {
   // ==================== 元素管理 ====================
 
   /**
-   * 获取 LeaferJS 元素
+   * 获取 LeaferJS 元素（lazy 创建）
    */
   get element(): Group | null {
+    if (this._element === null && !this._destroyed) {
+      this._element = this.createElement()
+      if (this._element) {
+        this._contentGroup = this.createContentGroup()
+        if (this._contentGroup) {
+          this._element.add(this._contentGroup)
+        }
+      }
+    }
     return this._element
   }
 
@@ -78,6 +87,10 @@ export abstract class ViewDesc {
    * 获取内容容器
    */
   get contentGroup(): Group | null {
+    // 确保 element 已创建
+    if (this._element === null) {
+      void this.element
+    }
     return this._contentGroup
   }
 

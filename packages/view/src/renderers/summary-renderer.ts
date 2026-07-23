@@ -1,4 +1,4 @@
-import { Group, Path, Text } from 'leafer-ui'
+import { Group, Rect, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
 
@@ -6,27 +6,33 @@ import type { Renderer } from './renderer'
  * SummaryRenderer — 摘要线渲染器
  * 
  * 负责渲染括号线 + 可选标题
+ * 通过 setBounds() 设置摘要范围，render() 渲染
  */
 export class SummaryRenderer implements Renderer {
   private group: Group | null = null
-  private path: Path | null = null
+  private bracketRect: Rect | null = null
   private titleText: Text | null = null
+  private nodeId: string
 
-  /** 摘要范围（由外部设置） */
+  /** 摘要范围（由 setBounds 设置） */
   private bounds = { x: 0, y: 0, width: 0, height: 0 }
   private title = ''
+
+  constructor(nodeId: string) {
+    this.nodeId = nodeId
+  }
 
   create(parent: Group): void {
     this.group = new Group()
 
-    // 摘要路径（括号线）
-    this.path = new Path({
-      path: '',
+    // 括号竖线
+    this.bracketRect = new Rect({
+      fill: 'transparent',
       stroke: '#9C27B0',
       strokeWidth: 2,
-      fill: 'transparent',
+      cornerRadius: 1,
     })
-    this.group.add(this.path)
+    this.group.add(this.bracketRect)
 
     // 摘要标题（可选）
     this.titleText = new Text({
@@ -52,26 +58,34 @@ export class SummaryRenderer implements Renderer {
   }
 
   render(_layout: LayoutResult, style: Record<string, unknown>): void {
-    if (!this.path || !this.titleText) {
+    if (!this.bracketRect || !this.titleText || !this.group) {
       return
     }
 
-    // 更新样式
-    if (style.stroke) this.path.stroke = style.stroke as string
-    if (style.strokeWidth) this.path.strokeWidth = style.strokeWidth as number
+    const { x, y, height } = this.bounds
+    if (height === 0) {
+      this.group.visible = false
+      return
+    }
 
-    // 计算括号线路径
-    const { x, y, width, height } = this.bounds
-    const bracketWidth = 12
-    const d = `M ${x + width + bracketWidth} ${y} L ${x + width} ${y} L ${x + width} ${y + height} L ${x + width + bracketWidth} ${y + height}`
-    this.path.path = d
+    this.group.visible = true
+    this.group.x = x
+    this.group.y = y
+
+    // 括号竖线
+    this.bracketRect.width = 3
+    this.bracketRect.height = height
+
+    // 应用样式
+    if (style.stroke) this.bracketRect.stroke = style.stroke as string
+    if (style.strokeWidth) this.bracketRect.strokeWidth = style.strokeWidth as number
 
     // 更新标题
     if (this.title) {
       this.titleText.text = this.title
       this.titleText.visible = true
-      this.titleText.x = x + width + bracketWidth + 4
-      this.titleText.y = y + height / 2 - 6
+      this.titleText.x = 8
+      this.titleText.y = height / 2 - 6
     } else {
       this.titleText.visible = false
     }
@@ -82,7 +96,7 @@ export class SummaryRenderer implements Renderer {
       this.group.destroy()
       this.group = null
     }
-    this.path = null
+    this.bracketRect = null
     this.titleText = null
   }
 }
