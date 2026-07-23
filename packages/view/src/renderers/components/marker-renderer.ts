@@ -74,6 +74,16 @@ export class MarkerRenderer {
     }
   }
 
+  /**
+   * 设置位置
+   */
+  setPosition(x: number, y: number): void {
+    if (this.group) {
+      this.group.x = x
+      this.group.y = y
+    }
+  }
+
   destroy(): void {
     if (this.group) {
       this.group.destroy()
