@@ -338,12 +338,6 @@ export class WorkbookEditor implements WorkbookEditorInterface {
    * @returns 是否处理了该快捷键
    */
   handleKeyboardShortcut(shortcut: string): boolean {
-    // 只读模式下只允许特定快捷键（如导航）
-    if (!this.editable) {
-      // TODO: 允许只读模式下的快捷键（如方向键导航）
-      return false
-    }
-
     return this.extensionManager.handleKeyboardShortcut(shortcut)
   }
 
