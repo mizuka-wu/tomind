@@ -6,7 +6,6 @@
 
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
-import { registerLayout } from './layout-engine'
 import {
   ColumnMap,
   Matrix,
@@ -152,5 +151,4 @@ function initGrid(matrixGrid: MatrixContainer) {
   matrixGrid.setPos({ x: 0, y: 0 })
 }
 
-// 注册 Matrix 布局算法
-registerLayout(matrixLayoutAlgorithm)
+

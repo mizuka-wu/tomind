@@ -31,6 +31,8 @@ export function createExtension<Options extends Record<string, unknown> = {}>(de
   commands?: Record<string, (...args: unknown[]) => CommandFn>
   shortcuts?: Record<string, string>
   addKeyboardShortcuts?: () => Record<string, KeyboardShortcutHandler>
+  addLayout?: () => { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }
+  addNodeView?: () => new (...args: any[]) => any
 }): Extension<Options> {
   // 合并默认选项
   const defaultOptions: ExtensionOptions<Options> = {
@@ -71,6 +73,8 @@ export function createExtension<Options extends Record<string, unknown> = {}>(de
     commands: definition.commands,
     shortcuts: definition.shortcuts,
     addKeyboardShortcuts: definition.addKeyboardShortcuts,
+    addLayout: definition.addLayout,
+    addNodeView: definition.addNodeView,
     addOptions: definition.addOptions,
     addStorage: definition.addStorage,
 

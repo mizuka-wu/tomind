@@ -18,7 +18,7 @@ import type {
   SummaryNodeDesc,
 } from '@tomind/schema'
 import type { StyleEngine } from '@tomind/style'
-import type { LayoutEngine, LayoutResult } from '@tomind/layout'
+import type { ILayoutEngine, LayoutResult } from '@tomind/layout'
 import { getTitleText } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { NodeDecoration } from '@tomind/state'
@@ -131,6 +131,22 @@ export abstract class NodeViewDesc extends ViewDesc {
   protected abstract updateContent(): void
 }
 
+// ==================== RootViewDesc ====================
+
+/** 根节点 ViewDesc — 透明容器，不渲染自身，只管理子节点 */
+export class RootViewDesc extends NodeViewDesc {
+  protected createElement(): Group {
+    return new Group()
+  }
+
+  protected createContentGroup(): Group {
+    return new Group()
+  }
+
+  protected updateStyle(): void {}
+  protected updateContent(): void {}
+}
+
 // ==================== TopicNodeViewDesc ====================
 
 export class TopicNodeViewDesc extends NodeViewDesc {
@@ -204,7 +220,9 @@ export class TopicNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
+    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) {
+      return
+    }
     
     // 获取 LeaferJS 格式样式
     const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
@@ -212,10 +230,8 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     // 获取布局结果
     let layout: LayoutResult
     if (NodeViewDesc.layoutEngine) {
-      // 使用 LayoutEngine 计算布局
       layout = NodeViewDesc.layoutEngine.compute(NodeViewDesc.state)
     } else {
-      // 降级：空布局
       layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     }
     

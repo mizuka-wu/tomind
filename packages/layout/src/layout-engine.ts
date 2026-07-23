@@ -2,10 +2,12 @@ import type { NodeDesc } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
 
-export interface LayoutEngine {
+export interface ILayoutEngine {
   setStyleEngine(engine: StyleEngine): void
   compute(state: SheetState): LayoutResult
   getLayoutResult(): LayoutResult
+  register?(algorithm: LayoutAlgorithm): void
+  unregister?(name: string): void
 }
 
 export interface NodeLayout {
@@ -53,20 +55,6 @@ export interface LayoutAlgorithm {
   ): LayoutResult
 }
 
-const layoutRegistry = new Map<string, LayoutAlgorithm>()
-
-export function registerLayout(algorithm: LayoutAlgorithm): void {
-  layoutRegistry.set(algorithm.name, algorithm)
-}
-
-export function unregisterLayout(name: string): void {
-  layoutRegistry.delete(name)
-}
-
-export function getLayout(name: string): LayoutAlgorithm | undefined {
-  return layoutRegistry.get(name)
-}
-
 export function measureTextSize(
   text: string,
   fontSize: number,
@@ -80,20 +68,3 @@ export function measureTextSize(
   const textHeight = lines * options.lineHeight
   return { width: Math.ceil(textWidth), height: Math.ceil(textHeight) }
 }
-
-export function layout(
-  doc: NodeDesc,
-  options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS,
-  styleEngine?: StyleEngine,
-  state?: SheetState,
-  layoutName: string = 'tree',
-): LayoutResult {
-  const algorithm = layoutRegistry.get(layoutName)
-  if (!algorithm) {
-    console.warn(`Layout algorithm "${layoutName}" not registered`)
-    return { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
-  }
-  return algorithm.layout(doc, options, styleEngine ?? null, state ?? null)
-}
-
-export const layoutTree = layout

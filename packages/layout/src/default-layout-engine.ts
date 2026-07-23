@@ -1,23 +1,36 @@
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
-import { layout, DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
-import type { LayoutEngine, LayoutResult } from './layout-engine'
+import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
+import type { ILayoutEngine, LayoutResult, LayoutAlgorithm } from './layout-engine'
 
-export class DefaultLayoutEngine implements LayoutEngine {
+export class LayoutEngine implements ILayoutEngine {
   private _styleEngine: StyleEngine | null = null
   private _lastResult: LayoutResult = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
+  private _registry = new Map<string, LayoutAlgorithm>()
+
+  register(algorithm: LayoutAlgorithm): void {
+    this._registry.set(algorithm.name, algorithm)
+  }
+
+  unregister(name: string): void {
+    this._registry.delete(name)
+  }
 
   setStyleEngine(engine: StyleEngine): void {
     this._styleEngine = engine
   }
 
   compute(state: SheetState): LayoutResult {
-    this._lastResult = layout(
+    const algorithm = this._registry.get('tree')
+    if (!algorithm) {
+      console.warn(`Layout algorithm "tree" not registered`)
+      return { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
+    }
+    this._lastResult = algorithm.layout(
       state.doc,
       DEFAULT_LAYOUT_OPTIONS,
-      this._styleEngine ?? undefined,
+      this._styleEngine ?? null,
       state,
-      'tree'
     )
     return this._lastResult
   }
