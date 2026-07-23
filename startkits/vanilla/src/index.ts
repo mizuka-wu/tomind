@@ -51,18 +51,18 @@ import {
 // ==================== 内置扩展列表 ====================
 
 const builtInExtensions: Extension<any>[] = [
-  // 布局
+  // 结构元素（节点类型）
+  TopicExtension,
   TreeLayoutExtension,
 
   // 核心编辑
-  TopicExtension,
   KeymapExtension,
   ViewportExtension,
   SelectionExtension,
   HistoryExtension,
   EditBridgeExtension,
 
-  // 结构元素
+  // 结构装饰
   BoundaryExtension,
   SummaryExtension,
   CollapseExtension,
