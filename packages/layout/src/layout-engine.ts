@@ -3,7 +3,7 @@ import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
 
 export interface ILayoutEngine {
-  setStyleEngine(engine: StyleEngine): void
+  setStyleEngine(engine: StyleEngine | null): void
   compute(state: SheetState): LayoutResult
   getLayoutResult(): LayoutResult
   register?(algorithm: LayoutAlgorithm): void

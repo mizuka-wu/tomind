@@ -11,8 +11,14 @@
   },
   "dependencies": {
     "@tomind/core": "workspace:*",
+    "@tomind/editor": "workspace:*",
+    "@tomind/formats": "workspace:*",
+    "@tomind/layout": "workspace:*",
+    "@tomind/state": "workspace:*",
     "@tomind/starter-vanilla": "workspace:*",
     "@tomind/extensions": "workspace:*",
+    "@tomind/style": "workspace:*",
+    "@tomind/schema": "workspace:*",
     "leafer-ui": "^2.1.8"
   },
   "devDependencies": {

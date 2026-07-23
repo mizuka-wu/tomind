@@ -65,7 +65,7 @@ export interface WorkbookEditorOptions {
   /** 共享的 CommandManager */
   commandManager?: CommandManager
   /** 扩展列表（参考 Tiptap） */
-  extensions?: Extension[]
+  extensions?: Extension<any>[]
   /** 是否可编辑（默认 false） */
   editable?: boolean
   /** 样式覆盖配置 */

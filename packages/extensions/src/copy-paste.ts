@@ -479,4 +479,5 @@ function escapeHTML(text: string): string {
   return div.innerHTML
 }
 
-export { ClipboardHelper, ClipboardData, NodeData }
+export { ClipboardHelper }
+export type { ClipboardData, NodeData }
