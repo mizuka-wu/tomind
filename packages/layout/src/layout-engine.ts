@@ -6,7 +6,6 @@ export interface LayoutEngine {
   setStyleEngine(engine: StyleEngine): void
   compute(state: SheetState): LayoutResult
   getLayoutResult(): LayoutResult
-  registerAlgorithm(algorithm: LayoutAlgorithm): void
 }
 
 export interface NodeLayout {
