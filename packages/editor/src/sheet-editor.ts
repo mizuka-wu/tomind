@@ -31,6 +31,7 @@ import {
 } from '@tomind/view'
 import type { StyleEngine } from '@tomind/style'
 import type { LayoutEngine } from '@tomind/layout'
+import { registerLayout as registerLayoutAlg, unregisterLayout as unregisterLayoutAlg } from '@tomind/layout'
 import { CommandManager } from '@tomind/commands'
 import type { CommandResult } from '@tomind/commands'
 import { ExtensionManager } from '@tomind/extension'
@@ -310,14 +311,10 @@ export class SheetEditor {
         unregisterNodeViewDesc(_nodeType)
       },
       registerLayout: (algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => {
-        // 注册布局算法
-        const { registerLayout } = require('../core/layout-engine')
-        registerLayout(algorithm)
+        registerLayoutAlg(algorithm)
       },
       unregisterLayout: (name: string) => {
-        // 注销布局算法
-        const { unregisterLayout } = require('../core/layout-engine')
-        unregisterLayout(name)
+        unregisterLayoutAlg(name)
       },
       registerPartView: (_partType: string, _viewDesc: unknown) => {
         // TODO: 注册 PartViewDesc
