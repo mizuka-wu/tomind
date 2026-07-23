@@ -53,7 +53,7 @@ export abstract class PartViewDesc extends ViewDesc {
 
     if (oldData === newData) return true
 
-    ;(this as unknown as { node: NodeDesc }).node = newNode
+    this.updateNode(newNode)
     this.updatePart(newData)
     this.clearDirty()
     return true

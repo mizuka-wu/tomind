@@ -35,7 +35,7 @@ export function classifyNode(
   if (node.type === NODE_TYPES.RELATIONSHIP) return 'relationship'
 
   // Topic 类型：根据层级和 topicType 推断
-  const topicType = (node.attrs as Record<string, unknown>)?.topicType as string | undefined
+  const topicType = typeof node.attrs.topicType === 'string' ? node.attrs.topicType : undefined
   if (topicType === 'detached') return 'floatingTopic'
   if (topicType === 'callout') return 'calloutTopic'
   if (topicType === 'summary') return 'summaryTopic'

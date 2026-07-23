@@ -13,8 +13,15 @@
 
 import { Group, Rect } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
-import { DraggableRegister, type DragMoveInfo } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
+
+// ==================== 类型安全辅助 ====================
+
+/** 从 ExtensionContext.storage 安全提取类型化存储 */
+function typedStorage<T>(ctx: ExtensionContext): T {
+  return ctx.storage as T
+}
+import { DraggableRegister, type DragMoveInfo } from './draggable'
 
 // ==================== 常量 ====================
 
@@ -152,7 +159,7 @@ function setupAnchorDrag(
   startHeight: number,
   rotation: number,
 ): void {
-  const storage = ctx.storage as unknown as ResizeBoxStorage
+  const storage = typedStorage<ResizeBoxStorage>(ctx)
   const registers: DraggableRegister[] = []
   const anchorKeys: Direction[] = ['lt', 'lm', 'lb', 'ct', 'cb', 'rt', 'rm', 'rb']
 
@@ -258,7 +265,7 @@ function setupAnchorDrag(
 // ==================== Hover 处理 ====================
 
 function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
-  const storage = ctx.storage as unknown as ResizeBoxStorage
+  const storage = typedStorage<ResizeBoxStorage>(ctx)
   const state = ctx.getState() as any
   if (!state) return
 
@@ -302,7 +309,7 @@ function handleHoverLeave(ctx: ExtensionContext, _nodeId: string): void {
 }
 
 function destroyOverlay(ctx: ExtensionContext): void {
-  const storage = ctx.storage as unknown as ResizeBoxStorage
+  const storage = typedStorage<ResizeBoxStorage>(ctx)
 
   for (const reg of storage.anchorRegisters) {
     reg.destroy()

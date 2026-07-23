@@ -1,5 +1,17 @@
 import { createExtension } from '@tomind/core'
 import type { ExtensionContext, CommandFn, ThemeData, NodeType, ResolvedStyle, StyleValue } from '@tomind/core'
+
+// ==================== 类型安全辅助 ====================
+
+interface ThemeExportArgs {
+  filter?: 'color' | 'skeleton'
+  callback?: (result: unknown) => void
+}
+
+function isThemeExportArgs(args: unknown): args is ThemeExportArgs {
+  return typeof args === 'object' && args !== null && !Array.isArray(args)
+}
+
 /**
  * ThemeExporterExtension — 主题导出扩展
  *
@@ -231,11 +243,15 @@ export const ThemeExporterExtension = createExtension<ThemeExporterOptions>({
   onCreate(ctx: ExtensionContext) {
     // 注册导出命令
     ctx.registerCommand('theme.export', (state, dispatch, args) => {
-      const styleEngine = (ctx.getWorkbook() as any)?.styleEngine
+      const workbook = ctx.getWorkbook()
+      const styleEngine = workbook && typeof workbook === 'object' && 'styleEngine' in workbook
+        ? (workbook as { styleEngine: unknown }).styleEngine
+        : null
       if (!styleEngine) return false
 
-      const filter = (args as any)?.filter as 'color' | 'skeleton' | undefined
-      const theme = collectThemeFromDoc(state, styleEngine, filter)
+      const parsedArgs = isThemeExportArgs(args) ? args : {}
+      const filter = parsedArgs.filter
+      const theme = collectThemeFromDoc(state, styleEngine as Parameters<typeof collectThemeFromDoc>[1], filter)
 
       const result: ThemeExportResult = {
         id: generateId(),
@@ -244,7 +260,7 @@ export const ThemeExporterExtension = createExtension<ThemeExporterOptions>({
       }
 
       // 如果有回调，调用回调
-      const callback = (args as any)?.callback
+      const callback = parsedArgs.callback
       if (typeof callback === 'function') {
         callback(result)
       }
