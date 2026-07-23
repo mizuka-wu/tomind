@@ -79,6 +79,74 @@ export class ExtensionManager implements IExtensionManager {
   }
 
   /**
+   * 是否已 setup
+   */
+  isSetup(): boolean {
+    return this._ctx !== null
+  }
+
+  /**
+   * 单独初始化一个扩展（用于后注册的扩展）
+   */
+  setupExtension(extension: Extension, ctx: ExtensionContext): void {
+    if (!extension.isEnabled()) return
+
+    // 更新 ctx
+    this._ctx = ctx
+
+    // 调用 addOptions 合并选项
+    if (extension.addOptions) {
+      const extraOptions = extension.addOptions()
+      extension.defaultOptions = { ...extension.defaultOptions, ...extraOptions }
+    }
+
+    // 调用 addStorage 初始化存储
+    if (extension.addStorage) {
+      const storage = extension.addStorage()
+      ;(extension as any).storage = storage
+    }
+
+    // 调用 addNodeView 注册 NodeView
+    if (extension.type === 'node' && extension.addNodeView) {
+      const NodeViewClass = extension.addNodeView()
+      ctx.registerNodeView(extension.name, NodeViewClass)
+    }
+
+    // 调用 addCommands 注册命令
+    if (extension.addCommands) {
+      const commands = extension.addCommands()
+      for (const [cmdName, cmdFn] of Object.entries(commands)) {
+        const fullName = `${extension.name}.${cmdName}`
+        ctx.registerCommand(fullName, cmdFn)
+      }
+    }
+
+    // 调用 addLayout 注册布局算法
+    if (extension.addLayout) {
+      const layoutAlgorithm = extension.addLayout()
+      ctx.registerLayout(layoutAlgorithm)
+    }
+
+    // 调用 addKeyboardShortcuts 注册快捷键
+    if (extension.addKeyboardShortcuts) {
+      const shortcuts = extension.addKeyboardShortcuts()
+      for (const [key, handler] of Object.entries(shortcuts)) {
+        this._keyboardShortcuts.set(key, handler)
+      }
+    }
+
+    // 调用 onCreate 钩子
+    if (extension.onCreate) {
+      const storage = (extension as any).storage ?? {}
+      const extensionCtx: ExtensionContext = { ...ctx, storage }
+      const cleanup = extension.onCreate(extensionCtx)
+      if (cleanup) {
+        this._cleanupFns.set(extension.name, cleanup)
+      }
+    }
+  }
+
+  /**
    * 初始化所有扩展
    */
   setup(ctx: ExtensionContext): void {

@@ -209,9 +209,10 @@ export class SheetEditor {
   registerExtension(extension: Extension): void {
     this.extensionManager.register(extension)
 
-    // 如果已经 setup 过，单独初始化这个扩展
-    const ctx = this.createExtensionContext()
-    extension.onCreate?.(ctx)
+    // 如果已经 setup 过，单独初始化这个扩展（完整流程）
+    if (this.extensionManager.isSetup()) {
+      this.extensionManager.setupExtension(extension, this.createExtensionContext())
+    }
   }
 
   /**
@@ -373,24 +374,34 @@ export class SheetEditor {
     const children = newParentNode.children
     if (!children) return
 
-    // 收集所有新子节点
+    // 收集所有新子节点（按 id 索引）
     const newChildren: NodeDesc[] = []
+    const newChildMap = new Map<string, NodeDesc>()
     for (const [, childNodes] of Object.entries(children)) {
       if (Array.isArray(childNodes)) {
-        newChildren.push(...childNodes)
+        for (const child of childNodes) {
+          newChildren.push(child)
+          newChildMap.set(child.id, child)
+        }
       }
     }
 
-    // 逐个比较更新
-    const oldChildren = [...parentView.children]
-    for (let i = 0; i < newChildren.length; i++) {
-      const newChild = newChildren[i]
-      const oldView = oldChildren[i]
+    // 构建旧子节点 id → view 映射
+    const oldViewMap = new Map<string, ViewDesc>()
+    for (const oldView of parentView.children) {
+      oldViewMap.set(oldView.node.id, oldView)
+    }
+
+    // 按新顺序重建子节点列表
+    const newViewList: ViewDesc[] = []
+    for (const newChild of newChildren) {
+      const oldView = oldViewMap.get(newChild.id)
 
       if (oldView && oldView.node.type === newChild.type) {
-        // 尝试更新
+        // 同类型同 id → 尝试更新
         if (oldView.update(newChild)) {
           this.updateChildrenViews(oldView, newChild)
+          newViewList.push(oldView)
           continue
         }
       }
@@ -403,16 +414,39 @@ export class SheetEditor {
 
       const newView = createViewDesc(newChild)
       if (newView) {
-        parentView.addChild(newView, i)
         this.buildChildrenViews(newView, newChild)
+        newViewList.push(newView)
       }
     }
 
-    // 移除多余的旧 ViewDesc
-    while (parentView.children.length > newChildren.length) {
-      const lastChild = parentView.children[parentView.children.length - 1]
-      parentView.removeChild(lastChild)
-      lastChild.destroy()
+    // 移除不再存在的旧子节点
+    for (const [id, oldView] of oldViewMap) {
+      if (!newChildMap.has(id)) {
+        parentView.removeChild(oldView)
+        oldView.destroy()
+      }
+    }
+
+    // 按新顺序添加子节点
+    for (const view of newViewList) {
+      if (view.parent !== parentView) {
+        parentView.addChild(view)
+      }
+    }
+
+    // 调整顺序：如果子节点已存在但顺序不对
+    const currentChildren = [...parentView.children]
+    for (let i = 0; i < newViewList.length; i++) {
+      const targetView = newViewList[i]
+      const currentIndex = currentChildren.indexOf(targetView)
+      if (currentIndex !== -1 && currentIndex !== i) {
+        // 需要移动
+        parentView.removeChild(targetView)
+        parentView.addChild(targetView, i)
+        // 更新 currentChildren
+        currentChildren.splice(currentIndex, 1)
+        currentChildren.splice(i, 0, targetView)
+      }
     }
   }
 
