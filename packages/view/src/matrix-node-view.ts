@@ -13,7 +13,7 @@
 import { Group } from 'leafer-ui'
 import { NodeViewDesc } from './node-view-desc'
 import { MatrixRenderer } from './renderers/matrix-renderer'
-import { layout } from '@tomind/layout'
+import { LayoutEngine, matrixLayoutAlgorithm } from '@tomind/layout'
 import type { MatrixCell } from '@tomind/layout'
 
 export class MatrixNodeViewDesc extends NodeViewDesc {
@@ -48,14 +48,11 @@ export class MatrixNodeViewDesc extends NodeViewDesc {
     // 获取 LeaferJS 格式样式
     const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
 
-    // 使用 Matrix 布局算法计算布局
-    const layoutResult = layout(
-      this.node,
-      undefined,  // 使用默认配置
-      NodeViewDesc.styleEngine,
-      NodeViewDesc.state,
-      'matrix',  // 使用 Matrix 布局算法
-    )
+    // 使用 LayoutEngine 计算 Matrix 布局
+    const engine = new LayoutEngine()
+    engine.register(matrixLayoutAlgorithm)
+    engine.setStyleEngine(NodeViewDesc.styleEngine)
+    const layoutResult = engine.compute(NodeViewDesc.state)
 
     // 渲染
     this._renderer.render(layoutResult, style)

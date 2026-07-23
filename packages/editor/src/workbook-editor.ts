@@ -22,7 +22,7 @@ import { ExtensionManager } from '@tomind/extension'
 import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEditorInterface } from '@tomind/extension'
 import type { StyleEngine } from '@tomind/style'
 import type { ResolvedStyle, NodeType } from '@tomind/style'
-import type { ILayoutEngine } from '@tomind/layout'
+import type { LayoutEngine } from '@tomind/layout'
 import type { CommandManager } from '@tomind/commands'
 import type { XAPSystem } from '@tomind/xap'
 
