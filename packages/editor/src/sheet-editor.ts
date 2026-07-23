@@ -129,7 +129,7 @@ export class SheetEditor {
     TopicNodeViewDesc.layoutEngine = this.layoutEngine
     TopicNodeViewDesc.state = this._state
     // 注入事件发射器，让 NodeView 能向扩展系统发事件
-    TopicNodeViewDesc._eventEmitter = { emit: (event: string, ...args: unknown[]) => this.emit(event as any, args[0] as any) }
+    TopicNodeViewDesc._eventEmitter = { emit: (event: string, ...args: unknown[]) => this.emitAny(event, ...args) }
 
     // 创建 commands 代理
     this.commands = this.createCommandsProxy()
@@ -172,6 +172,28 @@ export class SheetEditor {
 
   emit<K extends keyof SheetEditorEvents>(event: K, data: SheetEditorEvents[K]): void {
     this._emitter.dispatchEvent(new CustomEvent(event, { detail: data }))
+  }
+
+  /** 弱类型事件注册（供 ExtensionContext 桥接用） */
+  onAny(event: string, handler: (...args: unknown[]) => void): void {
+    const wrapped = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      handler(detail)
+    }
+    this._emitter.addEventListener(event, wrapped)
+    this._handlerMap.set(handler, wrapped)
+  }
+
+  offAny(event: string, handler: (...args: unknown[]) => void): void {
+    const wrapped = this._handlerMap.get(handler)
+    if (wrapped) {
+      this._emitter.removeEventListener(event, wrapped)
+      this._handlerMap.delete(handler)
+    }
+  }
+
+  emitAny(event: string, ...args: unknown[]): void {
+    this._emitter.dispatchEvent(new CustomEvent(event, { detail: args[0] }))
   }
 
   // ==================== 状态管理 ====================
@@ -270,18 +292,18 @@ export class SheetEditor {
         // TODO: 添加 unregister 方法
       },
       on: (event: string, handler: EventHandler) => {
-        editor.on(event as keyof SheetEditorEvents, handler as (data: unknown) => void)
+        editor.onAny(event, handler)
       },
       off: (event: string, handler: EventHandler) => {
-        editor.off(event as keyof SheetEditorEvents, handler as (data: unknown) => void)
+        editor.offAny(event, handler)
       },
       emit: (event: string, ...args: unknown[]) => {
-        editor.emit(event as keyof SheetEditorEvents, args[0] as never)
+        editor.emitAny(event, ...args)
       },
       registerNodeView: (_nodeType: string, _viewDesc: unknown) => {
         // Extension 注册 NodeViewDesc
-        if (typeof _viewDesc === 'function') {
-          registerNodeViewDesc(_nodeType, _viewDesc as any)
+        if (typeof _viewDesc === 'function' && _viewDesc.length <= 2) {
+          registerNodeViewDesc(_nodeType, _viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
         }
       },
       unregisterNodeView: (_nodeType: string) => {

@@ -663,7 +663,7 @@ class DragHandlerManager {
       const touch = e.touches[0] || e.changedTouches[0]
       return { x: touch.clientX, y: touch.clientY }
     }
-    return { x: (e as MouseEvent).clientX, y: (e as MouseEvent).clientY }
+    return { x: e.clientX, y: e.clientY }
   }
 }
 

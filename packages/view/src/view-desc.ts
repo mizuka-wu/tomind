@@ -296,6 +296,14 @@ export abstract class ViewDesc {
   // ==================== 更新 ====================
 
   /**
+   * 更新节点数据（由子类 update() 调用）
+   * 绕过 readonly 约束，因为 ViewDesc 的生命周期由编辑器管理
+   */
+  protected updateNode(newNode: NodeDesc): void {
+    ;(this as { node: NodeDesc }).node = newNode
+  }
+
+  /**
    * 更新视图（子类实现）
    * 返回 true 表示更新成功，false 表示需要重建
    */
@@ -303,7 +311,7 @@ export abstract class ViewDesc {
     if (this._destroyed) return false
     
     // 更新节点数据
-    ;(this as unknown as { node: NodeDesc }).node = newNode
+    this.updateNode(newNode)
     
     // 清除脏标记
     this.clearDirty()

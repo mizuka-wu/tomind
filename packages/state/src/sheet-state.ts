@@ -91,10 +91,10 @@ export class SheetState {
     return {
       id: node.id,
       type: node.type,
-      attrs: node.attrs as Record<string, unknown>,
-      children: node.children as unknown as Record<string, NodeDesc[]>,
+      attrs: node.attrs,
+      children: node.children,
       role: this.resolveRole(nodeId),
-      collapsed: (node.attrs.collapsed as boolean) ?? false
+      collapsed: typeof node.attrs.collapsed === 'boolean' ? node.attrs.collapsed : false
     }
   }
 

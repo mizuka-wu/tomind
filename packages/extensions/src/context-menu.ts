@@ -11,6 +11,13 @@
 import { createExtension } from '@tomind/core'
 import type { ExtensionContext, CommandFn, EventHandler } from '@tomind/core'
 
+// ==================== 类型安全辅助 ====================
+
+/** 从 ExtensionContext.storage 安全提取类型化存储 */
+function typedStorage<T>(ctx: ExtensionContext): T {
+  return ctx.storage as T
+}
+
 // ==================== 类型定义 ====================
 
 interface ContextMenuOptions {
@@ -95,7 +102,7 @@ export const ContextMenuExtension = createExtension<ContextMenuOptions>({
   },
 
   onCreate(ctx) {
-    const storage = ctx.storage as unknown as ContextMenuStorage
+    const storage = typedStorage<ContextMenuStorage>(ctx)
     const opts = storage.opts
 
     // 注册命令

@@ -22,6 +22,26 @@ import {
   isGestureEventType
 } from './view-event'
 
+// ==================== 类型安全辅助函数 ====================
+
+/** 从 Record<string, unknown> 安全提取数字 */
+function safeNum(obj: Record<string, unknown>, key: string, fallback: number): number {
+  const val = obj[key]
+  return typeof val === 'number' ? val : fallback
+}
+
+/** 从 Record<string, unknown> 安全提取字符串 */
+function safeStr(obj: Record<string, unknown>, key: string): string | undefined {
+  const val = obj[key]
+  return typeof val === 'string' ? val : undefined
+}
+
+/** 从 Record<string, unknown> 安全提取布尔值 */
+function safeBool(obj: Record<string, unknown>, key: string): boolean {
+  const val = obj[key]
+  return val === true
+}
+
 /** 事件绑定记录 */
 interface EventBinding {
   element: Group
@@ -254,31 +274,31 @@ export class EventManager {
   ): ViewEvent {
     const ne = nativeEvent as Record<string, unknown>
     const position = {
-      x: (ne.x as number) ?? (ne.clientX as number) ?? 0,
-      y: (ne.y as number) ?? (ne.clientY as number) ?? 0,
+      x: safeNum(ne, 'x', safeNum(ne, 'clientX', 0)),
+      y: safeNum(ne, 'y', safeNum(ne, 'clientY', 0)),
     }
 
     // 构建拖拽数据
     const dragData = isDragEventType(type) ? {
       startPosition: {
-        x: (ne.startX as number) ?? position.x,
-        y: (ne.startY as number) ?? position.y,
+        x: safeNum(ne, 'startX', position.x),
+        y: safeNum(ne, 'startY', position.y),
       },
       currentPosition: position,
       delta: {
-        x: (ne.moveX as number) ?? 0,
-        y: (ne.moveY as number) ?? 0,
+        x: safeNum(ne, 'moveX', 0),
+        y: safeNum(ne, 'moveY', 0),
       },
-      dropTargetId: ne.dropTargetId as string | undefined,
+      dropTargetId: safeStr(ne, 'dropTargetId'),
       data: ne.dragData,
     } : undefined
 
     // 构建手势数据
     const gestureData = isGestureEventType(type) ? {
-      scale: ne.scale as number | undefined,
-      totalScale: ne.totalScale as number | undefined,
-      rotation: ne.rotation as number | undefined,
-      totalRotation: ne.totalRotation as number | undefined,
+      scale: typeof ne.scale === 'number' ? ne.scale : undefined,
+      totalScale: typeof ne.totalScale === 'number' ? ne.totalScale : undefined,
+      rotation: typeof ne.rotation === 'number' ? ne.rotation : undefined,
+      totalRotation: typeof ne.totalRotation === 'number' ? ne.totalRotation : undefined,
       center: position,
     } : undefined
 
@@ -289,9 +309,9 @@ export class EventManager {
       nativeEvent,
       position,
       {
-        ctrlKey: (ne.ctrlKey as boolean) ?? false,
-        shiftKey: (ne.shiftKey as boolean) ?? false,
-        altKey: (ne.altKey as boolean) ?? false,
+        ctrlKey: safeBool(ne, 'ctrlKey'),
+        shiftKey: safeBool(ne, 'shiftKey'),
+        altKey: safeBool(ne, 'altKey'),
       },
       { drag: dragData, gesture: gestureData }
     )

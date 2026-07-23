@@ -112,7 +112,7 @@ export abstract class NodeViewDesc extends ViewDesc {
 
     if (newNode.type !== this.node.type) return false
 
-    ;(this as unknown as { node: NodeDesc }).node = newNode
+    this.updateNode(newNode)
 
     if (this.isDirty(DirtyFlag.STYLE)) this.updateStyle()
     if (this.isDirty(DirtyFlag.CONTENT)) this.updateContent()

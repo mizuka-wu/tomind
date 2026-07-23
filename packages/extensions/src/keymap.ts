@@ -227,7 +227,7 @@ export const KeymapExtension = createExtension({
   addKeyboardShortcuts() {
     // 合并默认快捷键和自定义快捷键
     const defaultKeymap = createDefaultKeymap()
-    const opts = (this as Record<string, unknown>)?.defaultOptions as Record<string, unknown> | undefined
+    const opts = (this as unknown as { defaultOptions?: Record<string, unknown> })?.defaultOptions
     const customKeymap = (opts?.keymap as Record<string, (ctx: ExtensionContext) => boolean>) ?? {}
 
     return {
