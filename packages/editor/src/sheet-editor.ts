@@ -126,6 +126,7 @@ export class SheetEditor {
 
     // 注入静态引用到 NodeViewDesc
     TopicNodeViewDesc.styleEngine = this.styleEngine
+    TopicNodeViewDesc.layoutEngine = this.layoutEngine
     TopicNodeViewDesc.state = this._state
     // 注入事件发射器，让 NodeView 能向扩展系统发事件
     TopicNodeViewDesc._eventEmitter = { emit: (event: string, ...args: unknown[]) => this.emit(event as any, args[0] as any) }
@@ -187,6 +188,7 @@ export class SheetEditor {
     this._state = newState
     // 更新静态引用
     TopicNodeViewDesc.state = newState
+    TopicNodeViewDesc.layoutEngine = this.layoutEngine
     this.updateDocView(newState.doc, tr)
     this.emit('stateUpdate', newState)
   }
