@@ -33,18 +33,43 @@ import type { Extension, StarterKitOptions } from '@tomind/core'
 import { createExtension } from '@tomind/core'
 
 // 具体扩展
-import { KeymapExtension, ViewportExtension, TreeLayoutExtension, HistoryExtension, BoundaryExtension, SummaryExtension, CollapseExtension } from '@tomind/extensions'
-
-// ==================== 内置扩展列表 ====================
-
-const builtInExtensions: Extension<any>[] = [
-  TreeLayoutExtension,
+import {
   KeymapExtension,
   ViewportExtension,
+  TreeLayoutExtension,
   HistoryExtension,
   BoundaryExtension,
   SummaryExtension,
   CollapseExtension,
+  TopicExtension,
+  SelectionExtension,
+  CopyPasteExtension,
+  EditBridgeExtension,
+  ContextMenuExtension,
+} from '@tomind/extensions'
+
+// ==================== 内置扩展列表 ====================
+
+const builtInExtensions: Extension<any>[] = [
+  // 布局
+  TreeLayoutExtension,
+
+  // 核心编辑
+  TopicExtension,
+  KeymapExtension,
+  ViewportExtension,
+  SelectionExtension,
+  HistoryExtension,
+  EditBridgeExtension,
+
+  // 结构元素
+  BoundaryExtension,
+  SummaryExtension,
+  CollapseExtension,
+
+  // 交互
+  CopyPasteExtension,
+  ContextMenuExtension,
 ]
 
 // ==================== StarterKit ====================
