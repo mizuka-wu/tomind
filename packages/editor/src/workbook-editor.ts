@@ -21,6 +21,7 @@ import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEdit
 import type { StyleEngine } from '@tomind/style'
 import type { ResolvedStyle, NodeType } from '@tomind/style'
 import type { LayoutEngine } from '@tomind/layout'
+import { registerLayout, unregisterLayout } from '@tomind/layout'
 import type { CommandManager } from '@tomind/commands'
 import type { XAPSystem } from '@tomind/xap'
 
@@ -405,11 +406,11 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       unregisterPartView: (_partType: string) => {
         // TODO: 注销从所有 Sheet
       },
-      registerLayout: (_algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => {
-        // TODO: 注册布局算法
+      registerLayout: (algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => {
+        registerLayout(algorithm)
       },
-      unregisterLayout: (_name: string) => {
-        // TODO: 注销布局算法
+      unregisterLayout: (name: string) => {
+        unregisterLayout(name)
       },
     }
   }
