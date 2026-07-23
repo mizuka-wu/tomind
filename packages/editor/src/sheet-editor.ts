@@ -24,14 +24,15 @@ import type { NodeDesc, SelectionState, Viewport } from '@tomind/schema'
 import { ViewDesc } from '@tomind/view'
 import { analyzeSteps } from '@tomind/view'
 import {
+  NodeViewDesc,
   TopicNodeViewDesc,
+  RootViewDesc,
   RelationshipNodeViewDesc,
   BoundaryNodeViewDesc,
   SummaryNodeViewDesc,
 } from '@tomind/view'
 import type { StyleEngine } from '@tomind/style'
-import type { LayoutEngine } from '@tomind/layout'
-import { registerLayout as registerLayoutAlg, unregisterLayout as unregisterLayoutAlg } from '@tomind/layout'
+import type { ILayoutEngine } from '@tomind/layout'
 import { CommandManager } from '@tomind/commands'
 import type { CommandResult } from '@tomind/commands'
 import { ExtensionManager } from '@tomind/extension'
@@ -60,6 +61,7 @@ type ViewDescClass = new (node: NodeDesc, role: string) => ViewDesc
 // NodeViewDesc 默认注册表（Tiptap 风格：Extension 注册 NodeView）
 function createDefaultNodeViewDescRegistry(): Map<string, ViewDescClass> {
   const registry = new Map<string, ViewDescClass>()
+  registry.set('root', RootViewDesc as any)
   registry.set('topic', TopicNodeViewDesc as any)
   registry.set('relationship', RelationshipNodeViewDesc as any)
   registry.set('boundary', BoundaryNodeViewDesc as any)
@@ -95,9 +97,6 @@ export function registerNodeViewDesc(nodeType: string, viewDescClass: new (node:
 export function unregisterNodeViewDesc(nodeType: string): void {
   nodeViewDescRegistry.delete(nodeType)
 }
-
-// PartViewDesc 注册表
-const partViewDescRegistry = new Map<string, new (node: NodeDesc, role: string) => ViewDesc>()
 
 /** 注册 PartViewDesc（供 Extension 调用） */
 export function registerPartViewDesc(partType: string, viewDescClass: new (node: NodeDesc, role: string) => ViewDesc): void {
@@ -159,19 +158,19 @@ export class SheetEditor {
     this._partViewDescRegistry = options.partViewDescRegistry || partViewDescRegistry
 
     // 创建 LeaferJS App
-    this.app = new App({ view: this.dom, ...options.appConfig })
+    this.app = new App({ view: this.dom, tree: {}, ...options.appConfig })
 
     // 创建滚动条
     this.scrollbar = this.app.tree
       ? new ScrollBar(this.app.tree, options.scrollbarConfig)
       : null
 
-    // 注入静态引用到 NodeViewDesc
-    TopicNodeViewDesc.styleEngine = this.styleEngine
-    TopicNodeViewDesc.layoutEngine = this.layoutEngine
-    TopicNodeViewDesc.state = this._state
+    // 注入静态引用到 NodeViewDesc（父类，updateStyle 从这里读取）
+    NodeViewDesc.styleEngine = this.styleEngine
+    NodeViewDesc.layoutEngine = this.layoutEngine
+    NodeViewDesc.state = this._state
     // 注入事件发射器，让 NodeView 能向扩展系统发事件
-    TopicNodeViewDesc._eventEmitter = { emit: (event: string, ...args: unknown[]) => this.emitAny(event, ...args) }
+    NodeViewDesc._eventEmitter = { emit: (event: string, ...args: unknown[]) => this.emitAny(event, ...args) }
 
     // 创建 commands 代理
     this.commands = this.createCommandsProxy()
@@ -186,14 +185,17 @@ export class SheetEditor {
       }
     }
 
+    // 初始化扩展（必须在 createDocView 之前，扩展注册的 NodeView 才能生效）
+    this.setupExtensions()
+
     // 初始化 ViewDesc 树
     this._docView = this.createDocView()
 
+    // standalone 模式：不在构造器中 renderInitial，统一由外部调用
+    // （WorkbookEditor.setup() 会为所有 sheet 调用 renderInitial）
+
     // 监听 viewport 变化
     this.setupViewportSync()
-
-    // 初始化扩展
-    this.setupExtensions()
   }
 
   // ==================== 事件 ====================
@@ -275,6 +277,9 @@ export class SheetEditor {
    * 注册扩展
    */
   registerExtension(extension: Extension): void {
+    // 避免重复注册：如果已注册则跳过
+    if (this.extensionManager.getExtension(extension.name)) return
+
     this.extensionManager.register(extension)
 
     // 如果已经 setup 过，单独初始化这个扩展（完整流程）
@@ -298,11 +303,19 @@ export class SheetEditor {
   }
 
   /**
-   * 初始化扩展系统
+   * 初始化扩展系统（幂等：已 setup 则跳过）
    */
-  private setupExtensions(): void {
+  setupExtensions(): void {
+    if (this.extensionManager.isSetup()) return
     const ctx = this.createExtensionContext()
     this.extensionManager.setup(ctx)
+  }
+
+  /** 触发初始渲染（需在扩展注册完成后调用） */
+  renderInitial(): void {
+    if (this._docView) {
+      this.initialRender(this._docView)
+    }
   }
 
   /**
@@ -345,10 +358,10 @@ export class SheetEditor {
         editor.unregisterNodeView(nodeType)
       },
       registerLayout: (algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => {
-        registerLayoutAlg(algorithm)
+        editor.layoutEngine.register?.(algorithm)
       },
       unregisterLayout: (name: string) => {
-        unregisterLayoutAlg(name)
+        editor.layoutEngine.unregister?.(name)
       },
       registerPartView: (partType: string, viewDesc: unknown) => {
         if (typeof viewDesc === 'function' && viewDesc.length <= 2) {
@@ -364,16 +377,18 @@ export class SheetEditor {
   // ==================== ViewDesc 管理 ====================
 
   private createViewDesc(node: NodeDesc): ViewDesc | null {
-    return _createViewDesc(node, this._nodeViewDescRegistry)
+    const vd = _createViewDesc(node, this._nodeViewDescRegistry)
+    if (!vd) console.warn(`[createViewDesc] no ViewDesc for type="${node.type}" id="${node.id}"`)
+    return vd
   }
 
   private createDocView(): ViewDesc | null {
     const doc = this._state.doc
-    if (!doc) return null
+    if (!doc) { console.warn('[createDocView] no doc'); return null }
 
     // 创建根 ViewDesc
     const rootView = this.createViewDesc(doc)
-    if (!rootView) return null
+    if (!rootView) { console.warn('[createDocView] rootView is null, doc.type=' + doc.type); return null }
 
     // 递归创建子 ViewDesc
     this.buildChildrenViews(rootView, doc)
@@ -386,12 +401,31 @@ export class SheetEditor {
     return rootView
   }
 
+  /** 初始渲染：递归调用 update() 让所有节点填充 LeaferJS 元素 */
+  private initialRender(view: ViewDesc): void {
+    // 触发 lazy element 创建（createElement 里创建 renderer）
+    void view.element
+
+    // 对当前节点调用 update（触发 updateStyle/updateContent）
+    if (view instanceof NodeViewDesc) {
+      try {
+        view.update(view.node)
+      } catch (e) {
+        console.error(`[initialRender] error on ${view.node.type}#${view.node.id}:`, e)
+      }
+    }
+    // 递归子节点
+    for (const child of view.children) {
+      this.initialRender(child)
+    }
+  }
+
   private buildChildrenViews(parentView: ViewDesc, parentNode: NodeDesc): void {
     const children = parentNode.children
     if (!children) return
 
     // children 是 Record<string, NodeDesc[]>
-    for (const [, childNodes] of Object.entries(children)) {
+    for (const [slot, childNodes] of Object.entries(children)) {
       if (!Array.isArray(childNodes)) continue
       for (const childNode of childNodes) {
         const childView = this.createViewDesc(childNode)

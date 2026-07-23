@@ -9,6 +9,7 @@ export type { DirtyAnalysis } from './dirty-analysis'
 
 export { 
   NodeViewDesc, 
+  RootViewDesc,
   TopicNodeViewDesc, 
   RelationshipNodeViewDesc, 
   BoundaryNodeViewDesc, 

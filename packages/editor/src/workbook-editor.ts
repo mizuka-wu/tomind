@@ -22,8 +22,7 @@ import { ExtensionManager } from '@tomind/extension'
 import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEditorInterface } from '@tomind/extension'
 import type { StyleEngine } from '@tomind/style'
 import type { ResolvedStyle, NodeType } from '@tomind/style'
-import type { LayoutEngine } from '@tomind/layout'
-import { registerLayout, unregisterLayout } from '@tomind/layout'
+import type { ILayoutEngine } from '@tomind/layout'
 import type { CommandManager } from '@tomind/commands'
 import type { XAPSystem } from '@tomind/xap'
 
@@ -354,6 +353,16 @@ export class WorkbookEditor implements WorkbookEditorInterface {
 
     // 初始化 Workbook 级别的扩展
     this.extensionManager.setup(this._extensionContext)
+
+    // 初始化所有 Sheet 的扩展
+    for (const sheet of this._sheets.values()) {
+      sheet.setupExtensions()
+    }
+
+    // 触发所有 Sheet 的初始渲染（需在扩展注册完成后）
+    for (const sheet of this._sheets.values()) {
+      sheet.renderInitial()
+    }
   }
 
   /**
@@ -416,10 +425,10 @@ export class WorkbookEditor implements WorkbookEditorInterface {
         workbook._partViewDescRegistry.delete(partType)
       },
       registerLayout: (algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => {
-        registerLayout(algorithm)
+        workbook.layoutEngine.register?.(algorithm)
       },
       unregisterLayout: (name: string) => {
-        unregisterLayout(name)
+        workbook.layoutEngine.unregister?.(name)
       },
     }
   }
