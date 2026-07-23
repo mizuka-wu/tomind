@@ -457,6 +457,8 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
 export class BoundaryNodeViewDesc extends NodeViewDesc {
   private renderer: BoundaryRenderer | null = null
   private _selectBoxVisible = false
+  private _savedStroke: string | undefined
+  private _savedStrokeWidth: number | undefined
 
   protected createElement(): Group {
     const group = new Group()
@@ -500,7 +502,21 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
   }
 
   private updateSelectBoxVisibility(visible: boolean): void {
-    // TODO: 集成 SelectBox 可见性控制
+    if (!this.renderer) return
+    const rect = (this.renderer as unknown as { rect: Rect | null }).rect
+    if (!rect) return
+
+    if (visible) {
+      // 高亮：蓝色边框 + 加粗
+      this._savedStroke = rect.stroke as string
+      this._savedStrokeWidth = rect.strokeWidth as number
+      rect.stroke = '#2563eb'
+      rect.strokeWidth = 2
+    } else {
+      // 恢复原始样式
+      if (this._savedStroke !== undefined) rect.stroke = this._savedStroke
+      if (this._savedStrokeWidth !== undefined) rect.strokeWidth = this._savedStrokeWidth
+    }
   }
 
   protected createContentGroup(): null {
