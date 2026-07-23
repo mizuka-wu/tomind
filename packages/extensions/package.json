@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "@tomind/core": "workspace:*",
+    "@tomind/layout": "workspace:*",
+    "@tomind/schema": "workspace:*",
+    "@tomind/state": "workspace:*",
+    "@tomind/style": "workspace:*",
     "leafer-ui": "^2.1.8"
   },
   "devDependencies": {

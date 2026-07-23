@@ -16,7 +16,7 @@ export class LayoutEngine implements ILayoutEngine {
     this._registry.delete(name)
   }
 
-  setStyleEngine(engine: StyleEngine): void {
+  setStyleEngine(engine: StyleEngine | null): void {
     this._styleEngine = engine
   }
 

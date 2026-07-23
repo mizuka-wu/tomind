@@ -1,4 +1,5 @@
-import { createExtension, Transaction, layout, DEFAULT_LAYOUT_OPTIONS } from '@tomind/core'
+import { createExtension, Transaction, LayoutEngine, DEFAULT_LAYOUT_OPTIONS } from '@tomind/core'
+import type { LayoutAlgorithm } from '@tomind/core'
 import type { LayoutResult, ExtensionContext, CommandFn, SheetState, SelectionElement } from '@tomind/core'
 /**
  * SelectionExtension — 选择管理扩展
@@ -110,7 +111,9 @@ function getLayoutResult(state: SheetState): LayoutResult {
     return { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
   }
   // 计算布局（不传 StyleEngine，使用默认参数 — 框选用足够精确）
-  cachedLayoutResult = layout(doc, DEFAULT_LAYOUT_OPTIONS)
+  const engine = new LayoutEngine()
+  engine.setStyleEngine(null)
+  cachedLayoutResult = engine.compute(state)
   cachedLayoutState = state
   return cachedLayoutResult
 }

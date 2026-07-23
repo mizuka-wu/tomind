@@ -146,7 +146,7 @@ function modelToXMindTopic(node: ModelNode): XMindTopic {
  */
 export async function exportXMind(
   tree: ModelTree,
-  filename = 'mindmap.xmind',
+  _filename = 'mindmap.xmind',
 ): Promise<Blob> {
   const zip = new JSZip()
 

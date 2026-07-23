@@ -32,12 +32,30 @@ importers:
       '@tomind/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@tomind/editor':
+        specifier: workspace:*
+        version: link:../../packages/editor
       '@tomind/extensions':
         specifier: workspace:*
         version: link:../../packages/extensions
+      '@tomind/formats':
+        specifier: workspace:*
+        version: link:../../packages/formats
+      '@tomind/layout':
+        specifier: workspace:*
+        version: link:../../packages/layout
+      '@tomind/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
       '@tomind/starter-vanilla':
         specifier: workspace:*
         version: link:../../startkits/vanilla
+      '@tomind/state':
+        specifier: workspace:*
+        version: link:../../packages/state
+      '@tomind/style':
+        specifier: workspace:*
+        version: link:../../packages/style
       leafer-ui:
         specifier: ^2.1.8
         version: 2.2.4
@@ -184,6 +202,18 @@ importers:
       '@tomind/core':
         specifier: workspace:*
         version: link:../core
+      '@tomind/layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@tomind/schema':
+        specifier: workspace:*
+        version: link:../schema
+      '@tomind/state':
+        specifier: workspace:*
+        version: link:../state
+      '@tomind/style':
+        specifier: workspace:*
+        version: link:../style
       leafer-ui:
         specifier: ^2.1.8
         version: 2.2.4
