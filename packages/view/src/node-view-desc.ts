@@ -781,18 +781,18 @@ export class InformationNodeViewDesc extends NodeViewDesc {
       })
     })
 
-    // 鼠标进入 - TODO: hover 效果
+    // 鼠标进入 - 通知选区扩展
     group.on_('pointerenter', () => {
       if (this._isHovering) return
       this._isHovering = true
-      // TODO: emit hover enter event
+      NodeViewDesc._eventEmitter?.emit('selection:hoverEnter', this.node.id)
     })
 
-    // 鼠标离开 - TODO: hover 效果
+    // 鼠标离开 - 通知选区扩展
     group.on_('pointerleave', () => {
       if (!this._isHovering) return
       this._isHovering = false
-      // TODO: emit hover leave event
+      NodeViewDesc._eventEmitter?.emit('selection:hoverLeave', this.node.id)
     })
   }
 
@@ -854,18 +854,18 @@ export class LabelNodeViewDesc extends NodeViewDesc {
       })
     })
 
-    // 鼠标进入 - TODO: hover 效果
+    // 鼠标进入 - 通知选区扩展
     group.on_('pointerenter', () => {
       if (this._isHovering) return
       this._isHovering = true
-      // TODO: emit hover enter event
+      NodeViewDesc._eventEmitter?.emit('selection:hoverEnter', this.node.id)
     })
 
-    // 鼠标离开 - TODO: hover 效果
+    // 鼠标离开 - 通知选区扩展
     group.on_('pointerleave', () => {
       if (!this._isHovering) return
       this._isHovering = false
-      // TODO: emit hover leave event
+      NodeViewDesc._eventEmitter?.emit('selection:hoverLeave', this.node.id)
     })
   }
 
@@ -1077,18 +1077,18 @@ export class MathjaxNodeViewDesc extends NodeViewDesc {
       })
     })
 
-    // 鼠标进入 - TODO: hover 效果
+    // 鼠标进入 - 通知选区扩展
     group.on_('pointerenter', () => {
       if (this._isHovering) return
       this._isHovering = true
-      // TODO: emit hover enter event
+      NodeViewDesc._eventEmitter?.emit('selection:hoverEnter', this.node.id)
     })
 
-    // 鼠标离开 - TODO: hover 效果
+    // 鼠标离开 - 通知选区扩展
     group.on_('pointerleave', () => {
       if (!this._isHovering) return
       this._isHovering = false
-      // TODO: emit hover leave event
+      NodeViewDesc._eventEmitter?.emit('selection:hoverLeave', this.node.id)
     })
   }
 
