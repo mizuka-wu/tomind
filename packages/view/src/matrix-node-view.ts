@@ -114,8 +114,8 @@ export class MatrixNodeViewDesc extends NodeViewDesc {
     const nodeId = cell.item?.id || cell._view?.id
     if (!nodeId) return
 
-    // 触发事件 — 通过事件系统通知编辑器更新选择状态
-    // TODO: 接入事件系统 dispatch selection update
+    // 通过事件系统通知编辑器更新选择状态
+    NodeViewDesc._eventEmitter?.emit('selection:select', nodeId)
   }
 
   /**

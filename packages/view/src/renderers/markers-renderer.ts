@@ -52,8 +52,8 @@ export class MarkersRenderer implements Renderer {
         visible: true,
       })
 
-      // 设置位置
-      // TODO: 需要根据 LeaferJS 坐标系调整
+      // 设置位置（LeaferJS 坐标系：x 水平，y 垂直）
+      marker.setPosition(offsetX, 0)
       offsetX += 20
     }
   }
