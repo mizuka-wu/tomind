@@ -1,4 +1,4 @@
-import { Group, Path, Text } from 'leafer-ui'
+import { Group, Rect, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
 
@@ -6,28 +6,34 @@ import type { Renderer } from './renderer'
  * BoundaryRenderer — 边界框渲染器
  * 
  * 负责渲染圆角矩形边界 + 可选标题
+ * 通过 setBounds() 设置边界范围，render() 渲染
  */
 export class BoundaryRenderer implements Renderer {
   private group: Group | null = null
-  private path: Path | null = null
+  private rect: Rect | null = null
   private titleText: Text | null = null
+  private nodeId: string
 
-  /** 边界范围（由外部设置） */
+  /** 边界范围（由 setBounds 设置） */
   private bounds = { x: 0, y: 0, width: 0, height: 0 }
   private title = ''
+
+  constructor(nodeId: string) {
+    this.nodeId = nodeId
+  }
 
   create(parent: Group): void {
     this.group = new Group()
 
-    // 边界路径（圆角矩形）
-    this.path = new Path({
-      path: '',
+    // 边界矩形（圆角）
+    this.rect = new Rect({
+      fill: 'transparent',
       stroke: '#FF9800',
       strokeWidth: 1,
-      fill: 'transparent',
+      cornerRadius: 8,
       dashPattern: [4, 4],
     })
-    this.group.add(this.path)
+    this.group.add(this.rect)
 
     // 边界标题（可选）
     this.titleText = new Text({
@@ -53,28 +59,37 @@ export class BoundaryRenderer implements Renderer {
   }
 
   render(_layout: LayoutResult, style: Record<string, unknown>): void {
-    if (!this.path || !this.titleText) {
+    if (!this.rect || !this.titleText || !this.group) {
       return
     }
 
-    // 更新样式
-    if (style.stroke) this.path.stroke = style.stroke as string
-    if (style.strokeWidth) this.path.strokeWidth = style.strokeWidth as number
-    if (style.fill) this.path.fill = style.fill as string
-    if (style.dashPattern) this.path.dashPattern = style.dashPattern as number[]
-
-    // 计算圆角矩形路径
     const { x, y, width, height } = this.bounds
-    const r = (style.cornerRadius as number) ?? 8
-    const d = `M ${x + r} ${y} L ${x + width - r} ${y} Q ${x + width} ${y} ${x + width} ${y + r} L ${x + width} ${y + height - r} Q ${x + width} ${y + height} ${x + width - r} ${y + height} L ${x + r} ${y + height} Q ${x} ${y + height} ${x} ${y + height - r} L ${x} ${y + r} Q ${x} ${y} ${x + r} ${y} Z`
-    this.path.path = d
+    if (width === 0 && height === 0) {
+      this.group.visible = false
+      return
+    }
+
+    this.group.visible = true
+    this.group.x = x
+    this.group.y = y
+
+    // 更新矩形
+    this.rect.width = width
+    this.rect.height = height
+
+    // 应用样式
+    if (style.stroke) this.rect.stroke = style.stroke as string
+    if (style.strokeWidth) this.rect.strokeWidth = style.strokeWidth as number
+    if (style.fill) this.rect.fill = style.fill as string
+    if (style.cornerRadius) this.rect.cornerRadius = style.cornerRadius as number
+    if (style.dashPattern) this.rect.dashPattern = style.dashPattern as number[]
 
     // 更新标题
     if (this.title) {
       this.titleText.text = this.title
       this.titleText.visible = true
-      this.titleText.x = x
-      this.titleText.y = y - 16
+      this.titleText.x = 0
+      this.titleText.y = -16
     } else {
       this.titleText.visible = false
     }
@@ -85,7 +100,7 @@ export class BoundaryRenderer implements Renderer {
       this.group.destroy()
       this.group = null
     }
-    this.path = null
+    this.rect = null
     this.titleText = null
   }
 }
