@@ -8,7 +8,7 @@
  * 4. 应用 Node Decoration（样式装饰）
  */
 
-import { Group } from 'leafer-ui'
+import { Group, Rect, Ellipse } from 'leafer-ui'
 import { ViewDesc, DirtyFlag } from './view-desc'
 import type {
   NodeDesc,
@@ -308,6 +308,8 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 
 export class RelationshipNodeViewDesc extends NodeViewDesc {
   private renderer: RelationshipRenderer | null = null
+  private _isHovering = false
+  private _savedStroke: string | undefined
 
   protected createElement(): Group {
     const group = new Group()
@@ -353,8 +355,32 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
       })
     })
 
-    // TODO: pointerenter - 关联线悬停高亮
-    // TODO: pointerleave - 关联线悬停恢复
+    // pointerenter - 关联线悬停高亮
+    group.on_('pointerenter', () => {
+      if (this._isHovering) return
+      this._isHovering = true
+      if (this.renderer) {
+        const pathRect = (this.renderer as unknown as { pathRect: Rect | null }).pathRect
+        if (pathRect) {
+          this._savedStroke = pathRect.stroke as string
+          pathRect.stroke = '#2563eb'
+          pathRect.strokeWidth = 3
+        }
+      }
+    })
+
+    // pointerleave - 恢复
+    group.on_('pointerleave', () => {
+      if (!this._isHovering) return
+      this._isHovering = false
+      if (this.renderer) {
+        const pathRect = (this.renderer as unknown as { pathRect: Rect | null }).pathRect
+        if (pathRect) {
+          pathRect.stroke = this._savedStroke ?? '#666'
+          pathRect.strokeWidth = 2
+        }
+      }
+    })
   }
 
   protected updateStyle(): void {
@@ -630,6 +656,8 @@ export class SummaryNodeViewDesc extends NodeViewDesc {
 
 export class CollapseExtendNodeViewDesc extends NodeViewDesc {
   private renderer: CollapseExtendRenderer | null = null
+  private _isHovering = false
+  private _savedFill: string | undefined
 
   protected createElement(): Group {
     const group = new Group()
@@ -657,12 +685,35 @@ export class CollapseExtendNodeViewDesc extends NodeViewDesc {
       e.stopPropagation?.()
     })
 
-    // hover 高亮
+    // hover 高亮 - 用父节点的 lineColor 做填充
     group.on_('pointerenter', () => {
-      // TODO: 用父节点的 lineColor 做填充高亮
+      if (this._isHovering) return
+      this._isHovering = true
+      if (this.renderer && NodeViewDesc.styleEngine && NodeViewDesc.state) {
+        // 获取父节点的 lineColor
+        const parentId = this._parent?.node.id
+        if (parentId) {
+          const parentStyle = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, parentId)
+          const lineColor = parentStyle.lineColor as string | undefined
+          if (lineColor) {
+            const circleFill = (this.renderer as unknown as { circleFill: Ellipse | null }).circleFill
+            if (circleFill) {
+              this._savedFill = circleFill.fill as string
+              circleFill.fill = lineColor
+            }
+          }
+        }
+      }
     })
     group.on_('pointerleave', () => {
-      // TODO: 恢复
+      if (!this._isHovering) return
+      this._isHovering = false
+      if (this.renderer) {
+        const circleFill = (this.renderer as unknown as { circleFill: Ellipse | null }).circleFill
+        if (circleFill) {
+          circleFill.fill = this._savedFill ?? 'none'
+        }
+      }
     })
   }
 
