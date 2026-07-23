@@ -18,7 +18,7 @@ import type {
   SummaryNodeDesc,
 } from '@tomind/schema'
 import type { StyleEngine } from '@tomind/style'
-import type { ILayoutEngine, LayoutResult } from '@tomind/layout'
+import type { LayoutEngine, LayoutResult } from '@tomind/layout'
 import { getTitleText } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { NodeDecoration } from '@tomind/state'

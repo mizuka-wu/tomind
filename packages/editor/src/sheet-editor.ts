@@ -32,7 +32,7 @@ import {
   SummaryNodeViewDesc,
 } from '@tomind/view'
 import type { StyleEngine } from '@tomind/style'
-import type { ILayoutEngine } from '@tomind/layout'
+import type { LayoutEngine } from '@tomind/layout'
 import { CommandManager } from '@tomind/commands'
 import type { CommandResult } from '@tomind/commands'
 import { ExtensionManager } from '@tomind/extension'
