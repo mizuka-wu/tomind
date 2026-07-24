@@ -237,7 +237,15 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     }
     
-    this.renderer.render(layout, style)
+    // 布局坐标设到 element（节点根 Group），不是 renderer.group（内部渲染 Group）
+    // renderer.group 保持 (0,0)，只负责 rect+text 的相对布局
+    const nodeLayout = layout.nodes.get(this.node.id)
+    if (nodeLayout && this.element) {
+      this.element.x = nodeLayout.x
+      this.element.y = nodeLayout.y
+    }
+
+    this.renderer.render(layout, style, this.node.attrs)
 
     // 绘制父子连线
     this.renderConnections(layout)
@@ -279,11 +287,14 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       const childLayout = layout.nodes.get(child.id)
       if (!childLayout) continue
 
-      // 根据父子相对位置自动判断方向
-      const parentCX = myLayout.x + myLayout.width / 2
-      const parentCY = myLayout.y + myLayout.height / 2
-      const childCX = childLayout.x + childLayout.width / 2
-      const childCY = childLayout.y + childLayout.height / 2
+      // 连线坐标相对于当前 element（element 已定位到 myLayout.x/y）
+      // 所以父节点相对坐标是 (0, 0)，子节点需要减去父节点的绝对坐标
+      const dx = myLayout.x
+      const dy = myLayout.y
+      const parentCX = myLayout.width / 2
+      const parentCY = myLayout.height / 2
+      const childCX = childLayout.x - dx + childLayout.width / 2
+      const childCY = childLayout.y - dy + childLayout.height / 2
 
       let startX: number, startY: number, endX: number, endY: number
 
@@ -291,15 +302,15 @@ export class TopicNodeViewDesc extends NodeViewDesc {
         // 水平方向为主（right / left）
         if (childCX > parentCX) {
           // 向右：起点右边缘，终点左边缘
-          startX = myLayout.x + myLayout.width
+          startX = myLayout.width
           startY = parentCY
-          endX = childLayout.x
+          endX = childLayout.x - dx
           endY = childCY
         } else {
           // 向左：起点左边缘，终点右边缘
-          startX = myLayout.x
+          startX = 0
           startY = parentCY
-          endX = childLayout.x + childLayout.width
+          endX = childLayout.x - dx + childLayout.width
           endY = childCY
         }
         // 水平圆角折线
@@ -319,15 +330,15 @@ export class TopicNodeViewDesc extends NodeViewDesc {
         if (childCY > parentCY) {
           // 向下：起点底边，终点顶边
           startX = parentCX
-          startY = myLayout.y + myLayout.height
+          startY = myLayout.height
           endX = childCX
-          endY = childLayout.y
+          endY = childLayout.y - dy
         } else {
           // 向上：起点顶边，终点底边
           startX = parentCX
-          startY = myLayout.y
+          startY = 0
           endX = childCX
-          endY = childLayout.y + childLayout.height
+          endY = childLayout.y - dy + childLayout.height
         }
         // 垂直圆角折线
         const midY = (startY + endY) / 2

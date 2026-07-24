@@ -31,7 +31,7 @@ export class TopicRenderer implements Renderer {
     parent.add(this.group)
   }
 
-  render(layout: LayoutResult, style: Record<string, unknown>): void {
+  render(layout: LayoutResult, style: Record<string, unknown>, nodeAttrs?: Record<string, unknown>): void {
     if (!this.rect || !this.text || !this.group) {
       return
     }
@@ -42,9 +42,8 @@ export class TopicRenderer implements Renderer {
       return
     }
 
-    // 使用绝对坐标（相对于根 Group）
-    this.group.x = nodeLayout.x
-    this.group.y = nodeLayout.y
+    // 坐标由 TopicNodeViewDesc.updateStyle() 设到 element 上
+    // renderer.group 保持 (0,0)，只负责 rect+text 的相对布局
 
     // 更新 Rect — 直接用 LeaferJS 属性
     this.rect.width = nodeLayout.width
@@ -56,8 +55,9 @@ export class TopicRenderer implements Renderer {
     if (style.strokeWidth !== undefined) this.rect.strokeWidth = style.strokeWidth as number
     if (style.cornerRadius !== undefined) this.rect.cornerRadius = style.cornerRadius as number
 
-    // 更新 Text — 直接用 LeaferJS 属性
-    this.text.text = getTitleText(style)
+    // 更新 Text — 从 node.attrs 取 title（style 不含 title）
+    const titleStyle = nodeAttrs ?? style
+    this.text.text = getTitleText(titleStyle)
     
     // 字体颜色：优先用 fontColor，fallback 到 color
     const fontColor = style.fontColor ?? style.color ?? '#333'

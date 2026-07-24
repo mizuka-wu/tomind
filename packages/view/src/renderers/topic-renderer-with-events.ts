@@ -52,15 +52,12 @@ export class TopicRendererWithEvents implements Renderer {
     this.setupDefaultEvents()
   }
 
-  render(layout: LayoutResult, style: Record<string, unknown>): void {
+  render(layout: LayoutResult, style: Record<string, unknown>, nodeAttrs?: Record<string, unknown>): void {
     if (!this.group || !this.rect || !this.text) return
-
     const nodeLayout = layout.nodes.get(this.nodeId)
     if (!nodeLayout) return
 
-    // 更新位置和样式
-    this.group.x = nodeLayout.x
-    this.group.y = nodeLayout.y
+    // 坐标由 TopicNodeViewDesc.updateStyle() 设到 element 上
     this.rect.set({
       width: nodeLayout.width,
       height: nodeLayout.height,
@@ -69,7 +66,7 @@ export class TopicRendererWithEvents implements Renderer {
       cornerRadius: style.cornerRadius as number,
     })
     this.text.set({
-      text: getTitleText(style),
+      text: getTitleText(nodeAttrs ?? style),
       fill: style.fontColor as string,
     })
   }
