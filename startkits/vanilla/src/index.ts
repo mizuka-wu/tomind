@@ -37,6 +37,11 @@ import {
   KeymapExtension,
   ViewportExtension,
   TreeLayoutExtension,
+  MapExtension,
+  LogicChartExtension,
+  OrgChartExtension,
+  TimelineExtension,
+  FishboneExtension,
   HistoryExtension,
   BoundaryExtension,
   SummaryExtension,
@@ -53,7 +58,14 @@ import {
 const builtInExtensions: Extension<any>[] = [
   // 结构元素（节点类型）
   TopicExtension,
-  TreeLayoutExtension,
+
+  // 布局（一个大类型一个插件，方向通过 configure 配置）
+  TreeLayoutExtension,        // right / left / down / up
+  MapExtension,               // clockwise / unbalanced
+  LogicChartExtension,        // right / left
+  OrgChartExtension,          // down / up
+  TimelineExtension,          // horizontal / vertical
+  FishboneExtension,          // leftHeaded / rightHeaded
 
   // 核心编辑
   KeymapExtension,
