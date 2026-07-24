@@ -1,3 +1,6 @@
+// TODO: 与 XMind 原生 tree 布局逐一对齐间距/偏移
+// TODO: 折叠节点时 branchHeight 计算验证
+// TODO: summary/boundary 联动布局
 /**
  * Tree Layout — 方向参数化的树布局算法
  *

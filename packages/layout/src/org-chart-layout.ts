@@ -1,3 +1,5 @@
+// TODO: 与 XMind org-chart.down/up 对齐
+// TODO: 多层嵌套水平居中验证
 /**
  * Org Chart 布局 — 组织架构图
  *

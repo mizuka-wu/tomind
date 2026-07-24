@@ -259,6 +259,9 @@ export class SheetEditor {
     // 更新静态引用
     TopicNodeViewDesc.state = newState
     TopicNodeViewDesc.layoutEngine = this.layoutEngine
+    // 布局结果只算一次：统一 compute 后缓存到 LayoutEngine
+    // 后续节点通过 getLayoutResult() 读取，不再重复算
+    this.layoutEngine.compute(newState)
     this.updateDocView(newState.doc, tr)
     this.emit('stateUpdate', newState)
   }

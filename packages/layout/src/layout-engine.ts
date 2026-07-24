@@ -6,6 +6,8 @@ export interface ILayoutEngine {
   setStyleEngine(engine: StyleEngine | null): void
   compute(state: SheetState): LayoutResult
   getLayoutResult(): LayoutResult
+  setActiveLayout?(name: string): void
+  getActiveLayout?(): string
   register?(algorithm: LayoutAlgorithm): void
   unregister?(name: string): void
 }

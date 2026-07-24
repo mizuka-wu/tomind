@@ -1,3 +1,5 @@
+// TODO: 与 XMind timeline 交替上下/左右排列验证
+// TODO: 时间线轴线偏移量
 /**
  * Timeline 布局 — 时间线
  *
