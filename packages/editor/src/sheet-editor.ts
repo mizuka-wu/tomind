@@ -22,7 +22,7 @@ import { SheetState, Transaction, PluginKey } from '@tomind/state'
 import type { Plugin } from '@tomind/state'
 import type { NodeDesc, SelectionState, Viewport } from '@tomind/schema'
 import { ViewDesc } from '@tomind/view'
-import { analyzeSteps } from '@tomind/view'
+import { analyzeSteps, DirtyFlag } from '@tomind/view'
 import {
   NodeViewDesc,
   TopicNodeViewDesc,
@@ -44,6 +44,7 @@ export interface SheetEditorEvents {
   viewportChange: Viewport
   stateUpdate: SheetState
   layoutUpdated: void
+  layoutChange: string
   dispatch: Transaction
 }
 
@@ -574,6 +575,29 @@ export class SheetEditor {
   setViewport(viewport: Viewport): void {
     const tr = Transaction.empty(this._state.doc).setViewport(viewport)
     this.dispatch(tr)
+  }
+
+  // ==================== 布局切换 ====================
+
+  /**
+   * 切换布局算法
+   * 设置活跃布局 + 标记所有节点需要重新布局 + 触发重渲染
+   */
+  switchLayout(layoutName: string): void {
+    // 设置活跃布局
+    this.layoutEngine.setActiveLayout?.(layoutName)
+
+    // 标记所有节点需要重新布局
+    if (this._docView) {
+      this._docView.markAllDirty(DirtyFlag.LAYOUT)
+    }
+
+    // 重新计算布局（使用新算法）
+    this.layoutEngine.compute(this._state)
+
+    // 触发重渲染：用当前 doc 再走一遍 updateDocView
+    this.updateDocView(this._state.doc)
+    this.emit('layoutChange', layoutName)
   }
 
   // ==================== 选区管理 ====================
