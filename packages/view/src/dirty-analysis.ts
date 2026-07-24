@@ -119,6 +119,7 @@ function analyzeAttrsChange(
 
       case 'collapsed':
         flag |= DirtyFlag.LAYOUT | DirtyFlag.SIZE | DirtyFlag.CHILDREN
+        // 折叠/展开时父节点连线需要重画，标记父子都脏
         break
 
       case 'class':
