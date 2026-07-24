@@ -300,6 +300,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 
       if (Math.abs(childCX - parentCX) > Math.abs(childCY - parentCY)) {
         // 水平方向为主（right / left）
+        const r = 8 // 圆角半径
         if (childCX > parentCX) {
           // 向右：起点右边缘，终点左边缘
           startX = myLayout.width
@@ -315,7 +316,15 @@ export class TopicNodeViewDesc extends NodeViewDesc {
         }
         // 水平圆角折线
         const midX = (startX + endX) / 2
-        const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`
+        const dir = endY > startY ? 1 : -1
+        const d = [
+          `M ${startX} ${startY}`,
+          `L ${midX - r} ${startY}`,
+          `Q ${midX} ${startY} ${midX} ${startY + dir * r}`,
+          `L ${midX} ${endY - dir * r}`,
+          `Q ${midX} ${endY} ${midX + (endX > midX ? r : -r)} ${endY}`,
+          `L ${endX} ${endY}`,
+        ].join(' ')
 
         const path = new Path({
           path: d,
@@ -327,6 +336,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
         this._connectionPaths.push(path)
       } else {
         // 垂直方向为主（down / up）
+        const r = 8 // 圆角半径
         if (childCY > parentCY) {
           // 向下：起点底边，终点顶边
           startX = parentCX
@@ -342,7 +352,15 @@ export class TopicNodeViewDesc extends NodeViewDesc {
         }
         // 垂直圆角折线
         const midY = (startY + endY) / 2
-        const d = `M ${startX} ${startY} L ${startX} ${midY} L ${endX} ${midY} L ${endX} ${endY}`
+        const dir = endX > startX ? 1 : -1
+        const d = [
+          `M ${startX} ${startY}`,
+          `L ${startX} ${midY - r}`,
+          `Q ${startX} ${midY} ${startX + dir * r} ${midY}`,
+          `L ${endX - dir * r} ${midY}`,
+          `Q ${endX} ${midY} ${endX} ${midY + (endY > midY ? r : -r)}`,
+          `L ${endX} ${endY}`,
+        ].join(' ')
 
         const path = new Path({
           path: d,
