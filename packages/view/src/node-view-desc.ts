@@ -9,6 +9,7 @@
  */
 
 import { Group, Rect, Ellipse } from 'leafer-ui'
+import { Path } from 'leafer-ui'
 import { ViewDesc, DirtyFlag } from './view-desc'
 import type {
   NodeDesc,
@@ -153,6 +154,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
   private renderer: Renderer | null = null
   private _selectBoxElement: Group | null = null
   private _isHovering = false
+  private _connectionPaths: Path[] = []
 
   protected createElement(): Group {
     const group = new Group()
@@ -227,15 +229,78 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     // 获取 LeaferJS 格式样式
     const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
     
-    // 获取布局结果
+    // 读取缓存的布局结果（由 SheetEditor.updateState 统一 compute）
     let layout: LayoutResult
     if (NodeViewDesc.layoutEngine) {
-      layout = NodeViewDesc.layoutEngine.compute(NodeViewDesc.state)
+      layout = NodeViewDesc.layoutEngine.getLayoutResult()
     } else {
       layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     }
     
     this.renderer.render(layout, style)
+
+    // 绘制父子连线
+    this.renderConnections(layout)
+  }
+
+  /**
+   * 绘制从当前节点到每个子节点的连线
+   * 连线画在 contentGroup 里（在子节点下方）
+   */
+  private renderConnections(layout: LayoutResult): void {
+    const group = this.element
+    if (!group) return
+
+    // 清除旧连线
+    for (const p of this._connectionPaths) {
+      p.destroy()
+    }
+    this._connectionPaths = []
+
+    // 获取自己的布局位置
+    const myLayout = layout.nodes.get(this.node.id)
+    if (!myLayout) return
+
+    // 遍历子节点（attached slot）
+    const children = this.node.children['attached'] ?? []
+    if (children.length === 0) return
+
+    // 连线样式
+    const strokeColor = (style: Record<string, unknown>) =>
+      (style.lineColor as string) ?? '#999'
+    const strokeWidth = (style: Record<string, unknown>) =>
+      (style.lineWidth as number) ?? 1
+
+    const nodeStyle = NodeViewDesc.styleEngine && NodeViewDesc.state
+      ? NodeViewDesc.styleEngine.computeStyle(NodeViewDesc.state, this.node.id) as Record<string, unknown>
+      : {}
+
+    for (const child of children) {
+      const childLayout = layout.nodes.get(child.id)
+      if (!childLayout) continue
+
+      // 起点：当前节点右边缘中心
+      const startX = myLayout.x + myLayout.width
+      const startY = myLayout.y + myLayout.height / 2
+
+      // 终点：子节点左边缘中心
+      const endX = childLayout.x
+      const endY = childLayout.y + childLayout.height / 2
+
+      // 圆角折线：先水平再垂直再水平（XMind 风格）
+      const midX = (startX + endX) / 2
+      const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`
+
+      const path = new Path({
+        path: d,
+        stroke: strokeColor(nodeStyle),
+        strokeWidth: strokeWidth(nodeStyle),
+        fill: 'none',
+      })
+
+      group.add(path)
+      this._connectionPaths.push(path)
+    }
   }
 
   protected updateContent(): void {

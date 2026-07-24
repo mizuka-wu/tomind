@@ -1,3 +1,5 @@
+// TODO: 与 XMind fishbone 斜线角度/间距对齐
+// TODO: leftHeaded/rightHeaded 对称性
 /**
  * Fishbone 布局 — 鱼骨图（石川图）
  *

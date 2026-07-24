@@ -1,3 +1,6 @@
+// TODO: 与 XMind map.clockwise 分支均匀分布验证
+// TODO: map.unbalanced 一侧偏移量对齐
+// TODO: 多层嵌套时上下分组平衡性
 /**
  * Map Clockwise 布局 — 均衡导图
  *

@@ -1,3 +1,5 @@
+// TODO: 与 XMind logic.right/left 间距对齐
+// TODO: 子分支垂直堆叠间距验证
 /**
  * Logic Chart 布局 — 逻辑图
  *
