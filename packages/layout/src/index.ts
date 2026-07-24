@@ -3,6 +3,9 @@ export type { ILayoutEngine, NodeLayout, LayoutResult, LayoutOptions, LayoutAlgo
 
 export { LayoutEngine } from './default-layout-engine'
 
+export { createTreeLayoutAlgorithm } from './tree-layout'
+export type { TreeDirection } from './tree-layout'
+
 export { matrixLayoutAlgorithm } from './matrix-layout'
 
 export { Matrix, MatrixContainer, MatrixCell, ColumnMap, LEFT, MIDDLE, RIGHT } from './matrix'
