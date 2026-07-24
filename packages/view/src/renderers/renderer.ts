@@ -22,8 +22,9 @@ export interface Renderer {
    * 更新渲染
    * @param layout 布局结果
    * @param style LeaferJS 格式样式（fill, stroke, strokeWidth, cornerRadius 等）
+   * @param nodeAttrs 节点原始属性（含 title/attributeTitle，供文本渲染使用）
    */
-  render(layout: LayoutResult, style: Record<string, unknown>): void
+  render(layout: LayoutResult, style: Record<string, unknown>, nodeAttrs?: Record<string, unknown>): void
 
   /**
    * 销毁图形对象

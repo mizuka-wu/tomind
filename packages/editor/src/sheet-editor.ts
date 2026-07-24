@@ -318,6 +318,9 @@ export class SheetEditor {
   /** 触发初始渲染（需在扩展注册完成后调用） */
   renderInitial(): void {
     if (this._docView) {
+      // 首次渲染前必须先 compute 布局，否则 getLayoutResult() 返回空 Map，
+      // TopicRenderer.render() 会因找不到 nodeLayout 而跳过所有节点渲染
+      this.layoutEngine.compute(this._state)
       this.initialRender(this._docView)
     }
   }
@@ -421,6 +424,11 @@ export class SheetEditor {
     // 递归子节点
     for (const child of view.children) {
       this.initialRender(child)
+      // 关键修复：element lazy 创建后挂载到父级 contentGroup
+      // addChild() 时机太早（_contentGroup 和 _element 都是 null），此处补挂
+      if (view.contentGroup && child.element) {
+        view.contentGroup.add(child.element)
+      }
     }
   }
 
