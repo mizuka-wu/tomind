@@ -71,18 +71,6 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
   }
 }
 
-function subtreeWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
-  const size = sizeMap.get(node.id)!
-  if (isCollapsed(node)) return size.width
-  const children = getAttachedChildren(node)
-  if (children.length === 0) return size.width
-  let maxChildWidth = 0
-  for (const child of children) {
-    maxChildWidth = Math.max(maxChildWidth, subtreeWidth(child, options, sizeMap))
-  }
-  return size.width + options.horizontalGap + maxChildWidth
-}
-
 function subtreeHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
   const size = sizeMap.get(node.id)!
   if (isCollapsed(node)) return size.height
