@@ -36,6 +36,8 @@ jobs:
 
       # 构建 demo
       - run: pnpm --filter @tomind/app-demo build
+        env:
+          VITE_BASE: /tomind/demo/
 
       # 合并 docs 和 demo 到一个目录
       - name: Prepare Pages
