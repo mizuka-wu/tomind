@@ -279,27 +279,69 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       const childLayout = layout.nodes.get(child.id)
       if (!childLayout) continue
 
-      // 起点：当前节点右边缘中心
-      const startX = myLayout.x + myLayout.width
-      const startY = myLayout.y + myLayout.height / 2
+      // 根据父子相对位置自动判断方向
+      const parentCX = myLayout.x + myLayout.width / 2
+      const parentCY = myLayout.y + myLayout.height / 2
+      const childCX = childLayout.x + childLayout.width / 2
+      const childCY = childLayout.y + childLayout.height / 2
 
-      // 终点：子节点左边缘中心
-      const endX = childLayout.x
-      const endY = childLayout.y + childLayout.height / 2
+      let startX: number, startY: number, endX: number, endY: number
 
-      // 圆角折线：先水平再垂直再水平（XMind 风格）
-      const midX = (startX + endX) / 2
-      const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`
+      if (Math.abs(childCX - parentCX) > Math.abs(childCY - parentCY)) {
+        // 水平方向为主（right / left）
+        if (childCX > parentCX) {
+          // 向右：起点右边缘，终点左边缘
+          startX = myLayout.x + myLayout.width
+          startY = parentCY
+          endX = childLayout.x
+          endY = childCY
+        } else {
+          // 向左：起点左边缘，终点右边缘
+          startX = myLayout.x
+          startY = parentCY
+          endX = childLayout.x + childLayout.width
+          endY = childCY
+        }
+        // 水平圆角折线
+        const midX = (startX + endX) / 2
+        const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`
 
-      const path = new Path({
-        path: d,
-        stroke: strokeColor(nodeStyle),
-        strokeWidth: strokeWidth(nodeStyle),
-        fill: 'none',
-      })
+        const path = new Path({
+          path: d,
+          stroke: strokeColor(nodeStyle),
+          strokeWidth: strokeWidth(nodeStyle),
+          fill: 'none',
+        })
+        group.add(path)
+        this._connectionPaths.push(path)
+      } else {
+        // 垂直方向为主（down / up）
+        if (childCY > parentCY) {
+          // 向下：起点底边，终点顶边
+          startX = parentCX
+          startY = myLayout.y + myLayout.height
+          endX = childCX
+          endY = childLayout.y
+        } else {
+          // 向上：起点顶边，终点底边
+          startX = parentCX
+          startY = myLayout.y
+          endX = childCX
+          endY = childLayout.y + childLayout.height
+        }
+        // 垂直圆角折线
+        const midY = (startY + endY) / 2
+        const d = `M ${startX} ${startY} L ${startX} ${midY} L ${endX} ${midY} L ${endX} ${endY}`
 
-      group.add(path)
-      this._connectionPaths.push(path)
+        const path = new Path({
+          path: d,
+          stroke: strokeColor(nodeStyle),
+          strokeWidth: strokeWidth(nodeStyle),
+          fill: 'none',
+        })
+        group.add(path)
+        this._connectionPaths.push(path)
+      }
     }
   }
 
