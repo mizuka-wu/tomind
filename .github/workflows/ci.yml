@@ -7,6 +7,11 @@ on:
       - master
   pull_request:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,3 +36,27 @@ jobs:
 
       # 构建 demo
       - run: pnpm --filter @tomind/app-demo build
+
+      # 合并 docs 和 demo 到一个目录
+      - name: Prepare Pages
+        run: |
+          mkdir -p _site/demo
+          cp -r apps/docs/.vitepress/dist/* _site/
+          cp -r apps/demo/dist/* _site/demo/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
