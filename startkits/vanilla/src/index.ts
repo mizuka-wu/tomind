@@ -1,31 +1,5 @@
 /**
  * @tomind/starter-vanilla — 默认扩展预装包
- *
- * 参考 Tiptap StarterKit 设计：
- * - 打包常用扩展
- * - 支持配置内部扩展
- * - 支持禁用扩展
- *
- * 依赖：
- * - @tomind/core — 引擎核心（Extension 类型、createExtension）
- * - @tomind/extensions — 具体扩展实现（Keymap、Viewport）
- *
- * 用法：
- * ```typescript
- * import { StarterKit } from '@tomind/starter-vanilla'
- * workbook.installExtension(StarterKit)
- *
- * // 配置内部扩展
- * workbook.installExtension(StarterKit.configure({
- *   viewport: { defaultZoom: 1.5 },
- *   keymap: false,  // 禁用
- * }))
- *
- * // 添加额外扩展
- * workbook.installExtension(StarterKit.configure({
- *   extensions: [MyCustomExtension],
- * }))
- * ```
  */
 
 // 引擎核心
@@ -36,12 +10,6 @@ import { createExtension } from '@tomind/core'
 import {
   KeymapExtension,
   ViewportExtension,
-  TreeLayoutExtension,
-  MapExtension,
-  LogicChartExtension,
-  OrgChartExtension,
-  TimelineExtension,
-  FishboneExtension,
   HistoryExtension,
   BoundaryExtension,
   SummaryExtension,
@@ -51,6 +19,21 @@ import {
   CopyPasteExtension,
   EditBridgeExtension,
   ContextMenuExtension,
+  // 布局（一个大类一个文件夹，文件夹导出多个方向插件）
+  TreeRightExtension,
+  TreeLeftExtension,
+  TreeDownExtension,
+  TreeUpExtension,
+  MapClockwiseExtension,
+  MapUnbalancedExtension,
+  LogicRightExtension,
+  LogicLeftExtension,
+  OrgChartDownExtension,
+  OrgChartUpExtension,
+  TimelineHorizontalExtension,
+  TimelineVerticalExtension,
+  FishboneLeftHeadedExtension,
+  FishboneRightHeadedExtension,
 } from '@tomind/extensions'
 
 // ==================== 内置扩展列表 ====================
@@ -59,13 +42,21 @@ const builtInExtensions: Extension<any>[] = [
   // 结构元素（节点类型）
   TopicExtension,
 
-  // 布局（一个大类型一个插件，方向通过 configure 配置）
-  TreeLayoutExtension,        // right / left / down / up
-  MapExtension,               // clockwise / unbalanced
-  LogicChartExtension,        // right / left
-  OrgChartExtension,          // down / up
-  TimelineExtension,          // horizontal / vertical
-  FishboneExtension,          // leftHeaded / rightHeaded
+  // 布局（每个方向独立插件，按需选用）
+  TreeRightExtension,
+  TreeLeftExtension,
+  TreeDownExtension,
+  TreeUpExtension,
+  MapClockwiseExtension,
+  MapUnbalancedExtension,
+  LogicRightExtension,
+  LogicLeftExtension,
+  OrgChartDownExtension,
+  OrgChartUpExtension,
+  TimelineHorizontalExtension,
+  TimelineVerticalExtension,
+  FishboneLeftHeadedExtension,
+  FishboneRightHeadedExtension,
 
   // 核心编辑
   KeymapExtension,
@@ -86,25 +77,14 @@ const builtInExtensions: Extension<any>[] = [
 
 // ==================== StarterKit ====================
 
-/**
- * 创建 StarterKit
- */
 function createStarterKit(options: StarterKitOptions = {}) {
   const { extensions: extraExtensions = [], ...extensionConfigs } = options
 
-  // 收集所有扩展
   const allExtensions: Extension<any>[] = []
 
-  // 处理内置扩展
   for (const ext of builtInExtensions) {
     const config = extensionConfigs[ext.name]
-
-    // 如果明确禁用，跳过
-    if (config === false) {
-      continue
-    }
-
-    // 如果有配置，应用配置
+    if (config === false) continue
     if (config && typeof config === 'object') {
       allExtensions.push(ext.configure(config as Record<string, unknown>))
     } else {
@@ -112,14 +92,12 @@ function createStarterKit(options: StarterKitOptions = {}) {
     }
   }
 
-  // 添加额外扩展（过滤掉 false）
   for (const ext of extraExtensions) {
     if (ext !== false) {
       allExtensions.push(ext)
     }
   }
 
-  // 创建 StarterKit 扩展
   return createExtension({
     name: 'starterKit',
     type: 'extension',
@@ -151,7 +129,6 @@ function createStarterKit(options: StarterKitOptions = {}) {
         }
       }
 
-      // 返回清理函数
       return () => {
         for (const cleanup of cleanupFns) {
           cleanup()
@@ -161,18 +138,11 @@ function createStarterKit(options: StarterKitOptions = {}) {
   })
 }
 
-/**
- * StarterKit 实例（使用默认配置）
- */
 export const StarterKit = createStarterKit()
 
-/**
- * StarterKit 工厂（支持配置）
- */
 export const StarterKitFactory = {
   create: createStarterKit,
   configure: (options: StarterKitOptions) => createStarterKit(options),
 }
 
-// Re-export 类型
 export type { StarterKitOptions } from '@tomind/core'
