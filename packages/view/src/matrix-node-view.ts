@@ -13,7 +13,6 @@
 import { Group } from 'leafer-ui'
 import { NodeViewDesc } from './node-view-desc'
 import { MatrixRenderer } from './renderers/matrix-renderer'
-import type { LayoutResult } from '@tomind/layout'
 import type { MatrixCell } from '@tomind/layout'
 
 export class MatrixNodeViewDesc extends NodeViewDesc {

@@ -161,7 +161,6 @@ export const mapClockwiseLayoutAlgorithm: LayoutAlgorithm = {
     const sizeMap = new Map<string, NodeSize>()
     measureSubtree(root, options, sizeMap)
 
-    const rootW = subtreeWidth(root, options, sizeMap)
     const rootH = subtreeHeight(root, options, sizeMap)
     const rootX = options.rootOffsetX
     const rootY = (rootH - sizeMap.get(root.id)!.height) / 2
