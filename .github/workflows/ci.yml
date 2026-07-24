@@ -41,7 +41,7 @@ jobs:
       - name: Prepare Pages
         run: |
           mkdir -p _site/demo
-          cp -r apps/docs/.vitepress/dist/* _site/
+          cp -r apps/docs/docs/.vitepress/dist/* _site/
           cp -r apps/demo/dist/* _site/demo/
 
       - name: Upload Pages artifact
