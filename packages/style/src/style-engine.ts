@@ -279,75 +279,103 @@ export class StyleEngine {
 
   /**
    * ResolvedStyle → LeaferJS 属性映射
+   *
+   * 关键区别：
+   * - SVG 用 fillColor/borderColor/lineColor，LeaferJS 用 fill/stroke
+   * - SVG 用 "none"/"solid" 字符串，LeaferJS 用 null/undefined
+   * - SVG 用 "16pt" 单位，LeaferJS 用数字（px）
+   * - SVG 用 linePattern: "dash"，LeaferJS 用 strokeDash: [5, 3]
+   * - fontColor 和 fillColor 都映射到 fill，但作用于不同元素：
+   *   Rect.fill = 背景色，Text.fill = 字体色
    */
   private toLeaferStyle(style: ResolvedStyle): Record<string, unknown> {
     const result: Record<string, unknown> = {}
-    
-    // 属性名映射
-    const styleMap: Record<string, string> = {
-      fillColor: 'fill',
-      borderColor: 'stroke',
-      borderWidth: 'strokeWidth',
-      lineCorner: 'cornerRadius',
-      fontColor: 'fill',
-      linePattern: 'dashPattern',
-    }
 
     for (const [key, value] of Object.entries(style)) {
       if (value === null || value === undefined) continue
-      
-      const leaferKey = styleMap[key] || key
-      
-      // 特殊处理
+
+      // "none" → null（LeaferJS 不识别 "none" 字符串）
+      if (value === 'none') {
+        // 保留某些 key 的 "none" 语义（如 linePattern "solid"）
+        if (key === 'linePattern' || key === 'borderPattern') continue
+        result[key] = null
+        continue
+      }
+
       switch (key) {
+        // ── 颜色映射 ──
+        case 'fillColor':
+          result.fill = value  // Rect 背景色
+          break
+        case 'fontColor':
+          // fontColor 不直接设到 result，由 TopicRenderer 从 style.fontColor 读取
+          // 避免和 fillColor 的 fill 冲突
+          result.fontColor = value
+          break
+        case 'borderColor':
+          result.stroke = value  // Rect 边框色
+          break
+        case 'lineColor':
+          result.lineColor = value  // 连线颜色，由 ConnectionRenderer 使用
+          break
+
+        // ── 线条映射 ──
+        case 'lineWidth':
+          result.strokeWidth = parsePtToPx(value)  // 连线宽度
+          break
+        case 'borderWidth':
+          result.strokeWidth = parsePtToPx(value)  // Rect 边框宽度
+          break
+        case 'linePattern':
+          // "solid" → 无虚线，"dash" → [5, 3]
+          result.strokeDash = value === 'solid' ? null : parseLinePattern(value)
+          break
+        case 'lineDash':
+          result.strokeDash = parseLineDash(value)
+          break
+
+        // ── 形状映射 ──
+        case 'lineCorner':
+        case 'shapeCorner':
+          result.cornerRadius = parsePtToPx(value)
+          break
+
+        // ── 字体映射 ──
         case 'fontSize':
-          // 解析 "16pt" 为数字
-          result[leaferKey] = this.parseFontSize(value)
+          result.fontSize = parsePtToPx(value)
           break
         case 'fontWeight':
-          // LeaferJS 支持 "bold" | "normal" | number
-          result[leaferKey] = this.parseFontWeight(value)
+          result.fontWeight = parseFontWeight(value)
           break
+        case 'fontStyle':
+          result.fontStyle = value  // "italic" | "normal"，LeaferJS 直接支持
+          break
+        case 'textAlign':
+          result.textAlign = value  // "left" | "center" | "right"
+          break
+
+        // ── 透明度 ──
         case 'opacity':
-          // 百分比转小数
-          result[leaferKey] = this.parseOpacity(value)
+          result.opacity = parseOpacity(value)
           break
+
+        // ── 间距（布局使用，不直接映射到 LeaferJS 属性） ──
+        case 'marginLeft':
+        case 'marginRight':
+        case 'marginTop':
+        case 'marginBottom':
+        case 'spacingMajor':
+        case 'spacingMinor':
+          result[key] = parsePtToPx(value)
+          break
+
+        // ── 其他：直接传递 ──
         default:
-          result[leaferKey] = value
+          result[key] = value
       }
     }
 
     return result
-  }
-
-  private parseFontSize(value: unknown): number {
-    if (typeof value === 'number') return value
-    if (typeof value === 'string') {
-      const num = parseFloat(value)
-      return isNaN(num) ? 14 : num
-    }
-    return 14
-  }
-
-  private parseFontWeight(value: unknown): string | number {
-    if (typeof value === 'number') return value
-    if (typeof value === 'string') {
-      const num = parseInt(value)
-      if (!isNaN(num)) return num
-      return value // "bold", "normal" 等
-    }
-    return 'normal'
-  }
-
-  private parseOpacity(value: unknown): number {
-    if (typeof value === 'number') return value
-    if (typeof value === 'string') {
-      if (value.endsWith('%')) {
-        return parseFloat(value) / 100
-      }
-      return parseFloat(value)
-    }
-    return 1
   }
 
   /**
@@ -509,4 +537,87 @@ function getDepthFromDoc(state: SheetState, topicId: string): number {
     currentId = parentId
   }
   return depth
+}
+
+// ==================== LeaferJS 样式转换辅助函数 ====================
+
+/**
+ * pt → px 转换（1pt = 96/72 px ≈ 1.333px）
+ * 支持："16pt"、"16"、16
+ */
+function parsePtToPx(value: unknown): number {
+  if (typeof value === 'number') return isFinite(value) ? value : 0
+  if (typeof value !== 'string') return 0
+  const trimmed = value.trim()
+  if (trimmed.endsWith('pt')) {
+    const num = parseFloat(trimmed)
+    return isNaN(num) ? 0 : Math.round(num * 96 / 72)
+  }
+  const num = parseFloat(trimmed)
+  return isNaN(num) ? 0 : num
+}
+
+/**
+ * linePattern → strokeDash 数组
+ * "dash" → [5, 3], "dot" → [2, 2], "dashDot" → [5, 3, 2, 3]
+ */
+function parseLinePattern(value: unknown): number[] | null {
+  if (typeof value !== 'string') return null
+  switch (value) {
+    case 'dash': return [5, 3]
+    case 'dot': return [2, 2]
+    case 'dashDot': return [5, 3, 2, 3]
+    case 'dashDotDot': return [5, 3, 2, 3, 2, 3]
+    case 'solid': return null
+    default: return null
+  }
+}
+
+/**
+ * lineDash → strokeDash 数组
+ * [5, 3] → [5, 3], "5,3" → [5, 3]
+ */
+function parseLineDash(value: unknown): number[] | null {
+  if (Array.isArray(value)) return value.length > 0 ? value : null
+  if (typeof value === 'string') {
+    const arr = value.split(/[\s,]+/).map(Number).filter(n => !isNaN(n))
+    return arr.length > 0 ? arr : null
+  }
+  return null
+}
+
+/**
+ * fontWeight 规范化
+ * "bold" → "bold", "700" → 700, 400 → 400
+ */
+function parseFontWeight(value: unknown): string | number {
+  if (typeof value === 'number') return isFinite(value) ? value : 'normal'
+  if (typeof value === 'string') {
+    const num = parseInt(value, 10)
+    if (!isNaN(num)) return num
+    return value  // "bold", "normal" 等
+  }
+  return 'normal'
+}
+
+/**
+ * opacity 规范化
+ * "50%" → 0.5, "0.5" → 0.5, 50 → 0.5 (>1 视为百分比)
+ */
+function parseOpacity(value: unknown): number {
+  if (typeof value === 'number') {
+    if (!isFinite(value)) return 1
+    return value > 1 ? value / 100 : value
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (trimmed.endsWith('%')) {
+      const num = parseFloat(trimmed)
+      return isNaN(num) ? 1 : num / 100
+    }
+    const num = parseFloat(trimmed)
+    if (isNaN(num)) return 1
+    return num > 1 ? num / 100 : num
+  }
+  return 1
 }
