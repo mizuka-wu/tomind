@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'Tomind',
-  description: '现代思维导图引擎 — 从 Snowbrush v2 重构而来',
+  description: '现代思维导图引擎 — TypeScript strict + Tiptap 风格扩展系统',
   base: '/tomind/',
   locales: {
     root: {

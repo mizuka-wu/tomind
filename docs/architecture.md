@@ -1,13 +1,13 @@
 # Tomind 架构设计文档
 
-> 基于 snowbrush-v2 重构，采用 Tiptap 风格扩展系统
+> 基于 Tiptap 风格扩展系统重构
 > 最后更新：2026-07-16
 
 ---
 
 ## 1. 项目概述
 
-Tomind 是一个现代思维导图引擎，从 Snowbrush v2.47.0（631 文件、147,592 行）重构而来。
+Tomind 是一个现代思维导图引擎，采用 Tiptap 风格扩展系统。
 
 ### 1.1 设计目标
 
@@ -524,7 +524,7 @@ class WorkbookEditor {
 
 ## 12. 与旧架构的对比
 
-| 维度 | 旧架构 (Snowbrush) | 新架构 (Tomind) |
+| 维度 | 旧架构 | 新架构 (Tomind) |
 |------|---------------------|-----------------|
 | 依赖 | Backbone, jQuery, underscore, SVG.js, MobX | leafer-ui, mitt |
 | 状态 | 可变 Model + Backbone.Events | 不可变 SheetState + Transaction |

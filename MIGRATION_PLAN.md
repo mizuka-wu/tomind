@@ -1,4 +1,4 @@
-# Snowbrush-V2 迁移计划
+# 迁移计划
 
 > 最后更新：2026-07-16
 
@@ -259,7 +259,7 @@ Phase 6  ░░░░░░░░░░░░░░░░  清理旧架构（最
 ## 当前状态
 
 - [x] Monorepo 搭建（turbo + pnpm workspace）
-- [x] 代码搬运（snowbrush-v2 → tomind）
+- [x] 代码搬运（v2 → tomind）
 - [x] 大部分 TS 错误修复（62 → 8）
 - [ ] Phase 0：剩余 8 个 TS 错误
 - [ ] Phase 1-6：待执行

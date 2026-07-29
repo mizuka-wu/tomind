@@ -3,7 +3,7 @@ layout: home
 hero:
   name: Tomind
   text: 现代思维导图引擎
-  tagline: 从 Snowbrush v2.47.0 重构而来 — TypeScript strict + Tiptap 风格扩展系统
+  tagline: TypeScript strict + Tiptap 风格扩展系统
   actions:
     - theme: brand
       text: 快速开始

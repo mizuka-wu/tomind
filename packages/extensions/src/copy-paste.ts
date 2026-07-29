@@ -318,7 +318,7 @@ function nodesToPlainText(nodes: NodeData[]): string {
 function nodesToHTML(nodes: NodeData[]): string {
   const html: string[] = []
 
-  html.push('<div class="snowbrush-clipboard">')
+  html.push('<div class="tomind-clipboard">')
 
   const walk = (node: NodeData) => {
     html.push(`<div class="topic" data-type="${node.type}">`)

@@ -1,7 +1,7 @@
 {
   "name": "@tomind/assets",
   "version": "0.1.0",
-  "description": "Snowbrush 资源处理",
+  "description": "@tomind 资源处理",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "files": [

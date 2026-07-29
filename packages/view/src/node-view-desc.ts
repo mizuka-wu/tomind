@@ -312,7 +312,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       let startX: number, startY: number, endX: number, endY: number
 
       if (Math.abs(childCX - parentCX) > Math.abs(childCY - parentCY)) {
-        // 水平方向为主（right / left）— Snowbrush curveHorizon 风格
+        // 水平方向为主（right / left）— curveHorizon 风格
         if (childCX > parentCX) {
           // 向右：起点右边缘，终点左边缘
           startX = myLayout.width
@@ -326,7 +326,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
           endX = childLayout.x - dx + childLayout.width
           endY = childCY
         }
-        // Snowbrush curveHorizon: M→L→Q（控制点在水平距离 1/5 处）
+        // curveHorizon: M→L→Q（控制点在水平距离 1/5 处）
         const dx2 = endX - startX
         const ctrlX = dx2 / 5 + startX
         const d = `M ${startX} ${startY} L ${startX} ${startY} Q ${ctrlX} ${endY} ${endX} ${endY}`
@@ -340,7 +340,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
         group.add(path)
         this._connectionPaths.push(path)
       } else {
-        // 垂直方向为主（down / up）— Snowbrush rect 风格
+        // 垂直方向为主（down / up）— rect 风格
         if (childCY > parentCY) {
           // 向下：起点底边，终点顶边
           startX = parentCX
@@ -354,7 +354,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
           endX = childCX
           endY = childLayout.y - dy - contentOffsetY + childLayout.height
         }
-        // Snowbrush rect: M→L→Q（控制点在垂直方向）
+        // rect: M→L→Q（控制点在垂直方向）
         const d = `M ${startX} ${startY} L ${startX} ${startY} Q ${endX} ${startY} ${endX} ${endY}`
 
         const path = new Path({

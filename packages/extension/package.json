@@ -1,7 +1,7 @@
 {
   "name": "@tomind/extension",
   "version": "0.1.0",
-  "description": "Snowbrush Extension \u7cfb\u7edf",
+  "description": "@tomind Extension \u7cfb\u7edf",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "files": [

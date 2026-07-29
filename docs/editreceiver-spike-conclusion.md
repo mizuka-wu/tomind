@@ -30,7 +30,7 @@ this.editTarget.text = this.isHTMLText ? editDom.innerHTML : editDom.innerText;
 
 1. **HMR 模块加载顺序**：开发模式下 HMR 时，`@leafer-in/text-editor` 可能在 `@leafer-in/editor` 之前加载，导致 "please install and import plugin" 错误。生产构建不会有此问题。
 
-2. **Enter 键行为**：TextEditor 默认 Enter 插入 `<br>` 换行。Snowbrush 的 BranchView 编辑需要 Enter 保存。需要通过 `onKeydown` 拦截或配置覆盖。
+2. **Enter 键行为**：TextEditor 默认 Enter 插入 `<br>` 换行。BranchView 编辑需要 Enter 保存。需要通过 `onKeydown` 拦截或配置覆盖。
 
 3. **Esc 键行为**：TextEditor 默认 Esc 关闭编辑器（调用 `editor.closeInnerEditor()`）。需要在此时触发 `saveEdit()` 流程。
 
