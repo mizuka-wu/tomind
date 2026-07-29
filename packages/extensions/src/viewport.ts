@@ -157,11 +157,23 @@ function createViewportShortcuts(): Record<string, KeyboardShortcutHandler> {
 function setupViewportInteractions(ctx: ExtensionContext, opts: Required<ViewportOptions>): () => void {
   const cleanupFns: (() => void)[] = []
 
-  // 等待 DOM 就绪
-  // 注意：这里需要访问 DOM 容器，但 ExtensionContext 不直接暴露 DOM
-  // 实际实现需要通过事件或配置获取 DOM 容器
+  // 通过事件系统获取 DOM 容器
+  // SheetEditor 在接收到 'getContainer' 事件时回调传入 this.dom
+  let domContainer: HTMLElement | null = null
+  ctx.emit('getContainer', (dom: HTMLElement) => { domContainer = dom })
 
-  // 暂时返回空清理函数，实际实现需要集成 DOM 事件
+  if (domContainer) {
+    if (opts.enableWheelZoom) {
+      cleanupFns.push(setupWheelZoom(domContainer, ctx, opts))
+    }
+    if (opts.enableDragMove) {
+      cleanupFns.push(setupDragMove(domContainer, ctx, opts))
+    }
+    if (opts.enableAutoMove) {
+      cleanupFns.push(setupAutoMove(domContainer, ctx, opts))
+    }
+  }
+
   return () => {
     for (const cleanup of cleanupFns) {
       cleanup()

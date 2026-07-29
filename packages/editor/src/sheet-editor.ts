@@ -36,7 +36,8 @@ import type { LayoutEngine } from '@tomind/layout'
 import { CommandManager } from '@tomind/commands'
 import type { CommandResult } from '@tomind/commands'
 import { ExtensionManager } from '@tomind/extension'
-import type { Extension, ExtensionContext, CommandFn, EventHandler } from '@tomind/extension'
+import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEditorInterface } from '@tomind/extension'
+import type { WorkbookEditor } from './workbook-editor'
 
 // ==================== 事件类型 ====================
 
@@ -134,7 +135,7 @@ export class SheetEditor {
   private _commandManager: CommandManager
   private _nodeViewDescRegistry: Map<string, new (node: NodeDesc, role: string) => ViewDesc>
   private _partViewDescRegistry: Map<string, new (node: NodeDesc, role: string) => ViewDesc>
-  _workbookEditor: any = null
+  _workbookEditor: WorkbookEditor | null = null
 
   constructor(options: {
     dom: HTMLElement
@@ -197,6 +198,14 @@ export class SheetEditor {
 
     // 监听 viewport 变化
     this.setupViewportSync()
+
+    // 响应扩展的 'getContainer' 事件，回调传入 DOM 容器
+    this._emitter.addEventListener('getContainer', ((e: Event) => {
+      const callback = (e as CustomEvent).detail
+      if (typeof callback === 'function') {
+        callback(this.dom)
+      }
+    }) as EventListener)
   }
 
   // ==================== 事件 ====================
@@ -332,7 +341,7 @@ export class SheetEditor {
     const editor = this
     return {
       storage: {},
-      getWorkbook: () => editor._workbookEditor as any,
+      getWorkbook: () => editor._workbookEditor!,
       getState: () => editor._state,
       dispatch: (tr: unknown) => editor.dispatch(tr as Transaction),
       getView: () => editor._docView,

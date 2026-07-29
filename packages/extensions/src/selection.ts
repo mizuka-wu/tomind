@@ -683,9 +683,7 @@ function getAllVisibleNodes(sheetState: SheetState): string[] {
       for (const children of Object.values(node.children)) {
         if (Array.isArray(children)) {
           for (const child of children) {
-            if (typeof child === 'string') {
-              walk(child)
-            }
+            walk(child.id)
           }
         }
       }

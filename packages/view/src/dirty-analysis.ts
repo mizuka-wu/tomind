@@ -77,8 +77,12 @@ export function analyzeSteps(steps: readonly Step[]): DirtyAnalysis {
       }
 
       case 'removeNode': {
-        // removeNode 没有 parentId，需要从其他方式获取
-        // 暂时跳过，后续可以通过 doc 树查找
+        // removeNode 步骤：从 doc 树查找父节点并标记 CHILDREN
+        const { nodeId } = step as import('@tomind/state').RemoveNodeStep
+        // removeNode 会从 doc 中删除节点，需要从当前已知的节点中标记父节点
+        // 这里标记被删除节点自身为 CLEAN（已不在树中），父节点需要通过其他方式获取
+        // 简单方案：标记被删除节点 ID 为 ALL，让 ViewDesc 树重建时处理
+        mergeFlag(nodeFlags, nodeId, DirtyFlag.ALL)
         break
       }
 

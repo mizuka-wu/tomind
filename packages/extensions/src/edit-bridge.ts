@@ -50,13 +50,16 @@ export const EditBridgeExtension = createExtension({
     // 注册 topic.edit 命令（F2 / Space 触发）
     const commandNames = ['topic.edit']
     for (const name of commandNames) {
-      ctx.registerCommand(name, (_params: unknown) => {
-        // 获取当前选中的节点
-        const state = ctx.getState() as any
-        const selectedId = state?.selection?.elements?.[0]?.id
+      ctx.registerCommand(name, (
+        state: unknown,
+        _dispatch: ((tr: unknown) => void) | null,
+        _args?: unknown,
+      ): boolean => {
+        const sheetState = state as { selection?: { elements?: Array<{ id: string }> }; getNode?: (id: string) => any }
+        const selectedId = sheetState?.selection?.elements?.[0]?.id
         if (!selectedId) return false
 
-        const node = state.nodes?.get(selectedId)
+        const node = sheetState?.getNode?.(selectedId)
         if (!node) return false
 
         handleEditStart(ctx, selectedId, node)

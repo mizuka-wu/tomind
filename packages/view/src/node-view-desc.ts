@@ -239,10 +239,21 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     
     // 布局坐标设到 element（节点根 Group），不是 renderer.group（内部渲染 Group）
     // renderer.group 保持 (0,0)，只负责 rect+text 的相对布局
+    // 子节点在父节点的 contentGroup(y:40) 里，所以坐标需要减去父节点的绝对位置
     const nodeLayout = layout.nodes.get(this.node.id)
     if (nodeLayout && this.element) {
-      this.element.x = nodeLayout.x
-      this.element.y = nodeLayout.y
+      const parentViewDesc = this._parent
+      const parentLayout = parentViewDesc ? layout.nodes.get(parentViewDesc.node.id) : null
+      if (parentLayout) {
+        // 子节点：相对坐标（减去父节点绝对位置和 contentGroup y 偏移）
+        const contentOffsetY = (this._parent as any)?._contentGroup?.y ?? 40
+        this.element.x = nodeLayout.x - parentLayout.x
+        this.element.y = nodeLayout.y - parentLayout.y - contentOffsetY
+      } else {
+        // 根节点：绝对坐标
+        this.element.x = nodeLayout.x
+        this.element.y = nodeLayout.y
+      }
     }
 
     this.renderer.render(layout, style, this.node.attrs)
@@ -288,19 +299,20 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       if (!childLayout) continue
 
       // 连线坐标相对于当前 element（element 已定位到 myLayout.x/y）
-      // 所以父节点相对坐标是 (0, 0)，子节点需要减去父节点的绝对坐标
+      // 子节点 element 已经是相对坐标（减去了父节点绝对位置和 contentGroup 偏移）
       const dx = myLayout.x
       const dy = myLayout.y
+      const contentOffsetY = (this as any)._contentGroup?.y ?? 40
       const parentCX = myLayout.width / 2
       const parentCY = myLayout.height / 2
+      // 子节点在父 element 坐标系下的中心（element 已减去 contentOffsetY）
       const childCX = childLayout.x - dx + childLayout.width / 2
-      const childCY = childLayout.y - dy + childLayout.height / 2
+      const childCY = childLayout.y - dy - contentOffsetY + childLayout.height / 2
 
       let startX: number, startY: number, endX: number, endY: number
 
       if (Math.abs(childCX - parentCX) > Math.abs(childCY - parentCY)) {
-        // 水平方向为主（right / left）
-        const r = 8 // 圆角半径
+        // 水平方向为主（right / left）— Snowbrush curveHorizon 风格
         if (childCX > parentCX) {
           // 向右：起点右边缘，终点左边缘
           startX = myLayout.width
@@ -314,59 +326,42 @@ export class TopicNodeViewDesc extends NodeViewDesc {
           endX = childLayout.x - dx + childLayout.width
           endY = childCY
         }
-        // 水平圆角折线
-        const midX = (startX + endX) / 2
-        const dir = endY > startY ? 1 : -1
-        const d = [
-          `M ${startX} ${startY}`,
-          `L ${midX - r} ${startY}`,
-          `Q ${midX} ${startY} ${midX} ${startY + dir * r}`,
-          `L ${midX} ${endY - dir * r}`,
-          `Q ${midX} ${endY} ${midX + (endX > midX ? r : -r)} ${endY}`,
-          `L ${endX} ${endY}`,
-        ].join(' ')
+        // Snowbrush curveHorizon: M→L→Q（控制点在水平距离 1/5 处）
+        const dx2 = endX - startX
+        const ctrlX = dx2 / 5 + startX
+        const d = `M ${startX} ${startY} L ${startX} ${startY} Q ${ctrlX} ${endY} ${endX} ${endY}`
 
         const path = new Path({
           path: d,
           stroke: strokeColor(nodeStyle),
           strokeWidth: strokeWidth(nodeStyle),
-          fill: 'none',
+          fill: false,
         })
         group.add(path)
         this._connectionPaths.push(path)
       } else {
-        // 垂直方向为主（down / up）
-        const r = 8 // 圆角半径
+        // 垂直方向为主（down / up）— Snowbrush rect 风格
         if (childCY > parentCY) {
           // 向下：起点底边，终点顶边
           startX = parentCX
           startY = myLayout.height
           endX = childCX
-          endY = childLayout.y - dy
+          endY = childLayout.y - dy - contentOffsetY
         } else {
           // 向上：起点顶边，终点底边
           startX = parentCX
           startY = 0
           endX = childCX
-          endY = childLayout.y - dy + childLayout.height
+          endY = childLayout.y - dy - contentOffsetY + childLayout.height
         }
-        // 垂直圆角折线
-        const midY = (startY + endY) / 2
-        const dir = endX > startX ? 1 : -1
-        const d = [
-          `M ${startX} ${startY}`,
-          `L ${startX} ${midY - r}`,
-          `Q ${startX} ${midY} ${startX + dir * r} ${midY}`,
-          `L ${endX - dir * r} ${midY}`,
-          `Q ${endX} ${midY} ${endX} ${midY + (endY > midY ? r : -r)}`,
-          `L ${endX} ${endY}`,
-        ].join(' ')
+        // Snowbrush rect: M→L→Q（控制点在垂直方向）
+        const d = `M ${startX} ${startY} L ${startX} ${startY} Q ${endX} ${startY} ${endX} ${endY}`
 
         const path = new Path({
           path: d,
           stroke: strokeColor(nodeStyle),
           strokeWidth: strokeWidth(nodeStyle),
-          fill: 'none',
+          fill: false,
         })
         group.add(path)
         this._connectionPaths.push(path)

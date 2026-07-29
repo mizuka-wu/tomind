@@ -292,6 +292,25 @@ export function createTreeLayoutAlgorithm(name: string, direction: TreeDirection
         maxX += ox; maxY += oy
       }
 
+      // 居中根节点：将根节点移到 bounding box 中心
+      const rootLayout = nodes.get(root.id)
+      if (rootLayout) {
+        const bbCenterX = maxX / 2
+        const bbCenterY = maxY / 2
+        const rootCenterX = rootLayout.x + rootLayout.width / 2
+        const rootCenterY = rootLayout.y + rootLayout.height / 2
+        const offsetX = bbCenterX - rootCenterX
+        const offsetY = bbCenterY - rootCenterY
+        if (Math.abs(offsetX) > 0.5 || Math.abs(offsetY) > 0.5) {
+          for (const l of nodes.values()) {
+            l.x += offsetX
+            l.y += offsetY
+          }
+          maxX += offsetX
+          maxY += offsetY
+        }
+      }
+
       return { nodes, totalWidth: maxX, totalHeight: maxY }
     },
   }

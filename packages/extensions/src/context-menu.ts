@@ -180,12 +180,20 @@ function setupEventHandlers(
     }
   }
 
-  // 注册事件监听
-  // 注意：实际的事件监听需要在 DOM 或 LeaferJS 上注册
-  // 这里只是定义处理器，实际绑定由 SheetEditor 或扩展管理器处理
+  // 注册事件监听（通过扩展事件系统）
+  // 右键菜单：由 ViewDesc 的 contextmenu 事件转发
+  ctx.on('contextmenu', handleContextMenu)
+  // 长按：由 ViewDesc 的 pointerdown/pointerup/pointermove 转发
+  ctx.on('pointerdown', handlePointerDown)
+  ctx.on('pointerup', handlePointerUp)
+  ctx.on('pointermove', handlePointerMove)
 
   // 返回清理函数
   return () => {
+    ctx.off('contextmenu', handleContextMenu)
+    ctx.off('pointerdown', handlePointerDown)
+    ctx.off('pointerup', handlePointerUp)
+    ctx.off('pointermove', handlePointerMove)
     if (longPressTimer) {
       clearTimeout(longPressTimer)
     }

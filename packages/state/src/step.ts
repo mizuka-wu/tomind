@@ -83,6 +83,20 @@ function replaceNodeInTree(root: NodeDesc, targetId: string, replacer: (node: No
 }
 
 /**
+ * 在节点树中查找指定 ID 的节点
+ */
+function findNodeById(root: NodeDesc, targetId: string): NodeDesc | null {
+  if (root.id === targetId) return root
+  for (const children of Object.values(root.children)) {
+    for (const child of children) {
+      const found = findNodeById(child, targetId)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+/**
  * 递归删除节点树中指定 ID 的节点
  * 返回新的根节点（不可变）
  */
@@ -180,6 +194,9 @@ export class InsertNodeStep extends Step {
  * 删除节点
  */
 export class RemoveNodeStep extends Step {
+  /** 被删除的节点快照，由 apply() 填充供 invert() 使用 */
+  private _deletedNode: NodeDesc | null = null
+
   constructor(
     public readonly nodeId: string,
     public readonly parentId?: string,
@@ -189,13 +206,21 @@ export class RemoveNodeStep extends Step {
   }
 
   apply(doc: NodeDesc): NodeDesc {
+    // 保存被删除节点的完整数据，用于 invert() 恢复
+    this._deletedNode = findNodeById(doc, this.nodeId)
     return removeNodeFromTree(doc, this.nodeId)
   }
 
   invert(): Step {
-    // 需要保存被删除的节点，用于 undo
-    // 这里简化处理，实际应该在 apply 时保存
-    return new InsertNodeStep(this.parentId || '', { id: this.nodeId } as NodeDesc, this.index)
+    if (this._deletedNode) {
+      return new InsertNodeStep(this.parentId || '', this._deletedNode, this.index)
+    }
+    // fallback：创建最小可用节点
+    return new InsertNodeStep(
+      this.parentId || '',
+      { id: this.nodeId, type: 'topic', attrs: {}, children: {} },
+      this.index,
+    )
   }
 
   toJSON(): StepJSON {

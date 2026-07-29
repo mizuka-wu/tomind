@@ -117,6 +117,18 @@ export const timelineHorizontalLayoutAlgorithm: LayoutAlgorithm = {
       maxX = Math.max(maxX, l.x + l.width)
       maxY = Math.max(maxY, l.y + l.height)
     }
+
+    // 居中根节点
+    const rootLayout = nodes.get(root.id)
+    if (rootLayout) {
+      const ox = maxX / 2 - (rootLayout.x + rootLayout.width / 2)
+      const oy = maxY / 2 - (rootLayout.y + rootLayout.height / 2)
+      if (Math.abs(ox) > 0.5 || Math.abs(oy) > 0.5) {
+        for (const l of nodes.values()) { l.x += ox; l.y += oy }
+        maxX += ox; maxY += oy
+      }
+    }
+
     return { nodes, totalWidth: maxX, totalHeight: maxY }
   },
 }
@@ -168,6 +180,18 @@ export const timelineVerticalLayoutAlgorithm: LayoutAlgorithm = {
       maxX = Math.max(maxX, l.x + l.width)
       maxY = Math.max(maxY, l.y + l.height)
     }
+
+    // 居中根节点
+    const rootLayout = nodes.get(root.id)
+    if (rootLayout) {
+      const ox = maxX / 2 - (rootLayout.x + rootLayout.width / 2)
+      const oy = maxY / 2 - (rootLayout.y + rootLayout.height / 2)
+      if (Math.abs(ox) > 0.5 || Math.abs(oy) > 0.5) {
+        for (const l of nodes.values()) { l.x += ox; l.y += oy }
+        maxX += ox; maxY += oy
+      }
+    }
+
     return { nodes, totalWidth: maxX, totalHeight: maxY }
   },
 }

@@ -59,28 +59,44 @@ export class Transform {
   }
 
   /**
-   * 过滤 Steps（返回新 Transform，不重新应用）
+   * 过滤 Steps（返回新 Transform，重新应用过滤后的 steps）
    */
   filter(predicate: (step: Step) => boolean): Transform {
-    // 注意：filter 后需要重新计算 doc
-    // 这里简化处理，实际应该重新应用所有 step
+    const filteredSteps = this.steps.filter(predicate)
+    // 从原始 doc（docs[0]）重新应用过滤后的 steps
+    const baseDoc = this.docs[0] ?? this.doc
+    let currentDoc = baseDoc
+    const newDocs: NodeDesc[] = [currentDoc]
+    for (const step of filteredSteps) {
+      currentDoc = step.apply(currentDoc)
+      newDocs.push(currentDoc)
+    }
     return new Transform(
-      this.doc,
-      [...this.steps.filter(predicate)],
-      [...this.docs],
-      this._meta as Map<string, unknown>
+      currentDoc,
+      filteredSteps,
+      newDocs,
+      new Map(this._meta),
     )
   }
 
   /**
-   * 映射 Steps（返回新 Transform，不重新应用）
+   * 映射 Steps（返回新 Transform，重新应用映射后的 steps）
    */
   map(fn: (step: Step) => Step): Transform {
+    const mappedSteps = this.steps.map(fn)
+    // 从原始 doc（docs[0]）重新应用映射后的 steps
+    const baseDoc = this.docs[0] ?? this.doc
+    let currentDoc = baseDoc
+    const newDocs: NodeDesc[] = [currentDoc]
+    for (const step of mappedSteps) {
+      currentDoc = step.apply(currentDoc)
+      newDocs.push(currentDoc)
+    }
     return new Transform(
-      this.doc,
-      [...this.steps.map(fn)],
-      [...this.docs],
-      this._meta as Map<string, unknown>
+      currentDoc,
+      mappedSteps,
+      newDocs,
+      new Map(this._meta),
     )
   }
 

@@ -141,18 +141,19 @@ export const CopyPasteExtension = createExtension<CopyPasteOptions>({
       ctx.registerCommand(name, command)
     }
 
-    // 注册快捷键
-    const shortcuts: Record<string, KeyboardShortcutHandler> = {
-      'Mod-c': () => ctx.executeCommand('clipboard.copy'),
-      'Mod-v': () => ctx.executeCommand('clipboard.paste'),
-      'Mod-x': () => ctx.executeCommand('clipboard.cut'),
-    }
-
     // 返回清理函数
     return () => {
       for (const name of Object.keys(commands)) {
         ctx.unregisterCommand(name)
       }
+    }
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      'Mod-c': (ctx) => ctx.executeCommand('clipboard.copy'),
+      'Mod-v': (ctx) => ctx.executeCommand('clipboard.paste'),
+      'Mod-x': (ctx) => ctx.executeCommand('clipboard.cut'),
     }
   },
 })
