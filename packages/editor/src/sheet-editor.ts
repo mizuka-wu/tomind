@@ -36,7 +36,7 @@ import type { LayoutEngine } from '@tomind/layout'
 import { CommandManager } from '@tomind/commands'
 import type { CommandResult } from '@tomind/commands'
 import { ExtensionManager } from '@tomind/extension'
-import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEditorInterface } from '@tomind/extension'
+import type { Extension, ExtensionContext, CommandFn, EventHandler } from '@tomind/extension'
 import type { WorkbookEditor } from './workbook-editor'
 
 // ==================== 事件类型 ====================
