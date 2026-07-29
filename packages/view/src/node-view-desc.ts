@@ -312,7 +312,8 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       let startX: number, startY: number, endX: number, endY: number
 
       if (Math.abs(childCX - parentCX) > Math.abs(childCY - parentCY)) {
-        // 水平方向为主（right / left）— curveHorizon 风格
+        // 水平方向为主（right / left）
+        const r = 8 // 圆角半径
         if (childCX > parentCX) {
           // 向右：起点右边缘，终点左边缘
           startX = myLayout.width
@@ -326,21 +327,29 @@ export class TopicNodeViewDesc extends NodeViewDesc {
           endX = childLayout.x - dx + childLayout.width
           endY = childCY
         }
-        // curveHorizon: M→L→Q（控制点在水平距离 1/5 处）
-        const dx2 = endX - startX
-        const ctrlX = dx2 / 5 + startX
-        const d = `M ${startX} ${startY} L ${startX} ${startY} Q ${ctrlX} ${endY} ${endX} ${endY}`
+        // 水平圆角折线：起点 → 水平到中点 → 圆角转弯 → 垂直到终点高度 → 圆角转弯 → 水平到终点
+        const midX = (startX + endX) / 2
+        const dir = endY > startY ? 1 : -1
+        const d = [
+          `M ${startX} ${startY}`,
+          `L ${midX - r} ${startY}`,
+          `Q ${midX} ${startY} ${midX} ${startY + dir * r}`,
+          `L ${midX} ${endY - dir * r}`,
+          `Q ${midX} ${endY} ${midX + (endX > midX ? r : -r)} ${endY}`,
+          `L ${endX} ${endY}`,
+        ].join(' ')
 
         const path = new Path({
           path: d,
           stroke: strokeColor(nodeStyle),
           strokeWidth: strokeWidth(nodeStyle),
-          fill: false,
+          fill: 'none',
         })
         group.add(path)
         this._connectionPaths.push(path)
       } else {
-        // 垂直方向为主（down / up）— rect 风格
+        // 垂直方向为主（down / up）
+        const r = 8 // 圆角半径
         if (childCY > parentCY) {
           // 向下：起点底边，终点顶边
           startX = parentCX
@@ -354,14 +363,23 @@ export class TopicNodeViewDesc extends NodeViewDesc {
           endX = childCX
           endY = childLayout.y - dy - contentOffsetY + childLayout.height
         }
-        // rect: M→L→Q（控制点在垂直方向）
-        const d = `M ${startX} ${startY} L ${startX} ${startY} Q ${endX} ${startY} ${endX} ${endY}`
+        // 垂直圆角折线：起点 → 垂直到中点 → 圆角转弯 → 水平到终点列 → 圆角转弯 → 垂直到终点
+        const midY = (startY + endY) / 2
+        const dir = endX > startX ? 1 : -1
+        const d = [
+          `M ${startX} ${startY}`,
+          `L ${startX} ${midY - r}`,
+          `Q ${startX} ${midY} ${startX + dir * r} ${midY}`,
+          `L ${endX - dir * r} ${midY}`,
+          `Q ${endX} ${midY} ${endX} ${midY + (endY > midY ? r : -r)}`,
+          `L ${endX} ${endY}`,
+        ].join(' ')
 
         const path = new Path({
           path: d,
           stroke: strokeColor(nodeStyle),
           strokeWidth: strokeWidth(nodeStyle),
-          fill: false,
+          fill: 'none',
         })
         group.add(path)
         this._connectionPaths.push(path)
