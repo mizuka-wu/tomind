@@ -329,8 +329,26 @@ export class SheetEditor {
     if (this._docView) {
       // 首次渲染前必须先 compute 布局，否则 getLayoutResult() 返回空 Map，
       // TopicRenderer.render() 会因找不到 nodeLayout 而跳过所有节点渲染
-      this.layoutEngine.compute(this._state)
+      const result = this.layoutEngine.compute(this._state)
       this.initialRender(this._docView)
+
+      // 初始 viewport 对准根节点：将 viewport 平移到根节点中心
+      const doc = this._state.doc
+      if (doc) {
+        const rootLayout = result.nodes.get(doc.id)
+        if (rootLayout) {
+          const rootCX = rootLayout.x + rootLayout.width / 2
+          const rootCY = rootLayout.y + rootLayout.height / 2
+          // 获取画布尺寸，计算偏移使根节点居中
+          const canvasWidth = this.dom.clientWidth
+          const canvasHeight = this.dom.clientHeight
+          this.setViewport({
+            x: canvasWidth / 2 - rootCX,
+            y: canvasHeight / 2 - rootCY,
+            zoom: this._state.viewport.zoom,
+          })
+        }
+      }
     }
   }
 
