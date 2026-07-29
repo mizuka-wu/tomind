@@ -299,15 +299,15 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       if (!childLayout) continue
 
       // 连线坐标相对于当前 element（element 已定位到 myLayout.x/y）
-      // 子节点 element 已经是相对坐标（减去了父节点绝对位置和 contentGroup 偏移）
+      // 子节点在 contentGroup（y:40）里，但连线画在 element 空间
+      // 子节点在 element 空间的位置 = 布局绝对坐标 - 父节点绝对坐标
       const dx = myLayout.x
       const dy = myLayout.y
-      const contentOffsetY = (this as any)._contentGroup?.y ?? 40
       const parentCX = myLayout.width / 2
       const parentCY = myLayout.height / 2
-      // 子节点在父 element 坐标系下的中心（element 已减去 contentOffsetY）
+      // 子节点中心在父 element 坐标系下（不减 contentOffsetY，因为连线在 element 层）
       const childCX = childLayout.x - dx + childLayout.width / 2
-      const childCY = childLayout.y - dy - contentOffsetY + childLayout.height / 2
+      const childCY = childLayout.y - dy + childLayout.height / 2
 
       let startX: number, startY: number, endX: number, endY: number
 
@@ -355,13 +355,13 @@ export class TopicNodeViewDesc extends NodeViewDesc {
           startX = parentCX
           startY = myLayout.height
           endX = childCX
-          endY = childLayout.y - dy - contentOffsetY
+          endY = childLayout.y - dy
         } else {
           // 向上：起点顶边，终点底边
           startX = parentCX
           startY = 0
           endX = childCX
-          endY = childLayout.y - dy - contentOffsetY + childLayout.height
+          endY = childLayout.y - dy + childLayout.height
         }
         // 垂直圆角折线：起点 → 垂直到中点 → 圆角转弯 → 水平到终点列 → 圆角转弯 → 垂直到终点
         const midY = (startY + endY) / 2
