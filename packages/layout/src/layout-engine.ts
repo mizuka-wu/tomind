@@ -44,7 +44,7 @@ export const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
   nodePadding: { top: 8, right: 16, bottom: 8, left: 16 },
   rootOffsetX: 50,
   lineHeight: 20,
-  charWidthFactor: 0.6,
+  charWidthFactor: 1.0,  // 中英文混合近似：中文≈1.0，英文≈0.6，取 1.0 保守估算
 }
 
 export interface LayoutAlgorithm {

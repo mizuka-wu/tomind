@@ -94,18 +94,9 @@ function rectsIntersect(a: Bounds, b: { x: number; y: number; width: number; hei
 }
 
 /**
- * 缓存最近一次 LayoutResult，避免每次框选都重新计算
- */
-let cachedLayoutResult: LayoutResult | null = null
-let cachedLayoutState: SheetState | null = null
-
-/**
- * 获取 LayoutResult（有缓存，状态不变时复用）
+ * 获取 LayoutResult（每次重新计算，避免跨 Sheet 缓存污染）
  */
 function getLayoutResult(state: SheetState): LayoutResult {
-  if (cachedLayoutResult && cachedLayoutState === state) {
-    return cachedLayoutResult
-  }
   const doc = state.doc
   if (!doc) {
     return { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
@@ -113,9 +104,7 @@ function getLayoutResult(state: SheetState): LayoutResult {
   // 计算布局（不传 StyleEngine，使用默认参数 — 框选用足够精确）
   const engine = new LayoutEngine()
   engine.setStyleEngine(null)
-  cachedLayoutResult = engine.compute(state)
-  cachedLayoutState = state
-  return cachedLayoutResult
+  return engine.compute(state)
 }
 
 /**

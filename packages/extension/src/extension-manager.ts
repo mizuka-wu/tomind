@@ -127,11 +127,21 @@ export class ExtensionManager implements IExtensionManager {
       ctx.registerLayout(layoutAlgorithm)
     }
 
-    // 调用 addKeyboardShortcuts 注册快捷键
+    // 调用 addKeyboardShortcuts 注册快捷键（Tiptap 风格）
     if (extension.addKeyboardShortcuts) {
       const shortcuts = extension.addKeyboardShortcuts()
       for (const [key, handler] of Object.entries(shortcuts)) {
         this._keyboardShortcuts.set(key, handler)
+      }
+    }
+
+    // 旧方式：shortcuts（string → command name 映射）
+    if (extension.shortcuts) {
+      for (const [shortcut, commandName] of Object.entries(extension.shortcuts)) {
+        this._keyboardShortcuts.set(shortcut, () => {
+          this.executeCommand(commandName)
+          return true
+        })
       }
     }
 
@@ -290,6 +300,20 @@ export class ExtensionManager implements IExtensionManager {
     const state = this._ctx.getState()
     const dispatch = this._ctx.dispatch
     return command(state, dispatch, args)
+  }
+
+  /**
+   * 注册命令（供 ExtensionContext.registerCommand 桥接）
+   */
+  registerCommand(name: string, command: CommandFn): void {
+    this._commands.set(name, command)
+  }
+
+  /**
+   * 注销命令（供 ExtensionContext.unregisterCommand 桥接）
+   */
+  unregisterCommand(name: string): void {
+    this._commands.delete(name)
   }
 
   /**

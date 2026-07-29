@@ -389,14 +389,11 @@ export class WorkbookEditor implements WorkbookEditorInterface {
         return workbook.executeCommand(name, args)
       },
       registerCommand: (name: string, command: CommandFn) => {
-        // 委托到活动 Sheet 的 CommandManager
-        const sheet = workbook.getActiveSheet()
-        sheet?.registerCommand(name, command)
+        // 注册到 Workbook 级别的 ExtensionManager（所有 sheet 共享）
+        workbook.extensionManager.registerCommand?.(name, command)
       },
       unregisterCommand: (name: string) => {
-        // 委托到活动 Sheet 的 CommandManager
-        const sheet = workbook.getActiveSheet()
-        sheet?.unregisterCommand(name)
+        workbook.extensionManager.unregisterCommand?.(name)
       },
       on: (event: string, handler: EventHandler) => {
         workbook.on(event, handler)
