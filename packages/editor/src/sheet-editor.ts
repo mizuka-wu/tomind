@@ -273,6 +273,10 @@ export class SheetEditor {
     // 后续节点通过 getLayoutResult() 读取，不再重复算
     this.layoutEngine.compute(newState)
     this.updateDocView(newState.doc, tr)
+    // 将 viewport 状态同步到 LeaferJS 画布
+    // setupViewportSync 只做了 LeaferJS → state 的单向同步
+    // 这里补上 state → LeaferJS 的反向同步
+    this.applyViewportToLeaferJS(newState.viewport)
     this.emit('stateUpdate', newState)
   }
 
@@ -601,6 +605,19 @@ export class SheetEditor {
       TopicNodeViewDesc.state = newState
       this.emit('viewportChange', viewport)
     })
+  }
+
+  /**
+   * 将 viewport 状态应用到 LeaferJS 画布
+   * LeaferJS 的 tree 层是可视区域的根，移动它的 x/y 相当于平移画布
+   */
+  private applyViewportToLeaferJS(viewport: Viewport): void {
+    if (!this.app.tree) return
+    const tree = this.app.tree
+    tree.x = viewport.x
+    tree.y = viewport.y
+    tree.scaleX = viewport.zoom
+    tree.scaleY = viewport.zoom
   }
 
   get viewport(): Viewport {
