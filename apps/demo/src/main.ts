@@ -29,6 +29,17 @@ async function init() {
       attrs: { title: tree.title || 'XMind Demo' },
       children: { attached: [topicNode] },
     }
+    // 注册 XMind 主题到 StyleEngine
+    if (tree.themeData) {
+      styleEngine.loadTheme({
+        id: tree.themeData.map?.id || tree.themeData.centralTopic?.id || 'xmind',
+        color: tree.themeData,
+      })
+      styleEngine.setActiveTheme(
+        tree.themeData.map?.id || tree.themeData.centralTopic?.id || 'xmind'
+      )
+      console.log('[demo] loaded xmind theme:', Object.keys(tree.themeData))
+    }
     console.log('[demo] loaded xmind:', tree.title)
   } catch (e) {
     console.error('[demo] failed to load xmind, using sample data:', e)

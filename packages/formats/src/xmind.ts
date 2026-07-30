@@ -44,11 +44,73 @@ interface XMindTopic {
   style?: { properties?: Record<string, string> }
 }
 
+interface XMindThemeEntry {
+  id?: string
+  properties?: Record<string, string>
+}
+
 interface XMindSheet {
   id: string
   class: string
   title: string
   rootTopic: XMindTopic
+  theme?: {
+    id?: string
+    centralTopic?: XMindThemeEntry
+    mainTopic?: XMindThemeEntry
+    subTopic?: XMindThemeEntry
+    rootTopic?: XMindThemeEntry
+    floatingTopic?: XMindThemeEntry
+    calloutTopic?: XMindThemeEntry
+    summaryTopic?: XMindThemeEntry
+    map?: XMindThemeEntry
+    importantTopic?: XMindThemeEntry
+    minorTopic?: XMindThemeEntry
+    expiredTopic?: XMindThemeEntry
+    [key: string]: XMindThemeEntry | string | undefined
+  }
+}
+
+// ==================== XMind 属性名 → camelCase 映射 ====================
+
+const XMIND_PROP_MAP: Record<string, string> = {
+  'fo:font-family': 'fontFamily',
+  'fo:font-weight': 'fontWeight',
+  'fo:font-size': 'fontSize',
+  'fo:font-style': 'fontStyle',
+  'fo:color': 'fontColor',
+  'fo:text-decoration': 'textDecoration',
+  'fo:text-transform': 'textTransform',
+  'fo:text-align': 'textAlign',
+  'svg:fill': 'fillColor',
+  'fill-pattern': 'fillPattern',
+  'border-line-color': 'borderColor',
+  'border-line-width': 'borderWidth',
+  'border-line-pattern': 'borderPattern',
+  'line-color': 'lineColor',
+  'line-width': 'lineWidth',
+  'line-class': 'lineClass',
+  'line-pattern': 'linePattern',
+  'line-corner': 'lineCorner',
+  'shape-class': 'shapeClass',
+  'shape-corner': 'shapeCorner',
+  'arrow-end-class': 'arrowEndClass',
+  'multi-line-colors': 'multiLineColors',
+}
+
+/** 将 XMind 属性对象转为 camelCase */
+function convertXMindProps(props: Record<string, string>): Record<string, string | number> {
+  const result: Record<string, string | number> = {}
+  for (const [key, value] of Object.entries(props)) {
+    const mapped = XMIND_PROP_MAP[key]
+    if (mapped) {
+      result[mapped] = value
+    } else {
+      // 未映射的属性保留原名（如 layout 等）
+      result[key] = value
+    }
+  }
+  return result
 }
 
 // ==================== 解析 ====================
@@ -108,9 +170,25 @@ export async function parseXMind(
     throw new Error('XMind sheet has no root topic')
   }
 
+  // 提取主题数据
+  let themeData: ModelTree['themeData'] | undefined
+  if (sheet.theme) {
+    themeData = {}
+    for (const [className, entry] of Object.entries(sheet.theme)) {
+      if (className === 'id') continue // 跳过顶层 id
+      if (typeof entry !== 'object' || !entry || !entry.properties) continue
+      themeData[className] = {
+        id: entry.id,
+        properties: convertXMindProps(entry.properties),
+      }
+    }
+    if (Object.keys(themeData).length === 0) themeData = undefined
+  }
+
   return {
     root: convertTopic(sheet.rootTopic),
     title: sheet.title,
+    themeData,
   }
 }
 
