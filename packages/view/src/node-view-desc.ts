@@ -8,8 +8,7 @@
  * 4. 应用 Node Decoration（样式装饰）
  */
 
-import { Group, Rect, Ellipse } from 'leafer-ui'
-import { Path } from 'leafer-ui'
+import { Group, Rect, Ellipse, Line } from 'leafer-ui'
 import { ViewDesc, DirtyFlag } from './view-desc'
 import type {
   NodeDesc,
@@ -154,7 +153,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
   private renderer: Renderer | null = null
   private _selectBoxElement: Group | null = null
   private _isHovering = false
-  private _connectionPaths: Path[] = []
+  private _connectionPaths: Line[] = []
 
   protected createElement(): Group {
     const group = new Group()
@@ -264,7 +263,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 
   /**
    * 绘制从当前节点到每个子节点的连线
-   * 连线画在 contentGroup 里（在子节点下方）
+   * 使用 Line + points + cornerRadius（LeaferJS 原生圆角折线）
    */
   private renderConnections(layout: LayoutResult): void {
     const group = this.element
@@ -294,96 +293,69 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       ? NodeViewDesc.styleEngine.computeStyle(NodeViewDesc.state, this.node.id) as Record<string, unknown>
       : {}
 
+    const color = strokeColor(nodeStyle)
+    const width = strokeWidth(nodeStyle)
+    const cornerRadius = 8
+
     for (const child of children) {
       const childLayout = layout.nodes.get(child.id)
       if (!childLayout) continue
 
       // 连线坐标相对于当前 element（element 已定位到 myLayout.x/y）
-      // 子节点在 contentGroup（y:40）里，但连线画在 element 空间
-      // 子节点在 element 空间的位置 = 布局绝对坐标 - 父节点绝对坐标
       const dx = myLayout.x
       const dy = myLayout.y
       const parentCX = myLayout.width / 2
       const parentCY = myLayout.height / 2
-      // 子节点中心在父 element 坐标系下（不减 contentOffsetY，因为连线在 element 层）
+      // 子节点中心在父 element 坐标系下
       const childCX = childLayout.x - dx + childLayout.width / 2
       const childCY = childLayout.y - dy + childLayout.height / 2
 
-      let startX: number, startY: number, endX: number, endY: number
+      let points: number[]
 
       if (Math.abs(childCX - parentCX) > Math.abs(childCY - parentCY)) {
         // 水平方向为主（right / left）
-        const r = 8 // 圆角半径
+        let startX: number, startY: number, endX: number, endY: number
         if (childCX > parentCX) {
-          // 向右：起点右边缘，终点左边缘
           startX = myLayout.width
           startY = parentCY
           endX = childLayout.x - dx
           endY = childCY
         } else {
-          // 向左：起点左边缘，终点右边缘
           startX = 0
           startY = parentCY
           endX = childLayout.x - dx + childLayout.width
           endY = childCY
         }
-        // 水平圆角折线：起点 → 水平到中点 → 圆角转弯 → 垂直到终点高度 → 圆角转弯 → 水平到终点
+        // 水平折线：起点 → 水平中点 → 垂直到终点高度 → 水平到终点
         const midX = (startX + endX) / 2
-        const dir = endY > startY ? 1 : -1
-        const d = [
-          `M ${startX} ${startY}`,
-          `L ${midX - r} ${startY}`,
-          `Q ${midX} ${startY} ${midX} ${startY + dir * r}`,
-          `L ${midX} ${endY - dir * r}`,
-          `Q ${midX} ${endY} ${midX + (endX > midX ? r : -r)} ${endY}`,
-          `L ${endX} ${endY}`,
-        ].join(' ')
-
-        const path = new Path({
-          path: d,
-          stroke: strokeColor(nodeStyle),
-          strokeWidth: strokeWidth(nodeStyle),
-          fill: 'none',
-        })
-        group.add(path)
-        this._connectionPaths.push(path)
+        points = [startX, startY, midX, startY, midX, endY, endX, endY]
       } else {
         // 垂直方向为主（down / up）
-        const r = 8 // 圆角半径
+        let startX: number, startY: number, endX: number, endY: number
         if (childCY > parentCY) {
-          // 向下：起点底边，终点顶边
           startX = parentCX
           startY = myLayout.height
           endX = childCX
           endY = childLayout.y - dy
         } else {
-          // 向上：起点顶边，终点底边
           startX = parentCX
           startY = 0
           endX = childCX
           endY = childLayout.y - dy + childLayout.height
         }
-        // 垂直圆角折线：起点 → 垂直到中点 → 圆角转弯 → 水平到终点列 → 圆角转弯 → 垂直到终点
+        // 垂直折线：起点 → 垂直中点 → 水平到终点列 → 垂直到终点
         const midY = (startY + endY) / 2
-        const dir = endX > startX ? 1 : -1
-        const d = [
-          `M ${startX} ${startY}`,
-          `L ${startX} ${midY - r}`,
-          `Q ${startX} ${midY} ${startX + dir * r} ${midY}`,
-          `L ${endX - dir * r} ${midY}`,
-          `Q ${endX} ${midY} ${endX} ${midY + (endY > midY ? r : -r)}`,
-          `L ${endX} ${endY}`,
-        ].join(' ')
-
-        const path = new Path({
-          path: d,
-          stroke: strokeColor(nodeStyle),
-          strokeWidth: strokeWidth(nodeStyle),
-          fill: 'none',
-        })
-        group.add(path)
-        this._connectionPaths.push(path)
+        points = [startX, startY, startX, midY, endX, midY, endX, endY]
       }
+
+      const line = new Line({
+        points,
+        cornerRadius,
+        stroke: color,
+        strokeWidth: width,
+      })
+      group.add(line)
+      this._connectionPaths.push(line)
     }
   }
 
