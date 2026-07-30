@@ -187,6 +187,15 @@ export class SheetEditor {
       }
     }
 
+    // 响应扩展的 'getContainer' 事件，回调传入 DOM 容器
+    // 必须在 setupExtensions 之前注册，否则扩展的 ctx.emit('getContainer') 无人接收
+    this._emitter.addEventListener('getContainer', ((e: Event) => {
+      const callback = (e as CustomEvent).detail
+      if (typeof callback === 'function') {
+        callback(this.dom)
+      }
+    }) as EventListener)
+
     // 初始化扩展（必须在 createDocView 之前，扩展注册的 NodeView 才能生效）
     this.setupExtensions()
 
@@ -198,14 +207,6 @@ export class SheetEditor {
 
     // 监听 viewport 变化
     this.setupViewportSync()
-
-    // 响应扩展的 'getContainer' 事件，回调传入 DOM 容器
-    this._emitter.addEventListener('getContainer', ((e: Event) => {
-      const callback = (e as CustomEvent).detail
-      if (typeof callback === 'function') {
-        callback(this.dom)
-      }
-    }) as EventListener)
   }
 
   // ==================== 事件 ====================
