@@ -71,7 +71,7 @@ interface XMindSheet {
   }
 }
 
-// ==================== XMind 属性名 → camelCase 映射 ====================
+// ==================== XMind 属性名 → camelCase 映射（渲染层使用） ====================
 
 const XMIND_PROP_MAP: Record<string, string> = {
   'fo:font-family': 'fontFamily',
@@ -98,16 +98,29 @@ const XMIND_PROP_MAP: Record<string, string> = {
   'multi-line-colors': 'multiLineColors',
 }
 
-/** 将 XMind 属性对象转为 camelCase */
-function convertXMindProps(props: Record<string, string>): Record<string, string | number> {
-  const result: Record<string, string | number> = {}
+/** 将 XMind 属性对象转为 camelCase（供 style engine / view 层调用） */
+export function convertXMindProps(
+  props: Record<string, string>,
+): Record<string, string> {
+  const result: Record<string, string> = {}
   for (const [key, value] of Object.entries(props)) {
     const mapped = XMIND_PROP_MAP[key]
-    if (mapped) {
-      result[mapped] = value
-    } else {
-      // 未映射的属性保留原名（如 layout 等）
-      result[key] = value
+    result[mapped || key] = value
+  }
+  return result
+}
+
+/** 将 XMind 主题条目转为 ThemeData 格式（保留原始属性名，转换由渲染层负责） */
+function convertXMindThemeEntries(
+  theme: NonNullable<XMindSheet['theme']>,
+): Record<string, { id?: string; properties: Record<string, string> }> {
+  const result: Record<string, { id?: string; properties: Record<string, string> }> = {}
+  for (const [className, entry] of Object.entries(theme)) {
+    if (className === 'id') continue
+    if (typeof entry !== 'object' || !entry || !entry.properties) continue
+    result[className] = {
+      id: entry.id,
+      properties: { ...entry.properties },
     }
   }
   return result
@@ -170,19 +183,11 @@ export async function parseXMind(
     throw new Error('XMind sheet has no root topic')
   }
 
-  // 提取主题数据
+  // 提取主题数据（保留 XMind 原始属性名，转换由渲染层负责）
   let themeData: ModelTree['themeData'] | undefined
   if (sheet.theme) {
-    themeData = {}
-    for (const [className, entry] of Object.entries(sheet.theme)) {
-      if (className === 'id') continue // 跳过顶层 id
-      if (typeof entry !== 'object' || !entry || !entry.properties) continue
-      themeData[className] = {
-        id: entry.id,
-        properties: convertXMindProps(entry.properties),
-      }
-    }
-    if (Object.keys(themeData).length === 0) themeData = undefined
+    const converted = convertXMindThemeEntries(sheet.theme)
+    themeData = Object.keys(converted).length > 0 ? converted : undefined
   }
 
   return {

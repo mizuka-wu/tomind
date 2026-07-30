@@ -43,8 +43,8 @@ export interface ModelTree {
   root: ModelNode
   /** 主题名称 */
   title?: string
-  /** 主题数据（className → { id, properties }），直接对应 StyleEngine 的 ThemeData */
-  themeData?: Record<string, { id?: string; properties: Record<string, string | number> }>
+  /** 主题数据（className → { id, properties }），保留 XMind 原始属性名 */
+  themeData?: Record<string, { id?: string; properties: Record<string, string> }>
 }
 
 // ==================== 转换器 ====================
