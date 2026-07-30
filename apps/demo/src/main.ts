@@ -18,7 +18,7 @@ async function init() {
   // 加载 xmind 文件
   let doc
   try {
-    const resp = await fetch('/demo.xmind')
+    const resp = await fetch('./demo.xmind')
     const buffer = await resp.arrayBuffer()
     const tree = await parseXMind(new Uint8Array(buffer))
     const topicNode = modelToNodeDesc(tree)
