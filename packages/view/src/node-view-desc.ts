@@ -263,7 +263,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 
   /**
    * 绘制从当前节点到每个子节点的连线
-   * 使用 Line + points（对齐 Snowbrush 直线折线效果）
+   * 使用 Line + points，样式从 StyleEngine 的 LeaferJS 映射读取
    */
   private renderConnections(layout: LayoutResult): void {
     const group = this.element
@@ -283,18 +283,16 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     const children = this.node.children['attached'] ?? []
     if (children.length === 0) return
 
-    // 连线样式（对齐 Snowbrush 默认值）
-    const strokeColor = (style: Record<string, unknown>) =>
-      (style.lineColor as string) ?? '#999999'
-    const strokeWidth = (style: Record<string, unknown>) =>
-      (style.lineWidth as number) ?? 1.5
-
-    const nodeStyle = NodeViewDesc.styleEngine && NodeViewDesc.state
-      ? NodeViewDesc.styleEngine.computeStyle(NodeViewDesc.state, this.node.id) as Record<string, unknown>
+    // 从 StyleEngine 获取 LeaferJS 兼容样式（已做 pt→px + 属性名映射）
+    // getLeaferStyle 返回: lineColor, strokeWidth, cornerRadius, strokeDash 等
+    const leaferStyle = NodeViewDesc.styleEngine && NodeViewDesc.state
+      ? NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
       : {}
 
-    const color = strokeColor(nodeStyle)
-    const width = strokeWidth(nodeStyle)
+    const color = (leaferStyle.lineColor as string) ?? '#999999'
+    const width = (leaferStyle.strokeWidth as number) ?? 1.5
+    const cornerRadius = (leaferStyle.cornerRadius as number) ?? 0
+    const strokeDash = leaferStyle.strokeDash as number[] | null | undefined
 
     for (const child of children) {
       const childLayout = layout.nodes.get(child.id)
@@ -351,6 +349,8 @@ export class TopicNodeViewDesc extends NodeViewDesc {
         points,
         stroke: color,
         strokeWidth: width,
+        ...(cornerRadius > 0 ? { cornerRadius } : {}),
+        ...(strokeDash ? { strokeDash } : {}),
       })
       group.add(line)
       this._connectionPaths.push(line)
