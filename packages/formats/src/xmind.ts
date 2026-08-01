@@ -110,7 +110,7 @@ export function convertXMindProps(
   return result
 }
 
-/** 将 XMind 主题条目转为 ThemeData 格式（保留原始属性名，转换由渲染层负责） */
+/** 将 XMind 主题条目转为 ThemeData 格式（属性名转为 camelCase，供 StyleEngine 识别） */
 function convertXMindThemeEntries(
   theme: NonNullable<XMindSheet['theme']>,
 ): Record<string, { id?: string; properties: Record<string, string> }> {
@@ -120,7 +120,9 @@ function convertXMindThemeEntries(
     if (typeof entry !== 'object' || !entry || !entry.properties) continue
     result[className] = {
       id: entry.id,
-      properties: { ...entry.properties },
+      // XMind 使用 kebab-case 属性名（如 "svg:fill"、"fo:font-size"），
+      // 这里统一转换为 camelCase（如 "fillColor"、"fontSize"），使 StyleEngine 能正确识别和应用
+      properties: convertXMindProps(entry.properties),
     }
   }
   return result
