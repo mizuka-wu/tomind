@@ -27,6 +27,8 @@ export { orgChartDownLayoutAlgorithm, orgChartUpLayoutAlgorithm } from './org-ch
 export { timelineHorizontalLayoutAlgorithm, timelineVerticalLayoutAlgorithm } from './timeline-layout'
 export { timelineHorizontalUpLayoutAlgorithm } from './timeline-horizontal-up-layout'
 export { timelineHorizontalDownLayoutAlgorithm } from './timeline-horizontal-down-layout'
+export { timelineSidedHorizontalLayoutAlgorithm } from './timeline-sided-horizontal-layout'
+export { timelineThroughVerticalLayoutAlgorithm } from './timeline-through-vertical-layout'
 
 // Fishbone 布局
 export { fishboneLeftHeadedLayoutAlgorithm, fishboneRightHeadedLayoutAlgorithm } from './fishbone-layout'

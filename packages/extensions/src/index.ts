@@ -29,5 +29,5 @@ export { MapClockwiseExtension, MapAnticlockwiseExtension, MapUnbalancedExtensio
 export { LogicRightExtension, LogicLeftExtension } from './logic'
 export { BraceRightExtension, BraceLeftExtension } from './brace'
 export { OrgChartDownExtension, OrgChartUpExtension } from './org-chart'
-export { TimelineHorizontalExtension, TimelineHorizontalUpExtension, TimelineHorizontalDownExtension, TimelineVerticalExtension } from './timeline'
+export { TimelineHorizontalExtension, TimelineHorizontalUpExtension, TimelineHorizontalDownExtension, TimelineSidedHorizontalExtension, TimelineThroughVerticalExtension, TimelineVerticalExtension } from './timeline'
 export { FishboneLeftHeadedExtension, FishboneRightHeadedExtension } from './fishbone'
