@@ -1,5 +1,5 @@
 /**
- * 迁移自 snowbrush-render 的主题数据
+ * 迁移的预设主题数据
  * 自动生成，请勿手动编辑
  */
 
@@ -9,6 +9,8 @@ import type { ThemeData } from '@tomind/style'
 export interface ColorThemeData {
   id: string
   tags: string[]
+  /** 颜色变量表（PRIMARY_COLOR_0 等），样式值可用 $变量名$ 引用 */
+  colorFieldsMap?: Record<string, string>
   theme: ThemeData
 }
 
@@ -26,6 +28,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Grayish"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#c1aba5",
+      "PRIMARY_COLOR_1": "#9eb4b9",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#e6ddda",
+      "SECONDARY_COLOR_2": "#88675e",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#eee8e6",
+      "DARK_COLOR": "#2d221f",
+      "QUICK_COLOR_1": "#000b0f",
+      "QUICK_COLOR_2": "#005476",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#eee8e6 #2d221f"
+    },
     "theme": {
       "map": {
         "id": "3eb0284a-4e05-416e-ac43-23eea8451aea",
@@ -115,6 +134,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Grayish"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#c6bea1",
+      "PRIMARY_COLOR_1": "#a2a2af",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#e7e4d8",
+      "SECONDARY_COLOR_2": "#908357",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#efede5",
+      "DARK_COLOR": "#302c1d",
+      "QUICK_COLOR_1": "#191532",
+      "QUICK_COLOR_2": "#3e337b",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#efede5 #302c1d"
+    },
     "theme": {
       "map": {
         "id": "d04c9e1a-0c78-470d-ab10-773e8e9aaa8d",
@@ -204,6 +240,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Grayish"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#9db6a5",
+      "PRIMARY_COLOR_1": "#bdacb0",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#d7e1da",
+      "SECONDARY_COLOR_2": "#5a7964",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#e7ede9",
+      "DARK_COLOR": "#18211b",
+      "QUICK_COLOR_1": "#320a1f",
+      "QUICK_COLOR_2": "#861d55",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#e7ede9 #18211b"
+    },
     "theme": {
       "map": {
         "id": "5a4ff022-e498-4740-908f-1e37d818fdee",
@@ -293,6 +346,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Grayish"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#9eb4b9",
+      "PRIMARY_COLOR_1": "#c1aba5",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#d9e1e3",
+      "SECONDARY_COLOR_2": "#5a767d",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#e7eced",
+      "DARK_COLOR": "#1a2224",
+      "QUICK_COLOR_1": "#531d0e",
+      "QUICK_COLOR_2": "#ab3d1d",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#e7eced #1a2224"
+    },
     "theme": {
       "map": {
         "id": "1d7850da-154a-42e2-9de1-37ee2f2347b1",
@@ -382,6 +452,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Grayish"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#a2a2af",
+      "PRIMARY_COLOR_1": "#c6bea1",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#d8d8de",
+      "SECONDARY_COLOR_2": "#606070",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#e9e9ec",
+      "DARK_COLOR": "#1a1a1e",
+      "QUICK_COLOR_1": "#4c3f00",
+      "QUICK_COLOR_2": "#b39300",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#e9e9ec #1a1a1e"
+    },
     "theme": {
       "map": {
         "id": "6c5a2f26-aca7-4635-99e9-fa7b6a9d0ab0",
@@ -471,6 +558,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Grayish"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#bdacb0",
+      "PRIMARY_COLOR_1": "#9db6a5",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#e3dcde",
+      "SECONDARY_COLOR_2": "#82676d",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ece8e9",
+      "DARK_COLOR": "#2c2325",
+      "QUICK_COLOR_1": "#000f08",
+      "QUICK_COLOR_2": "#007243",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ece8e9 #2c2325"
+    },
     "theme": {
       "map": {
         "id": "4a728405-c580-4112-9943-6beff60645aa",
@@ -560,6 +664,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#c1aba5",
+      "PRIMARY_COLOR_1": "#9eb4b9",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#40302c",
+      "SECONDARY_COLOR_2": "#88675e",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#eee8e6",
+      "DARK_COLOR": "#2d221f",
+      "QUICK_COLOR_1": "#c2dfe6",
+      "QUICK_COLOR_2": "#79baca",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#eee8e6 #2d221f"
+    },
     "theme": {
       "map": {
         "id": "3e8030e4-45ec-4196-8755-66cd5d4c71a7",
@@ -649,6 +770,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#c6bea1",
+      "PRIMARY_COLOR_1": "#a2a2af",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#433e29",
+      "SECONDARY_COLOR_2": "#908357",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#efede5",
+      "DARK_COLOR": "#302c1d",
+      "QUICK_COLOR_1": "#e0dfec",
+      "QUICK_COLOR_2": "#a29fc7",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#efede5 #302c1d"
+    },
     "theme": {
       "map": {
         "id": "7a6fb754-6073-4828-98b2-3b96af374bf5",
@@ -738,6 +876,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#9db6a5",
+      "PRIMARY_COLOR_1": "#bdacb0",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#26332a",
+      "SECONDARY_COLOR_2": "#5a7964",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#e7ede9",
+      "DARK_COLOR": "#18211b",
+      "QUICK_COLOR_1": "#f6e9ed",
+      "QUICK_COLOR_2": "#daa0b3",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#e7ede9 #18211b"
+    },
     "theme": {
       "map": {
         "id": "296f7ee2-46b0-4ac4-bd36-eb6488d38a77",
@@ -827,6 +982,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#9eb4b9",
+      "PRIMARY_COLOR_1": "#c1aba5",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#273336",
+      "SECONDARY_COLOR_2": "#5a767d",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#e7eced",
+      "DARK_COLOR": "#1a2224",
+      "QUICK_COLOR_1": "#ffffff",
+      "QUICK_COLOR_2": "#ffb99e",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#e7eced #1a2224"
+    },
     "theme": {
       "map": {
         "id": "fd3c2aa9-cc1c-4e73-91b9-d91cb62050a4",
@@ -916,6 +1088,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#a2a2af",
+      "PRIMARY_COLOR_1": "#c6bea1",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#28282e",
+      "SECONDARY_COLOR_2": "#606070",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#e9e9ec",
+      "DARK_COLOR": "#1a1a1e",
+      "QUICK_COLOR_1": "#fefbf1",
+      "QUICK_COLOR_2": "#fbe68f",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#e9e9ec #1a1a1e"
+    },
     "theme": {
       "map": {
         "id": "10c285eb-00ad-4bdd-b0d9-563a1ededb92",
@@ -1005,6 +1194,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#bdacb0",
+      "PRIMARY_COLOR_1": "#9db6a5",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#3d3134",
+      "SECONDARY_COLOR_2": "#82676d",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ece8e9",
+      "DARK_COLOR": "#2c2325",
+      "QUICK_COLOR_1": "#e5f5e9",
+      "QUICK_COLOR_2": "#9cd9ac",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ece8e9 #2c2325"
+    },
     "theme": {
       "map": {
         "id": "832875ae-f9dc-42be-8c3d-9f83272a69e5",
@@ -1094,6 +1300,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#c6bea1",
+      "PRIMARY_COLOR_1": "#efe6c6",
+      "PRIMARY_COLOR_2": "#ab9446",
+      "PRIMARY_COLOR_3": "#2a7b76",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#201e14",
+      "QUICK_COLOR_1": "#100d20",
+      "QUICK_COLOR_2": "#342b68",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #201e14"
+    },
     "theme": {
       "map": {
         "id": "3eff5bb6-fb06-4b48-9164-5031d7a80f68",
@@ -1183,6 +1406,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#9db6a5",
+      "PRIMARY_COLOR_1": "#c4e0cb",
+      "PRIMARY_COLOR_2": "#4f8766",
+      "PRIMARY_COLOR_3": "#34597d",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#fffeff",
+      "DARK_COLOR": "#0e120f",
+      "QUICK_COLOR_1": "#1d0612",
+      "QUICK_COLOR_2": "#711847",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fffeff #0e120f"
+    },
     "theme": {
       "map": {
         "id": "77722f90-9044-472c-aa8b-d67300c0264b",
@@ -1272,6 +1512,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#9eb4b9",
+      "PRIMARY_COLOR_1": "#c6dde2",
+      "PRIMARY_COLOR_2": "#246a7d",
+      "PRIMARY_COLOR_3": "#6c4a71",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#0f1415",
+      "QUICK_COLOR_1": "#3d160a",
+      "QUICK_COLOR_2": "#953519",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #0f1415"
+    },
     "theme": {
       "map": {
         "id": "334213a4-c4d4-4c7f-b0bf-22ce069a249c",
@@ -1361,6 +1618,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#a2a2af",
+      "PRIMARY_COLOR_1": "#c9cad5",
+      "PRIMARY_COLOR_2": "#54527c",
+      "PRIMARY_COLOR_3": "#a35a5c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#0e0e10",
+      "QUICK_COLOR_1": "#332a00",
+      "QUICK_COLOR_2": "#997e00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #0e0e10"
+    },
     "theme": {
       "map": {
         "id": "007fd590-e17e-4aa5-8397-5bfe1c82f1eb",
@@ -1450,6 +1724,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#aba0ab",
+      "PRIMARY_COLOR_1": "#d0c8d1",
+      "PRIMARY_COLOR_2": "#6c4a71",
+      "PRIMARY_COLOR_3": "#af6954",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#fefefe",
+      "DARK_COLOR": "#0d0b0d",
+      "QUICK_COLOR_1": "#0d0f00",
+      "QUICK_COLOR_2": "#5d6a00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fefefe #0d0b0d"
+    },
     "theme": {
       "map": {
         "id": "32ce73f5-d26d-431c-95f3-1ecf4a509f53",
@@ -1539,6 +1830,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Light Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#bdacb0",
+      "PRIMARY_COLOR_1": "#e4d5d9",
+      "PRIMARY_COLOR_2": "#8b4f65",
+      "PRIMARY_COLOR_3": "#b37f46",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#1e1819",
+      "QUICK_COLOR_1": "#000f08",
+      "QUICK_COLOR_2": "#005834",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #1e1819"
+    },
     "theme": {
       "map": {
         "id": "4336071a-6945-465c-ae75-6ca80701bd55",
@@ -1628,6 +1936,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#d02f48",
+      "PRIMARY_COLOR_1": "#a61d39",
+      "PRIMARY_COLOR_2": "#d0678e",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#e5e5e5",
+      "SECONDARY_COLOR_2": "#4a1019",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#29090e",
+      "QUICK_COLOR_1": "#004746",
+      "QUICK_COLOR_2": "#00827c",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #29090e"
+    },
     "theme": {
       "map": {
         "id": "7dfda34b-206a-40fe-9dbd-f46e31d86ea0",
@@ -1717,6 +2042,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#eec900",
+      "PRIMARY_COLOR_1": "#b39300",
+      "PRIMARY_COLOR_2": "#ffad36",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#e5e5e5",
+      "SECONDARY_COLOR_2": "#4c4000",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#211c00",
+      "QUICK_COLOR_1": "#322d51",
+      "QUICK_COLOR_2": "#534c98",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #211c00"
+    },
     "theme": {
       "map": {
         "id": "1d5b9743-1cbd-47d7-af11-ba432aa07167",
@@ -1806,6 +2148,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#00a15a",
+      "PRIMARY_COLOR_1": "#007243",
+      "PRIMARY_COLOR_2": "#b7c82b",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#e5e5e5",
+      "SECONDARY_COLOR_2": "#004c2a",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#000f08",
+      "QUICK_COLOR_1": "#612d46",
+      "QUICK_COLOR_2": "#a33c6a",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #000f08"
+    },
     "theme": {
       "map": {
         "id": "70aaf6c8-2a42-48ec-852b-acf2e3c6e7bd",
@@ -1895,6 +2254,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#00709b",
+      "PRIMARY_COLOR_1": "#005476",
+      "PRIMARY_COLOR_2": "#00aa9f",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#e5e5e5",
+      "SECONDARY_COLOR_2": "#00374c",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#000b0f",
+      "QUICK_COLOR_1": "#75362a",
+      "QUICK_COLOR_2": "#cc572e",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #000b0f"
+    },
     "theme": {
       "map": {
         "id": "2b1adbd8-9d94-4cf8-9f36-c51988382e4a",
@@ -1984,6 +2360,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#005ba5",
+      "PRIMARY_COLOR_1": "#004280",
+      "PRIMARY_COLOR_2": "#0098b9",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#e5e5e5",
+      "SECONDARY_COLOR_2": "#002a4c",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#00080f",
+      "QUICK_COLOR_1": "#794d1c",
+      "QUICK_COLOR_2": "#e19215",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #00080f"
+    },
     "theme": {
       "map": {
         "id": "dd8f2394-48e0-458b-b36e-5c04b8b739f4",
@@ -2073,6 +2466,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#81378a",
+      "PRIMARY_COLOR_1": "#612469",
+      "PRIMARY_COLOR_2": "#7574bc",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#e5e5e5",
+      "SECONDARY_COLOR_2": "#331536",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#0a040a",
+      "QUICK_COLOR_1": "#525b20",
+      "QUICK_COLOR_2": "#9cad00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #0a040a"
+    },
     "theme": {
       "map": {
         "id": "cf28695f-cc81-4b40-a6b1-3b31db707139",
@@ -2162,6 +2572,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#d02f48",
+      "PRIMARY_COLOR_1": "#ef6c70",
+      "PRIMARY_COLOR_2": "#a33c6a",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#7c1c2b",
+      "SECONDARY_COLOR_2": "#fdf1f1",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#fcf2f4",
+      "DARK_COLOR": "#140407",
+      "QUICK_COLOR_1": "#7eccc1",
+      "QUICK_COLOR_2": "#00aa9f",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fcf2f4 #140407"
+    },
     "theme": {
       "map": {
         "id": "63a834f6-b597-4b78-8258-295d5ff5b628",
@@ -2251,6 +2678,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#eec900",
+      "PRIMARY_COLOR_1": "#fad831",
+      "PRIMARY_COLOR_2": "#e19215",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#887200",
+      "SECONDARY_COLOR_2": "#fefcf0",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#fffcef",
+      "DARK_COLOR": "#0a0800",
+      "QUICK_COLOR_1": "#a29fc7",
+      "QUICK_COLOR_2": "#7574bc",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fffcef #0a0800"
+    },
     "theme": {
       "map": {
         "id": "5596aeda-6797-46ea-8ba9-844d5a284fe4",
@@ -2340,6 +2784,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#a8bb00",
+      "PRIMARY_COLOR_1": "#b7c82b",
+      "PRIMARY_COLOR_2": "#debc03",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#4c5400",
+      "SECONDARY_COLOR_2": "#fbfcf2",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#fdffef",
+      "DARK_COLOR": "#090a00",
+      "QUICK_COLOR_1": "#b89ab8",
+      "QUICK_COLOR_2": "#a165a8",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fdffef #090a00"
+    },
     "theme": {
       "map": {
         "id": "37f427ba-622b-40da-a193-1566283616d5",
@@ -2429,6 +2890,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#00709b",
+      "PRIMARY_COLOR_1": "#0098b9",
+      "PRIMARY_COLOR_2": "#00827c",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#002634",
+      "SECONDARY_COLOR_2": "#b9f2ff",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#effaff",
+      "DARK_COLOR": "#00070a",
+      "QUICK_COLOR_1": "#ffb99e",
+      "QUICK_COLOR_2": "#fa8155",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#effaff #00070a"
+    },
     "theme": {
       "map": {
         "id": "6f0b1360-6cce-40fd-bdfd-d63f4811b00e",
@@ -2518,6 +2996,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#534aa0",
+      "PRIMARY_COLOR_1": "#7574bc",
+      "PRIMARY_COLOR_2": "#005b9b",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#2e295a",
+      "SECONDARY_COLOR_2": "#f4f4fa",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#f5f4fa",
+      "DARK_COLOR": "#030306",
+      "QUICK_COLOR_1": "#fbe68f",
+      "QUICK_COLOR_2": "#fad831",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#f5f4fa #030306"
+    },
     "theme": {
       "map": {
         "id": "409e8e69-ec8b-439a-add3-c50548afda67",
@@ -2607,6 +3102,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ad2e6c",
+      "PRIMARY_COLOR_1": "#d0678e",
+      "PRIMARY_COLOR_2": "#7c3d84",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#5c1839",
+      "SECONDARY_COLOR_2": "#fbf3f6",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#fbf2f7",
+      "DARK_COLOR": "#080205",
+      "QUICK_COLOR_1": "#9cd9ac",
+      "QUICK_COLOR_2": "#41b879",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fbf2f7 #080205"
+    },
     "theme": {
       "map": {
         "id": "11a6c48b-4728-48cf-9cfa-4615694efa69",
@@ -2696,6 +3208,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#d02f48",
+      "PRIMARY_COLOR_1": "#ffffff",
+      "PRIMARY_COLOR_2": "#3e0e15",
+      "PRIMARY_COLOR_3": "#7c1c2b",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#3e0e15",
+      "QUICK_COLOR_1": "#005ba5",
+      "QUICK_COLOR_2": "#81378a",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #3e0e15"
+    },
     "theme": {
       "map": {
         "id": "4396b1a1-89cf-4c95-a827-efec86f1875e",
@@ -2785,6 +3314,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#eec900",
+      "PRIMARY_COLOR_1": "#3d3300",
+      "PRIMARY_COLOR_2": "#f0e6af",
+      "PRIMARY_COLOR_3": "#7f6b00",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#FFFFFF",
+      "DARK_COLOR": "#3d3300",
+      "QUICK_COLOR_1": "#ad2e6c",
+      "QUICK_COLOR_2": "#e95b23",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #3d3300"
+    },
     "theme": {
       "map": {
         "id": "90e8e763-3c82-4d72-8505-4f0749d55b53",
@@ -2874,6 +3420,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#a8bb00",
+      "PRIMARY_COLOR_1": "#363d00",
+      "PRIMARY_COLOR_2": "#dfe984",
+      "PRIMARY_COLOR_3": "#727f00",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#FFFFFF",
+      "DARK_COLOR": "#363d00",
+      "QUICK_COLOR_1": "#d02f48",
+      "QUICK_COLOR_2": "#f49d00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #363d00"
+    },
     "theme": {
       "map": {
         "id": "826995af-e307-42b4-a4d4-7ca1c6c5e8e6",
@@ -2963,6 +3526,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#005ba5",
+      "PRIMARY_COLOR_1": "#d8edfe",
+      "PRIMARY_COLOR_2": "#002a4c",
+      "PRIMARY_COLOR_3": "#005499",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#d8edfe",
+      "DARK_COLOR": "#002a4c",
+      "QUICK_COLOR_1": "#a8bb00",
+      "QUICK_COLOR_2": "#00857f",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#d8edfe #002a4c"
+    },
     "theme": {
       "map": {
         "id": "97c61998-8c06-40eb-95c7-83bb51ded5f8",
@@ -3052,6 +3632,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#534aa0",
+      "PRIMARY_COLOR_1": "#ffffff",
+      "PRIMARY_COLOR_2": "#1b1834",
+      "PRIMARY_COLOR_3": "#363068",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#1b1834",
+      "QUICK_COLOR_1": "#00a15a",
+      "QUICK_COLOR_2": "#00709b",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #1b1834"
+    },
     "theme": {
       "map": {
         "id": "9988937c-be5a-4a03-98e4-33d7435cfd6d",
@@ -3141,6 +3738,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Vivid Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#81378a",
+      "PRIMARY_COLOR_1": "#fbf7fb",
+      "PRIMARY_COLOR_2": "#331536",
+      "PRIMARY_COLOR_3": "#662b6d",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#fbf7fb",
+      "DARK_COLOR": "#331536",
+      "QUICK_COLOR_1": "#00857f",
+      "QUICK_COLOR_2": "#005ba5",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fbf7fb #331536"
+    },
     "theme": {
       "map": {
         "id": "7de3dc8a-dda4-41d4-baa3-bc24beb97ef1",
@@ -3231,6 +3845,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Gray",
       "Gray Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#d6d6d6",
+      "PRIMARY_COLOR_1": "#bcbcbc",
+      "PRIMARY_COLOR_2": "#a3a3a3",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#232323",
+      "QUICK_COLOR_1": "#d02f48",
+      "QUICK_COLOR_2": "#f49d00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #232323"
+    },
     "theme": {
       "map": {
         "id": "6937b410-f764-4f35-add8-29a218ec50e8",
@@ -3321,6 +3952,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Gray",
       "Gray Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#bbbbbb",
+      "PRIMARY_COLOR_1": "#a1a1a1",
+      "PRIMARY_COLOR_2": "#888888",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ededed",
+      "DARK_COLOR": "#080808",
+      "QUICK_COLOR_1": "#d02f48",
+      "QUICK_COLOR_2": "#f49d00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ededed #080808"
+    },
     "theme": {
       "map": {
         "id": "ccfef49e-1fa6-4551-85ed-d75a92e59b79",
@@ -3411,6 +4059,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Gray",
       "Gray Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#a1a1a1",
+      "PRIMARY_COLOR_1": "#878787",
+      "PRIMARY_COLOR_2": "#6d6d6d",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#d3d3d3",
+      "DARK_COLOR": "#070707",
+      "QUICK_COLOR_1": "#d02f48",
+      "QUICK_COLOR_2": "#f49d00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#d3d3d3 #070707"
+    },
     "theme": {
       "map": {
         "id": "80190039-9520-4a0d-84c3-a56ac8086db9",
@@ -3501,6 +4166,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Gray",
       "Gray Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#6d6d6d",
+      "PRIMARY_COLOR_1": "#868686",
+      "PRIMARY_COLOR_2": "#a0a0a0",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#393939",
+      "QUICK_COLOR_1": "#a61d39",
+      "QUICK_COLOR_2": "#b16c00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #393939"
+    },
     "theme": {
       "map": {
         "id": "8e6748b1-7e9b-4286-9b7d-c1b8df9b2416",
@@ -3591,6 +4273,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Gray",
       "Gray Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#545454",
+      "PRIMARY_COLOR_1": "#6d6d6d",
+      "PRIMARY_COLOR_2": "#878787",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#202020",
+      "QUICK_COLOR_1": "#a61d39",
+      "QUICK_COLOR_2": "#b16c00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #202020"
+    },
     "theme": {
       "map": {
         "id": "bbd0a2b3-a8b5-4b5e-aff2-240153eb4d58",
@@ -3681,6 +4380,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Gray",
       "Gray Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#3c3c3c",
+      "PRIMARY_COLOR_1": "#555555",
+      "PRIMARY_COLOR_2": "#6f6f6f",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#eeeeee",
+      "DARK_COLOR": "#080808",
+      "QUICK_COLOR_1": "#a61d39",
+      "QUICK_COLOR_2": "#b16c00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#eeeeee #080808"
+    },
     "theme": {
       "map": {
         "id": "96888388-9615-4088-9e28-5d4c0d2facc6",
@@ -3770,6 +4486,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#e53935",
+      "PRIMARY_COLOR_1": "#3949AB",
+      "PRIMARY_COLOR_2": "#EEEEEE",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "93611d50-9047-49ab-bdd4-1400503a16fe",
@@ -3859,6 +4592,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#C0CA33",
+      "PRIMARY_COLOR_1": "#D81B60",
+      "PRIMARY_COLOR_2": "#EEEEEE",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "f083f1f5-9a32-43c2-b483-156282ecf298",
@@ -3948,6 +4698,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#00897B",
+      "PRIMARY_COLOR_1": "#FB8C00",
+      "PRIMARY_COLOR_2": "#EEEEEE",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "067e1025-424b-4ceb-810a-7fcf5bb3f1d5",
@@ -4037,6 +4804,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#1E88E5",
+      "PRIMARY_COLOR_1": "#43A047",
+      "PRIMARY_COLOR_2": "#EEEEEE",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "c2859f0d-1c35-472f-8285-6750be8c3e51",
@@ -4126,6 +4910,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#3949AB",
+      "PRIMARY_COLOR_1": "#00897B",
+      "PRIMARY_COLOR_2": "#EEEEEE",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "3a4ea242-31a9-46e0-82f8-4ba4082397c4",
@@ -4215,6 +5016,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#8E24AA",
+      "PRIMARY_COLOR_1": "#00ACC1",
+      "PRIMARY_COLOR_2": "#EEEEEE",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "7aeb2d83-56f6-4a10-8356-fa5617496748",
@@ -4304,6 +5122,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffebee",
+      "PRIMARY_COLOR_1": "#2196F3",
+      "PRIMARY_COLOR_2": "#ffe0e5",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "aed0befc-d404-457f-bd20-03d07cce84db",
@@ -4394,6 +5229,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFF3E0",
+      "PRIMARY_COLOR_1": "#3F51B5",
+      "PRIMARY_COLOR_2": "#ffefd5",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "dc3bc3ef-7f3e-46f4-9358-7263b4e39585",
@@ -4484,6 +5336,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#E0F2F1",
+      "PRIMARY_COLOR_1": "#f44336",
+      "PRIMARY_COLOR_2": "#d8efee",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "92ea7e99-8898-43bd-8fb1-885deffd7e50",
@@ -4574,6 +5443,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#E0F7FA",
+      "PRIMARY_COLOR_1": "#FF9800",
+      "PRIMARY_COLOR_2": "#d6f5f9",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "1f922cf3-8eff-4d52-98fe-45ab9469e574",
@@ -4664,6 +5550,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#E3F2FD",
+      "PRIMARY_COLOR_1": "#CDDC39",
+      "PRIMARY_COLOR_2": "#d9edfc",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "7f8b94b1-bd6b-4bb2-ae58-de7406d92bca",
@@ -4754,6 +5657,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Classic Colorful"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F3E5F5",
+      "PRIMARY_COLOR_1": "#009688",
+      "PRIMARY_COLOR_2": "#efddf2",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#FB8C00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "aa33ba6e-1754-49c2-b83f-520b99310e01",
@@ -4844,6 +5764,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Mono"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#f44336",
+      "PRIMARY_COLOR_1": "",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#212121",
+      "QUICK_COLOR_2": "#757575",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "2839b45b-88d4-4342-8ce5-71e00777d601",
@@ -4933,6 +5870,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Mono"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FF9800",
+      "PRIMARY_COLOR_1": "",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#212121",
+      "QUICK_COLOR_2": "#757575",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "53e244c1-6dc1-439f-babd-7d305c3b2341",
@@ -5022,6 +5976,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Mono"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#4CAF50",
+      "PRIMARY_COLOR_1": "",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#212121",
+      "QUICK_COLOR_2": "#757575",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "609e5c72-c3d0-445b-a74a-253fd4d533c6",
@@ -5111,6 +6082,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Mono"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#2196F3",
+      "PRIMARY_COLOR_1": "",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#212121",
+      "QUICK_COLOR_2": "#757575",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "7f6a0c8e-57a0-4cbe-af85-ac08157ace7b",
@@ -5200,6 +6188,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Mono"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#3F51B5",
+      "PRIMARY_COLOR_1": "",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#212121",
+      "QUICK_COLOR_2": "#757575",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "fdc19c8a-80c1-4309-a6b7-597ac0e144ee",
@@ -5289,6 +6294,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
     "tags": [
       "Mono"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#E91E63",
+      "PRIMARY_COLOR_1": "",
+      "PRIMARY_COLOR_2": "",
+      "PRIMARY_COLOR_3": "",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#141414",
+      "QUICK_COLOR_1": "#212121",
+      "QUICK_COLOR_2": "#757575",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #141414"
+    },
     "theme": {
       "map": {
         "id": "2116a8a0-b904-49aa-82be-1f452e3725e0",
@@ -5379,6 +6401,17 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "Rainbow Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#fa8155",
+      "PRIMARY_COLOR_1": "#878787",
+      "PRIMARY_COLOR_2": "#ef6c70",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#0d0d0d",
+      "QUICK_COLOR_1": "#d02f48",
+      "QUICK_COLOR_2": "#f49d00",
+      "MULTI_LINE_COLORS": "#fa8155 #ffad36 #b7c82b #0098b9 #7574bc #a165a8",
+      "COLOR_LIST": " "
+    },
     "theme": {
       "map": {
         "id": "f332b4d1-bdda-40fc-930f-664f07776ada",
@@ -5472,6 +6505,17 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "Rainbow Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#2196F3",
+      "PRIMARY_COLOR_1": "#78909C",
+      "PRIMARY_COLOR_2": "#64B5F6",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#070707",
+      "QUICK_COLOR_1": "#e53935",
+      "QUICK_COLOR_2": "#C0CA33",
+      "MULTI_LINE_COLORS": "#2196F3 #1E88E5 #1976D2 #1565C0 #0D47A1 #283593",
+      "COLOR_LIST": " "
+    },
     "theme": {
       "map": {
         "id": "36688a4b-3bf6-4805-9e63-0fae14a5d7bf",
@@ -5565,6 +6609,17 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "Rainbow Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#e8c2bf",
+      "PRIMARY_COLOR_1": "#878787",
+      "PRIMARY_COLOR_2": "#dec4ca",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#0d0d0d",
+      "QUICK_COLOR_1": "#d02f48",
+      "QUICK_COLOR_2": "#f49d00",
+      "MULTI_LINE_COLORS": "#e8c2bf #f4d4b0 #d8ddad #a6d4cc #afc0d1 #c8b9c9",
+      "COLOR_LIST": " "
+    },
     "theme": {
       "map": {
         "id": "03dcbc19-3201-4378-8aaf-9acb14e99001",
@@ -5658,6 +6713,17 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "Rainbow Light"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#005b9b",
+      "PRIMARY_COLOR_1": "#878787",
+      "PRIMARY_COLOR_2": "#00827c",
+      "LIGHT_COLOR": "#f1f1f1",
+      "DARK_COLOR": "#0d0d0d",
+      "QUICK_COLOR_1": "#d02f48",
+      "QUICK_COLOR_2": "#f49d00",
+      "MULTI_LINE_COLORS": "#005b9b #534c98 #7c3d84 #a33c6a #c53f4d #cc572e",
+      "COLOR_LIST": " "
+    },
     "theme": {
       "map": {
         "id": "6996d98e-755d-4ee9-9fbb-ea3dac9aa000",
@@ -5751,6 +6817,17 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "Rainbow Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffa787",
+      "PRIMARY_COLOR_1": "#878787",
+      "PRIMARY_COLOR_2": "#85ce9e",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#3c3c3c",
+      "QUICK_COLOR_1": "#d02f48",
+      "QUICK_COLOR_2": "#f49d00",
+      "MULTI_LINE_COLORS": "#ffa787 #f19896 #dec4ca #5bafc4 #ffbe71 #d98ea5",
+      "COLOR_LIST": " "
+    },
     "theme": {
       "map": {
         "id": "ca0e6eeb-d1b4-4214-bbe8-b27b2ce91b14",
@@ -5844,6 +6921,17 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "Rainbow Dark"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#dba66b",
+      "PRIMARY_COLOR_1": "#878787",
+      "PRIMARY_COLOR_2": "#ca8281",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#272727",
+      "QUICK_COLOR_1": "#d02f48",
+      "QUICK_COLOR_2": "#f49d00",
+      "MULTI_LINE_COLORS": "#f2d96e #ffbe71 #fa8155 #a61d39 #c53f4d #ffa787",
+      "COLOR_LIST": " "
+    },
     "theme": {
       "map": {
         "id": "f18d76de-ac2f-4112-bf15-7014ed420849",
@@ -5934,6 +7022,13 @@ export const COLOR_THEMES: ColorThemeData[] = [
   {
     "id": "902bcc3b-9ad2-42e9-84c6-f14c33dd55de",
     "tags": [],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#d0d0d0",
+      "LIGHT_COLOR": "#ffffff",
+      "DARK_COLOR": "#333333",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": " "
+    },
     "theme": {
       "map": {
         "id": "4a538b8d-27c3-44b8-ad7e-b8b755d13d5a",
@@ -6027,6 +7122,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#000229",
+      "PRIMARY_COLOR_2": "#4D86DB",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "#000229",
+      "SECONDARY_COLOR_1": "#EEEBEE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#A37600",
+      "QUICK_COLOR_2": "#A10000",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#F9423A #F6A04D #F3D321 #00BC7B #486AFF #4D49BE",
+      "COLOR_LIST": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+    },
     "theme": {
       "map": {
         "id": "85df1fab-189e-436a-88d1-8cb6a8b7710b",
@@ -6113,6 +7225,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#D9D34E",
+      "PRIMARY_COLOR_2": "#4D86DB",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "#D9D34E",
+      "SECONDARY_COLOR_1": "#EEEBEE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#4ED9D2",
+      "QUICK_COLOR_2": "#D24ED9",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#ffa787 #f19896 #dec4ca #5bafc4 #ffbe71 #d98ea5",
+      "COLOR_LIST": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+    },
     "theme": {
       "map": {
         "id": "ccc4571d-ef87-4613-9f80-c115d1e970ad",
@@ -6199,6 +7328,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#52CC83",
+      "PRIMARY_COLOR_2": "#99142F",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "#52CC83",
+      "SECONDARY_COLOR_1": "#EEEBEE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#8352CC",
+      "QUICK_COLOR_2": "#CC8352",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#E7C2C0 #F3D4B2 #D8DCAF #A8D4CC #B0C0D0 #C8BAC9",
+      "COLOR_LIST": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+    },
     "theme": {
       "map": {
         "id": "78cf5217-013a-4446-a59f-7b1f98345b4d",
@@ -6285,6 +7431,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#4D86DB",
+      "PRIMARY_COLOR_2": "#99142F",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "#4D86DB",
+      "SECONDARY_COLOR_1": "#EEEBEE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#DB4D86",
+      "QUICK_COLOR_2": "#86DB4D",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#D3BD6C #ADB66B #76B18A #54A39B #5192A4 #7878A0",
+      "COLOR_LIST": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+    },
     "theme": {
       "map": {
         "id": "1f449353-e735-46c8-b461-cd69d0ab2f0b",
@@ -6371,6 +7534,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#99142F",
+      "PRIMARY_COLOR_2": "#4D86DB",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "#99142F",
+      "SECONDARY_COLOR_1": "#EEEBEE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#2F9914",
+      "QUICK_COLOR_2": "#142F99",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#F2D96E #FFBE71 #FA8155 #A61D39 #C53F4D #FFA787",
+      "COLOR_LIST": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+    },
     "theme": {
       "map": {
         "id": "bbf5e4f3-7d0c-4c2f-ae84-09a15e4597a1",
@@ -6457,6 +7637,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainbow",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#245570",
+      "PRIMARY_COLOR_2": "#4D86DB",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "#245570",
+      "SECONDARY_COLOR_1": "#EEEBEE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#702455",
+      "QUICK_COLOR_2": "#557024",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#0B5D99 #534E96 #7B4083 #A23E6A #C34150 #CA5835",
+      "COLOR_LIST": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+    },
     "theme": {
       "map": {
         "id": "f8d47ee6-801b-4fc2-85ce-42e7ed446395",
@@ -6543,6 +7740,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Energy",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#0D0D0D",
+      "PRIMARY_COLOR_2": "#233ED9",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F22816",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#0D0D0D",
+      "QUICK_COLOR_2": "#F22816",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+    },
     "theme": {
       "map": {
         "id": "b7f808ec-1958-4535-825a-0b49d093b0da",
@@ -6633,6 +7847,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Energy",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F2F2F2",
+      "PRIMARY_COLOR_1": "#0D0D0D",
+      "PRIMARY_COLOR_2": "#233ED9",
+      "PRIMARY_COLOR_3": "#ebebeb",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F22816",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#0D0D0D",
+      "QUICK_COLOR_2": "#F22816",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+    },
     "theme": {
       "map": {
         "id": "97ab4201-9692-4c55-9556-939c07d8b80d",
@@ -6723,6 +7954,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Energy",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0D0D0D",
+      "PRIMARY_COLOR_1": "#F22816",
+      "PRIMARY_COLOR_2": "#FFFFFF",
+      "PRIMARY_COLOR_3": "#262626",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F2F2F2",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#F22816",
+      "QUICK_COLOR_2": "#F2F2F2",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+    },
     "theme": {
       "map": {
         "id": "e1fbc914-4022-4e36-8661-57db5e6b3aa8",
@@ -6813,6 +8061,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Energy",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0D0D0D",
+      "PRIMARY_COLOR_1": "#F2B807",
+      "PRIMARY_COLOR_2": "#FFFFFF",
+      "PRIMARY_COLOR_3": "#262626",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F2F2F2",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#F2B807",
+      "QUICK_COLOR_2": "#F2F2F2",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+    },
     "theme": {
       "map": {
         "id": "3361c665-e2f3-4101-b739-95310e01b617",
@@ -6903,6 +8168,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Energy",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#233ED9",
+      "PRIMARY_COLOR_2": "#0D0D0D",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F22816",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#233ED9",
+      "QUICK_COLOR_2": "#F22816",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+    },
     "theme": {
       "map": {
         "id": "c6776517-a590-47ec-b758-08c0a72d5df0",
@@ -6993,6 +8275,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Energy",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0D0D0D",
+      "PRIMARY_COLOR_1": "#FFFFFF",
+      "PRIMARY_COLOR_2": "#F2F2F2",
+      "PRIMARY_COLOR_3": "#262626",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F2B807",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#FFFFFF",
+      "QUICK_COLOR_2": "#F2B807",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+    },
     "theme": {
       "map": {
         "id": "92dfe423-2807-4f1f-a705-cca6ecd6fffa",
@@ -7083,6 +8382,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Energy",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#0D0D0D",
+      "PRIMARY_COLOR_2": "#233ED9",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F22816",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#0d0d0d",
+      "QUICK_COLOR_2": "#dff116",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#F22816 #F2B807 #233ED9",
+      "COLOR_LIST": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+    },
     "theme": {
       "map": {
         "id": "42277d7e-1fca-49ae-877c-23beacbb43a9",
@@ -7169,6 +8485,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Energy",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0D0D0D",
+      "PRIMARY_COLOR_1": "#FFFFFF",
+      "PRIMARY_COLOR_2": "#F2F2F2",
+      "PRIMARY_COLOR_3": "#262626",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F2B807",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#ffffff",
+      "QUICK_COLOR_2": "#41f207",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#F2F2F2 #F22816 #F2B807 #233ED9",
+      "COLOR_LIST": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+    },
     "theme": {
       "map": {
         "id": "301045a1-c466-4ef1-ad2b-1106e8564b88",
@@ -7255,6 +8588,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Freshness",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#f0f0f0",
+      "PRIMARY_COLOR_1": "#3C74A6",
+      "PRIMARY_COLOR_2": "#B796D9",
+      "PRIMARY_COLOR_3": "#e8e8e8",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F2BDC7",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#3C74A6",
+      "QUICK_COLOR_2": "#5BA683",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+    },
     "theme": {
       "map": {
         "id": "aa135906-bb26-44c4-bde1-18822afbdb7a",
@@ -7345,6 +8695,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Freshness",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F2BDC7",
+      "PRIMARY_COLOR_1": "#3C74A6",
+      "PRIMARY_COLOR_2": "#5BA683",
+      "PRIMARY_COLOR_3": "#eb9cab",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#f0f0f0",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#3C74A6",
+      "QUICK_COLOR_2": "#B796D9",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+    },
     "theme": {
       "map": {
         "id": "ca433761-746d-468d-8889-fa20e3161c5e",
@@ -7435,6 +8802,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Freshness",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F2DC6B",
+      "PRIMARY_COLOR_1": "#3C74A6",
+      "PRIMARY_COLOR_2": "#3C74A6",
+      "PRIMARY_COLOR_3": "#558dbf",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#3C74A6",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#ba6bf2",
+      "QUICK_COLOR_2": "#6b81f2",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+    },
     "theme": {
       "map": {
         "id": "25129d68-831b-44c8-8f28-009f4608f337",
@@ -7525,6 +8909,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Freshness",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#5BA683",
+      "PRIMARY_COLOR_1": "#f0f0f0",
+      "PRIMARY_COLOR_2": "#F2DC6B",
+      "PRIMARY_COLOR_3": "#fff584",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F2BDC7",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#a56f5a",
+      "QUICK_COLOR_2": "#a65a7d",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+    },
     "theme": {
       "map": {
         "id": "1404db3c-1f24-4c3d-bb78-0c3b4e297885",
@@ -7615,6 +9016,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Freshness",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#B796D9",
+      "PRIMARY_COLOR_1": "#f0f0f0",
+      "PRIMARY_COLOR_2": "#3C74A6",
+      "PRIMARY_COLOR_3": "#558dbf",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F2DC6B",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#94d7a5",
+      "QUICK_COLOR_2": "#b7d895",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+    },
     "theme": {
       "map": {
         "id": "fa7d21a3-34a5-49a0-8b48-98414b7d39dd",
@@ -7705,6 +9123,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Freshness",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#3C74A6",
+      "PRIMARY_COLOR_1": "#f0f0f0",
+      "PRIMARY_COLOR_2": "#f0f0f0",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F2DC6B",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#8ea53b",
+      "QUICK_COLOR_2": "#a66d3b",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+    },
     "theme": {
       "map": {
         "id": "6b7905dc-2698-4e80-aaab-da68c509e283",
@@ -7795,6 +9230,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Freshness",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#f0f0f0",
+      "PRIMARY_COLOR_1": "#3C74A6",
+      "PRIMARY_COLOR_2": "#B796D9",
+      "PRIMARY_COLOR_3": "#e8e8e8",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F2BDC7",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#6d3ba6",
+      "QUICK_COLOR_2": "#5a7da6",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#F2BDC7 #5BA683 #B796D9",
+      "COLOR_LIST": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+    },
     "theme": {
       "map": {
         "id": "148f7c07-c4cc-4b7a-9a91-9d057adffddb",
@@ -7881,6 +9333,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Kimono",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#191959",
+      "PRIMARY_COLOR_2": "#8CB5FF",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FF7B31",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#191959",
+      "QUICK_COLOR_2": "#4A51D9",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+    },
     "theme": {
       "map": {
         "id": "12a2b68c-a1d7-4ac1-8ab1-d9607ee89e32",
@@ -7971,6 +9440,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Kimono",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFABAA",
+      "PRIMARY_COLOR_1": "#191959",
+      "PRIMARY_COLOR_2": "#4A51D9",
+      "PRIMARY_COLOR_3": "#ff817f",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFFFFF",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#191959",
+      "QUICK_COLOR_2": "#FFFFFF",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+    },
     "theme": {
       "map": {
         "id": "b5d8517d-3bf0-4987-8777-4c4f86a77819",
@@ -8061,6 +9547,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Kimono",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#191959",
+      "PRIMARY_COLOR_1": "#FF7B31",
+      "PRIMARY_COLOR_2": "#FFFFFF",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFABAA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#275918",
+      "QUICK_COLOR_2": "#585918",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+    },
     "theme": {
       "map": {
         "id": "b19de58d-fbf1-4129-aa83-2f65b8eb6dd8",
@@ -8151,6 +9654,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Kimono",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#8CB5FF",
+      "PRIMARY_COLOR_1": "#191959",
+      "PRIMARY_COLOR_2": "#191959",
+      "PRIMARY_COLOR_3": "#323272",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFFFFF",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#d1fe8c",
+      "QUICK_COLOR_2": "#fed58c",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+    },
     "theme": {
       "map": {
         "id": "3424ba0e-af78-4c04-93c1-e462e9527f13",
@@ -8241,6 +9761,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Kimono",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#4A51D9",
+      "PRIMARY_COLOR_2": "#8CB5FF",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FF7B31",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#4A51D9",
+      "QUICK_COLOR_2": "#191959",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+    },
     "theme": {
       "map": {
         "id": "9fa27b38-da94-4824-af5b-859d8a21817d",
@@ -8331,6 +9868,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Kimono",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#191959",
+      "PRIMARY_COLOR_1": "#FFFFFF",
+      "PRIMARY_COLOR_2": "#FFFFFF",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFABAA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#275918",
+      "QUICK_COLOR_2": "#585918",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+    },
     "theme": {
       "map": {
         "id": "3cd191bf-ea90-4363-b302-96f3fcd1eb74",
@@ -8421,6 +9975,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Kimono",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#191959",
+      "PRIMARY_COLOR_2": "#8CB5FF",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FF7B31",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#591858",
+      "QUICK_COLOR_2": "#d14ad8",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#FFABAA #FF7B31 #8CB5FF #4A51D9",
+      "COLOR_LIST": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+    },
     "theme": {
       "map": {
         "id": "23e76a53-f683-40d9-a6fb-c6cf89ac94fa",
@@ -8507,6 +10078,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Kimono",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#191959",
+      "PRIMARY_COLOR_1": "#FFFFFF",
+      "PRIMARY_COLOR_2": "#FFFFFF",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFABAA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#185949",
+      "QUICK_COLOR_2": "#185918",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#FFABAA #FF7B31 #8CB5FF #4A51D9",
+      "COLOR_LIST": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+    },
     "theme": {
       "map": {
         "id": "907d2358-267f-45eb-bb3f-fa8af40dffb1",
@@ -8593,6 +10181,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Forid",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#EDF3FF",
+      "PRIMARY_COLOR_1": "#0A052E",
+      "PRIMARY_COLOR_2": "#1692D2",
+      "PRIMARY_COLOR_3": "#e3ecff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFAA39",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#0A052E",
+      "QUICK_COLOR_2": "#D389D5",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+    },
     "theme": {
       "map": {
         "id": "16173ff3-c6e4-4b9a-8c6b-453d0d77fa83",
@@ -8683,6 +10288,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Forid",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#C1E554",
+      "PRIMARY_COLOR_1": "#0A052E",
+      "PRIMARY_COLOR_2": "#0A052E",
+      "PRIMARY_COLOR_3": "#231e47",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFAA39",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#e354e3",
+      "QUICK_COLOR_2": "#7854e4",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+    },
     "theme": {
       "map": {
         "id": "7804bde4-d5b3-412e-82c7-c06b34c8f5ce",
@@ -8773,6 +10395,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Forid",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0A052E",
+      "PRIMARY_COLOR_1": "#FFAA39",
+      "PRIMARY_COLOR_2": "#EDF3FF",
+      "PRIMARY_COLOR_3": "#231e47",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#C1E554",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#FFAA39",
+      "QUICK_COLOR_2": "#C1E554",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+    },
     "theme": {
       "map": {
         "id": "19948312-7045-4a9c-a157-7c4e883fcd97",
@@ -8863,6 +10502,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Forid",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#D389D5",
+      "PRIMARY_COLOR_1": "#0A052E",
+      "PRIMARY_COLOR_2": "#0A052E",
+      "PRIMARY_COLOR_3": "#231e47",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#EDF3FF",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#88d5be",
+      "QUICK_COLOR_2": "#8bd588",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+    },
     "theme": {
       "map": {
         "id": "487398ba-1bb7-4b4b-9ecc-877eebc90869",
@@ -8953,6 +10609,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Forid",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0A052E",
+      "PRIMARY_COLOR_1": "#1692D2",
+      "PRIMARY_COLOR_2": "#EDF3FF",
+      "PRIMARY_COLOR_3": "#231e47",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#C1E554",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#1692D2",
+      "QUICK_COLOR_2": "#C1E554",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+    },
     "theme": {
       "map": {
         "id": "7f7849c1-a197-4a12-a877-7039fbb2b557",
@@ -9043,6 +10716,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Forid",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0A052E",
+      "PRIMARY_COLOR_1": "#EDF3FF",
+      "PRIMARY_COLOR_2": "#C1E554",
+      "PRIMARY_COLOR_3": "#231e47",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFAA39",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#EDF3FF",
+      "QUICK_COLOR_2": "#FFAA39",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+    },
     "theme": {
       "map": {
         "id": "03970ecc-e438-4e51-ab8a-467968af5814",
@@ -9133,6 +10823,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Forid",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#EDF3FF",
+      "PRIMARY_COLOR_1": "#0A052E",
+      "PRIMARY_COLOR_2": "#1692D2",
+      "PRIMARY_COLOR_3": "#e3ecff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFAA39",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#2e0429",
+      "QUICK_COLOR_2": "#d5888b",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#FFAA39 #D389D5 #1692D2",
+      "COLOR_LIST": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+    },
     "theme": {
       "map": {
         "id": "3706e5f4-2f66-4777-8686-8e64d0ddcf84",
@@ -9219,6 +10926,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Forid",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0A052E",
+      "PRIMARY_COLOR_1": "#EDF3FF",
+      "PRIMARY_COLOR_2": "#C1E554",
+      "PRIMARY_COLOR_3": "#231e47",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFAA39",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#f9edff",
+      "QUICK_COLOR_2": "#8dff39",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#C1E554 #FFAA39 #D389D5 #1692D2",
+      "COLOR_LIST": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+    },
     "theme": {
       "map": {
         "id": "eeb2309a-7d30-4921-9a5e-9ae76d945d58",
@@ -9305,6 +11029,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Quaint",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F9F5DE",
+      "PRIMARY_COLOR_1": "#153E5D",
+      "PRIMARY_COLOR_2": "#4B9D9D",
+      "PRIMARY_COLOR_3": "#f6f0cd",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#7884A4",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#153E5D",
+      "QUICK_COLOR_2": "#7884A4",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+    },
     "theme": {
       "map": {
         "id": "8a40b3ff-92e1-476d-b10e-931f4b4f1d31",
@@ -9395,6 +11136,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Quaint",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#DFDDCE",
+      "PRIMARY_COLOR_1": "#153E5D",
+      "PRIMARY_COLOR_2": "#4B9D9D",
+      "PRIMARY_COLOR_3": "#cfccb5",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#7884A4",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#153E5D",
+      "QUICK_COLOR_2": "#7884A4",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+    },
     "theme": {
       "map": {
         "id": "c4fcad3e-b573-465b-b189-99943b641225",
@@ -9485,6 +11243,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Quaint",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#4B9D9D",
+      "PRIMARY_COLOR_1": "#153E5D",
+      "PRIMARY_COLOR_2": "#153E5D",
+      "PRIMARY_COLOR_3": "#2e5776",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F9F5DE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#9c884a",
+      "QUICK_COLOR_2": "#9d4a4a",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+    },
     "theme": {
       "map": {
         "id": "35d218c5-337b-4d8f-9e74-20a006ca8471",
@@ -9575,6 +11350,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Quaint",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#7884A4",
+      "PRIMARY_COLOR_1": "#F9F5DE",
+      "PRIMARY_COLOR_2": "#F9F5DE",
+      "PRIMARY_COLOR_3": "#fffff7",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#DFDDCE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#8fa478",
+      "QUICK_COLOR_2": "#a49878",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+    },
     "theme": {
       "map": {
         "id": "031f5c36-49d8-44be-9315-87c12e9af96e",
@@ -9665,6 +11457,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Quaint",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#AA79AA",
+      "PRIMARY_COLOR_1": "#153E5D",
+      "PRIMARY_COLOR_2": "#F9F5DE",
+      "PRIMARY_COLOR_3": "#fffff7",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#DFDDCE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#79aa9d",
+      "QUICK_COLOR_2": "#79aa79",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+    },
     "theme": {
       "map": {
         "id": "c65dbc84-7c68-41b7-970a-0fe1c466fecf",
@@ -9755,6 +11564,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Quaint",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#153E5D",
+      "PRIMARY_COLOR_1": "#F9F5DE",
+      "PRIMARY_COLOR_2": "#F9F5DE",
+      "PRIMARY_COLOR_3": "#fffff7",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#DFDDCE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#505d14",
+      "QUICK_COLOR_2": "#5d3314",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+    },
     "theme": {
       "map": {
         "id": "06ec34fd-023d-4890-9443-f0566af6de93",
@@ -9845,6 +11671,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Quaint",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F9F5DE",
+      "PRIMARY_COLOR_1": "#153E5D",
+      "PRIMARY_COLOR_2": "#4B9D9D",
+      "PRIMARY_COLOR_3": "#f6f0cd",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#7884A4",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#33145d",
+      "QUICK_COLOR_2": "#9778a4",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#4B9D9D #7884A4 #AA79AA",
+      "COLOR_LIST": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+    },
     "theme": {
       "map": {
         "id": "59fef625-443c-4926-af2c-ea28adebc1e6",
@@ -9931,6 +11774,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Quaint",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#153E5D",
+      "PRIMARY_COLOR_1": "#F9F5DE",
+      "PRIMARY_COLOR_2": "#F9F5DE",
+      "PRIMARY_COLOR_3": "#fffff7",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#DFDDCE",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#145d20",
+      "QUICK_COLOR_2": "#3d5d14",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#DFDDCE #4B9D9D #7884A4 #AA79AA",
+      "COLOR_LIST": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+    },
     "theme": {
       "map": {
         "id": "4a7a353e-7a21-4efc-a9b2-8149be4a522a",
@@ -10017,6 +11877,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Variety",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F6F5F5",
+      "PRIMARY_COLOR_1": "#070D59",
+      "PRIMARY_COLOR_2": "#E46D57",
+      "PRIMARY_COLOR_3": "#f1f0f0",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFC947",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#070D59",
+      "QUICK_COLOR_2": "#1F3C88",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+    },
     "theme": {
       "map": {
         "id": "ece31879-c409-4add-a590-acaf325e0343",
@@ -10107,6 +11984,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Variety",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#9BFFED",
+      "PRIMARY_COLOR_1": "#070D59",
+      "PRIMARY_COLOR_2": "#E46D57",
+      "PRIMARY_COLOR_3": "#69ffe4",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFC947",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#070D59",
+      "QUICK_COLOR_2": "#1F3C88",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+    },
     "theme": {
       "map": {
         "id": "7fc994db-344f-40c6-8ec7-10028f61326d",
@@ -10197,6 +12091,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Variety",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#070D59",
+      "PRIMARY_COLOR_1": "#FFC947",
+      "PRIMARY_COLOR_2": "#F6F5F5",
+      "PRIMARY_COLOR_3": "#202672",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#9BFFED",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#FFC947",
+      "QUICK_COLOR_2": "#9BFFED",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+    },
     "theme": {
       "map": {
         "id": "ef7c53b3-4ee8-4f65-969b-c7ddd805621c",
@@ -10287,6 +12198,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Variety",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#E46D57",
+      "PRIMARY_COLOR_1": "#070D59",
+      "PRIMARY_COLOR_2": "#070D59",
+      "PRIMARY_COLOR_3": "#202672",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F6F5F5",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#5662e4",
+      "QUICK_COLOR_2": "#56cde4",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+    },
     "theme": {
       "map": {
         "id": "ccddecc7-bcc2-4383-b577-754000d88930",
@@ -10377,6 +12305,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Variety",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#1F3C88",
+      "PRIMARY_COLOR_1": "#F6F5F5",
+      "PRIMARY_COLOR_2": "#F6F5F5",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#9BFFED",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#55861f",
+      "QUICK_COLOR_2": "#876b1f",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+    },
     "theme": {
       "map": {
         "id": "d59aee8d-5826-43c6-8bdc-9e89c7d9f70d",
@@ -10467,6 +12412,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Variety",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#070D59",
+      "PRIMARY_COLOR_1": "#F6F5F5",
+      "PRIMARY_COLOR_2": "#9BFFED",
+      "PRIMARY_COLOR_3": "#202672",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFC947",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#F6F5F5",
+      "QUICK_COLOR_2": "#FFC947",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+    },
     "theme": {
       "map": {
         "id": "b24ff659-2a3e-4266-aaf9-ef24377614f3",
@@ -10557,6 +12519,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Variety",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F6F5F5",
+      "PRIMARY_COLOR_1": "#070D59",
+      "PRIMARY_COLOR_2": "#E46D57",
+      "PRIMARY_COLOR_3": "#f1f0f0",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFC947",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#530759",
+      "QUICK_COLOR_2": "#6a1f87",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#FFC947 #E46D57 #1F3C88",
+      "COLOR_LIST": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+    },
     "theme": {
       "map": {
         "id": "54bbceb9-6453-4fda-88de-c6f376c0bbc2",
@@ -10643,6 +12622,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Variety",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#070D59",
+      "PRIMARY_COLOR_1": "#F6F5F5",
+      "PRIMARY_COLOR_2": "#9BFFED",
+      "PRIMARY_COLOR_3": "#202672",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFC947",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#f5f5f5",
+      "QUICK_COLOR_2": "#7cff46",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#9BFFED #FFC947 #E46D57 #1F3C88",
+      "COLOR_LIST": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+    },
     "theme": {
       "map": {
         "id": "5cdf2e4b-0dcc-4a3d-a62b-23bbb49171c0",
@@ -10729,6 +12725,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dazzling",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#092933",
+      "PRIMARY_COLOR_2": "#FF7DC1",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#A239EA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#092933",
+      "QUICK_COLOR_2": "#5C37E5",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+    },
     "theme": {
       "map": {
         "id": "cef4c4e1-96a3-4f6a-807c-5b4cd66d2ae3",
@@ -10819,6 +12832,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dazzling",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#EFD7E6",
+      "PRIMARY_COLOR_1": "#092933",
+      "PRIMARY_COLOR_2": "#5C37E5",
+      "PRIMARY_COLOR_3": "#e6c3d9",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FF7DC1",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#092933",
+      "QUICK_COLOR_2": "#A239EA",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+    },
     "theme": {
       "map": {
         "id": "9fe2eefa-91a5-4af4-a14b-8657a33de46d",
@@ -10909,6 +12939,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dazzling",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FF7DC1",
+      "PRIMARY_COLOR_1": "#092933",
+      "PRIMARY_COLOR_2": "#092933",
+      "PRIMARY_COLOR_3": "#22424c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFFFFF",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#7de1ff",
+      "QUICK_COLOR_2": "#7dffbb",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+    },
     "theme": {
       "map": {
         "id": "9388c038-9a4c-4373-8bcc-25c946380bc3",
@@ -10999,6 +13046,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dazzling",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#A239EA",
+      "PRIMARY_COLOR_1": "#FFFFFF",
+      "PRIMARY_COLOR_2": "#FFFFFF",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#EFD7E6",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#38e975",
+      "QUICK_COLOR_2": "#80ea38",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+    },
     "theme": {
       "map": {
         "id": "4ad464cf-8a29-43b9-a803-da2204d3f5dc",
@@ -11089,6 +13153,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dazzling",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#5C37E5",
+      "PRIMARY_COLOR_2": "#FF7DC1",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#A239EA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#5C37E5",
+      "QUICK_COLOR_2": "#092933",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+    },
     "theme": {
       "map": {
         "id": "75891705-16a6-45a1-92e7-b1c1b8ebbc71",
@@ -11179,6 +13260,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dazzling",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#092933",
+      "PRIMARY_COLOR_1": "#FFFFFF",
+      "PRIMARY_COLOR_2": "#EFD7E6",
+      "PRIMARY_COLOR_3": "#22424c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FF7DC1",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#FFFFFF",
+      "QUICK_COLOR_2": "#FF7DC1",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+    },
     "theme": {
       "map": {
         "id": "c8048203-a8c7-4091-abbd-5fcba45eec9d",
@@ -11269,6 +13367,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dazzling",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#092933",
+      "PRIMARY_COLOR_2": "#FF7DC1",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#A239EA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#120932",
+      "QUICK_COLOR_2": "#e437c0",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#EFD7E6 #FF7DC1 #A239EA #5C37E5",
+      "COLOR_LIST": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+    },
     "theme": {
       "map": {
         "id": "f6edb4a9-1ed7-41d8-b4ff-c74fc6b9bea0",
@@ -11355,6 +13470,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dazzling",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#092933",
+      "PRIMARY_COLOR_1": "#FFFFFF",
+      "PRIMARY_COLOR_2": "#EFD7E6",
+      "PRIMARY_COLOR_3": "#22424c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FF7DC1",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#ffffff",
+      "QUICK_COLOR_2": "#ffbb7d",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#EFD7E6 #FF7DC1 #A239EA #5C37E5",
+      "COLOR_LIST": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+    },
     "theme": {
       "map": {
         "id": "3fec30a1-6953-4462-bbb6-46fcb3ec7a92",
@@ -11441,6 +13573,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vintage",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#E9C46A",
+      "PRIMARY_COLOR_1": "#264653",
+      "PRIMARY_COLOR_2": "#264653",
+      "PRIMARY_COLOR_3": "#3f5f6c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#DC856F",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#a468e8",
+      "QUICK_COLOR_2": "#698ee9",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+    },
     "theme": {
       "map": {
         "id": "ecf797c0-13a8-47a7-bca4-401266718fcc",
@@ -11531,6 +13680,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vintage",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F4A261",
+      "PRIMARY_COLOR_1": "#264653",
+      "PRIMARY_COLOR_2": "#264653",
+      "PRIMARY_COLOR_3": "#3f5f6c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#DC856F",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#7d61f4",
+      "QUICK_COLOR_2": "#61b3f4",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+    },
     "theme": {
       "map": {
         "id": "970d9497-7b89-49ea-beab-680a370bced7",
@@ -11621,6 +13787,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vintage",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#DC856F",
+      "PRIMARY_COLOR_1": "#264653",
+      "PRIMARY_COLOR_2": "#264653",
+      "PRIMARY_COLOR_3": "#3f5f6c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#E9C46A",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#6e73db",
+      "QUICK_COLOR_2": "#6fc5db",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+    },
     "theme": {
       "map": {
         "id": "2d6adff5-6a68-4ca6-aa11-5e72daa06dc5",
@@ -11711,6 +13894,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vintage",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#A4705E",
+      "PRIMARY_COLOR_1": "#E9C46A",
+      "PRIMARY_COLOR_2": "#264653",
+      "PRIMARY_COLOR_3": "#3f5f6c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F4A261",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#5e5ea3",
+      "QUICK_COLOR_2": "#5e92a3",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+    },
     "theme": {
       "map": {
         "id": "b819bb3b-4d76-4dee-b4f7-1f5649d01781",
@@ -11801,6 +14001,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vintage",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#2A9D8F",
+      "PRIMARY_COLOR_1": "#264653",
+      "PRIMARY_COLOR_2": "#264653",
+      "PRIMARY_COLOR_3": "#3f5f6c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#E9C46A",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#9d722a",
+      "QUICK_COLOR_2": "#9d2a38",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+    },
     "theme": {
       "map": {
         "id": "be04cc08-f196-4a7d-91e3-624304c1f8c0",
@@ -11891,6 +14108,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vintage",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#264653",
+      "PRIMARY_COLOR_1": "#E9C46A",
+      "PRIMARY_COLOR_2": "#E9C46A",
+      "PRIMARY_COLOR_3": "#ffdd83",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F4A261",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#505124",
+      "QUICK_COLOR_2": "#523225",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+    },
     "theme": {
       "map": {
         "id": "d6044951-90ac-4f6b-9549-a2daf7e14137",
@@ -11981,6 +14215,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vintage",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#264653",
+      "PRIMARY_COLOR_1": "#E9C46A",
+      "PRIMARY_COLOR_2": "#E9C46A",
+      "PRIMARY_COLOR_3": "#ffdd83",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F4A261",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#245125",
+      "QUICK_COLOR_2": "#455124",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#F4A261 #DC856F #A4705E #2A9D8F",
+      "COLOR_LIST": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+    },
     "theme": {
       "map": {
         "id": "5515ec47-f758-453c-981d-82d9dfe0caf3",
@@ -12067,6 +14318,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dessert",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F9F8ED",
+      "PRIMARY_COLOR_1": "#006d77",
+      "PRIMARY_COLOR_2": "#D8AC8F",
+      "PRIMARY_COLOR_3": "#f5f4e3",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFBC9F",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#006d77",
+      "QUICK_COLOR_2": "#83c5be",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+    },
     "theme": {
       "map": {
         "id": "98978bfd-bdfa-434a-a88d-e26e4a91b1f0",
@@ -12157,6 +14425,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dessert",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFEDD2",
+      "PRIMARY_COLOR_1": "#006d77",
+      "PRIMARY_COLOR_2": "#D8AC8F",
+      "PRIMARY_COLOR_3": "#ffe3bb",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFBC9F",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#006d77",
+      "QUICK_COLOR_2": "#83c5be",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+    },
     "theme": {
       "map": {
         "id": "bd3fb424-9647-4dfd-96f9-17da45da0cd8",
@@ -12247,6 +14532,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dessert",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFBC9F",
+      "PRIMARY_COLOR_1": "#006d77",
+      "PRIMARY_COLOR_2": "#F9F8ED",
+      "PRIMARY_COLOR_3": "#ff9a6e",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFEDD2",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#006d77",
+      "QUICK_COLOR_2": "#FFEDD2",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+    },
     "theme": {
       "map": {
         "id": "90926bc7-7c20-4d34-973c-4d7051579672",
@@ -12337,6 +14639,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dessert",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#D8AC8F",
+      "PRIMARY_COLOR_1": "#006d77",
+      "PRIMARY_COLOR_2": "#F9F8ED",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFEDD2",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#988dd8",
+      "QUICK_COLOR_2": "#8ebbd8",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+    },
     "theme": {
       "map": {
         "id": "ca20817d-4f15-4a1b-905f-531583c214fa",
@@ -12427,6 +14746,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dessert",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#83c5be",
+      "PRIMARY_COLOR_1": "#006d77",
+      "PRIMARY_COLOR_2": "#006d77",
+      "PRIMARY_COLOR_3": "#198690",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F9F8ED",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#c3ad83",
+      "QUICK_COLOR_2": "#c48389",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+    },
     "theme": {
       "map": {
         "id": "9f725348-16a1-43bc-98a1-f55abf357a7d",
@@ -12517,6 +14853,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dessert",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#006d77",
+      "PRIMARY_COLOR_1": "#F9F8ED",
+      "PRIMARY_COLOR_2": "#F9F8ED",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFEDD2",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#756200",
+      "QUICK_COLOR_2": "#760a00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+    },
     "theme": {
       "map": {
         "id": "f94ce7b2-8fc5-4a38-9ef4-a61945b94efa",
@@ -12607,6 +14960,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dessert",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F9F8ED",
+      "PRIMARY_COLOR_1": "#006d77",
+      "PRIMARY_COLOR_2": "#D8AC8F",
+      "PRIMARY_COLOR_3": "#f5f4e3",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFBC9F",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#090076",
+      "QUICK_COLOR_2": "#8389c4",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#FFBC9F #D8AC8F #83c5be",
+      "COLOR_LIST": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+    },
     "theme": {
       "map": {
         "id": "330f181e-e1b9-4f3b-bdf7-8cfb9a0941fd",
@@ -12693,6 +15063,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Dessert",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#006d77",
+      "PRIMARY_COLOR_1": "#F9F8ED",
+      "PRIMARY_COLOR_2": "#F9F8ED",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFEDD2",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#127500",
+      "QUICK_COLOR_2": "#6b7500",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#FFEDD2 #FFBC9F #D8AC8F #83c5be",
+      "COLOR_LIST": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+    },
     "theme": {
       "map": {
         "id": "11fa6a7c-2373-40b1-8e2f-debeb0da3fe9",
@@ -12779,6 +15166,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vanllia",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#0D4040",
+      "PRIMARY_COLOR_2": "#40514E",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#30E3CA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#0D4040",
+      "QUICK_COLOR_2": "#11999E",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+    },
     "theme": {
       "map": {
         "id": "dccf01bc-e795-4fcd-8055-bdc6da496848",
@@ -12869,6 +15273,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vanllia",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#E4F9F5",
+      "PRIMARY_COLOR_1": "#0D4040",
+      "PRIMARY_COLOR_2": "#40514E",
+      "PRIMARY_COLOR_3": "#d6f6f0",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#30E3CA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#0D4040",
+      "QUICK_COLOR_2": "#11999E",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+    },
     "theme": {
       "map": {
         "id": "d72a941b-6764-4740-ab63-a74192b38908",
@@ -12959,6 +15380,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vanllia",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0D4040",
+      "PRIMARY_COLOR_1": "#30E3CA",
+      "PRIMARY_COLOR_2": "#FFFFFF",
+      "PRIMARY_COLOR_3": "#265959",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#E4F9F5",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#30E3CA",
+      "QUICK_COLOR_2": "#E4F9F5",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+    },
     "theme": {
       "map": {
         "id": "a2eb60e7-87a0-4f1c-af6c-06a5f46e1cc8",
@@ -13049,6 +15487,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vanllia",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#11999E",
+      "PRIMARY_COLOR_2": "#0D4040",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#30E3CA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#11999E",
+      "QUICK_COLOR_2": "#40514E",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+    },
     "theme": {
       "map": {
         "id": "b4e8a157-7eae-45b5-a5b9-68984681353b",
@@ -13139,6 +15594,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vanllia",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#40514E",
+      "PRIMARY_COLOR_1": "#FFFFFF",
+      "PRIMARY_COLOR_2": "#FFFFFF",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#E4F9F5",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#514a40",
+      "QUICK_COLOR_2": "#514042",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+    },
     "theme": {
       "map": {
         "id": "76ddc307-18a3-4c3f-a30d-fa30b53963c4",
@@ -13229,6 +15701,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vanllia",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0D4040",
+      "PRIMARY_COLOR_1": "#FFFFFF",
+      "PRIMARY_COLOR_2": "#E4F9F5",
+      "PRIMARY_COLOR_3": "#265959",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#30E3CA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#FFFFFF",
+      "QUICK_COLOR_2": "#30E3CA",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+    },
     "theme": {
       "map": {
         "id": "65cc35cb-69e8-4fa9-b558-87954cd03764",
@@ -13319,6 +15808,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vanllia",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFFFF",
+      "PRIMARY_COLOR_1": "#0D4040",
+      "PRIMARY_COLOR_2": "#40514E",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#30E3CA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#0c0c40",
+      "QUICK_COLOR_2": "#16109e",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#30E3CA #11999E #40514E",
+      "COLOR_LIST": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+    },
     "theme": {
       "map": {
         "id": "de0fb79d-44a1-41c1-b25e-07a513b5c6c1",
@@ -13405,6 +15911,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Vanllia",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0D4040",
+      "PRIMARY_COLOR_1": "#FFFFFF",
+      "PRIMARY_COLOR_2": "#E4F9F5",
+      "PRIMARY_COLOR_3": "#265959",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#30E3CA",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#ffffff",
+      "QUICK_COLOR_2": "#2f48e3",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#E4F9F5 #30E3CA #11999E #40514E",
+      "COLOR_LIST": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+    },
     "theme": {
       "map": {
         "id": "38f0d445-8551-4182-8856-b6ead8c0daea",
@@ -13491,6 +16014,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Candy",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#54A6D6",
+      "PRIMARY_COLOR_2": "#F09E3A",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FF9C72",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#54A6D6",
+      "QUICK_COLOR_2": "#FF9C72",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+    },
     "theme": {
       "map": {
         "id": "01ebec5c-1b47-465e-a157-f74acf7f12ef",
@@ -13581,6 +16121,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Candy",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FF9C72",
+      "PRIMARY_COLOR_1": "#ffffff",
+      "PRIMARY_COLOR_2": "#f5cd6c",
+      "PRIMARY_COLOR_3": "#ffe685",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#f5cd6c",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#7871ff",
+      "QUICK_COLOR_2": "#71d4ff",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+    },
     "theme": {
       "map": {
         "id": "1353549f-ade8-46d8-9d83-c543a845d665",
@@ -13671,6 +16228,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Candy",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#f5cd6c",
+      "PRIMARY_COLOR_1": "#54A6D6",
+      "PRIMARY_COLOR_2": "#ffffff",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F09E3A",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#aa6af5",
+      "QUICK_COLOR_2": "#6b93f5",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+    },
     "theme": {
       "map": {
         "id": "034d25e4-f33a-440a-bf3c-507da7c349c0",
@@ -13761,6 +16335,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Candy",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F09E3A",
+      "PRIMARY_COLOR_1": "#ffffff",
+      "PRIMARY_COLOR_2": "#f5cd6c",
+      "PRIMARY_COLOR_3": "#ffe685",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#f5cd6c",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#713af0",
+      "QUICK_COLOR_2": "#3a8bf0",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+    },
     "theme": {
       "map": {
         "id": "b19f9f7f-9992-4dff-9f6c-0b679ef50fcc",
@@ -13851,6 +16442,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Candy",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#9cc3e4",
+      "PRIMARY_COLOR_1": "#ffffff",
+      "PRIMARY_COLOR_2": "#54A6D6",
+      "PRIMARY_COLOR_3": "#6dbfef",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#54A6D6",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#d3e39b",
+      "QUICK_COLOR_2": "#e3bd9c",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+    },
     "theme": {
       "map": {
         "id": "3e7c3927-9c28-4377-8901-3edf24f98f9d",
@@ -13941,6 +16549,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Candy",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#54A6D6",
+      "PRIMARY_COLOR_1": "#ffffff",
+      "PRIMARY_COLOR_2": "#f5cd6c",
+      "PRIMARY_COLOR_3": "#ffe685",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#9cc3e4",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#c5d553",
+      "QUICK_COLOR_2": "#d68453",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+    },
     "theme": {
       "map": {
         "id": "149421eb-0876-4831-be4a-c6dd674e4a0d",
@@ -14031,6 +16656,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Candy",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#54A6D6",
+      "PRIMARY_COLOR_2": "#F09E3A",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FF9C72",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#8453d6",
+      "QUICK_COLOR_2": "#d4ff71",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#FF9C72 #f5cd6c #F09E3A #9cc3e4",
+      "COLOR_LIST": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+    },
     "theme": {
       "map": {
         "id": "8267d0bc-fcba-4ac8-82d5-b809b97970ce",
@@ -14117,6 +16759,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "GreenTea",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#D6D9C3",
+      "PRIMARY_COLOR_1": "#1F2B1D",
+      "PRIMARY_COLOR_2": "#265834",
+      "PRIMARY_COLOR_3": "#c1c5a4",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#579360",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#1F2B1D",
+      "QUICK_COLOR_2": "#656d4a",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+    },
     "theme": {
       "map": {
         "id": "5a44c73b-1e2f-4dd8-b488-db0f4c02c7a4",
@@ -14207,6 +16866,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "GreenTea",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#b6ad90",
+      "PRIMARY_COLOR_1": "#1F2B1D",
+      "PRIMARY_COLOR_2": "#1F2B1D",
+      "PRIMARY_COLOR_3": "#384436",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#579360",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#a290b4",
+      "QUICK_COLOR_2": "#9099b5",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+    },
     "theme": {
       "map": {
         "id": "1b5f6ae2-98bb-4978-94bd-4b54b52e8048",
@@ -14297,6 +16973,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "GreenTea",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#579360",
+      "PRIMARY_COLOR_1": "#1F2B1D",
+      "PRIMARY_COLOR_2": "#1F2B1D",
+      "PRIMARY_COLOR_3": "#384436",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#D6D9C3",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#93575d",
+      "QUICK_COLOR_2": "#93578a",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+    },
     "theme": {
       "map": {
         "id": "e6aa0c3a-7041-477b-b7c5-ed29e1b2261f",
@@ -14387,6 +17080,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "GreenTea",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#656d4a",
+      "PRIMARY_COLOR_1": "#D6D9C3",
+      "PRIMARY_COLOR_2": "#D6D9C3",
+      "PRIMARY_COLOR_3": "#eff2dc",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#b6ad90",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#6c4a6d",
+      "QUICK_COLOR_2": "#524a6d",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+    },
     "theme": {
       "map": {
         "id": "183069b3-3aa1-4757-a2a4-2aa1fc31af52",
@@ -14477,6 +17187,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "GreenTea",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#265834",
+      "PRIMARY_COLOR_1": "#D6D9C3",
+      "PRIMARY_COLOR_2": "#D6D9C3",
+      "PRIMARY_COLOR_3": "#eff2dc",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#b6ad90",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#582826",
+      "QUICK_COLOR_2": "#582649",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+    },
     "theme": {
       "map": {
         "id": "1fdbd10a-aaaf-4004-bb8e-60581958a9ab",
@@ -14567,6 +17294,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "GreenTea",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#1F2B1D",
+      "PRIMARY_COLOR_1": "#D6D9C3",
+      "PRIMARY_COLOR_2": "#b6ad90",
+      "PRIMARY_COLOR_3": "#384436",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#579360",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#D6D9C3",
+      "QUICK_COLOR_2": "#579360",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+    },
     "theme": {
       "map": {
         "id": "fa71aed7-ffa2-4232-bad5-e1a4891b5db5",
@@ -14657,6 +17401,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "GreenTea",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#1F2B1D",
+      "PRIMARY_COLOR_1": "#D6D9C3",
+      "PRIMARY_COLOR_2": "#b6ad90",
+      "PRIMARY_COLOR_3": "#384436",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#579360",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#c3d9c6",
+      "QUICK_COLOR_2": "#578993",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#b6ad90 #579360 #656d4a #265834",
+      "COLOR_LIST": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+    },
     "theme": {
       "map": {
         "id": "5dfe1c76-d84f-45c2-ad7e-bcfe4380acd0",
@@ -14743,6 +17504,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "CyberPunk",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#7400b8",
+      "PRIMARY_COLOR_2": "#4ea8de",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#5e60ce",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#7400b8",
+      "QUICK_COLOR_2": "#5e60ce",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+    },
     "theme": {
       "map": {
         "id": "8373441f-d5c3-4b6a-8118-8c9f52087cd5",
@@ -14833,6 +17611,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "CyberPunk",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#72efdd",
+      "PRIMARY_COLOR_1": "#7400b8",
+      "PRIMARY_COLOR_2": "#7400b8",
+      "PRIMARY_COLOR_3": "#8d19d1",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffffff",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#eebe71",
+      "QUICK_COLOR_2": "#ee7283",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+    },
     "theme": {
       "map": {
         "id": "ec32eff1-9fae-4767-8b81-e06a02b2eab5",
@@ -14923,6 +17718,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "CyberPunk",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#56cfe1",
+      "PRIMARY_COLOR_1": "#7400b8",
+      "PRIMARY_COLOR_2": "#7400b8",
+      "PRIMARY_COLOR_3": "#8d19d1",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffffff",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#e1cf56",
+      "QUICK_COLOR_2": "#e16756",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+    },
     "theme": {
       "map": {
         "id": "0a513e62-7974-4d7a-acd1-468a47487311",
@@ -15013,6 +17825,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "CyberPunk",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#4ea8de",
+      "PRIMARY_COLOR_1": "#7400b8",
+      "PRIMARY_COLOR_2": "#7400b8",
+      "PRIMARY_COLOR_3": "#8d19d1",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffffff",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#cadd4e",
+      "QUICK_COLOR_2": "#dd844e",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+    },
     "theme": {
       "map": {
         "id": "b5463a3c-2e15-4ebc-8421-baceff67868b",
@@ -15103,6 +17932,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "CyberPunk",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#5e60ce",
+      "PRIMARY_COLOR_1": "#ffffff",
+      "PRIMARY_COLOR_2": "#ffffff",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#72efdd",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#7bce5e",
+      "QUICK_COLOR_2": "#cecc5e",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+    },
     "theme": {
       "map": {
         "id": "0f998869-6105-4046-9421-2317572029ae",
@@ -15193,6 +18039,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "CyberPunk",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#7400b8",
+      "PRIMARY_COLOR_2": "#4ea8de",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#5e60ce",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#7400b8",
+      "QUICK_COLOR_2": "#5e60ce",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+    },
     "theme": {
       "map": {
         "id": "05cb195c-b94f-4c2a-84ea-5876873f86e3",
@@ -15283,6 +18146,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "CyberPunk",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#7400b8",
+      "PRIMARY_COLOR_2": "#4ea8de",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#5e60ce",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#b80043",
+      "QUICK_COLOR_2": "#cc5ece",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#72efdd #56cfe1 #4ea8de #5e60ce",
+      "COLOR_LIST": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+    },
     "theme": {
       "map": {
         "id": "cfc3db15-b51d-4956-b45f-568787dded0c",
@@ -15369,6 +18249,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Space",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#d9dcd6",
+      "PRIMARY_COLOR_1": "#0D2F42",
+      "PRIMARY_COLOR_2": "#2f6690",
+      "PRIMARY_COLOR_3": "#c6cac1",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#3a7ca5",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#0D2F42",
+      "QUICK_COLOR_2": "#16425b",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+    },
     "theme": {
       "map": {
         "id": "92c15346-5a56-4fe7-9190-8cbbe4c9962f",
@@ -15459,6 +18356,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Space",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#81c3d7",
+      "PRIMARY_COLOR_1": "#0D2F42",
+      "PRIMARY_COLOR_2": "#0D2F42",
+      "PRIMARY_COLOR_3": "#26485b",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#3a7ca5",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#d6d481",
+      "QUICK_COLOR_2": "#d69581",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+    },
     "theme": {
       "map": {
         "id": "2a051e9b-4061-45bf-b165-7e187b6d83d2",
@@ -15549,6 +18463,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Space",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#3a7ca5",
+      "PRIMARY_COLOR_1": "#d9dcd6",
+      "PRIMARY_COLOR_2": "#d9dcd6",
+      "PRIMARY_COLOR_3": "#f2f5ef",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#81c3d7",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#95a439",
+      "QUICK_COLOR_2": "#a56339",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+    },
     "theme": {
       "map": {
         "id": "dd31431a-e0ba-483f-870b-d1fd2b0ff1ad",
@@ -15639,6 +18570,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Space",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#2f6690",
+      "PRIMARY_COLOR_1": "#d9dcd6",
+      "PRIMARY_COLOR_2": "#d9dcd6",
+      "PRIMARY_COLOR_3": "#f2f5ef",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#81c3d7",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#7c8f2f",
+      "QUICK_COLOR_2": "#8f592f",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+    },
     "theme": {
       "map": {
         "id": "0639530c-c767-46a3-8295-1d55619de1ae",
@@ -15729,6 +18677,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Space",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#16425b",
+      "PRIMARY_COLOR_1": "#d9dcd6",
+      "PRIMARY_COLOR_2": "#d9dcd6",
+      "PRIMARY_COLOR_3": "#f2f5ef",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#81c3d7",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#525b14",
+      "QUICK_COLOR_2": "#5b2f15",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+    },
     "theme": {
       "map": {
         "id": "ccb835b7-f262-438d-b97a-afb84852cd90",
@@ -15819,6 +18784,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Space",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0D2F42",
+      "PRIMARY_COLOR_1": "#d9dcd6",
+      "PRIMARY_COLOR_2": "#81c3d7",
+      "PRIMARY_COLOR_3": "#26485b",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#3a7ca5",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#d9dcd6",
+      "QUICK_COLOR_2": "#3a7ca5",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+    },
     "theme": {
       "map": {
         "id": "f96e837a-4be7-4abe-9e53-9ca5c23d1ba1",
@@ -15909,6 +18891,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Space",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#0D2F42",
+      "PRIMARY_COLOR_1": "#d9dcd6",
+      "PRIMARY_COLOR_2": "#81c3d7",
+      "PRIMARY_COLOR_3": "#26485b",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#3a7ca5",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#d6dcd9",
+      "QUICK_COLOR_2": "#6239a5",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#81c3d7 #3a7ca5 #2f6690 #16425b",
+      "COLOR_LIST": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+    },
     "theme": {
       "map": {
         "id": "40211da0-7f61-47b7-bc68-0872205d5e11",
@@ -15995,6 +18994,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Sakura",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFE3E8",
+      "PRIMARY_COLOR_1": "#FFA9C6",
+      "PRIMARY_COLOR_2": "#D1C3BD",
+      "PRIMARY_COLOR_3": "#ffd4dc",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFB4B6",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#FFA9C6",
+      "QUICK_COLOR_2": "#FFB4B6",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+    },
     "theme": {
       "map": {
         "id": "2d99033f-6c25-42aa-b2aa-d5798f4582ee",
@@ -16085,6 +19101,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Sakura",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFDCC8",
+      "PRIMARY_COLOR_1": "#FFA9C6",
+      "PRIMARY_COLOR_2": "#D1C3BD",
+      "PRIMARY_COLOR_3": "#ffcaac",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFB4B6",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#FFA9C6",
+      "QUICK_COLOR_2": "#FFB4B6",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+    },
     "theme": {
       "map": {
         "id": "2eae1328-0c22-48f8-9428-15c2498e402d",
@@ -16175,6 +19208,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Sakura",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFB4B6",
+      "PRIMARY_COLOR_1": "#FFE3E8",
+      "PRIMARY_COLOR_2": "#FFDCC8",
+      "PRIMARY_COLOR_3": "#fe8e91",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFDCC8",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#FFE3E8",
+      "QUICK_COLOR_2": "#C1CFDE",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+    },
     "theme": {
       "map": {
         "id": "31cb57f3-d4dc-4009-aacd-7947728ea460",
@@ -16265,6 +19315,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Sakura",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFA9C6",
+      "PRIMARY_COLOR_1": "#FFE3E8",
+      "PRIMARY_COLOR_2": "#FFDCC8",
+      "PRIMARY_COLOR_3": "#ff7da9",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFDCC8",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#FFE3E8",
+      "QUICK_COLOR_2": "#C1CFDE",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+    },
     "theme": {
       "map": {
         "id": "a6d118ce-3f66-4584-81e7-f4be041daa88",
@@ -16355,6 +19422,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Sakura",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#D1C3BD",
+      "PRIMARY_COLOR_1": "#FFE3E8",
+      "PRIMARY_COLOR_2": "#FFDCC8",
+      "PRIMARY_COLOR_3": "#fff5e1",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFDCC8",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#bebdd1",
+      "QUICK_COLOR_2": "#bdcbd1",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+    },
     "theme": {
       "map": {
         "id": "47d1c3cc-f79a-418c-8561-da7a0f0e9253",
@@ -16445,6 +19529,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Sakura",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#C1CFDE",
+      "PRIMARY_COLOR_1": "#FFE3E8",
+      "PRIMARY_COLOR_2": "#FFDCC8",
+      "PRIMARY_COLOR_3": "#a2b6cd",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFDCC8",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#FFE3E8",
+      "QUICK_COLOR_2": "#FFA9C6",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+    },
     "theme": {
       "map": {
         "id": "3fc363b9-3329-4bdf-a6bc-bb49cc3c0dd4",
@@ -16535,6 +19636,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Sakura",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFE3E8",
+      "PRIMARY_COLOR_1": "#FFA9C6",
+      "PRIMARY_COLOR_2": "#D1C3BD",
+      "PRIMARY_COLOR_3": "#ffd4dc",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFB4B6",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#ffe2a8",
+      "QUICK_COLOR_2": "#fffcb4",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#FFB4B6 #D1C3BD #C1CFDE",
+      "COLOR_LIST": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+    },
     "theme": {
       "map": {
         "id": "50dceff2-35d7-4e30-bccf-de8b0afaf6fe",
@@ -16621,6 +19739,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Fire",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FDD29A",
+      "PRIMARY_COLOR_1": "#6D3B37",
+      "PRIMARY_COLOR_2": "#6D3B37",
+      "PRIMARY_COLOR_3": "#865450",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FC901A",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#ba9afd",
+      "QUICK_COLOR_2": "#9ac4fd",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+    },
     "theme": {
       "map": {
         "id": "e48e0853-770e-4d5e-8506-b683d4f3c052",
@@ -16711,6 +19846,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Fire",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F9A655",
+      "PRIMARY_COLOR_1": "#6D3B37",
+      "PRIMARY_COLOR_2": "#6D3B37",
+      "PRIMARY_COLOR_3": "#865450",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FDD29A",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#7b53f8",
+      "QUICK_COLOR_2": "#54a7f8",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+    },
     "theme": {
       "map": {
         "id": "d420de2d-cb61-421e-ab96-98412a1cd45e",
@@ -16801,6 +19953,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Fire",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#6D3B37",
+      "PRIMARY_COLOR_1": "#FC901A",
+      "PRIMARY_COLOR_2": "#FDD29A",
+      "PRIMARY_COLOR_3": "#ffebb3",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F9A655",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#37406b",
+      "QUICK_COLOR_2": "#37686c",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+    },
     "theme": {
       "map": {
         "id": "73119faf-8177-4bf2-bfd0-26f4ada591eb",
@@ -16891,6 +20060,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Fire",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FDD29A",
+      "PRIMARY_COLOR_1": "#E04B51",
+      "PRIMARY_COLOR_2": "#6D3B37",
+      "PRIMARY_COLOR_3": "#865450",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FC901A",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#ba9afd",
+      "QUICK_COLOR_2": "#9ac4fd",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+    },
     "theme": {
       "map": {
         "id": "c70878cb-61ec-4fec-a3da-c1ef599972a6",
@@ -16981,6 +20167,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Fire",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#A4564C",
+      "PRIMARY_COLOR_1": "#FDD29A",
+      "PRIMARY_COLOR_2": "#FDD29A",
+      "PRIMARY_COLOR_3": "#ffebb3",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F9A655",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#4a56a3",
+      "QUICK_COLOR_2": "#4b99a3",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+    },
     "theme": {
       "map": {
         "id": "bc4baa49-3904-4950-b729-dbfc297a4958",
@@ -17071,6 +20274,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Fire",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#6D3B37",
+      "PRIMARY_COLOR_1": "#FDD29A",
+      "PRIMARY_COLOR_2": "#FDD29A",
+      "PRIMARY_COLOR_3": "#ffebb3",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F9A655",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#37406b",
+      "QUICK_COLOR_2": "#37686c",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+    },
     "theme": {
       "map": {
         "id": "0b1c62c2-c1ec-4c8b-8178-59b3db1b8e9a",
@@ -17161,6 +20381,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Christmas",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#D5F2E3",
+      "PRIMARY_COLOR_1": "#101F23",
+      "PRIMARY_COLOR_2": "#BC191E",
+      "PRIMARY_COLOR_3": "#c0ebd4",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#E12A37",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#101F23",
+      "QUICK_COLOR_2": "#2D6C65",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+    },
     "theme": {
       "map": {
         "id": "c0a0d481-af94-439d-aa09-bb1f589fa6e5",
@@ -17251,6 +20488,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Christmas",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#F0A346",
+      "PRIMARY_COLOR_1": "#101F23",
+      "PRIMARY_COLOR_2": "#101F23",
+      "PRIMARY_COLOR_3": "#29383c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#E12A37",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#7946f0",
+      "QUICK_COLOR_2": "#4692f0",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+    },
     "theme": {
       "map": {
         "id": "6697be52-2214-4660-8209-10368e7dc798",
@@ -17341,6 +20595,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Christmas",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#D5F2E3",
+      "PRIMARY_COLOR_1": "#E12A37",
+      "PRIMARY_COLOR_2": "#101F23",
+      "PRIMARY_COLOR_3": "#c0ebd4",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#BC191E",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#E12A37",
+      "QUICK_COLOR_2": "#BC191E",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+    },
     "theme": {
       "map": {
         "id": "06e9ad1d-8b64-4f18-80f9-8f9d0066994d",
@@ -17431,6 +20702,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Christmas",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#D5F2E3",
+      "PRIMARY_COLOR_1": "#BC191E",
+      "PRIMARY_COLOR_2": "#101F23",
+      "PRIMARY_COLOR_3": "#c0ebd4",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#E12A37",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#BC191E",
+      "QUICK_COLOR_2": "#2D6C65",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+    },
     "theme": {
       "map": {
         "id": "041f8044-4010-4863-bb68-7c8cca1c22af",
@@ -17521,6 +20809,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Christmas",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#2D6C65",
+      "PRIMARY_COLOR_1": "#D5F2E3",
+      "PRIMARY_COLOR_2": "#D5F2E3",
+      "PRIMARY_COLOR_3": "#eefffc",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#F0A346",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#6b552c",
+      "QUICK_COLOR_2": "#6b2d33",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+    },
     "theme": {
       "map": {
         "id": "8d5926dc-ba4b-481e-94e8-cd46d2dbc222",
@@ -17611,6 +20916,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Christmas",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#101F23",
+      "PRIMARY_COLOR_1": "#D5F2E3",
+      "PRIMARY_COLOR_2": "#F0A346",
+      "PRIMARY_COLOR_3": "#29383c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#E12A37",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#D5F2E3",
+      "QUICK_COLOR_2": "#E12A37",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+    },
     "theme": {
       "map": {
         "id": "b7116e17-3a44-466c-8981-b65bdd198472",
@@ -17701,6 +21023,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Christmas",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#101F23",
+      "PRIMARY_COLOR_1": "#D5F2E3",
+      "PRIMARY_COLOR_2": "#F0A346",
+      "PRIMARY_COLOR_3": "#29383c",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#E12A37",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#d4e3f2",
+      "QUICK_COLOR_2": "#e1d329",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#F0A346 #E12A37 #BC191E #2D6C65",
+      "COLOR_LIST": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+    },
     "theme": {
       "map": {
         "id": "cd2719f9-f600-4990-9ec0-65366ccc1cb7",
@@ -17787,6 +21126,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "DeepSea",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#B4F2FD",
+      "PRIMARY_COLOR_1": "#000D2D",
+      "PRIMARY_COLOR_2": "#135CAE",
+      "PRIMARY_COLOR_3": "#8eebfc",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#3BB6E3",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#000D2D",
+      "QUICK_COLOR_2": "#01206A",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+    },
     "theme": {
       "map": {
         "id": "00ea609d-a80c-4603-a76c-3628ce011a42",
@@ -17877,6 +21233,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "DeepSea",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#6EE2FD",
+      "PRIMARY_COLOR_1": "#000D2D",
+      "PRIMARY_COLOR_2": "#000D2D",
+      "PRIMARY_COLOR_3": "#192646",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#3BB6E3",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#fcf46d",
+      "QUICK_COLOR_2": "#fd896d",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+    },
     "theme": {
       "map": {
         "id": "438fadf0-d015-42ab-82d7-f6ca3ffb1009",
@@ -17967,6 +21340,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "DeepSea",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#000D2D",
+      "PRIMARY_COLOR_1": "#3BB6E3",
+      "PRIMARY_COLOR_2": "#B4F2FD",
+      "PRIMARY_COLOR_3": "#192646",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#6EE2FD",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#3BB6E3",
+      "QUICK_COLOR_2": "#6EE2FD",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+    },
     "theme": {
       "map": {
         "id": "98aeffd2-6086-4827-81c8-c544ba8448e1",
@@ -18057,6 +21447,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "DeepSea",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#135CAE",
+      "PRIMARY_COLOR_1": "#B4F2FD",
+      "PRIMARY_COLOR_2": "#B4F2FD",
+      "PRIMARY_COLOR_3": "#cdffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#6EE2FD",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#82ae11",
+      "QUICK_COLOR_2": "#ae6512",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+    },
     "theme": {
       "map": {
         "id": "3a1bef17-1bdf-453d-bb5d-6f73cf97742a",
@@ -18147,6 +21554,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "DeepSea",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#01206A",
+      "PRIMARY_COLOR_1": "#B4F2FD",
+      "PRIMARY_COLOR_2": "#B4F2FD",
+      "PRIMARY_COLOR_3": "#cdffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#6EE2FD",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#396a00",
+      "QUICK_COLOR_2": "#6a4b00",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+    },
     "theme": {
       "map": {
         "id": "0b482f35-684d-45ba-9af3-e320eb95ea76",
@@ -18237,6 +21661,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "DeepSea",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#000D2D",
+      "PRIMARY_COLOR_1": "#B4F2FD",
+      "PRIMARY_COLOR_2": "#6EE2FD",
+      "PRIMARY_COLOR_3": "#192646",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#3BB6E3",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#B4F2FD",
+      "QUICK_COLOR_2": "#3BB6E3",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+    },
     "theme": {
       "map": {
         "id": "801884c1-2831-4615-a616-7fe2263f2da2",
@@ -18327,6 +21768,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "DeepSea",
       "TYPE_C"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#000D2D",
+      "PRIMARY_COLOR_1": "#B4F2FD",
+      "PRIMARY_COLOR_2": "#6EE2FD",
+      "PRIMARY_COLOR_3": "#192646",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#3BB6E3",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#bfb4fd",
+      "QUICK_COLOR_2": "#673be2",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#6EE2FD #3BB6E3 #135CAE",
+      "COLOR_LIST": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+    },
     "theme": {
       "map": {
         "id": "0e12510a-300b-4a26-a73a-012cd12e1545",
@@ -18413,6 +21871,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Islands",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffe8d6",
+      "PRIMARY_COLOR_1": "#6b705c",
+      "PRIMARY_COLOR_2": "#a5a58d",
+      "PRIMARY_COLOR_3": "#fedcc1",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#cb997e",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#6b705c",
+      "QUICK_COLOR_2": "#cb997e",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+    },
     "theme": {
       "map": {
         "id": "d784e027-b011-4172-9caf-cf953f7f6eaf",
@@ -18503,6 +21978,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Islands",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ddbea9",
+      "PRIMARY_COLOR_1": "#6b705c",
+      "PRIMARY_COLOR_2": "#ffe8d6",
+      "PRIMARY_COLOR_3": "#ffffef",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#cb997e",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#b1a8dc",
+      "QUICK_COLOR_2": "#a9c7dc",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+    },
     "theme": {
       "map": {
         "id": "06291abe-3bf1-49b2-b238-048437737ec8",
@@ -18593,6 +22085,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Islands",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#cb997e",
+      "PRIMARY_COLOR_1": "#ffe8d6",
+      "PRIMARY_COLOR_2": "#6b705c",
+      "PRIMARY_COLOR_3": "#848975",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ddbea9",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#857ec9",
+      "QUICK_COLOR_2": "#7eafca",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+    },
     "theme": {
       "map": {
         "id": "f7321e02-361d-4e89-8a16-43583a2272f4",
@@ -18683,6 +22192,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Islands",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#b7b7a4",
+      "PRIMARY_COLOR_1": "#6b705c",
+      "PRIMARY_COLOR_2": "#ffe8d6",
+      "PRIMARY_COLOR_3": "#ffffef",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffe8d6",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#b2a4b7",
+      "QUICK_COLOR_2": "#a4a4b7",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+    },
     "theme": {
       "map": {
         "id": "c2efdbf0-ef92-4f34-bd6d-40f2ae030d71",
@@ -18773,6 +22299,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Islands",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#a5a58d",
+      "PRIMARY_COLOR_1": "#ffe8d6",
+      "PRIMARY_COLOR_2": "#6b705c",
+      "PRIMARY_COLOR_3": "#848975",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ddbea9",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#9f8da5",
+      "QUICK_COLOR_2": "#8d8da5",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+    },
     "theme": {
       "map": {
         "id": "f7f6a8a8-18d3-4449-be8c-2ca3f5a4861b",
@@ -18863,6 +22406,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Islands",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#6b705c",
+      "PRIMARY_COLOR_1": "#ffe8d6",
+      "PRIMARY_COLOR_2": "#ffe8d6",
+      "PRIMARY_COLOR_3": "#ffffef",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ddbea9",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#705c70",
+      "QUICK_COLOR_2": "#615c70",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+    },
     "theme": {
       "map": {
         "id": "cb072bd4-ab69-465c-8cb1-181417a31d5a",
@@ -18953,6 +22513,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Islands",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffe8d6",
+      "PRIMARY_COLOR_1": "#6b705c",
+      "PRIMARY_COLOR_2": "#a5a58d",
+      "PRIMARY_COLOR_3": "#fedcc1",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#cb997e",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#5c7061",
+      "QUICK_COLOR_2": "#afca7e",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#ddbea9 #cb997e #b7b7a4 #a5a58d",
+      "COLOR_LIST": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+    },
     "theme": {
       "map": {
         "id": "d6feb8ce-fc9b-46f0-8054-65b5d9c761f3",
@@ -19039,6 +22616,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Violet",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFBEF",
+      "PRIMARY_COLOR_1": "#72369d",
+      "PRIMARY_COLOR_2": "#9d4edd",
+      "PRIMARY_COLOR_3": "#fef8e6",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#DCBEF4",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#72369d",
+      "QUICK_COLOR_2": "#b67be6",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+    },
     "theme": {
       "map": {
         "id": "db88ebc0-217b-45cb-9c60-d9552d1da07f",
@@ -19129,6 +22723,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Violet",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FBD58A",
+      "PRIMARY_COLOR_1": "#72369d",
+      "PRIMARY_COLOR_2": "#72369d",
+      "PRIMARY_COLOR_3": "#8b4fb6",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFFBEF",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#b98afb",
+      "QUICK_COLOR_2": "#8aaffb",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+    },
     "theme": {
       "map": {
         "id": "a4216585-0b5a-4faf-9db6-e154c7ac491e",
@@ -19219,6 +22830,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Violet",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#DCBEF4",
+      "PRIMARY_COLOR_1": "#72369d",
+      "PRIMARY_COLOR_2": "#9d4edd",
+      "PRIMARY_COLOR_3": "#ca9dee",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FFFBEF",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#72369d",
+      "QUICK_COLOR_2": "#b67be6",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+    },
     "theme": {
       "map": {
         "id": "bed7b905-8f36-40e3-82f7-c4ded24b798c",
@@ -19309,6 +22937,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Violet",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#b67be6",
+      "PRIMARY_COLOR_1": "#FFFBEF",
+      "PRIMARY_COLOR_2": "#72369d",
+      "PRIMARY_COLOR_3": "#8b4fb6",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FBD58A",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#7ae59a",
+      "QUICK_COLOR_2": "#abe57b",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+    },
     "theme": {
       "map": {
         "id": "f2c8d986-878b-4d4a-bc07-0b2c76385898",
@@ -19399,6 +23044,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Violet",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#9d4edd",
+      "PRIMARY_COLOR_1": "#FFFBEF",
+      "PRIMARY_COLOR_2": "#FFFBEF",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FBD58A",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#4edd7a",
+      "QUICK_COLOR_2": "#8ddd4e",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+    },
     "theme": {
       "map": {
         "id": "21e0dcfd-90ed-4873-b7c7-b479641329c4",
@@ -19489,6 +23151,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Violet",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#72369d",
+      "PRIMARY_COLOR_1": "#FFFBEF",
+      "PRIMARY_COLOR_2": "#FFFBEF",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#FBD58A",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#369d58",
+      "QUICK_COLOR_2": "#619d36",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+    },
     "theme": {
       "map": {
         "id": "9820c8aa-e276-47d1-94eb-8617da572d56",
@@ -19579,6 +23258,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Violet",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#FFFBEF",
+      "PRIMARY_COLOR_1": "#72369d",
+      "PRIMARY_COLOR_2": "#9d4edd",
+      "PRIMARY_COLOR_3": "#fef8e6",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#DCBEF4",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#9d3661",
+      "QUICK_COLOR_2": "#e57baa",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#FBD58A #DCBEF4 #b67be6 #9d4edd",
+      "COLOR_LIST": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+    },
     "theme": {
       "map": {
         "id": "1ac1bc73-de8d-4b7d-89fa-e3443af4562e",
@@ -19665,6 +23361,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Roses",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#fff0f3",
+      "PRIMARY_COLOR_1": "#a4133c",
+      "PRIMARY_COLOR_2": "#ff758f",
+      "PRIMARY_COLOR_3": "#ffe8ec",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffb3c1",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#a4133c",
+      "QUICK_COLOR_2": "#c9184a",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+    },
     "theme": {
       "map": {
         "id": "96f29ca0-312d-41b9-b9ab-ab7440a81e5d",
@@ -19755,6 +23468,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Roses",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffccd5",
+      "PRIMARY_COLOR_1": "#a4133c",
+      "PRIMARY_COLOR_2": "#c9184a",
+      "PRIMARY_COLOR_3": "#ffb2bf",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#c9184a",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#a4133c",
+      "QUICK_COLOR_2": "#ff758f",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+    },
     "theme": {
       "map": {
         "id": "739e6dfd-81a4-4eb4-9126-7aa1eb8dbc31",
@@ -19845,6 +23575,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Roses",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffb3c1",
+      "PRIMARY_COLOR_1": "#a4133c",
+      "PRIMARY_COLOR_2": "#c9184a",
+      "PRIMARY_COLOR_3": "#ff8ca2",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#fff0f3",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#a4133c",
+      "QUICK_COLOR_2": "#fff0f3",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+    },
     "theme": {
       "map": {
         "id": "ccd5ff8c-2e10-4f5b-857a-dfee11e92ce4",
@@ -19935,6 +23682,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Roses",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ff758f",
+      "PRIMARY_COLOR_1": "#a4133c",
+      "PRIMARY_COLOR_2": "#fff0f3",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffccd5",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#73b1ff",
+      "QUICK_COLOR_2": "#74ffe4",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+    },
     "theme": {
       "map": {
         "id": "1132e43d-34f5-4e26-ba8e-e8e48f670ff3",
@@ -20025,6 +23789,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Roses",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#fff0f3",
+      "PRIMARY_COLOR_1": "#c9184a",
+      "PRIMARY_COLOR_2": "#ff758f",
+      "PRIMARY_COLOR_3": "#ffe8ec",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffb3c1",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#c9184a",
+      "QUICK_COLOR_2": "#a4133c",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+    },
     "theme": {
       "map": {
         "id": "cc60d63b-91d3-4e18-8e49-1bcbe530d8cd",
@@ -20115,6 +23896,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Roses",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#a4133c",
+      "PRIMARY_COLOR_1": "#fff0f3",
+      "PRIMARY_COLOR_2": "#fff0f3",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffccd5",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#115fa4",
+      "QUICK_COLOR_2": "#12a47b",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+    },
     "theme": {
       "map": {
         "id": "909323f0-0634-46b2-976f-f4fb6b6573d5",
@@ -20205,6 +24003,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Roses",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#fff0f3",
+      "PRIMARY_COLOR_1": "#a4133c",
+      "PRIMARY_COLOR_2": "#ff758f",
+      "PRIMARY_COLOR_3": "#ffe8ec",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffb3c1",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#a47b12",
+      "QUICK_COLOR_2": "#c99718",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#ffb3c1 #ff758f #c9184a",
+      "COLOR_LIST": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+    },
     "theme": {
       "map": {
         "id": "e1345a91-dbc3-498d-86a1-52d7440e590c",
@@ -20291,6 +24106,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainforest",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#046562",
+      "PRIMARY_COLOR_2": "#06AFA9",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#68d8d6",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#046562",
+      "QUICK_COLOR_2": "#68d8d6",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+    },
     "theme": {
       "map": {
         "id": "adc2b69f-d6d2-4a61-a718-53311d52bbfc",
@@ -20381,6 +24213,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainforest",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#c4fff9",
+      "PRIMARY_COLOR_1": "#046562",
+      "PRIMARY_COLOR_2": "#06AFA9",
+      "PRIMARY_COLOR_3": "#a6fef5",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#06AFA9",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#046562",
+      "QUICK_COLOR_2": "#68d8d6",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+    },
     "theme": {
       "map": {
         "id": "bda231dc-d117-4e6f-b1b7-25f76525c4de",
@@ -20471,6 +24320,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainforest",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#9ceaef",
+      "PRIMARY_COLOR_1": "#046562",
+      "PRIMARY_COLOR_2": "#046562",
+      "PRIMARY_COLOR_3": "#1d7e7b",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffffff",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#efdf9c",
+      "QUICK_COLOR_2": "#efa19c",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+    },
     "theme": {
       "map": {
         "id": "35bb8f0f-1dc0-48a0-b7cb-18e9eda50058",
@@ -20561,6 +24427,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainforest",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#68d8d6",
+      "PRIMARY_COLOR_1": "#046562",
+      "PRIMARY_COLOR_2": "#046562",
+      "PRIMARY_COLOR_3": "#1d7e7b",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#ffffff",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#d7b967",
+      "QUICK_COLOR_2": "#d86769",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+    },
     "theme": {
       "map": {
         "id": "86cabb13-3818-4180-bc24-03434f9f0975",
@@ -20651,6 +24534,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainforest",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#06AFA9",
+      "PRIMARY_COLOR_2": "#046562",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#68d8d6",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#06AFA9",
+      "QUICK_COLOR_2": "#68d8d6",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+    },
     "theme": {
       "map": {
         "id": "bd69e801-55b9-458c-8a86-b57107d2e7a2",
@@ -20741,6 +24641,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainforest",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#046562",
+      "PRIMARY_COLOR_1": "#ffffff",
+      "PRIMARY_COLOR_2": "#ffffff",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#c4fff9",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#634904",
+      "QUICK_COLOR_2": "#640406",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "",
+      "COLOR_LIST": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+    },
     "theme": {
       "map": {
         "id": "5638b2d9-1218-4aa1-b513-8a40e551ad81",
@@ -20831,6 +24748,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainforest",
       "TYPE_A"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#ffffff",
+      "PRIMARY_COLOR_1": "#046562",
+      "PRIMARY_COLOR_2": "#06AFA9",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#68d8d6",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#040764",
+      "QUICK_COLOR_2": "#6769d8",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#9ceaef #68d8d6 #06AFA9",
+      "COLOR_LIST": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+    },
     "theme": {
       "map": {
         "id": "b6197f71-919c-4482-addb-bbac058f3e4f",
@@ -20917,6 +24851,23 @@ export const COLOR_THEMES: ColorThemeData[] = [
       "Rainforest",
       "TYPE_B"
     ],
+    "colorFieldsMap": {
+      "PRIMARY_COLOR_0": "#046562",
+      "PRIMARY_COLOR_1": "#ffffff",
+      "PRIMARY_COLOR_2": "#ffffff",
+      "PRIMARY_COLOR_3": "#ffffff",
+      "PRIMARY_COLOR_4": "",
+      "SECONDARY_COLOR_1": "#c4fff9",
+      "SECONDARY_COLOR_2": "",
+      "SECONDARY_COLOR_3": "",
+      "LIGHT_COLOR": "",
+      "DARK_COLOR": "",
+      "QUICK_COLOR_1": "#1e6304",
+      "QUICK_COLOR_2": "#636104",
+      "TRANSPARENT": "none",
+      "MULTI_LINE_COLORS": "#c4fff9 #9ceaef #68d8d6 #06AFA9",
+      "COLOR_LIST": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+    },
     "theme": {
       "map": {
         "id": "4510ef87-af7a-45cb-97b4-3e04f2149bfa",

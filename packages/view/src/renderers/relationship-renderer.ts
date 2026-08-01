@@ -179,7 +179,7 @@ export class RelationshipRenderer implements Renderer {
   /**
    * 计算贝塞尔曲线路径
    *
-   * M 起点 → L 拐点 → Q 终点（参考 snowbrush curveHorizon）：
+   * M 起点 → L 拐点 → Q 终点：
    * `M ${sx} ${sy} L ${ctrlX} ${ctrlY} Q ${qCtrlX} ${qCtrlY} ${ex} ${ey}`
    */
   private computeCurvePath(): string {

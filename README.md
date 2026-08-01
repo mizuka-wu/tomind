@@ -10,6 +10,7 @@ Tiptap 风格的思维导图编辑器引擎，基于 TypeScript + LeaferJS 渲�
 - **事务系统** — ProseMirror 风格的 Step → Transform → Transaction → State 分层，支持 undo/redo
 - **多 Sheet 支持** — WorkbookEditor 管理多个 SheetEditor 实例，共享 StyleEngine/LayoutEngine
 - **XMind 兼容** — 存储格式兼容 XMind，支持导入导出
+- **主题系统** — 内置 235 色彩主题 + 43 骨架主题，支持 XMind 主题数据
 
 ## 项目结构
 
@@ -149,6 +150,7 @@ packages/extensions/src/tree/
 | mini-map | 小地图 |
 | drag-handler/draggable | 拖拽 |
 | theme-exporter | 主题导出 |
+| preset-theme | 预设主题（235 色彩 + 43 骨架主题） |
 | assets | 资源管理 |
 
 ## 布局算法

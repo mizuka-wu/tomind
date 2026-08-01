@@ -7,7 +7,7 @@
  * 3. 提供样式查询 API
  *
  * 主题来源：
- * - Snowball 主题包（skeleton + color）
+ * - 预设主题包（skeleton + color）
  * - 用户自定义主题
  * - 默认主题（硬编码）
  *
@@ -42,7 +42,7 @@ import { parseClassList, getClassStyles } from '@tomind/state'
 import { SKELETON_KEY_SET, COLOR_KEY_SET } from './style-keys'
 
 /**
- * 主题包接口（Snowball 等外部主题来源实现）
+ * 主题包接口（外部主题来源实现）
  */
 export interface ThemePackage {
   /** 主题 ID */
@@ -82,7 +82,7 @@ export class StyleEngine {
   }
 
   /**
-   * 加载主题包（如 Snowball 主题）
+   * 加载主题包（如预设主题）
    */
   /**
    * 设置布局模式样式映射

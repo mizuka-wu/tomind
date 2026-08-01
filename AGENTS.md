@@ -24,14 +24,15 @@ tomind/
 ├── packages/
 │   ├── schema/               # @tomind/schema — NodeDesc, SelectionState, Viewport 类型
 │   ├── state/                # @tomind/state — SheetState, Transaction, Transform, Step
-│   ├── view/                 # @tomind/view — ViewDesc, NodeViewDesc, PartViewDesc
+│   ├── view/                 # @tomind/view — ViewDesc, NodeViewDesc, PartViewDesc, Renderers
 │   ├── layout/               # @tomind/layout — 布局引擎（layout, matrixLayout）
-│   ├── style/                # @tomind/style — 样式系统（StyleEngine, ThemePackage）
+│   ├── style/                # @tomind/style — 样式系统（StyleEngine, ThemePackage, style-keys）
 │   ├── assets/               # @tomind/assets — 资源处理
 │   ├── extension/            # @tomind/extension — Extension 系统（createExtension, types, manager）
 │   ├── commands/             # @tomind/commands — CommandDef, CommandManager
 │   ├── editor/               # @tomind/editor — SheetEditor, CommandChain
 │   ├── xap/                  # @tomind/xap — XAP 格式
+│   ├── formats/              # @tomind/formats — XMind/FreeMind/OPML/Markdown 格式转换
 │   ├── extensions/           # @tomind/extensions — 具体扩展合集
 │   │   └── src/
 │   │       ├── keymap.ts
@@ -39,6 +40,8 @@ tomind/
 │   │       ├── selection.ts
 │   │       ├── relationship.ts
 │   │       ├── theme-exporter.ts
+│   │       ├── preset-theme.ts      # 预设主题扩展（235 色彩 + 43 骨架）
+│   │       ├── theme-data.ts        # 迁移的主题数据（235 色彩 + 43 骨架）
 │   │       └── ... (20+ 扩展)
 │   │
 ├── startkits/
@@ -46,6 +49,11 @@ tomind/
 │       └── src/index.ts
 │
 ├── tests/                    # 集成测试（与 packages/ 同级）
+│   ├── style-engine.test.ts  # 样式引擎测试
+│   ├── layout.test.ts        # 布局算法测试
+│   └── ...
+├── scripts/
+│   └── convert-themes.mjs   # 主题数据转换脚本
 ├── apps/                     # 应用层（demo、编辑器等）
 ├── docs/                     # 架构文档
 ├── pnpm-workspace.yaml       # packages/* + startkits/* + apps/*
@@ -70,6 +78,14 @@ tomind/
 ```
 
 **原则**：单向依赖，低层包不依赖上层。
+
+## 主题系统规范
+
+- 主题数据通过 `ThemeData` 接口定义，包含 `ThemeClassEntry` 和 `colorFieldsMap`
+- `StyleKey` 类型约束所有样式属性键名
+- `SKELETON_KEYS` / `COLOR_KEYS` 分类控制主题合并行为
+- 骨架主题可覆盖 `fillColor: "none"` 以实现透明填充
+- XMind URI 类名（如 `org.xmind.topicShape.roundedRect`）需通过 `normalizeClassName()` 转为短名
 
 ## 开发命令
 

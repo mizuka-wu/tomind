@@ -13,15 +13,15 @@
  *
  * const engine = new StyleEngine()
  *
- * // 加载 Snowball 主题
+ * // 加载预设主题
  * engine.loadTheme({
- *   id: 'snowball-dark',
+ *   id: 'preset-dark',
  *   skeleton: skeletonTheme,
  *   color: colorTheme,
  * })
  *
  * // 设置为当前主题
- * engine.setActiveTheme('snowball-dark')
+ * engine.setActiveTheme('preset-dark')
  *
  * // 计算节点样式
  * const style = engine.computeStyle(state, topicId)
