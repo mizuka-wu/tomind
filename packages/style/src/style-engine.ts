@@ -38,27 +38,7 @@ import { classifyNode, getParentId, findById } from './classify'
 import { DEFAULT_STYLES } from './default-styles'
 import { normalizeStyleObject, serializeStyleObject } from './style-converter'
 import { parseClassList, getClassStyles } from '@tomind/state'
-
-/**
- * 骨架主题属性键 — 结构相关（形状、连线、间距等）
- * skeleton 主题合并时只允许覆盖这些键（外加不属于任何分类的通用键）
- */
-const SKELETON_KEYS = new Set([
-  'shapeClass', 'lineClass', 'calloutShapeClass',
-  'marginLeft', 'marginRight', 'marginTop', 'marginBottom',
-  'spacingMajor', 'spacingMinor',
-  'lineCorner', 'shapeCorner',
-])
-
-/**
- * 颜色主题属性键 — 颜色相关（填充、描边、字体等）
- * color 主题合并时只允许覆盖这些键（外加不属于任何分类的通用键）
- */
-const COLOR_KEYS = new Set([
-  'fillColor', 'lineColor', 'fontColor', 'borderColor',
-  'fillPattern', 'linePattern', 'borderPattern',
-  'opacity',
-])
+import { SKELETON_KEY_SET, COLOR_KEY_SET } from './style-keys'
 
 /**
  * 主题包接口（Snowball 等外部主题来源实现）
@@ -452,7 +432,7 @@ export class StyleEngine {
   getGlobalStyle(state: SheetState, key: string): StyleValue {
     const theme = this.getActiveTheme() || (state.theme || {}) as ThemeData
     const globalEntry = theme['global']
-    return globalEntry?.properties?.[key]
+    return globalEntry?.properties?.[key as keyof typeof globalEntry.properties]
   }
 
   /**
@@ -531,7 +511,7 @@ export class StyleEngine {
 
     const parentId = getParentId(state.doc, topicId)
     const nodeType = classifyNode(state.doc, topicId)
-    const result = { ...style }
+    const result = { ...style } as Record<string, StyleValue>
 
     for (const { key, type } of specialKeys) {
       if (type === 'inherit') {
@@ -541,7 +521,7 @@ export class StyleEngine {
             ...options,
             ignoreParent: false,
           })
-          const parentVal = parentStyle[key]
+          const parentVal = parentStyle[key as keyof ResolvedStyle]
           if (parentVal !== undefined && parentVal !== null) {
             result[key] = parentVal
           } else {
@@ -552,7 +532,7 @@ export class StyleEngine {
         }
       } else if (type === 'initial') {
         // initial: 重置为默认值
-        const defaultVal = DEFAULT_STYLES[nodeType]?.[key]
+        const defaultVal = DEFAULT_STYLES[nodeType]?.[key as keyof ResolvedStyle]
         if (defaultVal !== undefined) {
           result[key] = defaultVal
         } else {
@@ -561,7 +541,7 @@ export class StyleEngine {
       }
     }
 
-    return result
+    return result as ResolvedStyle
   }
 }
 
@@ -576,11 +556,11 @@ function mergeThemeData(
     if (!entry?.properties) continue
     const filtered: Record<string, StyleValue> = {}
     for (const [key, value] of Object.entries(entry.properties)) {
-      if (type === 'skeleton' && SKELETON_KEYS.has(key)) {
+      if (type === 'skeleton' && SKELETON_KEY_SET.has(key)) {
         filtered[key] = value
-      } else if (type === 'color' && COLOR_KEYS.has(key)) {
+      } else if (type === 'color' && COLOR_KEY_SET.has(key)) {
         filtered[key] = value
-      } else if (!SKELETON_KEYS.has(key) && !COLOR_KEYS.has(key)) {
+      } else if (!SKELETON_KEY_SET.has(key) && !COLOR_KEY_SET.has(key)) {
         filtered[key] = value
       }
     }
@@ -598,13 +578,13 @@ function mergeThemeData(
 
 /** 过滤 null/undefined（保留 "none" 和 falsy 值如 0） */
 function filterNullish(style: ResolvedStyle): ResolvedStyle {
-  const result: ResolvedStyle = {}
+  const result: Record<string, StyleValue> = {}
   for (const [key, value] of Object.entries(style)) {
     if (value !== null && value !== undefined) {
       result[key] = value
     }
   }
-  return result
+  return result as ResolvedStyle
 }
 
 /** 从 doc 树获取深度 */

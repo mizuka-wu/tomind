@@ -1,5 +1,6 @@
 import { createExtension } from '@tomind/core'
 import type { ExtensionContext, CommandFn, ThemeData, NodeType, ResolvedStyle, StyleValue } from '@tomind/core'
+import { COLOR_KEYS, SKELETON_KEYS } from '@tomind/style'
 
 // ==================== 类型安全辅助 ====================
 
@@ -54,28 +55,6 @@ const NODE_TYPE_TO_CLASS: Record<string, string> = {
   map: 'map',
 }
 
-/** 颜色相关样式键 */
-const COLOR_KEYS = [
-  'fillColor', 'fillPattern', 'fillGradient',
-  'borderColor', 'borderWidth', 'borderPattern',
-  'lineColor', 'lineWidth', 'linePattern',
-  'fontColor', 'fontFamily', 'fontSize', 'fontStyle', 'fontWeight',
-  'textTransform', 'textDecoration', 'textAlign', 'textBackgroundColor',
-  'opacity', 'multiLineColors',
-  'calloutFillColor', 'calloutLineColor', 'calloutLineClass',
-  'calloutLineCorner', 'calloutLinePattern', 'calloutLineWidth', 'calloutShapeClass',
-]
-
-/** 骨架相关样式键 */
-const SKELETON_KEYS = [
-  'shapeClass', 'shapeCorner',
-  'lineClass', 'lineTapered', 'lineCorner',
-  'structureClass',
-  'marginLeft', 'marginRight', 'marginTop', 'marginBottom',
-  'spacingMajor', 'spacingMinor',
-  'arrowEndClass', 'arrowBeginClass',
-]
-
 // ==================== 工具函数 ====================
 
 /** 生成 UUID */
@@ -84,10 +63,10 @@ function generateId(): string {
 }
 
 /** 从样式中提取指定键 */
-function extractStyleKeys(style: ResolvedStyle, keys: string[]): Record<string, StyleValue> {
+function extractStyleKeys(style: ResolvedStyle, keys: readonly string[]): Record<string, StyleValue> {
   const result: Record<string, StyleValue> = {}
   for (const key of keys) {
-    const value = style[key]
+    const value = style[key as keyof ResolvedStyle]
     if (value !== undefined && value !== null) {
       result[key] = value
     }

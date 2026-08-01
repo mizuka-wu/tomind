@@ -7,11 +7,13 @@
  * 3. 两层分离 — StyleEngine 计算 ResolvedStyle，NodeView 转 LeaferJS 属性
  */
 
+import type { ColorKey, SkeletonKey, StyleKey } from './style-keys'
+
 /** 样式值类型 — 可以是任意数据类型 */
 export type StyleValue = string | number | boolean | null | undefined
 
 /** 解析后的样式对象（camelCase 键名，纯数据） */
-export interface ResolvedStyle {
+export type ResolvedStyle = {
   // 填充
   fillColor?: StyleValue        // "#ff0000" | "inherit"
   fillPattern?: StyleValue      // "solid" | "hachure" | ...
@@ -63,15 +65,16 @@ export interface ResolvedStyle {
   calloutLineColor?: StyleValue
   // 多线颜色
   multiLineColors?: StyleValue  // "none" | "#ff0000 #00ff00 #0000ff"
-  // 扩展
-  [key: string]: StyleValue
+} & {
+  // 扩展键（类型安全）
+  [key in StyleKey]?: StyleValue
 }
 
 /** 主题数据结构 — 类名 → 样式属性 */
 export interface ThemeData {
   [className: string]: {
     id?: string
-    properties: Record<string, StyleValue>
+    properties: Partial<Record<StyleKey, StyleValue>>
   }
 }
 

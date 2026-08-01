@@ -47,6 +47,25 @@ export type {
   NodeType,
 } from './style-types'
 
+// 样式键常量
+export {
+  COLOR_KEYS,
+  SKELETON_KEYS,
+  ALL_STYLE_KEYS,
+  COLOR_KEY_SET,
+  SKELETON_KEY_SET,
+  ALL_STYLE_KEY_SET,
+  isColorKey,
+  isSkeletonKey,
+  isStyleKey,
+  getKeyCategory,
+} from './style-keys'
+export type {
+  ColorKey,
+  SkeletonKey,
+  StyleKey,
+} from './style-keys'
+
 // 样式转换器（双向转换）
 export {
   normalizeColor,

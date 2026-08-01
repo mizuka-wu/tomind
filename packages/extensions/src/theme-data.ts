@@ -32,7 +32,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#eee8e6",
           "multiLineColors": "",
-          "color-list": "#eee8e6 #2d221f"
+          "colorList": "#eee8e6 #2d221f"
         }
       },
       "centralTopic": {
@@ -121,7 +121,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#efede5",
           "multiLineColors": "",
-          "color-list": "#efede5 #302c1d"
+          "colorList": "#efede5 #302c1d"
         }
       },
       "centralTopic": {
@@ -210,7 +210,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#e7ede9",
           "multiLineColors": "",
-          "color-list": "#e7ede9 #18211b"
+          "colorList": "#e7ede9 #18211b"
         }
       },
       "centralTopic": {
@@ -299,7 +299,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#e7eced",
           "multiLineColors": "",
-          "color-list": "#e7eced #1a2224"
+          "colorList": "#e7eced #1a2224"
         }
       },
       "centralTopic": {
@@ -388,7 +388,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#e9e9ec",
           "multiLineColors": "",
-          "color-list": "#e9e9ec #1a1a1e"
+          "colorList": "#e9e9ec #1a1a1e"
         }
       },
       "centralTopic": {
@@ -477,7 +477,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ece8e9",
           "multiLineColors": "",
-          "color-list": "#ece8e9 #2c2325"
+          "colorList": "#ece8e9 #2c2325"
         }
       },
       "centralTopic": {
@@ -566,7 +566,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#2d221f",
           "multiLineColors": "",
-          "color-list": "#eee8e6 #2d221f"
+          "colorList": "#eee8e6 #2d221f"
         }
       },
       "centralTopic": {
@@ -655,7 +655,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#302c1d",
           "multiLineColors": "",
-          "color-list": "#efede5 #302c1d"
+          "colorList": "#efede5 #302c1d"
         }
       },
       "centralTopic": {
@@ -744,7 +744,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#18211b",
           "multiLineColors": "",
-          "color-list": "#e7ede9 #18211b"
+          "colorList": "#e7ede9 #18211b"
         }
       },
       "centralTopic": {
@@ -833,7 +833,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#1a2224",
           "multiLineColors": "",
-          "color-list": "#e7eced #1a2224"
+          "colorList": "#e7eced #1a2224"
         }
       },
       "centralTopic": {
@@ -922,7 +922,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#1a1a1e",
           "multiLineColors": "",
-          "color-list": "#e9e9ec #1a1a1e"
+          "colorList": "#e9e9ec #1a1a1e"
         }
       },
       "centralTopic": {
@@ -1011,7 +1011,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#2c2325",
           "multiLineColors": "",
-          "color-list": "#ece8e9 #2c2325"
+          "colorList": "#ece8e9 #2c2325"
         }
       },
       "centralTopic": {
@@ -1100,7 +1100,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#efe6c6",
           "multiLineColors": "",
-          "color-list": "#ffffff #201e14"
+          "colorList": "#ffffff #201e14"
         }
       },
       "centralTopic": {
@@ -1189,7 +1189,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#c4e0cb",
           "multiLineColors": "",
-          "color-list": "#fffeff #0e120f"
+          "colorList": "#fffeff #0e120f"
         }
       },
       "centralTopic": {
@@ -1278,7 +1278,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#c6dde2",
           "multiLineColors": "",
-          "color-list": "#ffffff #0f1415"
+          "colorList": "#ffffff #0f1415"
         }
       },
       "centralTopic": {
@@ -1367,7 +1367,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#c9cad5",
           "multiLineColors": "",
-          "color-list": "#ffffff #0e0e10"
+          "colorList": "#ffffff #0e0e10"
         }
       },
       "centralTopic": {
@@ -1456,7 +1456,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#d0c8d1",
           "multiLineColors": "",
-          "color-list": "#fefefe #0d0b0d"
+          "colorList": "#fefefe #0d0b0d"
         }
       },
       "centralTopic": {
@@ -1545,7 +1545,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#e4d5d9",
           "multiLineColors": "",
-          "color-list": "#ffffff #1e1819"
+          "colorList": "#ffffff #1e1819"
         }
       },
       "centralTopic": {
@@ -1634,7 +1634,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #29090e"
+          "colorList": "#ffffff #29090e"
         }
       },
       "centralTopic": {
@@ -1723,7 +1723,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #211c00"
+          "colorList": "#ffffff #211c00"
         }
       },
       "centralTopic": {
@@ -1812,7 +1812,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #000f08"
+          "colorList": "#ffffff #000f08"
         }
       },
       "centralTopic": {
@@ -1901,7 +1901,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #000b0f"
+          "colorList": "#ffffff #000b0f"
         }
       },
       "centralTopic": {
@@ -1990,7 +1990,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #00080f"
+          "colorList": "#ffffff #00080f"
         }
       },
       "centralTopic": {
@@ -2079,7 +2079,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #0a040a"
+          "colorList": "#ffffff #0a040a"
         }
       },
       "centralTopic": {
@@ -2168,7 +2168,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#140407",
           "multiLineColors": "",
-          "color-list": "#fcf2f4 #140407"
+          "colorList": "#fcf2f4 #140407"
         }
       },
       "centralTopic": {
@@ -2257,7 +2257,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0a0800",
           "multiLineColors": "",
-          "color-list": "#fffcef #0a0800"
+          "colorList": "#fffcef #0a0800"
         }
       },
       "centralTopic": {
@@ -2346,7 +2346,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#090a00",
           "multiLineColors": "",
-          "color-list": "#fdffef #090a00"
+          "colorList": "#fdffef #090a00"
         }
       },
       "centralTopic": {
@@ -2435,7 +2435,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#00070a",
           "multiLineColors": "",
-          "color-list": "#effaff #00070a"
+          "colorList": "#effaff #00070a"
         }
       },
       "centralTopic": {
@@ -2524,7 +2524,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#030306",
           "multiLineColors": "",
-          "color-list": "#f5f4fa #030306"
+          "colorList": "#f5f4fa #030306"
         }
       },
       "centralTopic": {
@@ -2613,7 +2613,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#080205",
           "multiLineColors": "",
-          "color-list": "#fbf2f7 #080205"
+          "colorList": "#fbf2f7 #080205"
         }
       },
       "centralTopic": {
@@ -2702,7 +2702,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#d02f48",
           "multiLineColors": "",
-          "color-list": "#ffffff #3e0e15"
+          "colorList": "#ffffff #3e0e15"
         }
       },
       "centralTopic": {
@@ -2791,7 +2791,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#eec900",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #3d3300"
+          "colorList": "#FFFFFF #3d3300"
         }
       },
       "centralTopic": {
@@ -2880,7 +2880,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#a8bb00",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #363d00"
+          "colorList": "#FFFFFF #363d00"
         }
       },
       "centralTopic": {
@@ -2969,7 +2969,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#005ba5",
           "multiLineColors": "",
-          "color-list": "#d8edfe #002a4c"
+          "colorList": "#d8edfe #002a4c"
         }
       },
       "centralTopic": {
@@ -3058,7 +3058,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#534aa0",
           "multiLineColors": "",
-          "color-list": "#ffffff #1b1834"
+          "colorList": "#ffffff #1b1834"
         }
       },
       "centralTopic": {
@@ -3147,7 +3147,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#81378a",
           "multiLineColors": "",
-          "color-list": "#fbf7fb #331536"
+          "colorList": "#fbf7fb #331536"
         }
       },
       "centralTopic": {
@@ -3237,7 +3237,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #232323"
+          "colorList": "#ffffff #232323"
         }
       },
       "centralTopic": {
@@ -3327,7 +3327,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ededed",
           "multiLineColors": "",
-          "color-list": "#ededed #080808"
+          "colorList": "#ededed #080808"
         }
       },
       "centralTopic": {
@@ -3417,7 +3417,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#d3d3d3",
           "multiLineColors": "",
-          "color-list": "#d3d3d3 #070707"
+          "colorList": "#d3d3d3 #070707"
         }
       },
       "centralTopic": {
@@ -3507,7 +3507,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#393939",
           "multiLineColors": "",
-          "color-list": "#ffffff #393939"
+          "colorList": "#ffffff #393939"
         }
       },
       "centralTopic": {
@@ -3597,7 +3597,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#202020",
           "multiLineColors": "",
-          "color-list": "#ffffff #202020"
+          "colorList": "#ffffff #202020"
         }
       },
       "centralTopic": {
@@ -3687,7 +3687,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#080808",
           "multiLineColors": "",
-          "color-list": "#eeeeee #080808"
+          "colorList": "#eeeeee #080808"
         }
       },
       "centralTopic": {
@@ -3776,7 +3776,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -3865,7 +3865,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -3954,7 +3954,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4043,7 +4043,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4132,7 +4132,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4221,7 +4221,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4310,7 +4310,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffe0e5",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4400,7 +4400,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffefd5",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4490,7 +4490,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#d8efee",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4580,7 +4580,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#d6f5f9",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4670,7 +4670,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#d9edfc",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4760,7 +4760,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#efddf2",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4850,7 +4850,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -4939,7 +4939,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -5028,7 +5028,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -5117,7 +5117,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -5206,7 +5206,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -5295,7 +5295,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #141414"
+          "colorList": "#ffffff #141414"
         }
       },
       "centralTopic": {
@@ -5385,7 +5385,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#fa8155 #ffad36 #b7c82b #0098b9 #7574bc #a165a8",
-          "color-list": " "
+          "colorList": " "
         }
       },
       "centralTopic": {
@@ -5478,7 +5478,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#2196F3 #1E88E5 #1976D2 #1565C0 #0D47A1 #283593",
-          "color-list": " "
+          "colorList": " "
         }
       },
       "centralTopic": {
@@ -5571,7 +5571,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#e8c2bf #f4d4b0 #d8ddad #a6d4cc #afc0d1 #c8b9c9",
-          "color-list": " "
+          "colorList": " "
         }
       },
       "centralTopic": {
@@ -5664,7 +5664,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#f1f1f1",
           "multiLineColors": "#005b9b #534c98 #7c3d84 #a33c6a #c53f4d #cc572e",
-          "color-list": " "
+          "colorList": " "
         }
       },
       "centralTopic": {
@@ -5757,7 +5757,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#3c3c3c",
           "multiLineColors": "#ffa787 #f19896 #dec4ca #5bafc4 #ffbe71 #d98ea5",
-          "color-list": " "
+          "colorList": " "
         }
       },
       "centralTopic": {
@@ -5850,7 +5850,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#272727",
           "multiLineColors": "#f2d96e #ffbe71 #fa8155 #a61d39 #c53f4d #ffa787",
-          "color-list": " "
+          "colorList": " "
         }
       },
       "centralTopic": {
@@ -5940,7 +5940,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": " "
+          "colorList": " "
         }
       },
       "centralTopic": {
@@ -6033,7 +6033,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#F9423A #F6A04D #F3D321 #00BC7B #486AFF #4D49BE",
-          "color-list": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+          "colorList": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
         }
       },
       "centralTopic": {
@@ -6119,7 +6119,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#ffa787 #f19896 #dec4ca #5bafc4 #ffbe71 #d98ea5",
-          "color-list": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+          "colorList": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
         }
       },
       "centralTopic": {
@@ -6205,7 +6205,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#E7C2C0 #F3D4B2 #D8DCAF #A8D4CC #B0C0D0 #C8BAC9",
-          "color-list": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+          "colorList": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
         }
       },
       "centralTopic": {
@@ -6291,7 +6291,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#D3BD6C #ADB66B #76B18A #54A39B #5192A4 #7878A0",
-          "color-list": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+          "colorList": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
         }
       },
       "centralTopic": {
@@ -6377,7 +6377,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#F2D96E #FFBE71 #FA8155 #A61D39 #C53F4D #FFA787",
-          "color-list": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+          "colorList": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
         }
       },
       "centralTopic": {
@@ -6463,7 +6463,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#0B5D99 #534E96 #7B4083 #A23E6A #C34150 #CA5835",
-          "color-list": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
+          "colorList": "#000229 #D9D34E #52CC83 #4D86DB #99142F #245570"
         }
       },
       "centralTopic": {
@@ -6549,7 +6549,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+          "colorList": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
         }
       },
       "centralTopic": {
@@ -6639,7 +6639,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F2F2F2",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+          "colorList": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
         }
       },
       "centralTopic": {
@@ -6729,7 +6729,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0D0D0D",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+          "colorList": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
         }
       },
       "centralTopic": {
@@ -6819,7 +6819,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0D0D0D",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+          "colorList": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
         }
       },
       "centralTopic": {
@@ -6909,7 +6909,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+          "colorList": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
         }
       },
       "centralTopic": {
@@ -6999,7 +6999,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0D0D0D",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+          "colorList": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
         }
       },
       "centralTopic": {
@@ -7089,7 +7089,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "#F22816 #F2B807 #233ED9",
-          "color-list": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+          "colorList": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
         }
       },
       "centralTopic": {
@@ -7175,7 +7175,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0D0D0D",
           "multiLineColors": "#F2F2F2 #F22816 #F2B807 #233ED9",
-          "color-list": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
+          "colorList": "#FFFFFF #F2F2F2 #F22816 #F2B807 #233ED9 #0D0D0D"
         }
       },
       "centralTopic": {
@@ -7261,7 +7261,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#f0f0f0",
           "multiLineColors": "",
-          "color-list": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+          "colorList": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
         }
       },
       "centralTopic": {
@@ -7351,7 +7351,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F2BDC7",
           "multiLineColors": "",
-          "color-list": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+          "colorList": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
         }
       },
       "centralTopic": {
@@ -7441,7 +7441,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F2DC6B",
           "multiLineColors": "",
-          "color-list": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+          "colorList": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
         }
       },
       "centralTopic": {
@@ -7531,7 +7531,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#5BA683",
           "multiLineColors": "",
-          "color-list": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+          "colorList": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
         }
       },
       "centralTopic": {
@@ -7621,7 +7621,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#B796D9",
           "multiLineColors": "",
-          "color-list": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+          "colorList": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
         }
       },
       "centralTopic": {
@@ -7711,7 +7711,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#3C74A6",
           "multiLineColors": "",
-          "color-list": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+          "colorList": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
         }
       },
       "centralTopic": {
@@ -7801,7 +7801,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#f0f0f0",
           "multiLineColors": "#F2BDC7 #5BA683 #B796D9",
-          "color-list": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
+          "colorList": "#f0f0f0 #F2BDC7 #F2DC6B #5BA683 #B796D9 #3C74A6"
         }
       },
       "centralTopic": {
@@ -7887,7 +7887,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+          "colorList": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
         }
       },
       "centralTopic": {
@@ -7977,7 +7977,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFABAA",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+          "colorList": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
         }
       },
       "centralTopic": {
@@ -8067,7 +8067,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#191959",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+          "colorList": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
         }
       },
       "centralTopic": {
@@ -8157,7 +8157,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#8CB5FF",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+          "colorList": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
         }
       },
       "centralTopic": {
@@ -8247,7 +8247,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+          "colorList": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
         }
       },
       "centralTopic": {
@@ -8337,7 +8337,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#191959",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+          "colorList": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
         }
       },
       "centralTopic": {
@@ -8427,7 +8427,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "#FFABAA #FF7B31 #8CB5FF #4A51D9",
-          "color-list": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+          "colorList": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
         }
       },
       "centralTopic": {
@@ -8513,7 +8513,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#191959",
           "multiLineColors": "#FFABAA #FF7B31 #8CB5FF #4A51D9",
-          "color-list": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
+          "colorList": "#FFFFFF #FFABAA #FF7B31 #8CB5FF #4A51D9 #191959"
         }
       },
       "centralTopic": {
@@ -8599,7 +8599,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#EDF3FF",
           "multiLineColors": "",
-          "color-list": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+          "colorList": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
         }
       },
       "centralTopic": {
@@ -8689,7 +8689,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#C1E554",
           "multiLineColors": "",
-          "color-list": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+          "colorList": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
         }
       },
       "centralTopic": {
@@ -8779,7 +8779,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0A052E",
           "multiLineColors": "",
-          "color-list": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+          "colorList": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
         }
       },
       "centralTopic": {
@@ -8869,7 +8869,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#D389D5",
           "multiLineColors": "",
-          "color-list": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+          "colorList": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
         }
       },
       "centralTopic": {
@@ -8959,7 +8959,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0A052E",
           "multiLineColors": "",
-          "color-list": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+          "colorList": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
         }
       },
       "centralTopic": {
@@ -9049,7 +9049,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0A052E",
           "multiLineColors": "",
-          "color-list": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+          "colorList": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
         }
       },
       "centralTopic": {
@@ -9139,7 +9139,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#EDF3FF",
           "multiLineColors": "#FFAA39 #D389D5 #1692D2",
-          "color-list": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+          "colorList": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
         }
       },
       "centralTopic": {
@@ -9225,7 +9225,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0A052E",
           "multiLineColors": "#C1E554 #FFAA39 #D389D5 #1692D2",
-          "color-list": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
+          "colorList": "#EDF3FF #C1E554 #FFAA39 #D389D5 #1692D2 #0A052E"
         }
       },
       "centralTopic": {
@@ -9311,7 +9311,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F9F5DE",
           "multiLineColors": "",
-          "color-list": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+          "colorList": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
         }
       },
       "centralTopic": {
@@ -9401,7 +9401,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#DFDDCE",
           "multiLineColors": "",
-          "color-list": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+          "colorList": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
         }
       },
       "centralTopic": {
@@ -9491,7 +9491,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#4B9D9D",
           "multiLineColors": "",
-          "color-list": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+          "colorList": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
         }
       },
       "centralTopic": {
@@ -9581,7 +9581,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#7884A4",
           "multiLineColors": "",
-          "color-list": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+          "colorList": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
         }
       },
       "centralTopic": {
@@ -9671,7 +9671,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#AA79AA",
           "multiLineColors": "",
-          "color-list": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+          "colorList": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
         }
       },
       "centralTopic": {
@@ -9761,7 +9761,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#153E5D",
           "multiLineColors": "",
-          "color-list": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+          "colorList": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
         }
       },
       "centralTopic": {
@@ -9851,7 +9851,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F9F5DE",
           "multiLineColors": "#4B9D9D #7884A4 #AA79AA",
-          "color-list": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+          "colorList": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
         }
       },
       "centralTopic": {
@@ -9937,7 +9937,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#153E5D",
           "multiLineColors": "#DFDDCE #4B9D9D #7884A4 #AA79AA",
-          "color-list": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
+          "colorList": "#F9F5DE #DFDDCE #4B9D9D #7884A4 #AA79AA #153E5D"
         }
       },
       "centralTopic": {
@@ -10023,7 +10023,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F6F5F5",
           "multiLineColors": "",
-          "color-list": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+          "colorList": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
         }
       },
       "centralTopic": {
@@ -10113,7 +10113,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#9BFFED",
           "multiLineColors": "",
-          "color-list": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+          "colorList": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
         }
       },
       "centralTopic": {
@@ -10203,7 +10203,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#070D59",
           "multiLineColors": "",
-          "color-list": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+          "colorList": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
         }
       },
       "centralTopic": {
@@ -10293,7 +10293,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#E46D57",
           "multiLineColors": "",
-          "color-list": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+          "colorList": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
         }
       },
       "centralTopic": {
@@ -10383,7 +10383,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#1F3C88",
           "multiLineColors": "",
-          "color-list": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+          "colorList": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
         }
       },
       "centralTopic": {
@@ -10473,7 +10473,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#070D59",
           "multiLineColors": "",
-          "color-list": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+          "colorList": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
         }
       },
       "centralTopic": {
@@ -10563,7 +10563,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F6F5F5",
           "multiLineColors": "#FFC947 #E46D57 #1F3C88",
-          "color-list": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+          "colorList": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
         }
       },
       "centralTopic": {
@@ -10649,7 +10649,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#070D59",
           "multiLineColors": "#9BFFED #FFC947 #E46D57 #1F3C88",
-          "color-list": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
+          "colorList": "#F6F5F5 #9BFFED #FFC947 #E46D57 #1F3C88 #070D59"
         }
       },
       "centralTopic": {
@@ -10735,7 +10735,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+          "colorList": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
         }
       },
       "centralTopic": {
@@ -10825,7 +10825,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#EFD7E6",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+          "colorList": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
         }
       },
       "centralTopic": {
@@ -10915,7 +10915,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FF7DC1",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+          "colorList": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
         }
       },
       "centralTopic": {
@@ -11005,7 +11005,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#A239EA",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+          "colorList": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
         }
       },
       "centralTopic": {
@@ -11095,7 +11095,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+          "colorList": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
         }
       },
       "centralTopic": {
@@ -11185,7 +11185,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#092933",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+          "colorList": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
         }
       },
       "centralTopic": {
@@ -11275,7 +11275,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "#EFD7E6 #FF7DC1 #A239EA #5C37E5",
-          "color-list": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+          "colorList": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
         }
       },
       "centralTopic": {
@@ -11361,7 +11361,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#092933",
           "multiLineColors": "#EFD7E6 #FF7DC1 #A239EA #5C37E5",
-          "color-list": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
+          "colorList": "#FFFFFF #EFD7E6 #FF7DC1 #A239EA #5C37E5 #092933"
         }
       },
       "centralTopic": {
@@ -11447,7 +11447,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#E9C46A",
           "multiLineColors": "",
-          "color-list": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+          "colorList": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
         }
       },
       "centralTopic": {
@@ -11537,7 +11537,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F4A261",
           "multiLineColors": "",
-          "color-list": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+          "colorList": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
         }
       },
       "centralTopic": {
@@ -11627,7 +11627,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#DC856F",
           "multiLineColors": "",
-          "color-list": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+          "colorList": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
         }
       },
       "centralTopic": {
@@ -11717,7 +11717,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#A4705E",
           "multiLineColors": "",
-          "color-list": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+          "colorList": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
         }
       },
       "centralTopic": {
@@ -11807,7 +11807,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#2A9D8F",
           "multiLineColors": "",
-          "color-list": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+          "colorList": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
         }
       },
       "centralTopic": {
@@ -11897,7 +11897,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#264653",
           "multiLineColors": "",
-          "color-list": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+          "colorList": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
         }
       },
       "centralTopic": {
@@ -11987,7 +11987,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#264653",
           "multiLineColors": "#F4A261 #DC856F #A4705E #2A9D8F",
-          "color-list": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
+          "colorList": "#E9C46A #F4A261 #DC856F #A4705E #2A9D8F #264653"
         }
       },
       "centralTopic": {
@@ -12073,7 +12073,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F9F8ED",
           "multiLineColors": "",
-          "color-list": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+          "colorList": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
         }
       },
       "centralTopic": {
@@ -12163,7 +12163,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFEDD2",
           "multiLineColors": "",
-          "color-list": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+          "colorList": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
         }
       },
       "centralTopic": {
@@ -12253,7 +12253,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFBC9F",
           "multiLineColors": "",
-          "color-list": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+          "colorList": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
         }
       },
       "centralTopic": {
@@ -12343,7 +12343,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#D8AC8F",
           "multiLineColors": "",
-          "color-list": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+          "colorList": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
         }
       },
       "centralTopic": {
@@ -12433,7 +12433,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#83c5be",
           "multiLineColors": "",
-          "color-list": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+          "colorList": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
         }
       },
       "centralTopic": {
@@ -12523,7 +12523,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#006d77",
           "multiLineColors": "",
-          "color-list": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+          "colorList": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
         }
       },
       "centralTopic": {
@@ -12613,7 +12613,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F9F8ED",
           "multiLineColors": "#FFBC9F #D8AC8F #83c5be",
-          "color-list": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+          "colorList": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
         }
       },
       "centralTopic": {
@@ -12699,7 +12699,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#006d77",
           "multiLineColors": "#FFEDD2 #FFBC9F #D8AC8F #83c5be",
-          "color-list": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
+          "colorList": "#F9F8ED #FFEDD2 #FFBC9F #D8AC8F #83c5be #006d77"
         }
       },
       "centralTopic": {
@@ -12785,7 +12785,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+          "colorList": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
         }
       },
       "centralTopic": {
@@ -12875,7 +12875,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#E4F9F5",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+          "colorList": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
         }
       },
       "centralTopic": {
@@ -12965,7 +12965,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0D4040",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+          "colorList": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
         }
       },
       "centralTopic": {
@@ -13055,7 +13055,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+          "colorList": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
         }
       },
       "centralTopic": {
@@ -13145,7 +13145,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#40514E",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+          "colorList": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
         }
       },
       "centralTopic": {
@@ -13235,7 +13235,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0D4040",
           "multiLineColors": "",
-          "color-list": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+          "colorList": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
         }
       },
       "centralTopic": {
@@ -13325,7 +13325,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFFFF",
           "multiLineColors": "#30E3CA #11999E #40514E",
-          "color-list": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+          "colorList": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
         }
       },
       "centralTopic": {
@@ -13411,7 +13411,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0D4040",
           "multiLineColors": "#E4F9F5 #30E3CA #11999E #40514E",
-          "color-list": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
+          "colorList": "#FFFFFF #E4F9F5 #30E3CA #11999E #40514E #0D4040"
         }
       },
       "centralTopic": {
@@ -13497,7 +13497,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+          "colorList": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
         }
       },
       "centralTopic": {
@@ -13587,7 +13587,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FF9C72",
           "multiLineColors": "",
-          "color-list": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+          "colorList": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
         }
       },
       "centralTopic": {
@@ -13677,7 +13677,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#f5cd6c",
           "multiLineColors": "",
-          "color-list": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+          "colorList": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
         }
       },
       "centralTopic": {
@@ -13767,7 +13767,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F09E3A",
           "multiLineColors": "",
-          "color-list": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+          "colorList": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
         }
       },
       "centralTopic": {
@@ -13857,7 +13857,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#9cc3e4",
           "multiLineColors": "",
-          "color-list": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+          "colorList": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
         }
       },
       "centralTopic": {
@@ -13947,7 +13947,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#54A6D6",
           "multiLineColors": "",
-          "color-list": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+          "colorList": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
         }
       },
       "centralTopic": {
@@ -14037,7 +14037,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#FF9C72 #f5cd6c #F09E3A #9cc3e4",
-          "color-list": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
+          "colorList": "#ffffff #FF9C72 #f5cd6c #F09E3A #9cc3e4 #54A6D6"
         }
       },
       "centralTopic": {
@@ -14123,7 +14123,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#D6D9C3",
           "multiLineColors": "",
-          "color-list": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+          "colorList": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
         }
       },
       "centralTopic": {
@@ -14213,7 +14213,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#b6ad90",
           "multiLineColors": "",
-          "color-list": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+          "colorList": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
         }
       },
       "centralTopic": {
@@ -14303,7 +14303,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#579360",
           "multiLineColors": "",
-          "color-list": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+          "colorList": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
         }
       },
       "centralTopic": {
@@ -14393,7 +14393,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#656d4a",
           "multiLineColors": "",
-          "color-list": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+          "colorList": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
         }
       },
       "centralTopic": {
@@ -14483,7 +14483,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#265834",
           "multiLineColors": "",
-          "color-list": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+          "colorList": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
         }
       },
       "centralTopic": {
@@ -14573,7 +14573,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#1F2B1D",
           "multiLineColors": "",
-          "color-list": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+          "colorList": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
         }
       },
       "centralTopic": {
@@ -14663,7 +14663,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#1F2B1D",
           "multiLineColors": "#b6ad90 #579360 #656d4a #265834",
-          "color-list": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
+          "colorList": "#D6D9C3 #b6ad90 #579360 #656d4a #265834 #1F2B1D"
         }
       },
       "centralTopic": {
@@ -14749,7 +14749,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+          "colorList": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
         }
       },
       "centralTopic": {
@@ -14839,7 +14839,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#72efdd",
           "multiLineColors": "",
-          "color-list": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+          "colorList": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
         }
       },
       "centralTopic": {
@@ -14929,7 +14929,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#56cfe1",
           "multiLineColors": "",
-          "color-list": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+          "colorList": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
         }
       },
       "centralTopic": {
@@ -15019,7 +15019,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#4ea8de",
           "multiLineColors": "",
-          "color-list": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+          "colorList": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
         }
       },
       "centralTopic": {
@@ -15109,7 +15109,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#5e60ce",
           "multiLineColors": "",
-          "color-list": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+          "colorList": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
         }
       },
       "centralTopic": {
@@ -15199,7 +15199,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+          "colorList": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
         }
       },
       "centralTopic": {
@@ -15289,7 +15289,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#72efdd #56cfe1 #4ea8de #5e60ce",
-          "color-list": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
+          "colorList": "#ffffff #72efdd #56cfe1 #4ea8de #5e60ce #7400b8"
         }
       },
       "centralTopic": {
@@ -15375,7 +15375,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#d9dcd6",
           "multiLineColors": "",
-          "color-list": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+          "colorList": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
         }
       },
       "centralTopic": {
@@ -15465,7 +15465,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#81c3d7",
           "multiLineColors": "",
-          "color-list": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+          "colorList": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
         }
       },
       "centralTopic": {
@@ -15555,7 +15555,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#3a7ca5",
           "multiLineColors": "",
-          "color-list": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+          "colorList": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
         }
       },
       "centralTopic": {
@@ -15645,7 +15645,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#2f6690",
           "multiLineColors": "",
-          "color-list": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+          "colorList": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
         }
       },
       "centralTopic": {
@@ -15735,7 +15735,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#16425b",
           "multiLineColors": "",
-          "color-list": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+          "colorList": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
         }
       },
       "centralTopic": {
@@ -15825,7 +15825,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0D2F42",
           "multiLineColors": "",
-          "color-list": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+          "colorList": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
         }
       },
       "centralTopic": {
@@ -15915,7 +15915,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#0D2F42",
           "multiLineColors": "#81c3d7 #3a7ca5 #2f6690 #16425b",
-          "color-list": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
+          "colorList": "#d9dcd6 #81c3d7 #3a7ca5 #2f6690 #16425b #0D2F42"
         }
       },
       "centralTopic": {
@@ -16001,7 +16001,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFE3E8",
           "multiLineColors": "",
-          "color-list": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+          "colorList": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
         }
       },
       "centralTopic": {
@@ -16091,7 +16091,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFDCC8",
           "multiLineColors": "",
-          "color-list": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+          "colorList": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
         }
       },
       "centralTopic": {
@@ -16181,7 +16181,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFB4B6",
           "multiLineColors": "",
-          "color-list": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+          "colorList": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
         }
       },
       "centralTopic": {
@@ -16271,7 +16271,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFA9C6",
           "multiLineColors": "",
-          "color-list": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+          "colorList": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
         }
       },
       "centralTopic": {
@@ -16361,7 +16361,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#D1C3BD",
           "multiLineColors": "",
-          "color-list": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+          "colorList": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
         }
       },
       "centralTopic": {
@@ -16451,7 +16451,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#C1CFDE",
           "multiLineColors": "",
-          "color-list": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+          "colorList": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
         }
       },
       "centralTopic": {
@@ -16541,7 +16541,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFE3E8",
           "multiLineColors": "#FFB4B6 #D1C3BD #C1CFDE",
-          "color-list": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
+          "colorList": "#FFE3E8 #FFDCC8 #FFB4B6 #FFA9C6 #D1C3BD #C1CFDE"
         }
       },
       "centralTopic": {
@@ -16627,7 +16627,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FDD29A",
           "multiLineColors": "",
-          "color-list": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+          "colorList": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
         }
       },
       "centralTopic": {
@@ -16717,7 +16717,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F9A655",
           "multiLineColors": "",
-          "color-list": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+          "colorList": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
         }
       },
       "centralTopic": {
@@ -16807,7 +16807,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#6D3B37",
           "multiLineColors": "",
-          "color-list": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+          "colorList": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
         }
       },
       "centralTopic": {
@@ -16897,7 +16897,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FDD29A",
           "multiLineColors": "",
-          "color-list": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+          "colorList": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
         }
       },
       "centralTopic": {
@@ -16987,7 +16987,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#A4564C",
           "multiLineColors": "",
-          "color-list": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+          "colorList": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
         }
       },
       "centralTopic": {
@@ -17077,7 +17077,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#6D3B37",
           "multiLineColors": "",
-          "color-list": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
+          "colorList": "#FDD29A #F9A655 #FC901A #E04B51 #A4564C #6D3B37"
         }
       },
       "centralTopic": {
@@ -17167,7 +17167,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#D5F2E3",
           "multiLineColors": "",
-          "color-list": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+          "colorList": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
         }
       },
       "centralTopic": {
@@ -17257,7 +17257,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#F0A346",
           "multiLineColors": "",
-          "color-list": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+          "colorList": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
         }
       },
       "centralTopic": {
@@ -17347,7 +17347,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#D5F2E3",
           "multiLineColors": "",
-          "color-list": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+          "colorList": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
         }
       },
       "centralTopic": {
@@ -17437,7 +17437,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#D5F2E3",
           "multiLineColors": "",
-          "color-list": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+          "colorList": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
         }
       },
       "centralTopic": {
@@ -17527,7 +17527,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#2D6C65",
           "multiLineColors": "",
-          "color-list": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+          "colorList": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
         }
       },
       "centralTopic": {
@@ -17617,7 +17617,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#101F23",
           "multiLineColors": "",
-          "color-list": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+          "colorList": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
         }
       },
       "centralTopic": {
@@ -17707,7 +17707,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#101F23",
           "multiLineColors": "#F0A346 #E12A37 #BC191E #2D6C65",
-          "color-list": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
+          "colorList": "#D5F2E3 #F0A346 #E12A37 #BC191E #2D6C65 #101F23"
         }
       },
       "centralTopic": {
@@ -17793,7 +17793,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#B4F2FD",
           "multiLineColors": "",
-          "color-list": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+          "colorList": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
         }
       },
       "centralTopic": {
@@ -17883,7 +17883,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#6EE2FD",
           "multiLineColors": "",
-          "color-list": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+          "colorList": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
         }
       },
       "centralTopic": {
@@ -17973,7 +17973,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#000D2D",
           "multiLineColors": "",
-          "color-list": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+          "colorList": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
         }
       },
       "centralTopic": {
@@ -18063,7 +18063,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#135CAE",
           "multiLineColors": "",
-          "color-list": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+          "colorList": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
         }
       },
       "centralTopic": {
@@ -18153,7 +18153,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#01206A",
           "multiLineColors": "",
-          "color-list": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+          "colorList": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
         }
       },
       "centralTopic": {
@@ -18243,7 +18243,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#000D2D",
           "multiLineColors": "",
-          "color-list": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+          "colorList": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
         }
       },
       "centralTopic": {
@@ -18333,7 +18333,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#000D2D",
           "multiLineColors": "#6EE2FD #3BB6E3 #135CAE",
-          "color-list": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
+          "colorList": "#B4F2FD #6EE2FD #3BB6E3 #135CAE #01206A #000D2D"
         }
       },
       "centralTopic": {
@@ -18419,7 +18419,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffe8d6",
           "multiLineColors": "",
-          "color-list": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+          "colorList": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
         }
       },
       "centralTopic": {
@@ -18509,7 +18509,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ddbea9",
           "multiLineColors": "",
-          "color-list": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+          "colorList": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
         }
       },
       "centralTopic": {
@@ -18599,7 +18599,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#cb997e",
           "multiLineColors": "",
-          "color-list": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+          "colorList": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
         }
       },
       "centralTopic": {
@@ -18689,7 +18689,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#b7b7a4",
           "multiLineColors": "",
-          "color-list": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+          "colorList": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
         }
       },
       "centralTopic": {
@@ -18779,7 +18779,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#a5a58d",
           "multiLineColors": "",
-          "color-list": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+          "colorList": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
         }
       },
       "centralTopic": {
@@ -18869,7 +18869,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#6b705c",
           "multiLineColors": "",
-          "color-list": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+          "colorList": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
         }
       },
       "centralTopic": {
@@ -18959,7 +18959,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffe8d6",
           "multiLineColors": "#ddbea9 #cb997e #b7b7a4 #a5a58d",
-          "color-list": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
+          "colorList": "#ffe8d6 #ddbea9 #cb997e #b7b7a4 #a5a58d #6b705c"
         }
       },
       "centralTopic": {
@@ -19045,7 +19045,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFBEF",
           "multiLineColors": "",
-          "color-list": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+          "colorList": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
         }
       },
       "centralTopic": {
@@ -19135,7 +19135,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FBD58A",
           "multiLineColors": "",
-          "color-list": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+          "colorList": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
         }
       },
       "centralTopic": {
@@ -19225,7 +19225,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#DCBEF4",
           "multiLineColors": "",
-          "color-list": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+          "colorList": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
         }
       },
       "centralTopic": {
@@ -19315,7 +19315,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#b67be6",
           "multiLineColors": "",
-          "color-list": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+          "colorList": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
         }
       },
       "centralTopic": {
@@ -19405,7 +19405,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#9d4edd",
           "multiLineColors": "",
-          "color-list": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+          "colorList": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
         }
       },
       "centralTopic": {
@@ -19495,7 +19495,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#72369d",
           "multiLineColors": "",
-          "color-list": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+          "colorList": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
         }
       },
       "centralTopic": {
@@ -19585,7 +19585,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#FFFBEF",
           "multiLineColors": "#FBD58A #DCBEF4 #b67be6 #9d4edd",
-          "color-list": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
+          "colorList": "#FFFBEF #FBD58A #DCBEF4 #b67be6 #9d4edd #72369d"
         }
       },
       "centralTopic": {
@@ -19671,7 +19671,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#fff0f3",
           "multiLineColors": "",
-          "color-list": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+          "colorList": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
         }
       },
       "centralTopic": {
@@ -19761,7 +19761,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffccd5",
           "multiLineColors": "",
-          "color-list": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+          "colorList": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
         }
       },
       "centralTopic": {
@@ -19851,7 +19851,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffb3c1",
           "multiLineColors": "",
-          "color-list": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+          "colorList": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
         }
       },
       "centralTopic": {
@@ -19941,7 +19941,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ff758f",
           "multiLineColors": "",
-          "color-list": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+          "colorList": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
         }
       },
       "centralTopic": {
@@ -20031,7 +20031,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#fff0f3",
           "multiLineColors": "",
-          "color-list": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+          "colorList": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
         }
       },
       "centralTopic": {
@@ -20121,7 +20121,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#a4133c",
           "multiLineColors": "",
-          "color-list": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+          "colorList": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
         }
       },
       "centralTopic": {
@@ -20211,7 +20211,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#fff0f3",
           "multiLineColors": "#ffb3c1 #ff758f #c9184a",
-          "color-list": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
+          "colorList": "#fff0f3 #ffccd5 #ffb3c1 #ff758f #c9184a #a4133c"
         }
       },
       "centralTopic": {
@@ -20297,7 +20297,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+          "colorList": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
         }
       },
       "centralTopic": {
@@ -20387,7 +20387,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#c4fff9",
           "multiLineColors": "",
-          "color-list": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+          "colorList": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
         }
       },
       "centralTopic": {
@@ -20477,7 +20477,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#9ceaef",
           "multiLineColors": "",
-          "color-list": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+          "colorList": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
         }
       },
       "centralTopic": {
@@ -20567,7 +20567,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#68d8d6",
           "multiLineColors": "",
-          "color-list": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+          "colorList": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
         }
       },
       "centralTopic": {
@@ -20657,7 +20657,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "",
-          "color-list": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+          "colorList": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
         }
       },
       "centralTopic": {
@@ -20747,7 +20747,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#046562",
           "multiLineColors": "",
-          "color-list": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+          "colorList": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
         }
       },
       "centralTopic": {
@@ -20837,7 +20837,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#ffffff",
           "multiLineColors": "#9ceaef #68d8d6 #06AFA9",
-          "color-list": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+          "colorList": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
         }
       },
       "centralTopic": {
@@ -20923,7 +20923,7 @@ export const COLOR_THEMES: ColorThemeData[] = [
         "properties": {
           "fillColor": "#046562",
           "multiLineColors": "#c4fff9 #9ceaef #68d8d6 #06AFA9",
-          "color-list": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
+          "colorList": "#ffffff #c4fff9 #9ceaef #68d8d6 #06AFA9 #046562"
         }
       },
       "centralTopic": {
@@ -21019,7 +21019,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "actived",
+          "alignmentByLevel": "actived",
           "fontFamily": "Montserrat",
           "fontStyle": "normal",
           "fontWeight": 500,
@@ -21145,7 +21145,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "1",
           "linePattern": "dot",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -21159,7 +21159,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "48a989c9-197e-4534-984e-f80434e50ff7",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -21182,7 +21182,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "actived",
+          "alignmentByLevel": "actived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 500,
@@ -21306,7 +21306,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -21320,7 +21320,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "f35c7db6-49eb-46ba-9bdf-b0d72ada927e",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -21343,7 +21343,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": "bold",
@@ -21472,7 +21472,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -21486,7 +21486,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "6c13f5c6-dc69-493f-8cd2-c1b33f0bcb22",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -21509,7 +21509,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "actived",
+          "alignmentByLevel": "actived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -21634,7 +21634,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "handdrawn-dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -21648,7 +21648,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "dbccd6e4-3928-41bb-bbf4-1aaaeec39ff3",
         "properties": {
-          "line-tapered": "normal"
+          "lineTapered": "normal"
         }
       }
     }
@@ -21672,7 +21672,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Roboto Slab",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -21785,7 +21785,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Roboto Slab','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -21799,7 +21799,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "a4884af6-4e2f-409a-976b-0533cfeabb8d",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -21822,7 +21822,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Condense",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -21931,7 +21931,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "1",
           "linePattern": "dot",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Condense','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -21945,7 +21945,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "321990c5-dd80-4648-94ee-74ec06933444",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -21968,7 +21968,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3",
           "borderPattern": "handdrawn-solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 500,
@@ -22100,7 +22100,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "handdrawn-dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -22114,7 +22114,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "f83ef788-6fb7-4025-afc6-71f53869ce23",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -22136,7 +22136,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "actived",
+          "alignmentByLevel": "actived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -22259,7 +22259,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -22273,7 +22273,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "2ef1d4af-fb1a-4190-a6c7-7cc453896c7f",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -22295,7 +22295,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "actived",
+          "alignmentByLevel": "actived",
           "fontFamily": "Droid Serif",
           "fontStyle": "normal",
           "fontWeight": 400,
@@ -22420,7 +22420,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Droid Serif','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -22434,7 +22434,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "56765ed7-df9f-4d71-9676-d94bd669170f",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -22458,7 +22458,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "actived",
+          "alignmentByLevel": "actived",
           "fontFamily": "Montserrat",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -22580,7 +22580,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -22594,7 +22594,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "efe8cb1f-9f60-4bdd-a17e-afac75664fb2",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -22617,7 +22617,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "1pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "actived",
+          "alignmentByLevel": "actived",
           "fontFamily": "NeverMind Condense",
           "fontStyle": "normal",
           "fontWeight": 500,
@@ -22739,7 +22739,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.zigzag",
           "lineWidth": "1",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Condense','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -22753,7 +22753,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "79e6c87d-d30c-449d-9d63-d548c8614082",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -22777,7 +22777,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "handdrawn-solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -22899,7 +22899,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "handdrawn-dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -22913,7 +22913,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "bdd82bb5-feaf-4082-a4e4-654e2fb5a6f6",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -22937,7 +22937,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 400,
@@ -23060,7 +23060,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "1",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "italic",
@@ -23074,7 +23074,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "712e5022-f0ff-4113-8c97-21af5d644e6e",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -23097,7 +23097,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "2pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "actived",
+          "alignmentByLevel": "actived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -23223,7 +23223,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "handdrawn-dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -23237,7 +23237,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "f8accc62-34bb-446d-aa40-6ff3ba97471b",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -23260,7 +23260,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "2pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -23368,7 +23368,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -23382,7 +23382,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "e7ee410e-0338-4429-a800-54744eab162d",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -23406,7 +23406,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "2pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Montserrat",
           "fontStyle": "normal",
           "fontWeight": 500,
@@ -23513,7 +23513,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.zigzag",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -23527,7 +23527,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "696f829d-2d86-4e0f-ac92-51b22bf3e811",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -23550,7 +23550,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 500,
@@ -23675,7 +23675,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -23689,7 +23689,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "5172e5f5-2d0e-4ba3-8a36-23a408ac9588",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -23713,7 +23713,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Roboto",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -23839,7 +23839,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Roboto','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -23853,7 +23853,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "45d72d70-b004-44df-9a51-fe61550a5260",
         "properties": {
-          "line-tapered": "tapered"
+          "lineTapered": "tapered"
         }
       }
     }
@@ -23876,7 +23876,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Montserrat",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -24000,7 +24000,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -24014,7 +24014,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "2937d1c7-f823-4390-b7d1-229f25fb55b4",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -24037,7 +24037,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Arvo",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -24160,7 +24160,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Arvo','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -24174,7 +24174,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "0b783c61-5ca8-4828-aba3-b12deddbd949",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -24197,7 +24197,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -24323,7 +24323,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.zigzag",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.square",
+          "arrowBeginClass": "org.xmind.arrowShape.square",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -24337,7 +24337,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "73b0715b-acd0-4867-aa72-b163fa2d614d",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -24361,7 +24361,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "5",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -24489,7 +24489,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "handdrawn-dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -24503,7 +24503,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "32766257-9bed-4eea-8fe0-3cf89a71b3de",
         "properties": {
-          "line-tapered": "tapered"
+          "lineTapered": "tapered"
         }
       }
     }
@@ -24526,7 +24526,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -24651,7 +24651,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Montserrat','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -24665,7 +24665,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "a277be6c-3898-4135-9925-6abeef0a9531",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -24687,7 +24687,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3",
           "borderPattern": "handdrawn-solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -24813,7 +24813,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -24827,7 +24827,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "6c3df78d-fdb9-4560-9171-ad07774d14e6",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -24849,7 +24849,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "5pt",
           "borderPattern": "handdrawn-solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -24975,7 +24975,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -24989,7 +24989,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "328f61bb-8d54-45b6-82be-cd6d2c1a326e",
         "properties": {
-          "line-tapered": "normal"
+          "lineTapered": "normal"
         }
       }
     }
@@ -25011,7 +25011,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -25135,7 +25135,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "1",
           "linePattern": "handdrawn-dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','Open Sans','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -25149,7 +25149,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "6add27ff-2a8c-4b27-9a8d-2fd1306042fe",
         "properties": {
-          "line-tapered": "normal"
+          "lineTapered": "normal"
         }
       }
     }
@@ -25172,7 +25172,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -25299,7 +25299,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -25313,7 +25313,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "fc5fd30e-59db-4c3c-9c38-3c60f588a2db",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -25336,7 +25336,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "2pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Droid Serif",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -25459,7 +25459,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.zigzag",
           "lineWidth": "1",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Droid Serif','Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -25473,7 +25473,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "b734a75f-abbb-4cf9-84a6-2b421f5b48e7",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -25495,7 +25495,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Montserrat",
           "fontStyle": "normal",
           "fontWeight": 500,
@@ -25620,7 +25620,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -25634,7 +25634,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "ac1dea37-faa1-417e-af7d-5a404d2e0b17",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -25657,7 +25657,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Condense",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -25767,7 +25767,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.zigzag",
           "lineWidth": "1",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Condense','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -25781,7 +25781,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "f03b89b1-6f73-48e8-90bf-86ea157bd181",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -25805,7 +25805,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -25929,7 +25929,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "handdrawn-dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -25943,7 +25943,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "758fa6f1-1bf5-4595-97a0-9ed9a6f9aec2",
         "properties": {
-          "line-tapered": "tapered"
+          "lineTapered": "tapered"
         }
       }
     }
@@ -25965,7 +25965,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Roboto",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -26091,7 +26091,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Roboto','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -26105,7 +26105,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "bf4523fb-e206-44f7-b5ca-6bce95452cfd",
         "properties": {
-          "line-tapered": "normal"
+          "lineTapered": "normal"
         }
       }
     }
@@ -26129,7 +26129,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Raleway",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -26241,7 +26241,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Raleway','Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -26255,7 +26255,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "512eaf1b-eb6f-43f0-bec0-171742f068e5",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -26277,7 +26277,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -26390,7 +26390,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Montserrat','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -26404,7 +26404,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "cfd265a8-f5f3-488e-a34f-10fce5277950",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -26426,7 +26426,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -26552,7 +26552,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -26566,7 +26566,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "5c317d96-5291-40f1-8075-52f388a3687a",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -26590,7 +26590,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 600,
@@ -26716,7 +26716,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "handdrawn-dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -26730,7 +26730,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "7c3f4006-838a-4e66-b6c4-7114160548c9",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -26754,7 +26754,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "3pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Nunito",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -26881,7 +26881,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.zigzag",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Nunito','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -26895,7 +26895,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "aee93dc9-27ec-4afa-aec2-b131ed44593d",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -26918,7 +26918,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "2pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Open Sans",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -27042,7 +27042,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.zigzag",
           "lineWidth": "1",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Open Sans','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -27056,7 +27056,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "51d2ff41-e1b1-45b2-a54a-8e4901491b77",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -27079,7 +27079,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "2",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Montserrat",
           "fontStyle": "normal",
           "fontWeight": 500,
@@ -27206,7 +27206,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -27220,7 +27220,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "4b9a20da-70ff-41b9-ae91-e284fd07b273",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -27243,7 +27243,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "0pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 500,
@@ -27368,7 +27368,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Montserrat','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -27382,7 +27382,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "bfdd08b7-4a4d-4375-898f-cb71cb79a55a",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -27405,7 +27405,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "2pt",
           "borderPattern": "handdrawn-solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind Hand",
           "fontStyle": "normal",
           "fontWeight": 700,
@@ -27533,7 +27533,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "handdrawn-dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind Hand','Caveat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "italic",
@@ -27547,7 +27547,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "fe1b0f7f-7196-4b57-8ba2-b97c0d31857e",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -27569,7 +27569,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "2pt",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "Montserrat",
           "fontStyle": "normal",
           "fontWeight": 400,
@@ -27661,7 +27661,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.zigzag",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.dot",
+          "arrowBeginClass": "org.xmind.arrowShape.dot",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -27675,7 +27675,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "a5168ab6-1c88-43a3-b216-d1b26d7acb79",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }
@@ -27698,7 +27698,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "borderWidth": "2",
           "borderPattern": "solid",
           "arrowEndClass": "org.xmind.arrowShape.none",
-          "alignment-by-level": "inactived",
+          "alignmentByLevel": "inactived",
           "fontFamily": "NeverMind",
           "fontStyle": "normal",
           "fontWeight": 500,
@@ -27793,7 +27793,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
           "shapeClass": "org.xmind.relationshipShape.curved",
           "lineWidth": "2",
           "linePattern": "dash",
-          "arrow-begin-class": "org.xmind.arrowShape.none",
+          "arrowBeginClass": "org.xmind.arrowShape.none",
           "arrowEndClass": "org.xmind.arrowShape.triangle",
           "fontFamily": "'NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
           "fontStyle": "normal",
@@ -27807,7 +27807,7 @@ export const SKELETON_THEMES: SkeletonThemeData[] = [
       "map": {
         "id": "c0bb525c-6315-4102-ab4b-35e9170b8d72",
         "properties": {
-          "line-tapered": "none"
+          "lineTapered": "none"
         }
       }
     }

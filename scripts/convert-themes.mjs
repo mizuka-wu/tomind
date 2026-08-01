@@ -28,12 +28,16 @@ const XMIND_PROP_MAP = {
   'line-class': 'lineClass',
   'line-pattern': 'linePattern',
   'line-corner': 'lineCorner',
+  'line-tapered': 'lineTapered',
   'shape-class': 'shapeClass',
   'shape-corner': 'shapeCorner',
   'arrow-end-class': 'arrowEndClass',
+  'arrow-begin-class': 'arrowBeginClass',
   'multi-line-colors': 'multiLineColors',
   'callout-shape-class': 'calloutShapeClass',
   'opacity': 'opacity',
+  'alignment-by-level': 'alignmentByLevel',
+  'color-list': 'colorList',
 }
 
 function convertProps(props) {
