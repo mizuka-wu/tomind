@@ -7,7 +7,7 @@
  * 3. 两层分离 — StyleEngine 计算 ResolvedStyle，NodeView 转 LeaferJS 属性
  */
 
-import type { ColorKey, SkeletonKey, StyleKey } from './style-keys'
+import type { StyleKey } from './style-keys'
 
 /** 样式值类型 — 可以是任意数据类型 */
 export type StyleValue = string | number | boolean | null | undefined
