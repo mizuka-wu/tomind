@@ -17,6 +17,9 @@ export { mapAnticlockwiseLayoutAlgorithm } from './map-anticlockwise-layout'
 // Logic 布局
 export { logicRightLayoutAlgorithm, logicLeftLayoutAlgorithm } from './logic-layout'
 
+// Brace 布局
+export { braceRightLayoutAlgorithm, braceLeftLayoutAlgorithm } from './brace-layout'
+
 // Org Chart 布局
 export { orgChartDownLayoutAlgorithm, orgChartUpLayoutAlgorithm } from './org-chart-layout'
 
