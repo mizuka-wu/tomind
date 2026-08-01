@@ -7,6 +7,7 @@ export { createTreeLayoutAlgorithm } from './tree-layout'
 export type { TreeDirection } from './tree-layout'
 
 export { matrixLayoutAlgorithm } from './matrix-layout'
+export { treeTableLayoutAlgorithm } from './treetable-layout'
 
 export { Matrix, MatrixContainer, MatrixCell, ColumnMap, LEFT, MIDDLE, RIGHT } from './matrix'
 

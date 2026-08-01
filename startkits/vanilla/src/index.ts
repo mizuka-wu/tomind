@@ -42,6 +42,8 @@ import {
   TimelineVerticalExtension,
   FishboneLeftHeadedExtension,
   FishboneRightHeadedExtension,
+  SpreadsheetExtension,
+  TreeTableExtension,
 } from '@tomind/extensions'
 
 // ==================== 内置扩展列表 ====================
@@ -72,6 +74,8 @@ const builtInExtensions: Extension<any>[] = [
   TimelineVerticalExtension,
   FishboneLeftHeadedExtension,
   FishboneRightHeadedExtension,
+  SpreadsheetExtension,
+  TreeTableExtension,
 
   // 核心编辑
   KeymapExtension,
