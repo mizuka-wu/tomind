@@ -560,7 +560,7 @@ export class StyleEngine {
             ...options,
             ignoreParent: false,
           })
-          const parentVal = parentStyle[key as keyof ResolvedStyle]
+          const parentVal = (parentStyle as Record<string, StyleValue>)[key]
           if (parentVal !== undefined && parentVal !== null) {
             result[key] = parentVal
           } else {
@@ -571,7 +571,7 @@ export class StyleEngine {
         }
       } else if (type === 'initial') {
         // initial: 重置为默认值
-        const defaultVal = DEFAULT_STYLES[nodeType]?.[key as keyof ResolvedStyle]
+        const defaultVal = (DEFAULT_STYLES[nodeType] as Record<string, StyleValue> | undefined)?.[key]
         if (defaultVal !== undefined) {
           result[key] = defaultVal
         } else {
