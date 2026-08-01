@@ -34,6 +34,7 @@
 
 import type { SheetState } from '@tomind/state'
 import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue } from './style-types'
+import { isThemeClassEntry, resolveColorVariables } from './style-types'
 import { classifyNode, getParentId, findById } from './classify'
 import { DEFAULT_STYLES } from './default-styles'
 import { normalizeStyleObject, serializeStyleObject, normalizeClassName } from './style-converter'
@@ -245,6 +246,9 @@ export class StyleEngine {
     // 最终清理：处理 User 层可能引入的 inherit/initial 值
     result = this.resolveSpecialValues(result, state, topicId, options)
 
+    // 解析颜色变量引用（$PRIMARY_COLOR_0$ 等 → 主题 colorFieldsMap）
+    result = this.resolveColorVarsInStyle(result, theme.colorFieldsMap)
+
     // 规范化所有值：解析单位、处理 NaN、过滤无效值
     return normalizeStyleObject(result as Record<string, unknown>, this.defaultUnit) as ResolvedStyle
   }
@@ -452,7 +456,9 @@ export class StyleEngine {
   getGlobalStyle(state: SheetState, key: string): StyleValue {
     const theme = this.getActiveTheme() || (state.theme || {}) as ThemeData
     const globalEntry = theme['global']
-    return globalEntry?.properties?.[key as keyof typeof globalEntry.properties]
+    if (!isThemeClassEntry(globalEntry)) return undefined
+    const value = globalEntry.properties[key as keyof typeof globalEntry.properties]
+    return resolveColorVariables(value, theme.colorFieldsMap)
   }
 
   /**
@@ -466,7 +472,8 @@ export class StyleEngine {
     const theme = this.getActiveTheme() || (state.theme || {}) as ThemeData
     const nodeType = classifyNode(state.doc, topicId)
     const classStyle = this.getClassStyle(theme, nodeType)
-    return classStyle?.[key]
+    if (!classStyle) return undefined
+    return resolveColorVariables(classStyle[key], theme.colorFieldsMap)
   }
 
   /**
@@ -482,7 +489,7 @@ export class StyleEngine {
     const skeletonNoneFills = new Set<string>()
     if (skeletonTheme) {
       for (const [className, entry] of Object.entries(skeletonTheme)) {
-        if (entry?.properties?.fillColor === 'none') {
+        if (isThemeClassEntry(entry) && entry.properties.fillColor === 'none') {
           skeletonNoneFills.add(className)
         }
       }
@@ -490,6 +497,11 @@ export class StyleEngine {
     }
     if (colorTheme) {
       result = mergeThemeData(result, colorTheme, 'color', skeletonNoneFills)
+    }
+    // 保留颜色变量表（colorFieldsMap），优先级：colorTheme > skeletonTheme > base
+    const colorFieldsMap = colorTheme?.colorFieldsMap ?? skeletonTheme?.colorFieldsMap ?? base.colorFieldsMap
+    if (colorFieldsMap) {
+      result.colorFieldsMap = colorFieldsMap
     }
     return result
   }
@@ -511,7 +523,7 @@ export class StyleEngine {
   /** 从主题获取类样式（过滤 nullish） */
   private getClassStyle(theme: ThemeData, className: NodeType): ResolvedStyle | null {
     const entry = theme[className]
-    if (!entry?.properties) return null
+    if (!isThemeClassEntry(entry)) return null
     return filterNullish(entry.properties as ResolvedStyle)
   }
 
@@ -570,6 +582,23 @@ export class StyleEngine {
 
     return result as ResolvedStyle
   }
+
+  /** 解析样式对象中所有值的颜色变量引用（未命中变量名时保持原样） */
+  private resolveColorVarsInStyle(
+    style: ResolvedStyle,
+    colorFieldsMap: Record<string, string> | undefined,
+  ): ResolvedStyle {
+    if (!colorFieldsMap) return style
+    let result: Record<string, StyleValue> | undefined
+    for (const [key, value] of Object.entries(style)) {
+      const resolved = resolveColorVariables(value, colorFieldsMap)
+      if (resolved !== value) {
+        if (!result) result = { ...style }
+        result[key] = resolved
+      }
+    }
+    return (result as ResolvedStyle) ?? style
+  }
 }
 
 /** 按类型合并主题数据：skeleton 只合并结构键，color 只合并颜色键，通用键两类都合并 */
@@ -581,10 +610,14 @@ function mergeThemeData(
 ): ThemeData {
   const result: ThemeData = { ...base }
   for (const [className, entry] of Object.entries(override)) {
-    if (!entry?.properties) continue
+    if (!isThemeClassEntry(entry)) continue
+    // per-level 主题（level3, level4, ...）作为完整覆盖，不受 skeleton/color 键分类限制
+    const isLevelClass = /^level\d+$/.test(className)
     const filtered: Record<string, StyleValue> = {}
     for (const [key, value] of Object.entries(entry.properties)) {
-      if (type === 'skeleton' && (SKELETON_KEY_SET.has(key) || (key === 'fillColor' && value === 'none'))) {
+      if (isLevelClass) {
+        filtered[key] = value
+      } else if (type === 'skeleton' && (SKELETON_KEY_SET.has(key) || (key === 'fillColor' && value === 'none'))) {
         // 骨架主题可覆盖 fillColor，但仅限 "none"（透明填充语义）
         filtered[key] = value
       } else if (type === 'color' && COLOR_KEY_SET.has(key)) {
@@ -597,11 +630,12 @@ function mergeThemeData(
         filtered[key] = value
       }
     }
+    const existing = result[className]
     result[className] = {
-      ...result[className],
+      ...(isThemeClassEntry(existing) ? existing : undefined),
       ...entry,
       properties: {
-        ...(result[className]?.properties || {}),
+        ...(isThemeClassEntry(existing) ? existing.properties : {}),
         ...filtered,
       },
     }
