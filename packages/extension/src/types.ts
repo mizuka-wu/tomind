@@ -54,12 +54,25 @@ export interface ExtensionContext {
   unregisterPartView: (partType: string) => void
 }
 
+/** 主题数据结构（内联定义，避免循环依赖） */
+type ThemeDataInline = Record<string, { id?: string; properties: Record<string, string | number | boolean | null | undefined> }>
+
+/** 样式引擎接口（避免循环依赖） */
+export interface StyleEngineInterface {
+  loadTheme: (pkg: { id: string; name?: string; skeleton?: ThemeDataInline; color?: ThemeDataInline }) => void
+  setActiveTheme: (themeId: string) => void
+  getActiveThemeId: () => string | null
+  getActiveTheme: () => ThemeDataInline | null
+  computeStyle: (state: any, topicId: string, options?: any) => any
+  getLeaferStyle: (state: any, topicId: string, options?: any) => Record<string, unknown>
+}
+
 /** WorkbookEditor 接口（避免循环依赖） */
 export interface WorkbookEditorInterface {
   /** 是否可编辑（初始值创建时决定，默认 false） */
   editable: boolean
   /** 样式引擎 */
-  styleEngine?: unknown
+  styleEngine?: StyleEngineInterface
   /** 布局引擎 */
   layoutEngine?: unknown
   /** 切换编辑模式 */

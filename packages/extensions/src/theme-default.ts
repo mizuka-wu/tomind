@@ -300,7 +300,7 @@ export const ThemeDefaultExtension = createExtension({
 
   onCreate(ctx) {
     const workbook = ctx.getWorkbook()
-    const styleEngine = workbook.styleEngine as any
+    const styleEngine = workbook.styleEngine
 
     if (!styleEngine) {
       console.warn('[ThemeDefaultExtension] StyleEngine not available')
