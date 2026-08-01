@@ -444,7 +444,6 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 export class RelationshipNodeViewDesc extends NodeViewDesc {
   private renderer: RelationshipRenderer | null = null
   private _isHovering = false
-  private _savedStroke: string | undefined
 
   protected createElement(): Group {
     const group = new Group()
@@ -494,27 +493,14 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
     group.on_('pointerenter', () => {
       if (this._isHovering) return
       this._isHovering = true
-      if (this.renderer) {
-        const pathRect = (this.renderer as unknown as { pathRect: Rect | null }).pathRect
-        if (pathRect) {
-          this._savedStroke = pathRect.stroke as string
-          pathRect.stroke = '#2563eb'
-          pathRect.strokeWidth = 3
-        }
-      }
+      this.renderer?.setHovered(true)
     })
 
     // pointerleave - 恢复
     group.on_('pointerleave', () => {
       if (!this._isHovering) return
       this._isHovering = false
-      if (this.renderer) {
-        const pathRect = (this.renderer as unknown as { pathRect: Rect | null }).pathRect
-        if (pathRect) {
-          pathRect.stroke = this._savedStroke ?? '#666'
-          pathRect.strokeWidth = 2
-        }
-      }
+      this.renderer?.setHovered(false)
     })
   }
 
