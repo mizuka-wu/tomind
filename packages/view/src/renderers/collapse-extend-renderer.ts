@@ -120,7 +120,8 @@ export class CollapseExtendRenderer implements Renderer {
     // 从 style 中提取属性
     const collapsed = style.collapsed as boolean
     const lineColor = style.lineColor as string | undefined
-    const lineWidth = style.lineWidth as number | undefined
+    // toLeaferStyle 已将 lineWidth 映射为 lineStrokeWidth（并向后兼容写入 strokeWidth）
+    const lineWidth = (style.strokeWidth as number) ?? (style.lineStrokeWidth as number) ?? undefined
     const backgroundColor = style.backgroundColor as string | undefined
     const fillColor = style.fillColor as string | undefined
     const fillOpacity = style.fillOpacity as number | undefined
