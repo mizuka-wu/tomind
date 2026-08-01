@@ -218,7 +218,6 @@ export class RelationshipRenderer implements Renderer {
   /** 优先使用外部传入的控制点，否则取起止点水平方向 20% 处（终点高度） */
   private resolveCtrlPoint(): { ctrlX: number; ctrlY: number } {
     const sx = this.from.x
-    const sy = this.from.y
     const ex = this.to.x
     const ey = this.to.y
 
