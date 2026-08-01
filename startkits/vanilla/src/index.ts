@@ -19,6 +19,7 @@ import {
   CopyPasteExtension,
   EditBridgeExtension,
   ContextMenuExtension,
+  SnowballThemeExtension,
   // 布局（一个大类一个文件夹，文件夹导出多个方向插件）
   TreeRightExtension,
   TreeLeftExtension,
@@ -73,6 +74,9 @@ const builtInExtensions: Extension<any>[] = [
   // 交互
   CopyPasteExtension,
   ContextMenuExtension,
+
+  // 主题
+  SnowballThemeExtension,
 ]
 
 // ==================== StarterKit ====================
