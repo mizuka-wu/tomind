@@ -55,7 +55,7 @@ export interface ExtensionContext {
 }
 
 /** 主题数据结构（内联定义，避免循环依赖） */
-type ThemeDataInline = Record<string, { id?: string; properties: Record<string, string | number | boolean | null | undefined> }>
+type ThemeDataInline = Record<string, { id?: string; properties: Record<string, string | number | boolean | null | undefined> } | Record<string, string> | undefined>
 
 /** 样式引擎接口（避免循环依赖） */
 export interface StyleEngineInterface {

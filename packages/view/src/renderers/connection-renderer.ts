@@ -38,9 +38,20 @@ export class ConnectionRenderer implements Renderer {
   render(_layout: LayoutResult, style: Record<string, unknown>): void {
     if (!this.path) return
 
-    // 更新样式
+    const lineTapered = style.lineTapered
+    if (lineTapered === 'tapered') {
+      this.renderTaperedLine(style)
+    } else {
+      this.renderNormalLine(style)
+    }
+  }
+
+  private renderNormalLine(style: Record<string, unknown>): void {
+    if (!this.path) return
+
     const lineColor = style.lineColor ?? style.stroke ?? '#999999'
     if (typeof lineColor === 'string') this.path.stroke = lineColor
+    this.path.fill = undefined
 
     const strokeWidth = style.lineStrokeWidth ?? style.strokeWidth
     if (typeof strokeWidth === 'number') this.path.strokeWidth = strokeWidth
@@ -54,6 +65,32 @@ export class ConnectionRenderer implements Renderer {
     // 默认使用简单直线，后续可以扩展为曲线/折线
     const d = `M ${this.start.x} ${this.start.y} L ${this.end.x} ${this.end.y}`
     this.path.path = d
+  }
+
+  private renderTaperedLine(style: Record<string, unknown>): void {
+    if (!this.path) return
+
+    const sx = this.start.x
+    const sy = this.start.y
+    const ex = this.end.x
+    const ey = this.end.y
+
+    const strokeWidth = style.lineStrokeWidth ?? style.strokeWidth
+    const width = typeof strokeWidth === 'number' ? strokeWidth : 2
+
+    const lineColor = style.lineColor ?? style.stroke ?? '#999999'
+    if (typeof lineColor === 'string') this.path.fill = lineColor
+    this.path.stroke = undefined
+
+    const angle = Math.atan2(ey - sy, ex - sx)
+    const perpX = Math.sin(angle) * (width / 2)
+    const perpY = -Math.cos(angle) * (width / 2)
+
+    const path =
+      `M ${sx - perpX} ${sy - perpY} ` +
+      `L ${sx + perpX} ${sy + perpY} ` +
+      `L ${ex} ${ey} Z`
+    this.path.path = path
   }
 
   destroy(): void {
