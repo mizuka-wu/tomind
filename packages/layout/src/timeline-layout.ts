@@ -81,10 +81,25 @@ function layoutTimelineHorizontal(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
 ): void {
   const size = sizeMap.get(node.id)!
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: 0, titleHeight: 0, branchHeight: 0 })
+  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
+
+  // 分支高度 = 上下两侧子节点的垂直总跨度
+  let branchHeight = size.height
+  const children = getAttachedChildren(node)
+  if (!isCollapsed(node) && children.length > 0) {
+    let topH = 0
+    let bottomH = 0
+    for (let i = 0; i < children.length; i++) {
+      const cs = sizeMap.get(children[i].id)!
+      if (i % 2 === 0) topH = Math.max(topH, cs.height)
+      else bottomH = Math.max(bottomH, cs.height)
+    }
+    branchHeight = topH + size.height + bottomH + options.verticalGap * 2
+  }
+
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
 
   if (isCollapsed(node)) return
-  const children = getAttachedChildren(node)
   if (children.length === 0) return
 
   // 子节点沿水平轴排列，交替上下
@@ -144,10 +159,23 @@ function layoutTimelineVertical(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
 ): void {
   const size = sizeMap.get(node.id)!
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: 0, titleHeight: 0, branchHeight: 0 })
+  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
+
+  // 分支高度 = 子节点沿垂直轴排列的总跨度
+  let branchHeight = size.height
+  const children = getAttachedChildren(node)
+  if (!isCollapsed(node) && children.length > 0) {
+    let total = 0
+    for (let i = 0; i < children.length; i++) {
+      total += sizeMap.get(children[i].id)!.height
+      if (i < children.length - 1) total += options.verticalGap
+    }
+    branchHeight = Math.max(size.height, total)
+  }
+
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
 
   if (isCollapsed(node)) return
-  const children = getAttachedChildren(node)
   if (children.length === 0) return
 
   // 子节点沿垂直轴排列，交替左右

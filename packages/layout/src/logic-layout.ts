@@ -107,18 +107,27 @@ function layoutSubtree(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
 ): void {
   const size = sizeMap.get(node.id)!
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: 0, titleHeight: 0, branchHeight: 0 })
-
-  if (isCollapsed(node)) return
-  const children = getAttachedChildren(node)
-  if (children.length === 0) return
+  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
 
   // 子节点垂直堆叠，向右展开
   let totalH = 0
-  for (let i = 0; i < children.length; i++) {
-    totalH += subtreeTotalHeight(children[i], options, sizeMap)
-    if (i < children.length - 1) totalH += options.verticalGap
+  const children = getAttachedChildren(node)
+  if (!isCollapsed(node) && children.length > 0) {
+    for (let i = 0; i < children.length; i++) {
+      totalH += subtreeTotalHeight(children[i], options, sizeMap)
+      if (i < children.length - 1) totalH += options.verticalGap
+    }
   }
+
+  nodes.set(node.id, {
+    x, y,
+    width: size.width, height: size.height,
+    titleWidth, titleHeight,
+    branchHeight: children.length > 0 && !isCollapsed(node) ? totalH : size.height,
+  })
+
+  if (isCollapsed(node)) return
+  if (children.length === 0) return
 
   let childY = y + (size.height - totalH) / 2
   const childX = x + size.width + options.horizontalGap
@@ -216,17 +225,26 @@ function layoutSubtreeLeft(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
 ): void {
   const size = sizeMap.get(node.id)!
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: 0, titleHeight: 0, branchHeight: 0 })
-
-  if (isCollapsed(node)) return
-  const children = getAttachedChildren(node)
-  if (children.length === 0) return
+  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
 
   let totalH = 0
-  for (let i = 0; i < children.length; i++) {
-    totalH += subtreeTotalHeight(children[i], options, sizeMap)
-    if (i < children.length - 1) totalH += options.verticalGap
+  const children = getAttachedChildren(node)
+  if (!isCollapsed(node) && children.length > 0) {
+    for (let i = 0; i < children.length; i++) {
+      totalH += subtreeTotalHeight(children[i], options, sizeMap)
+      if (i < children.length - 1) totalH += options.verticalGap
+    }
   }
+
+  nodes.set(node.id, {
+    x, y,
+    width: size.width, height: size.height,
+    titleWidth, titleHeight,
+    branchHeight: children.length > 0 && !isCollapsed(node) ? totalH : size.height,
+  })
+
+  if (isCollapsed(node)) return
+  if (children.length === 0) return
 
   let childY = y + (size.height - totalH) / 2
   const childX = x - options.horizontalGap

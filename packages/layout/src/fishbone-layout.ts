@@ -82,10 +82,25 @@ function layoutFishbone(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
 ): void {
   const size = sizeMap.get(node.id)!
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: 0, titleHeight: 0, branchHeight: 0 })
+  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
+
+  // 分支高度 = 主脊上下两侧子节点的垂直总跨度
+  let branchHeight = size.height
+  const children = getAttachedChildren(node)
+  if (!isCollapsed(node) && children.length > 0) {
+    let topH = 0
+    let bottomH = 0
+    for (let i = 0; i < children.length; i++) {
+      const cs = sizeMap.get(children[i].id)!
+      if (i % 2 === 0) topH = Math.max(topH, cs.height)
+      else bottomH = Math.max(bottomH, cs.height)
+    }
+    branchHeight = topH + size.height + bottomH + options.verticalGap * 4
+  }
+
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
 
   if (isCollapsed(node)) return
-  const children = getAttachedChildren(node)
   if (children.length === 0) return
 
   // 鱼骨: 子节点沿主脊排列，交替上下

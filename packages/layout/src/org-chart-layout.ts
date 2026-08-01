@@ -105,10 +105,20 @@ function layoutSubtreeDown(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
 ): void {
   const size = sizeMap.get(node.id)!
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: 0, titleHeight: 0, branchHeight: 0 })
+  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
+
+  // 分支高度 = 子节点子树的最大垂直延伸（子节点同层水平排列）
+  let branchHeight = size.height
+  const children = getAttachedChildren(node)
+  if (!isCollapsed(node) && children.length > 0) {
+    for (const child of children) {
+      branchHeight = Math.max(branchHeight, subtreeHeight(child, options, sizeMap))
+    }
+  }
+
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
 
   if (isCollapsed(node)) return
-  const children = getAttachedChildren(node)
   if (children.length === 0) return
 
   // 子节点水平排列
@@ -140,10 +150,19 @@ function layoutSubtreeUp(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
 ): void {
   const size = sizeMap.get(node.id)!
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: 0, titleHeight: 0, branchHeight: 0 })
+  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
+
+  let branchHeight = size.height
+  const children = getAttachedChildren(node)
+  if (!isCollapsed(node) && children.length > 0) {
+    for (const child of children) {
+      branchHeight = Math.max(branchHeight, subtreeHeight(child, options, sizeMap))
+    }
+  }
+
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
 
   if (isCollapsed(node)) return
-  const children = getAttachedChildren(node)
   if (children.length === 0) return
 
   const childTotalW = (() => {

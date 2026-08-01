@@ -93,11 +93,17 @@ function layoutSubtree(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
 ): void {
   const size = sizeMap.get(node.id)!
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: 0, titleHeight: 0, branchHeight: 0 })
+  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
 
-  if (isCollapsed(node)) return
+  if (isCollapsed(node)) {
+    nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })
+    return
+  }
   const children = getAttachedChildren(node)
-  if (children.length === 0) return
+  if (children.length === 0) {
+    nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })
+    return
+  }
 
   // 分成上下两组
   const topChildren: NodeDesc[] = []
@@ -112,11 +118,24 @@ function layoutSubtree(
 
   const childX = x + size.width + options.horizontalGap
 
-  // 布局上方子节点（从上到下）
+  // 上方组总高度
+  let topTotalH = 0
   if (topChildren.length > 0) {
-    let topTotalH = 0
     for (const c of topChildren) topTotalH += subtreeHeight(c, options, sizeMap)
     topTotalH += (topChildren.length - 1) * options.verticalGap
+  }
+  // 下方组总高度
+  let botTotalH = 0
+  if (bottomChildren.length > 0) {
+    for (const c of bottomChildren) botTotalH += subtreeHeight(c, options, sizeMap)
+    botTotalH += (bottomChildren.length - 1) * options.verticalGap
+  }
+
+  // 分支高度 = 上下两组子节点的总高度
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: topTotalH + botTotalH })
+
+  // 布局上方子节点（从上到下）
+  if (topChildren.length > 0) {
     let cy = y + size.height / 2 - topTotalH / 2
     for (const child of topChildren) {
       const ch = subtreeHeight(child, options, sizeMap)
@@ -127,9 +146,6 @@ function layoutSubtree(
 
   // 布局下方子节点
   if (bottomChildren.length > 0) {
-    let botTotalH = 0
-    for (const c of bottomChildren) botTotalH += subtreeHeight(c, options, sizeMap)
-    botTotalH += (bottomChildren.length - 1) * options.verticalGap
     let cy = y + size.height / 2 + (topChildren.length > 0 ? 0 : -botTotalH / 2)
     for (const child of bottomChildren) {
       const ch = subtreeHeight(child, options, sizeMap)
