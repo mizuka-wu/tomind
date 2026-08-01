@@ -58,6 +58,10 @@ export interface ExtensionContext {
 export interface WorkbookEditorInterface {
   /** 是否可编辑（初始值创建时决定，默认 false） */
   editable: boolean
+  /** 样式引擎 */
+  styleEngine?: unknown
+  /** 布局引擎 */
+  layoutEngine?: unknown
   /** 切换编辑模式 */
   toggleEditable: () => boolean
   /** 获取活动 Sheet */
