@@ -248,7 +248,7 @@ export class MatrixCell {
     }
     const { width, height } = this.item === undefined
       ? defaultBounds
-      : this.item.bounds
+      : this.item.bounds ?? defaultBounds
     return {
       width: width + this.padding * 2,
       height: height + this.padding * 2,
@@ -277,7 +277,7 @@ export class MatrixCell {
     }
     const bounds = this.item === undefined
       ? defaultBounds
-      : this.item.bounds
+      : this.item.bounds ?? defaultBounds
     return {
       x: this.pos!.x + this.itemPos.x - bounds.x,
       y: this.pos!.y + this.itemPos.y - bounds.y,

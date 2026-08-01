@@ -28,7 +28,7 @@ export const matrixLayoutAlgorithm: LayoutAlgorithm = {
     const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
 
     // 获取子节点
-    const children = node.children?.TOPIC || []
+    const children = node.children?.attached || []
     if (children.length === 0) {
       return { nodes, totalWidth: 0, totalHeight: 0 }
     }
@@ -76,7 +76,7 @@ export const matrixLayoutAlgorithm: LayoutAlgorithm = {
 function createColumnMap(children: readonly NodeDesc[]): ColumnMap {
   const columnMap = new ColumnMap(children.length)
   children.forEach((child, index) => {
-    const grandChildren = child.children?.TOPIC || []
+    const grandChildren = child.children?.attached || []
     grandChildren.forEach((gChild) => {
       const key = (gChild.attrs?.label as string) || ''
       const cell = columnMap.getCell(index, key)
@@ -87,7 +87,7 @@ function createColumnMap(children: readonly NodeDesc[]): ColumnMap {
 }
 
 function createMatrixGrid(node: NodeDesc, columnMap: ColumnMap, isTranspose: boolean): MatrixContainer {
-  const children = node.children?.TOPIC || []
+  const children = node.children?.attached || []
 
   // 主单元格
   const mainCell = new MatrixCell(node, { align: LEFT })
