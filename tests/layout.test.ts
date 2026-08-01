@@ -35,7 +35,7 @@ describe('Tree Layout', () => {
 
   it('should layout multiple nodes horizontally', () => {
     const algorithm = createTreeLayoutAlgorithm('tree-right', 'right')
-    const doc = createTestNode('root', 'root', { title: 'Root' }, {
+    const doc = createTestNode('topic-root', 'topic', { title: 'Root' }, {
       attached: [
         createTestNode('topic-1', 'topic', { title: 'Topic 1' }),
         createTestNode('topic-2', 'topic', { title: 'Topic 2' }),
@@ -50,22 +50,23 @@ describe('Tree Layout', () => {
 
     // Get all topic nodes
     const topics = Array.from(result.nodes.entries()).filter(([id]) => id.startsWith('topic-'))
-    expect(topics.length).toBe(3)
+    expect(topics.length).toBe(4) // root + 3 children
 
-    // All topics should have different y positions (stacked vertically)
-    const yPositions = topics.map(([, node]) => node.y)
+    // All child topics should have different y positions (stacked vertically)
+    const childTopics = topics.filter(([id]) => id !== 'topic-root')
+    const yPositions = childTopics.map(([, node]) => node.y)
     const uniqueYPositions = new Set(yPositions)
     expect(uniqueYPositions.size).toBe(3)
 
-    // All topics should have same x position (aligned horizontally)
-    const xPositions = topics.map(([, node]) => node.x)
+    // All child topics should have same x position (aligned horizontally)
+    const xPositions = childTopics.map(([, node]) => node.x)
     const uniqueXPositions = new Set(xPositions)
     expect(uniqueXPositions.size).toBe(1)
   })
 
   it('should layout with spacing from style', () => {
     const algorithm = createTreeLayoutAlgorithm('tree-right', 'right')
-    const doc = createTestNode('root', 'root', { 
+    const doc = createTestNode('topic-root', 'topic', { 
       title: 'Root',
       style: { spacingMajor: '50pt', spacingMinor: '35pt' },
     }, {
@@ -80,14 +81,14 @@ describe('Tree Layout', () => {
     expect(result.nodes.size).toBeGreaterThan(0)
 
     // Get root and topic nodes
-    const root = result.nodes.get('root')
-    const topics = Array.from(result.nodes.entries()).filter(([id]) => id.startsWith('topic-'))
-    expect(topics.length).toBe(1)
+    const root = result.nodes.get('topic-root')
+    const topic1 = result.nodes.get('topic-1')
 
-    const topic1 = topics[0][1]
+    expect(root).toBeDefined()
+    expect(topic1).toBeDefined()
 
     // Topic should be to the right of root
-    expect(topic1.x).toBeGreaterThan(root!.x + root!.width)
+    expect(topic1!.x).toBeGreaterThan(root!.x + root!.width)
   })
 
   it('should handle collapsed nodes', () => {
