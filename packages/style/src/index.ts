@@ -34,6 +34,7 @@ export type { ThemePackage } from './style-engine'
 
 // 工具函数
 export { classifyNode, getParentId } from './classify'
+export { isThemeClassEntry, resolveColorVariables } from './style-types'
 
 // 默认样式
 export { DEFAULT_STYLES } from './default-styles'
@@ -43,6 +44,7 @@ export type {
   StyleValue,
   ResolvedStyle,
   ThemeData,
+  ThemeClassEntry,
   StyleComputeOptions,
   NodeType,
 } from './style-types'

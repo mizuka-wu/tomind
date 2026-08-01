@@ -70,12 +70,43 @@ export type ResolvedStyle = {
   [key in StyleKey]?: StyleValue
 }
 
-/** 主题数据结构 — 类名 → 样式属性 */
+/** 主题类样式条目 */
+export interface ThemeClassEntry {
+  id?: string
+  properties: Partial<Record<StyleKey, StyleValue>>
+}
+
+/**
+ * 主题数据结构 — 类名 → 样式属性
+ *
+ * 说明：
+ * - `colorFieldsMap` 是主题的保留字段（颜色变量表），不占用类名
+ * - 索引签名使用联合类型以容纳 colorFieldsMap（其值为字符串映射）
+ */
 export interface ThemeData {
-  [className: string]: {
-    id?: string
-    properties: Partial<Record<StyleKey, StyleValue>>
-  }
+  [className: string]: ThemeClassEntry | Record<string, string> | undefined
+  /** 颜色变量表（PRIMARY_COLOR_0 等），样式值可用 $变量名$ 引用 */
+  colorFieldsMap?: Record<string, string>
+}
+
+/** 类型守卫：判断主题条目是否为类样式条目（含 properties 字段） */
+export function isThemeClassEntry(entry: unknown): entry is ThemeClassEntry {
+  if (typeof entry !== 'object' || entry === null) return false
+  if (!('properties' in entry)) return false
+  const properties = entry.properties
+  return typeof properties === 'object' && properties !== null
+}
+
+/**
+ * 解析样式值中的颜色变量引用（$PRIMARY_COLOR_0$ 等）
+ * 从主题 colorFieldsMap 查找替换，未命中变量名时保持原样
+ */
+export function resolveColorVariables(
+  value: StyleValue,
+  colorFieldsMap: Record<string, string> | undefined,
+): StyleValue {
+  if (typeof value !== 'string' || !colorFieldsMap || !value.includes('$')) return value
+  return value.replace(/\$([A-Z0-9_]+)\$/g, (match, varName: string) => colorFieldsMap[varName] ?? match)
 }
 
 /** 节点类型（决定样式类名） */
