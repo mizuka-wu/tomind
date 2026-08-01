@@ -287,6 +287,7 @@ export class StyleEngine {
    * - SVG 用 "none"/"solid" 字符串，LeaferJS 用 null/undefined
    * - SVG 用 "16pt" 单位，LeaferJS 用数字（px）
    * - SVG 用 linePattern: "dash"，LeaferJS 用 strokeDash: [5, 3]
+   * - SVG 用 borderPattern: "dash"，LeaferJS 用 dashPattern: [5, 3]
    * - fontColor 和 fillColor 都映射到 fill，但作用于不同元素：
    *   Rect.fill = 背景色，Text.fill = 字体色
    */
@@ -322,6 +323,11 @@ export class StyleEngine {
         case 'fillColor':
           result.fill = value  // Rect 背景色
           break
+        case 'fillPattern':
+          // LeaferJS 不直接支持 fillPattern（hachure/cross-hatch/zigzag 等矢量图案），
+          // 暂时保留直通，后续可通过自定义渲染实现
+          result.fillPattern = value
+          break
         case 'fontColor':
           // fontColor 不直接设到 result，由 TopicRenderer 从 style.fontColor 读取
           // 避免和 fillColor 的 fill 冲突
@@ -329,6 +335,14 @@ export class StyleEngine {
           break
         case 'borderColor':
           result.stroke = value  // Rect 边框色
+          break
+        case 'borderPattern':
+          // "solid" → 无虚线，"dash" → [5, 3]（类似 linePattern，供 Rect 边框使用）
+          if (value === 'solid') {
+            result.dashPattern = null
+          } else if (typeof value === 'string') {
+            result.dashPattern = parseLinePattern(value)
+          }
           break
         case 'lineColor':
           result.lineColor = value  // 连线颜色，由 ConnectionRenderer 使用
