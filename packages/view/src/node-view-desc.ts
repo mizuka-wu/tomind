@@ -8,7 +8,7 @@
  * 4. 应用 Node Decoration（样式装饰）
  */
 
-import { Group, Rect, Ellipse, Line } from 'leafer-ui'
+import { Group, Rect, Ellipse, Line, Path } from 'leafer-ui'
 import { ViewDesc, DirtyFlag } from './view-desc'
 import type {
   NodeDesc,
@@ -153,7 +153,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
   private renderer: Renderer | null = null
   private _selectBoxElement: Group | null = null
   private _isHovering = false
-  private _connectionPaths: Line[] = []
+  private _connectionPaths: Array<Line | Path> = []
 
   protected createElement(): Group {
     const group = new Group()
@@ -283,16 +283,16 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     const children = this.node.children['attached'] ?? []
     if (children.length === 0) return
 
-    // 从 StyleEngine 获取 LeaferJS 兼容样式（已做 pt→px + 属性名映射）
-    // getLeaferStyle 返回: lineColor, strokeWidth, cornerRadius, strokeDash 等
     const leaferStyle = NodeViewDesc.styleEngine && NodeViewDesc.state
       ? NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
       : {}
 
     const color = (leaferStyle.lineColor as string) ?? '#999999'
     const width = (leaferStyle.strokeWidth as number) ?? 1.5
-    const cornerRadius = (leaferStyle.cornerRadius as number) ?? 0
+    const cornerRadius = (leaferStyle.lineCornerRadius as number) ?? (leaferStyle.cornerRadius as number) ?? 0
     const strokeDash = leaferStyle.strokeDash as number[] | null | undefined
+    const lineClass = (leaferStyle.lineClass as string) ?? 'elbow'
+    const arrowEndClass = leaferStyle.arrowEndClass as string | undefined
 
     for (const child of children) {
       const childLayout = layout.nodes.get(child.id)
@@ -307,11 +307,10 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       const childCX = childLayout.x - dx + childLayout.width / 2
       const childCY = childLayout.y - dy + childLayout.height / 2
 
-      let points: number[]
+      const isHorizontal = Math.abs(childCX - parentCX) > Math.abs(childCY - parentCY)
+      let startX: number, startY: number, endX: number, endY: number
 
-      if (Math.abs(childCX - parentCX) > Math.abs(childCY - parentCY)) {
-        // 水平方向为主（right / left）
-        let startX: number, startY: number, endX: number, endY: number
+      if (isHorizontal) {
         if (childCX > parentCX) {
           startX = myLayout.width
           startY = parentCY
@@ -323,12 +322,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
           endX = childLayout.x - dx + childLayout.width
           endY = childCY
         }
-        // 水平折线：起点 → 水平中点 → 垂直到终点高度 → 水平到终点
-        const midX = (startX + endX) / 2
-        points = [startX, startY, midX, startY, midX, endY, endX, endY]
       } else {
-        // 垂直方向为主（down / up）
-        let startX: number, startY: number, endX: number, endY: number
         if (childCY > parentCY) {
           startX = parentCX
           startY = myLayout.height
@@ -340,21 +334,71 @@ export class TopicNodeViewDesc extends NodeViewDesc {
           endX = childCX
           endY = childLayout.y - dy + childLayout.height
         }
-        // 垂直折线：起点 → 垂直中点 → 水平到终点列 → 垂直到终点
-        const midY = (startY + endY) / 2
-        points = [startX, startY, startX, midY, endX, midY, endX, endY]
       }
 
-      const line = new Line({
-        points,
+      let path: string
+      if (lineClass === 'curve') {
+        path = this.computeCurvePath(startX, startY, endX, endY, isHorizontal)
+      } else if (lineClass === 'roundedElbow') {
+        const r = cornerRadius > 0 ? cornerRadius : 8
+        path = this.computeRoundedElbowPath(startX, startY, endX, endY, isHorizontal, r)
+      } else {
+        if (isHorizontal) {
+          const midX = (startX + endX) / 2
+          path = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`
+        } else {
+          const midY = (startY + endY) / 2
+          path = `M ${startX} ${startY} L ${startX} ${midY} L ${endX} ${midY} L ${endX} ${endY}`
+        }
+      }
+
+      const pathElement = new Path({
+        path,
         stroke: color,
         strokeWidth: width,
-        ...(cornerRadius > 0 ? { cornerRadius } : {}),
-        ...(strokeDash ? { strokeDash } : {}),
+        strokeLinecap: 'round',
+        ...(strokeDash ? { dashPattern: strokeDash } : {}),
       })
-      group.add(line)
-      this._connectionPaths.push(line)
+      group.add(pathElement)
+      this._connectionPaths.push(pathElement)
+
+      if (arrowEndClass === 'triangle') {
+        const arrow = this.createArrow(endX, endY, isHorizontal, color)
+        group.add(arrow)
+        this._connectionPaths.push(arrow)
+      }
     }
+  }
+
+  private computeCurvePath(sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean): string {
+    if (isHorizontal) {
+      const ctrlX = sx + (ex - sx) * 0.2
+      return `M ${sx} ${sy} L ${ctrlX} ${sy} Q ${ctrlX} ${ey} ${ex} ${ey}`
+    } else {
+      const ctrlY = sy + (ey - sy) * 0.2
+      return `M ${sx} ${sy} L ${sx} ${ctrlY} Q ${ex} ${ctrlY} ${ex} ${ey}`
+    }
+  }
+
+  private computeRoundedElbowPath(sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, r: number): string {
+    if (isHorizontal) {
+      const midX = (sx + ex) / 2
+      return `M ${sx} ${sy} L ${midX - r} ${sy} Q ${midX} ${sy} ${midX} ${sy + r} L ${midX} ${ey - r} Q ${midX} ${ey} ${midX + r} ${ey} L ${ex} ${ey}`
+    } else {
+      const midY = (sy + ey) / 2
+      return `M ${sx} ${sy} L ${sx} ${midY - r} Q ${sx} ${midY} ${sx + r} ${midY} L ${ex - r} ${midY} Q ${ex} ${midY} ${ex} ${midY + r} L ${ex} ${ey}`
+    }
+  }
+
+  private createArrow(x: number, y: number, isHorizontal: boolean, color: string): Path {
+    const size = 8
+    let path: string
+    if (isHorizontal) {
+      path = `M ${x} ${y} L ${x - size} ${y - size / 2} L ${x - size} ${y + size / 2} Z`
+    } else {
+      path = `M ${x} ${y} L ${x - size / 2} ${y - size} L ${x + size / 2} ${y - size} Z`
+    }
+    return new Path({ path, fill: color })
   }
 
   protected updateContent(): void {
