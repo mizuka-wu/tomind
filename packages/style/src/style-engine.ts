@@ -40,6 +40,27 @@ import { normalizeStyleObject, serializeStyleObject } from './style-converter'
 import { parseClassList, getClassStyles } from '@tomind/state'
 
 /**
+ * 骨架主题属性键 — 结构相关（形状、连线、间距等）
+ * skeleton 主题合并时只允许覆盖这些键（外加不属于任何分类的通用键）
+ */
+const SKELETON_KEYS = new Set([
+  'shapeClass', 'lineClass', 'calloutShapeClass',
+  'marginLeft', 'marginRight', 'marginTop', 'marginBottom',
+  'spacingMajor', 'spacingMinor',
+  'lineCorner', 'shapeCorner',
+])
+
+/**
+ * 颜色主题属性键 — 颜色相关（填充、描边、字体等）
+ * color 主题合并时只允许覆盖这些键（外加不属于任何分类的通用键）
+ */
+const COLOR_KEYS = new Set([
+  'fillColor', 'lineColor', 'fontColor', 'borderColor',
+  'fillPattern', 'linePattern', 'borderPattern',
+  'opacity',
+])
+
+/**
  * 主题包接口（Snowball 等外部主题来源实现）
  */
 export interface ThemePackage {
@@ -314,6 +335,11 @@ export class StyleEngine {
       if (value === 'none') {
         // 保留某些 key 的 "none" 语义（如 linePattern "solid"）
         if (key === 'linePattern' || key === 'borderPattern') continue
+        // fillGradient: "none" 表示取消渐变填充 → 覆盖 fill 为 null
+        if (key === 'fillGradient') {
+          result.fill = null
+          continue
+        }
         result[key] = null
         continue
       }
@@ -327,6 +353,15 @@ export class StyleEngine {
           // LeaferJS 不直接支持 fillPattern（hachure/cross-hatch/zigzag 等矢量图案），
           // 暂时保留直通，后续可通过自定义渲染实现
           result.fillPattern = value
+          break
+        case 'fillGradient':
+          // "linear(...)" 字符串 → LeaferJS IGradientPaint 对象（覆盖 fill）
+          if (typeof value === 'string') {
+            const gradient = parseLinearGradient(value)
+            if (gradient) {
+              result.fill = gradient
+            }
+          }
           break
         case 'fontColor':
           // fontColor 不直接设到 result，由 TopicRenderer 从 style.fontColor 读取
@@ -444,10 +479,10 @@ export class StyleEngine {
   ): ThemeData {
     let result = { ...base }
     if (skeletonTheme) {
-      result = mergeThemeData(result, skeletonTheme)
+      result = mergeThemeData(result, skeletonTheme, 'skeleton')
     }
     if (colorTheme) {
-      result = mergeThemeData(result, colorTheme)
+      result = mergeThemeData(result, colorTheme, 'color')
     }
     return result
   }
@@ -530,19 +565,32 @@ export class StyleEngine {
   }
 }
 
-/** 深合并主题数据 */
-function mergeThemeData(base: ThemeData, override: ThemeData): ThemeData {
+/** 按类型合并主题数据：skeleton 只合并结构键，color 只合并颜色键，通用键两类都合并 */
+function mergeThemeData(
+  base: ThemeData,
+  override: ThemeData,
+  type: 'skeleton' | 'color',
+): ThemeData {
   const result: ThemeData = { ...base }
   for (const [className, entry] of Object.entries(override)) {
-    if (entry?.properties) {
-      result[className] = {
-        ...result[className],
-        ...entry,
-        properties: {
-          ...(result[className]?.properties || {}),
-          ...entry.properties,
-        },
+    if (!entry?.properties) continue
+    const filtered: Record<string, StyleValue> = {}
+    for (const [key, value] of Object.entries(entry.properties)) {
+      if (type === 'skeleton' && SKELETON_KEYS.has(key)) {
+        filtered[key] = value
+      } else if (type === 'color' && COLOR_KEYS.has(key)) {
+        filtered[key] = value
+      } else if (!SKELETON_KEYS.has(key) && !COLOR_KEYS.has(key)) {
+        filtered[key] = value
       }
+    }
+    result[className] = {
+      ...result[className],
+      ...entry,
+      properties: {
+        ...(result[className]?.properties || {}),
+        ...filtered,
+      },
     }
   }
   return result
@@ -573,6 +621,80 @@ function getDepthFromDoc(state: SheetState, topicId: string): number {
 }
 
 // ==================== LeaferJS 样式转换辅助函数 ====================
+
+/** 渐变停靠点（对应 LeaferJS IColorStop） */
+interface GradientStop {
+  offset: number
+  color: string
+}
+
+/** 线性渐变填充（对应 LeaferJS IGradientPaint 子集） */
+interface LinearGradientPaint {
+  type: 'linear'
+  from?: { type: 'percent'; x: number; y: number }
+  to?: { type: 'percent'; x: number; y: number }
+  stops: GradientStop[]
+  /** 渐变角度（度数，用于调试/序列化） */
+  angle?: number
+}
+
+/**
+ * 解析 linear(...) 渐变字符串为 LeaferJS 渐变对象
+ *
+ * 语法：linear(45deg, #ff0000, #00ff00)
+ * 角度遵循 CSS 约定：0deg 自下而上，90deg 自左而右（顺时针）
+ * 转换为 from/to 百分比点，使 LeaferJS 线性渐变按角度渲染
+ */
+function parseLinearGradient(value: string): LinearGradientPaint | null {
+  const match = value.match(/^linear\(\s*(-?\d+(?:\.\d+)?)\s*(?:deg)?\s*,\s*(.+)\)$/i)
+  if (!match) return null
+
+  const angle = parseFloat(match[1])
+  if (isNaN(angle)) return null
+
+  const colorStrings = splitGradientStops(match[2])
+  if (colorStrings.length < 2) return null
+
+  const stops: GradientStop[] = colorStrings.map((color, i, arr) => ({
+    offset: i / (arr.length - 1),
+    color,
+  }))
+
+  const { from, to } = angleToFromTo(angle)
+  return { type: 'linear', from, to, stops, angle }
+}
+
+/** 按逗号分割颜色列表，忽略括号内的逗号（支持 rgba() 等） */
+function splitGradientStops(str: string): string[] {
+  const result: string[] = []
+  let depth = 0
+  let current = ''
+  for (const ch of str) {
+    if (ch === '(') depth++
+    if (ch === ')') depth--
+    if (ch === ',' && depth === 0) {
+      if (current.trim()) result.push(current.trim())
+      current = ''
+    } else {
+      current += ch
+    }
+  }
+  if (current.trim()) result.push(current.trim())
+  return result
+}
+
+/** 角度 → LeaferJS from/to 百分比点 */
+function angleToFromTo(
+  angle: number,
+): { from: { type: 'percent'; x: number; y: number }; to: { type: 'percent'; x: number; y: number } } {
+  const rad = (angle * Math.PI) / 180
+  const dx = Math.sin(rad)
+  const dy = -Math.cos(rad)
+  return {
+    from: { type: 'percent', x: 0.5 - 0.5 * dx, y: 0.5 - 0.5 * dy },
+    to: { type: 'percent', x: 0.5 + 0.5 * dx, y: 0.5 + 0.5 * dy },
+  }
+}
 
 /**
  * pt → px 转换（1pt = 96/72 px ≈ 1.333px）

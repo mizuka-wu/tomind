@@ -288,13 +288,17 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       : {}
 
     const color = (leaferStyle.lineColor as string) ?? '#999999'
+    const multiLineColors = typeof leaferStyle.multiLineColors === 'string'
+      ? leaferStyle.multiLineColors.split(/\s+/).filter(Boolean)
+      : []
     const width = (leaferStyle.strokeWidth as number) ?? 1.5
     const cornerRadius = (leaferStyle.lineCornerRadius as number) ?? (leaferStyle.cornerRadius as number) ?? 0
     const strokeDash = leaferStyle.strokeDash as number[] | null | undefined
     const lineClass = (leaferStyle.lineClass as string) ?? 'elbow'
     const arrowEndClass = leaferStyle.arrowEndClass as string | undefined
 
-    for (const child of children) {
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
       const childLayout = layout.nodes.get(child.id)
       if (!childLayout) continue
 
@@ -354,7 +358,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 
       const pathElement = new Path({
         path,
-        stroke: color,
+        stroke: multiLineColors.length > 0 ? multiLineColors[i % multiLineColors.length] : color,
         strokeWidth: width,
         strokeLinecap: 'round',
         ...(strokeDash ? { dashPattern: strokeDash } : {}),
@@ -363,7 +367,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       this._connectionPaths.push(pathElement)
 
       if (arrowEndClass === 'triangle') {
-        const arrow = this.createArrow(endX, endY, isHorizontal, color)
+        const arrow = this.createArrow(endX, endY, isHorizontal, multiLineColors.length > 0 ? multiLineColors[i % multiLineColors.length] : color)
         group.add(arrow)
         this._connectionPaths.push(arrow)
       }
