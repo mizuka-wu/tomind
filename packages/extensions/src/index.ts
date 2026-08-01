@@ -25,7 +25,7 @@ export { CopyPasteExtension } from './copy-paste'
 
 // ─── 布局扩展（一个大类一个文件夹） ───
 export { TreeRightExtension, TreeLeftExtension, TreeDownExtension, TreeUpExtension } from './tree'
-export { MapClockwiseExtension, MapUnbalancedExtension } from './map'
+export { MapClockwiseExtension, MapAnticlockwiseExtension, MapUnbalancedExtension } from './map'
 export { LogicRightExtension, LogicLeftExtension } from './logic'
 export { OrgChartDownExtension, OrgChartUpExtension } from './org-chart'
 export { TimelineHorizontalExtension, TimelineVerticalExtension } from './timeline'
