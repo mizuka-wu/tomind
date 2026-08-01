@@ -1,8 +1,16 @@
 import { Group, Rect, Text, Line, Ellipse } from 'leafer-ui'
-import type { IFontWeight, ITextAlign } from 'leafer-ui'
+import type { IFontWeight, ITextAlign, ITextDecorationType } from 'leafer-ui'
 import type { LayoutResult, NodeLayout } from '@tomind/layout'
 import type { Renderer } from './renderer'
 import { getTitleText } from '@tomind/schema'
+
+const SYSTEM_FONT_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+
+/** textDecoration 映射 — 样式值 → LeaferJS 值（LeaferJS 使用 'under'/'delete'） */
+const TEXT_DECORATION_MAP: Record<string, ITextDecorationType> = {
+  underline: 'under',
+  'line-through': 'delete',
+}
 
 /**
  * TopicRenderer — Topic 节点渲染器
@@ -145,19 +153,41 @@ export class TopicRenderer implements Renderer {
 
     // 从 node.attrs 取 title（style 不含 title）
     const titleStyle = nodeAttrs ?? style
-    this.text.text = getTitleText(titleStyle)
+
+    // 文本内容 + textTransform 转换
+    let text = getTitleText(titleStyle)
+    const textTransform = style.textTransform
+    if (textTransform === 'uppercase') {
+      text = text.toUpperCase()
+    } else if (textTransform === 'lowercase') {
+      text = text.toLowerCase()
+    } else if (textTransform === 'capitalize') {
+      text = text.replace(/\b\w/g, (c) => c.toUpperCase())
+    }
+    this.text.text = text
 
     // 字体颜色：优先用 fontColor，fallback 到 color
     const fontColor = style.fontColor ?? style.color ?? '#333'
     if (typeof fontColor === 'string') this.text.fill = fontColor
 
-    if (typeof style.fontFamily === 'string') this.text.fontFamily = style.fontFamily
+    // fontFamily：'$system$' 解析为系统字体栈
+    if (typeof style.fontFamily === 'string') {
+      this.text.fontFamily = style.fontFamily === '$system$' ? SYSTEM_FONT_STACK : style.fontFamily
+    }
     if (typeof style.fontSize === 'number') this.text.fontSize = style.fontSize
     if (typeof style.fontWeight === 'string' || typeof style.fontWeight === 'number') {
       this.text.fontWeight = style.fontWeight as IFontWeight
     }
     if (typeof style.textAlign === 'string') {
       this.text.textAlign = style.textAlign as ITextAlign
+    }
+
+    // textDecoration：映射为 LeaferJS 的 'under'/'delete'
+    if (typeof style.textDecoration === 'string') {
+      const decoration = TEXT_DECORATION_MAP[style.textDecoration]
+      if (decoration !== undefined) {
+        this.text.textDecoration = decoration
+      }
     }
 
     // 文本居中
