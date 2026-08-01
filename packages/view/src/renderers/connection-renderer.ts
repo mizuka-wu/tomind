@@ -39,9 +39,16 @@ export class ConnectionRenderer implements Renderer {
     if (!this.path) return
 
     // 更新样式
-    if (style.stroke) this.path.stroke = style.stroke as string
-    if (style.strokeWidth) this.path.strokeWidth = style.strokeWidth as number
-    if (style.dashPattern) this.path.dashPattern = style.dashPattern as number[]
+    const lineColor = style.lineColor ?? style.stroke ?? '#999999'
+    if (typeof lineColor === 'string') this.path.stroke = lineColor
+
+    const strokeWidth = style.lineStrokeWidth ?? style.strokeWidth
+    if (typeof strokeWidth === 'number') this.path.strokeWidth = strokeWidth
+
+    const strokeDash = style.strokeDash ?? style.dashPattern
+    if (Array.isArray(strokeDash) && strokeDash.length > 0) {
+      this.path.dashPattern = strokeDash
+    }
 
     // 计算连接线路径
     // 默认使用简单直线，后续可以扩展为曲线/折线

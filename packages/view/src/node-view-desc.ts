@@ -1582,7 +1582,31 @@ export class ConnectionNodeViewDesc extends NodeViewDesc {
   protected updateStyle(): void {
     if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
     const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
-    const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
+
+    // 读取缓存的布局结果（由 SheetEditor.updateState 统一 compute）
+    let layout: LayoutResult
+    if (NodeViewDesc.layoutEngine) {
+      layout = NodeViewDesc.layoutEngine.getLayoutResult()
+    } else {
+      layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
+    }
+
+    const node = this.node as RelationshipNodeDesc
+    const { sourceId, targetId } = node.attrs
+    const sourceLayout = layout.nodes.get(sourceId)
+    const targetLayout = layout.nodes.get(targetId)
+    if (sourceLayout && targetLayout) {
+      const from = {
+        x: sourceLayout.x + sourceLayout.width / 2,
+        y: sourceLayout.y + sourceLayout.height / 2,
+      }
+      const to = {
+        x: targetLayout.x + targetLayout.width / 2,
+        y: targetLayout.y + targetLayout.height / 2,
+      }
+      this.renderer.setEndpoints(from, to)
+    }
+
     this.renderer.render(layout, style)
   }
 

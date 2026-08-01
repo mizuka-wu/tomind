@@ -389,6 +389,34 @@ export function serializeTransform(value: TransformValues | string | null | unde
   return parts.join(' ')
 }
 
+// ==================== 类名归一化 ====================
+
+/** XMind 类名 URI 前缀 → 短名（strip 前缀后得到渲染器使用的短名） */
+const XMIND_CLASS_PREFIXES = [
+  'org.xmind.topicShape.',
+  'org.xmind.arrowShape.',
+  'org.xmind.branchConnection.',
+  'org.xmind.boundaryShape.',
+  'org.xmind.calloutTopicShape.',
+]
+
+/**
+ * 归一化 XMind 类名 URI 为短名
+ * "org.xmind.topicShape.roundedRect" → "roundedRect"
+ * "org.xmind.arrowShape.triangle" → "triangle"
+ * "org.xmind.branchConnection.curve" → "curve"
+ * 非字符串或未匹配前缀的值原样返回
+ */
+export function normalizeClassName(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  for (const prefix of XMIND_CLASS_PREFIXES) {
+    if (value.startsWith(prefix)) {
+      return value.slice(prefix.length)
+    }
+  }
+  return value
+}
+
 // ==================== 综合转换器 ====================
 
 /** 需要颜色转换的属性 */

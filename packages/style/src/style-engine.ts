@@ -36,7 +36,7 @@ import type { SheetState } from '@tomind/state'
 import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue } from './style-types'
 import { classifyNode, getParentId, findById } from './classify'
 import { DEFAULT_STYLES } from './default-styles'
-import { normalizeStyleObject, serializeStyleObject } from './style-converter'
+import { normalizeStyleObject, serializeStyleObject, normalizeClassName } from './style-converter'
 import { parseClassList, getClassStyles } from '@tomind/state'
 import { SKELETON_KEY_SET, COLOR_KEY_SET } from './style-keys'
 
@@ -379,6 +379,26 @@ export class StyleEngine {
           result.strokeDash = parseLineDash(value)
           break
 
+        // ── 形状/箭头/连线类名映射（XMind URI → 短名） ──
+        case 'shapeClass':
+          result.shapeClass = normalizeClassName(value)
+          break
+        case 'arrowEndClass':
+          result.arrowEndClass = normalizeClassName(value)
+          break
+        case 'arrowBeginClass':
+          result.arrowBeginClass = normalizeClassName(value)
+          break
+        case 'lineClass':
+          result.lineClass = normalizeClassName(value)
+          break
+        case 'calloutShapeClass':
+          result.calloutShapeClass = normalizeClassName(value)
+          break
+        case 'calloutLineClass':
+          result.calloutLineClass = normalizeClassName(value)
+          break
+
         // ── 形状映射 ──
         case 'lineCorner':
           result.lineCornerRadius = parsePtToPx(value)  // 连线圆角（新键）
@@ -458,11 +478,18 @@ export class StyleEngine {
     colorTheme?: ThemeData,
   ): ThemeData {
     let result = { ...base }
+    // 骨架主题显式声明的 fillColor: "none"（透明填充）优先级高于颜色主题
+    const skeletonNoneFills = new Set<string>()
     if (skeletonTheme) {
+      for (const [className, entry] of Object.entries(skeletonTheme)) {
+        if (entry?.properties?.fillColor === 'none') {
+          skeletonNoneFills.add(className)
+        }
+      }
       result = mergeThemeData(result, skeletonTheme, 'skeleton')
     }
     if (colorTheme) {
-      result = mergeThemeData(result, colorTheme, 'color')
+      result = mergeThemeData(result, colorTheme, 'color', skeletonNoneFills)
     }
     return result
   }
@@ -550,15 +577,21 @@ function mergeThemeData(
   base: ThemeData,
   override: ThemeData,
   type: 'skeleton' | 'color',
+  protectedNoneFills?: Set<string>,
 ): ThemeData {
   const result: ThemeData = { ...base }
   for (const [className, entry] of Object.entries(override)) {
     if (!entry?.properties) continue
     const filtered: Record<string, StyleValue> = {}
     for (const [key, value] of Object.entries(entry.properties)) {
-      if (type === 'skeleton' && SKELETON_KEY_SET.has(key)) {
+      if (type === 'skeleton' && (SKELETON_KEY_SET.has(key) || (key === 'fillColor' && value === 'none'))) {
+        // 骨架主题可覆盖 fillColor，但仅限 "none"（透明填充语义）
         filtered[key] = value
       } else if (type === 'color' && COLOR_KEY_SET.has(key)) {
+        // 骨架主题声明的 fillColor: "none" 优先，颜色主题不得覆盖
+        if (key === 'fillColor' && protectedNoneFills?.has(className)) {
+          continue
+        }
         filtered[key] = value
       } else if (!SKELETON_KEY_SET.has(key) && !COLOR_KEY_SET.has(key)) {
         filtered[key] = value
