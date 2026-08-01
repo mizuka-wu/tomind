@@ -265,8 +265,10 @@ export class StyleEngine {
    * 直接返回可用于 LeaferJS 元素的属性：
    * - fill (不是 fillColor)
    * - stroke (不是 borderColor)
-   * - strokeWidth (不是 borderWidth)
-   * - cornerRadius (不是 lineCorner)
+   * - lineStrokeWidth (不是 lineWidth，连线宽度)
+   * - strokeWidth (不是 borderWidth，Rect 边框宽度)
+   * - lineCornerRadius (不是 lineCorner，连线圆角)
+   * - cornerRadius (不是 shapeCorner，Rect 圆角)
    */
   getLeaferStyle(
     state: SheetState,
@@ -289,6 +291,19 @@ export class StyleEngine {
    *   Rect.fill = 背景色，Text.fill = 字体色
    */
   private toLeaferStyle(style: ResolvedStyle): Record<string, unknown> {
+    // ── LeaferJS 属性映射规则 ──
+    // 旧映射（存在冲突，后者覆盖前者）：
+    //   lineWidth   → strokeWidth    borderWidth  → strokeWidth
+    //   lineCorner  → cornerRadius   shapeCorner  → cornerRadius
+    // 新映射（分离，避免覆盖）：
+    //   lineWidth   → lineStrokeWidth（连线宽度，供 ConnectionRenderer 使用）
+    //   borderWidth → strokeWidth（Rect 边框宽度）
+    //   lineCorner  → lineCornerRadius（连线圆角）
+    //   shapeCorner → cornerRadius（Rect 圆角）
+    // 向后兼容：lineWidth 仍同步写 strokeWidth，lineCorner 仍同步写 cornerRadius（已废弃，勿依赖）
+    //
+    // pt→px：parsePtToPx 基于未规范化的原始值（如 "16pt"）转换；
+    // 已被 normalizeStyleObject 剥单位的数字值则原样传递（无法再区分 pt/px）。
     const result: Record<string, unknown> = {}
 
     for (const [key, value] of Object.entries(style)) {
@@ -321,7 +336,8 @@ export class StyleEngine {
 
         // ── 线条映射 ──
         case 'lineWidth':
-          result.strokeWidth = parsePtToPx(value)  // 连线宽度
+          result.lineStrokeWidth = parsePtToPx(value)  // 连线宽度（新键）
+          result.strokeWidth = parsePtToPx(value)       // 向后兼容（已废弃）
           break
         case 'borderWidth':
           result.strokeWidth = parsePtToPx(value)  // Rect 边框宽度
@@ -336,8 +352,11 @@ export class StyleEngine {
 
         // ── 形状映射 ──
         case 'lineCorner':
+          result.lineCornerRadius = parsePtToPx(value)  // 连线圆角（新键）
+          result.cornerRadius = parsePtToPx(value)       // 向后兼容（已废弃）
+          break
         case 'shapeCorner':
-          result.cornerRadius = parsePtToPx(value)
+          result.cornerRadius = parsePtToPx(value)  // Rect 圆角
           break
 
         // ── 字体映射 ──
