@@ -1,10 +1,12 @@
 # CODEMAP — 代码地图
 
-> 项目代码地图，标记每个模块的职责、依赖、风险和 `any` 使用情况。
+> ⚠️ 本文档描述的是旧架构（snowbrush-render），仅供参考。新架构请参见 [architecture.md](architecture.md)。
 
 ---
 
-## 总览
+## 旧架构（snowbrush-render）
+
+### 总览
 
 | 指标 | 数据 |
 |------|------|

@@ -2,7 +2,7 @@
 
 /**
  * 主题数据转换脚本
- * 将 snowbrush-render 的主题数据转换为 tomind 格式
+ * 将外部主题数据转换为 tomind 格式
  */
 
 import { readFileSync, writeFileSync } from 'fs'
@@ -62,10 +62,10 @@ function convertTheme(theme) {
   return result
 }
 
-// 读取 snowbrush-render 的主题数据
-const snowbrushDir = '/Users/mizuka/Projects/fe/snowbrush-render/src/snowball/lib/data'
+// 读取外部主题数据
+const snowbrushDir = '/Users/mizuka/Projects/fe/snowbrush-render/src/snowball/lib/data' // 外部主题数据目录
 
-console.log('Reading snowbrush-render theme data...')
+console.log('Reading theme data...')
 
 // 读取 colorthemes.ts
 const colorThemesContent = readFileSync(join(snowbrushDir, 'colorthemes.ts'), 'utf-8')
@@ -103,6 +103,7 @@ const convertedColorThemes = colorThemes
   .map(theme => ({
     id: theme.id,
     tags: theme.tags,
+    colorFieldsMap: theme.colorFieldsMap,
     theme: convertTheme(theme.theme),
   }))
 
@@ -115,7 +116,7 @@ const convertedSkeletonThemes = skeletonThemes.map(theme => ({
 
 // 生成 TypeScript 代码
 const output = `/**
- * 迁移自 snowbrush-render 的主题数据
+ * 迁移自外部主题数据
  * 自动生成，请勿手动编辑
  */
 
@@ -125,6 +126,8 @@ import type { ThemeData } from '@tomind/style'
 export interface ColorThemeData {
   id: string
   tags: string[]
+  /** 颜色变量表（PRIMARY_COLOR_0 等），样式值可用 $变量名$ 引用 */
+  colorFieldsMap?: Record<string, string>
   theme: ThemeData
 }
 

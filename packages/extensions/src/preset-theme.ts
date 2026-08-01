@@ -1,8 +1,15 @@
 import { createExtension } from '@tomind/core'
 import type { ThemeData } from '@tomind/style'
 import { COLOR_THEMES, SKELETON_THEMES, getColorTheme, getSkeletonTheme } from './theme-data'
+import type { ColorThemeData } from './theme-data'
 
 // ==================== 默认主题组合 ====================
+
+/** 将颜色主题转为 ThemeData，并附带 colorFieldsMap（颜色变量表） */
+function toColorThemeData(colorTheme: ColorThemeData): ThemeData {
+  if (!colorTheme.colorFieldsMap) return colorTheme.theme
+  return { ...colorTheme.theme, colorFieldsMap: colorTheme.colorFieldsMap }
+}
 
 function createPresetTheme(colorThemeId: string, skeletonThemeId: string) {
   const colorTheme = getColorTheme(colorThemeId)
@@ -16,7 +23,7 @@ function createPresetTheme(colorThemeId: string, skeletonThemeId: string) {
   return {
     id: `preset-${colorThemeId}-${skeletonThemeId}`,
     name: `Preset (${colorTheme.tags.join(', ')})`,
-    color: colorTheme.theme,
+    color: toColorThemeData(colorTheme),
     skeleton: skeletonTheme.theme,
   }
 }
@@ -33,7 +40,7 @@ if (defaultColorTheme && defaultSkeletonTheme) {
   PRESET_THEMES['preset-default'] = {
     id: 'preset-default',
     name: 'Preset Default',
-    color: defaultColorTheme.theme,
+    color: toColorThemeData(defaultColorTheme),
     skeleton: defaultSkeletonTheme.theme,
   }
 }
@@ -44,7 +51,7 @@ if (darkColorTheme && defaultSkeletonTheme) {
   PRESET_THEMES['preset-dark'] = {
     id: 'preset-dark',
     name: 'Preset Dark',
-    color: darkColorTheme.theme,
+    color: toColorThemeData(darkColorTheme),
     skeleton: defaultSkeletonTheme.theme,
   }
 }
@@ -55,7 +62,7 @@ if (lightColorTheme && defaultSkeletonTheme) {
   PRESET_THEMES['preset-light'] = {
     id: 'preset-light',
     name: 'Preset Light',
-    color: lightColorTheme.theme,
+    color: toColorThemeData(lightColorTheme),
     skeleton: defaultSkeletonTheme.theme,
   }
 }

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { StyleEngine } from '@tomind/style'
+import { StyleEngine, resolveColorVariables } from '@tomind/style'
 import type { ThemeData, ResolvedStyle } from '@tomind/style'
 
 describe('StyleEngine', () => {
@@ -248,6 +248,30 @@ describe('StyleEngine', () => {
       const result = engine.composeTheme(base, skeleton, color)
       expect(result.subTopic.properties.fillColor).toBe('#ff0000')
     })
+
+    it('should preserve colorFieldsMap from color theme', () => {
+      const base: ThemeData = {
+        centralTopic: {
+          id: 'base',
+          properties: { fillColor: '#ffffff' },
+        },
+      }
+      const color: ThemeData = {
+        centralTopic: {
+          id: 'color',
+          properties: { fillColor: '#c1aba5' },
+        },
+        colorFieldsMap: {
+          PRIMARY_COLOR_0: '#c1aba5',
+          DARK_COLOR: '#2d221f',
+        },
+      }
+      const result = engine.composeTheme(base, undefined, color)
+      expect(result.colorFieldsMap).toEqual({
+        PRIMARY_COLOR_0: '#c1aba5',
+        DARK_COLOR: '#2d221f',
+      })
+    })
   })
 
   describe('loadTheme', () => {
@@ -286,6 +310,25 @@ describe('StyleEngine', () => {
       engine.setActiveTheme('unknown-theme')
       expect(consoleSpy).toHaveBeenCalled()
       consoleSpy.mockRestore()
+    })
+  })
+
+  describe('resolveColorVariables', () => {
+    it('should resolve known color variables', () => {
+      const map = { PRIMARY_COLOR_0: '#c1aba5', DARK_COLOR: '#2d221f' }
+      expect(resolveColorVariables('$PRIMARY_COLOR_0$', map)).toBe('#c1aba5')
+      expect(resolveColorVariables('$DARK_COLOR$', map)).toBe('#2d221f')
+    })
+
+    it('should keep unknown variables unchanged', () => {
+      const map = { PRIMARY_COLOR_0: '#c1aba5' }
+      expect(resolveColorVariables('$UNKNOWN_VAR$', map)).toBe('$UNKNOWN_VAR$')
+    })
+
+    it('should pass through non-string values and no-map cases', () => {
+      expect(resolveColorVariables('16pt', undefined)).toBe('16pt')
+      expect(resolveColorVariables(null, { PRIMARY_COLOR_0: '#c1aba5' })).toBeNull()
+      expect(resolveColorVariables(16, { PRIMARY_COLOR_0: '#c1aba5' })).toBe(16)
     })
   })
 })

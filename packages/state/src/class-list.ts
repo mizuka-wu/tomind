@@ -92,7 +92,7 @@ export function toggleClass(
  */
 export function getClassStyleValue(
   classList: readonly string[],
-  theme: Record<string, { properties?: Record<string, unknown> }> | undefined,
+  theme: Record<string, unknown> | undefined,
   key: string
 ): unknown {
   if (!theme || classList.length === 0) return undefined
@@ -100,7 +100,8 @@ export function getClassStyleValue(
   let value: unknown = undefined
   for (const className of classList) {
     const classEntry = theme[className]
-    if (classEntry?.properties?.[key] !== undefined) {
+    if (!isClassEntryWithProps(classEntry)) continue
+    if (classEntry.properties[key] !== undefined) {
       value = classEntry.properties[key]
     }
   }
@@ -114,16 +115,25 @@ export function getClassStyleValue(
  */
 export function getClassStyles(
   classList: readonly string[],
-  theme: Record<string, { properties?: Record<string, unknown> }> | undefined
+  theme: Record<string, unknown> | undefined
 ): Record<string, unknown> {
   if (!theme || classList.length === 0) return {}
 
   const result: Record<string, unknown> = {}
   for (const className of classList) {
     const classEntry = theme[className]
-    if (classEntry?.properties) {
-      Object.assign(result, classEntry.properties)
+    if (!isClassEntryWithProps(classEntry)) continue
+    for (const [key, value] of Object.entries(classEntry.properties)) {
+      result[key] = value
     }
   }
   return result
+}
+
+/** 类型守卫：判断主题条目是否为含 properties 的对象 */
+function isClassEntryWithProps(entry: unknown): entry is { properties: Record<string, unknown> } {
+  if (typeof entry !== 'object' || entry === null) return false
+  if (!('properties' in entry)) return false
+  const props = entry.properties
+  return typeof props === 'object' && props !== null
 }
