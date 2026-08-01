@@ -66,6 +66,7 @@ function parseStyleValue(value: unknown, fallback: number): number {
 function getNodeSpacing(
   style: ResolvedStyle | undefined,
   options: LayoutOptions,
+  direction: TreeDirection,
 ) {
   if (!style) {
     return {
@@ -74,9 +75,17 @@ function getNodeSpacing(
       padding: options.nodePadding,
     }
   }
+
+  const majorGap = parseStyleValue(style.spacingMajor, options.horizontalGap)
+  const minorGap = parseStyleValue(style.spacingMinor, options.verticalGap)
+
+  // 根据方向映射：spacingMajor=父子间距, spacingMinor=兄弟间距
+  // 水平方向(right/left)：父子沿 X 轴 → horizontalGap；兄弟沿 Y 轴 → verticalGap
+  // 垂直方向(down/up)：父子沿 Y 轴 → verticalGap；兄弟沿 X 轴 → horizontalGap
+  const isHorizontal = direction === 'right' || direction === 'left'
   return {
-    horizontalGap: parseStyleValue(style.spacingMajor, options.horizontalGap),
-    verticalGap: parseStyleValue(style.spacingMinor, options.verticalGap),
+    horizontalGap: isHorizontal ? majorGap : minorGap,
+    verticalGap: isHorizontal ? minorGap : majorGap,
     padding: {
       top: parseStyleValue(style.marginTop, options.nodePadding.top),
       right: parseStyleValue(style.marginRight, options.nodePadding.right),
@@ -104,10 +113,10 @@ function getNodeStyle(ctx: TreeLayoutContext, nodeId: string): ResolvedStyle | u
   return style
 }
 
-function getNodeSpacingCached(ctx: TreeLayoutContext, nodeId: string) {
+function getNodeSpacingCached(ctx: TreeLayoutContext, nodeId: string, direction: TreeDirection) {
   if (ctx.spacingCache.has(nodeId)) return ctx.spacingCache.get(nodeId)!
   const style = getNodeStyle(ctx, nodeId)
-  const spacing = getNodeSpacing(style, ctx.options)
+  const spacing = getNodeSpacing(style, ctx.options, direction)
   ctx.spacingCache.set(nodeId, spacing)
   return spacing
 }
@@ -141,12 +150,13 @@ function measureSubtree(
   ctx: TreeLayoutContext,
   node: NodeDesc,
   sizeMap: Map<string, NodeSize>,
+  direction: TreeDirection,
 ): void {
-  const spacing = getNodeSpacingCached(ctx, node.id)
+  const spacing = getNodeSpacingCached(ctx, node.id, direction)
   sizeMap.set(node.id, measureNodeSize(node, spacing.padding, ctx.options))
   if (!isCollapsed(node)) {
     for (const child of getAttachedChildren(node)) {
-      measureSubtree(ctx, child, sizeMap)
+      measureSubtree(ctx, child, sizeMap, direction)
     }
   }
 }
@@ -175,7 +185,7 @@ function childrenAxisSize(
   dir: TreeDirection,
 ): number {
   const h = isHorizontal(dir)
-  const spacing = getNodeSpacingCached(ctx, children[0]?.id ?? '')
+  const spacing = getNodeSpacingCached(ctx, children[0]?.id ?? '', dir)
   let total = 0
   for (let i = 0; i < children.length; i++) {
     const s = sizeMap.get(children[i].id)!
@@ -195,7 +205,7 @@ function layoutSubtree(
   nodes: Map<string, NodeLayoutOutput>,
 ): void {
   const size = sizeMap.get(node.id)!
-  const spacing = getNodeSpacingCached(ctx, node.id)
+  const spacing = getNodeSpacingCached(ctx, node.id, direction)
   const children = getAttachedChildren(node)
   const h = isHorizontal(direction)
 
@@ -261,7 +271,7 @@ export function createTreeLayoutAlgorithm(name: string, direction: TreeDirection
       if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
       const sizeMap = new Map<string, NodeSize>()
-      measureSubtree(ctx, root, sizeMap)
+      measureSubtree(ctx, root, sizeMap, direction)
 
       const rootAxisSize = childrenAxisSize(ctx, [root], sizeMap, direction)
       let rootX: number
