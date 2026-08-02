@@ -1,7 +1,11 @@
 /**
  * CommandDef — 命令定义接口
  *
- * 对标 Tiptap 的 Command 概念，兼容 MCP Tool 规范
+ * 对齐 MCP Tool 规范，每个命令包含：
+ * - name: 命令名称
+ * - description: 命令描述
+ * - inputSchema: 输入参数的 JSON Schema
+ * - outputSchema: 输出结果的 JSON Schema（可选）
  */
 
 import type { SheetState } from '@tomind/state'
@@ -105,4 +109,15 @@ export function defineCommand<TInput = unknown, TOutput = unknown>(
   def: CommandDef<TInput, TOutput>
 ): CommandDef<TInput, TOutput> {
   return def
+}
+
+/**
+ * 将 CommandDef 转换为 MCP Tool 格式
+ */
+export function commandToMCPTool(def: CommandDef): MCPTool {
+  return {
+    name: def.name,
+    description: def.description,
+    inputSchema: def.inputSchema,
+  }
 }
