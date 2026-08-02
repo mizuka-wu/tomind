@@ -69,6 +69,33 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
   }
 }
 
+/** 递归计算子树总高度（垂直方向的总跨度） */
+function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+  const size = sizeMap.get(node.id)!
+  if (isCollapsed(node)) return size.height
+  const children = getAttachedChildren(node)
+  if (children.length === 0) return size.height
+  let total = 0
+  for (let i = 0; i < children.length; i++) {
+    total += subtreeTotalHeight(children[i], options, sizeMap)
+    if (i < children.length - 1) total += options.verticalGap
+  }
+  return Math.max(size.height, total)
+}
+
+/** 递归计算子树总宽度（水平方向的总跨度） */
+function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+  const size = sizeMap.get(node.id)!
+  if (isCollapsed(node)) return size.width
+  const children = getAttachedChildren(node)
+  if (children.length === 0) return size.width
+  let maxChildWidth = 0
+  for (const child of children) {
+    maxChildWidth = Math.max(maxChildWidth, subtreeTotalWidth(child, options, sizeMap))
+  }
+  return size.width + options.horizontalGap + maxChildWidth
+}
+
 function layoutSubtree(
   node: NodeDesc,
   x: number,
@@ -86,7 +113,7 @@ function layoutSubtree(
   if (!isCollapsed(node) && children.length > 0) {
     let maxChildH = 0
     for (const child of children) {
-      maxChildH = Math.max(maxChildH, sizeMap.get(child.id)!.height)
+      maxChildH = Math.max(maxChildH, subtreeTotalHeight(child, options, sizeMap))
     }
     branchHeight = size.height + maxChildH + options.verticalGap
   }
@@ -101,7 +128,7 @@ function layoutSubtree(
   for (const child of children) {
     const childY = y + size.height + options.verticalGap
     layoutSubtree(child, childX, childY, options, sizeMap, nodes)
-    childX += sizeMap.get(child.id)!.width + options.horizontalGap
+    childX += subtreeTotalWidth(child, options, sizeMap) + options.horizontalGap
   }
 }
 

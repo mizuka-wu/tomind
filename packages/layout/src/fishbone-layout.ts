@@ -72,6 +72,34 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
   }
 }
 
+/** 递归计算子树总高度（垂直方向的总跨度） */
+function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+  const size = sizeMap.get(node.id)!
+  if (isCollapsed(node)) return size.height
+  const children = getAttachedChildren(node)
+  if (children.length === 0) return size.height
+  let total = 0
+  for (let i = 0; i < children.length; i++) {
+    total += subtreeTotalHeight(children[i], options, sizeMap)
+    if (i < children.length - 1) total += options.verticalGap
+  }
+  return Math.max(size.height, total)
+}
+
+/** 递归计算子树总宽度（水平方向的总跨度），沿主脊方向使用 spineGap */
+function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+  const size = sizeMap.get(node.id)!
+  if (isCollapsed(node)) return size.width
+  const children = getAttachedChildren(node)
+  if (children.length === 0) return size.width
+  const spineGap = options.horizontalGap * 1.5
+  let maxChildWidth = 0
+  for (const child of children) {
+    maxChildWidth = Math.max(maxChildWidth, subtreeTotalWidth(child, options, sizeMap))
+  }
+  return size.width + spineGap + maxChildWidth
+}
+
 function layoutFishbone(
   node: NodeDesc,
   x: number,
@@ -91,9 +119,8 @@ function layoutFishbone(
     let topH = 0
     let bottomH = 0
     for (let i = 0; i < children.length; i++) {
-      const cs = sizeMap.get(children[i].id)!
-      if (i % 2 === 0) topH = Math.max(topH, cs.height)
-      else bottomH = Math.max(bottomH, cs.height)
+      if (i % 2 === 0) topH = Math.max(topH, subtreeTotalHeight(children[i], options, sizeMap))
+      else bottomH = Math.max(bottomH, subtreeTotalHeight(children[i], options, sizeMap))
     }
     branchHeight = topH + size.height + bottomH + options.verticalGap * 4
   }
@@ -122,8 +149,8 @@ function layoutFishbone(
     layoutFishbone(child, childX + offsetX, childY, headLeft, options, sizeMap, nodes)
 
     childX = headLeft
-      ? childX + cs.width + spineGap
-      : childX - cs.width - spineGap
+      ? childX + subtreeTotalWidth(child, options, sizeMap) + spineGap
+      : childX - subtreeTotalWidth(child, options, sizeMap) - spineGap
   }
 }
 
@@ -176,8 +203,7 @@ export const fishboneRightHeadedLayoutAlgorithm: LayoutAlgorithm = {
       let w = 0
       const children = getAttachedChildren(root)
       for (let i = 0; i < children.length; i++) {
-        const cs = sizeMap.get(children[i].id)!
-        w += cs.width + options.horizontalGap * 1.5
+        w += subtreeTotalWidth(children[i], options, sizeMap) + options.horizontalGap * 1.5
       }
       return w + sizeMap.get(root.id)!.width
     })()

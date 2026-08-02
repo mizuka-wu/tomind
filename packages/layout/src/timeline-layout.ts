@@ -70,6 +70,33 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
   }
 }
 
+/** 递归计算子树总高度（垂直方向的总跨度） */
+function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+  const size = sizeMap.get(node.id)!
+  if (isCollapsed(node)) return size.height
+  const children = getAttachedChildren(node)
+  if (children.length === 0) return size.height
+  let total = 0
+  for (let i = 0; i < children.length; i++) {
+    total += subtreeTotalHeight(children[i], options, sizeMap)
+    if (i < children.length - 1) total += options.verticalGap
+  }
+  return Math.max(size.height, total)
+}
+
+/** 递归计算子树总宽度（水平方向的总跨度） */
+function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+  const size = sizeMap.get(node.id)!
+  if (isCollapsed(node)) return size.width
+  const children = getAttachedChildren(node)
+  if (children.length === 0) return size.width
+  let maxChildWidth = 0
+  for (const child of children) {
+    maxChildWidth = Math.max(maxChildWidth, subtreeTotalWidth(child, options, sizeMap))
+  }
+  return size.width + options.horizontalGap + maxChildWidth
+}
+
 // ─── 水平时间线 ───
 
 function layoutTimelineHorizontal(
@@ -90,9 +117,8 @@ function layoutTimelineHorizontal(
     let topH = 0
     let bottomH = 0
     for (let i = 0; i < children.length; i++) {
-      const cs = sizeMap.get(children[i].id)!
-      if (i % 2 === 0) topH = Math.max(topH, cs.height)
-      else bottomH = Math.max(bottomH, cs.height)
+      if (i % 2 === 0) topH = Math.max(topH, subtreeTotalHeight(children[i], options, sizeMap))
+      else bottomH = Math.max(bottomH, subtreeTotalHeight(children[i], options, sizeMap))
     }
     branchHeight = topH + size.height + bottomH + options.verticalGap * 2
   }
@@ -111,7 +137,7 @@ function layoutTimelineHorizontal(
       ? y - cs.height - options.verticalGap  // 上方
       : y + size.height + options.verticalGap  // 下方
     layoutTimelineHorizontal(child, childX, childY, options, sizeMap, nodes)
-    childX += cs.width + options.horizontalGap
+    childX += subtreeTotalWidth(child, options, sizeMap) + options.horizontalGap
   }
 }
 
@@ -167,7 +193,7 @@ function layoutTimelineVertical(
   if (!isCollapsed(node) && children.length > 0) {
     let total = 0
     for (let i = 0; i < children.length; i++) {
-      total += sizeMap.get(children[i].id)!.height
+      total += subtreeTotalHeight(children[i], options, sizeMap)
       if (i < children.length - 1) total += options.verticalGap
     }
     branchHeight = Math.max(size.height, total)
@@ -187,7 +213,7 @@ function layoutTimelineVertical(
       ? x - cs.width - options.horizontalGap  // 左侧
       : x + size.width + options.horizontalGap  // 右侧
     layoutTimelineVertical(child, childX, childY, options, sizeMap, nodes)
-    childY += cs.height + options.verticalGap
+    childY += subtreeTotalHeight(child, options, sizeMap) + options.verticalGap
   }
 }
 
