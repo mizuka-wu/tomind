@@ -601,7 +601,7 @@ export class StyleEngine {
   }
 }
 
-/** 按类型合并主题数据：skeleton 只合并结构键，color 只合并颜色键，通用键两类都合并 */
+/** 按类型合并主题数据：skeleton 合并结构键和颜色键，color 只合并颜色键 */
 function mergeThemeData(
   base: ThemeData,
   override: ThemeData,
@@ -611,17 +611,19 @@ function mergeThemeData(
   const result: ThemeData = { ...base }
   for (const [className, entry] of Object.entries(override)) {
     if (!isThemeClassEntry(entry)) continue
-    // per-level 主题（level3, level4, ...）作为完整覆盖，不受 skeleton/color 键分类限制
     const isLevelClass = /^level\d+$/.test(className)
     const filtered: Record<string, StyleValue> = {}
     for (const [key, value] of Object.entries(entry.properties)) {
       if (isLevelClass) {
         filtered[key] = value
-      } else if (type === 'skeleton' && (SKELETON_KEY_SET.has(key) || (key === 'fillColor' && value === 'none'))) {
-        // 骨架主题可覆盖 fillColor，但仅限 "none"（透明填充语义）
-        filtered[key] = value
+      } else if (type === 'skeleton') {
+        // skeleton 主题合并所有键：结构键 + 颜色键（lineWidth/fontFamily 等）
+        // 但 fillColor 仅限 "none"（透明填充语义）
+        if (SKELETON_KEY_SET.has(key) || COLOR_KEY_SET.has(key) || (!SKELETON_KEY_SET.has(key) && !COLOR_KEY_SET.has(key))) {
+          if (key === 'fillColor' && value !== 'none') continue
+          filtered[key] = value
+        }
       } else if (type === 'color' && COLOR_KEY_SET.has(key)) {
-        // 骨架主题声明的 fillColor: "none" 优先，颜色主题不得覆盖
         if (key === 'fillColor' && protectedNoneFills?.has(className)) {
           continue
         }

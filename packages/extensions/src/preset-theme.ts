@@ -56,8 +56,11 @@ if (darkColorTheme && defaultSkeletonTheme) {
   }
 }
 
-// 浅色主题（查找标签包含 "Light" 的主题）
-const lightColorTheme = COLOR_THEMES.find(t => t.tags.some(tag => tag.toLowerCase().includes('light')))
+// 浅色主题（查找标签包含 "Light" 但不包含 "Dark" 的主题，避免匹配 "Light Dark"）
+const lightColorTheme = COLOR_THEMES.find(t =>
+  t.tags.some(tag => tag.toLowerCase().includes('light')) &&
+  !t.tags.some(tag => tag.toLowerCase().includes('dark'))
+)
 if (lightColorTheme && defaultSkeletonTheme) {
   PRESET_THEMES['preset-light'] = {
     id: 'preset-light',
@@ -88,8 +91,8 @@ export const PresetThemeExtension = createExtension({
 
     if (!styleEngine) return
 
-    const options = ctx.storage as PresetThemeOptions
-    const themeId = options.themeId || 'preset-default'
+    // 从 defaultOptions 读取配置（ctx.storage 为空因为没有 addStorage）
+    const themeId = (this as any).defaultOptions?.themeId || 'preset-default'
     const theme = PRESET_THEMES[themeId]
 
     if (!theme) {
