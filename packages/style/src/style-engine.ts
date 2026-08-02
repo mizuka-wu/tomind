@@ -635,7 +635,7 @@ function mergeThemeData(
     const existing = result[className]
     result[className] = {
       ...(isThemeClassEntry(existing) ? existing : undefined),
-      id: entry.id,
+      ...(entry.id ? { id: entry.id } : {}),
       properties: {
         ...(isThemeClassEntry(existing) ? existing.properties : {}),
         ...filtered,

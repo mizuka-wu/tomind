@@ -79,10 +79,10 @@ async function init() {
         }
       }
       if (Object.keys(skeletonProps).length > 0) {
-        skeleton[className] = { properties: skeletonProps as any }
+        skeleton[className] = { id: (entry as any).id, properties: skeletonProps as any }
       }
       if (Object.keys(colorProps).length > 0) {
-        color[className] = { properties: colorProps as any }
+        color[className] = { id: (entry as any).id, properties: colorProps as any }
       }
     }
     
