@@ -7,6 +7,23 @@ import { StarterKit } from '@tomind/starter-vanilla'
 import { parseXMind } from '@tomind/formats/xmind'
 import { modelToNodeDesc } from '@tomind/formats/model-to-node'
 
+// 全局调试接口
+declare global {
+  interface Window {
+    __tomind: {
+      workbook: WorkbookEditor
+      styleEngine: StyleEngine
+      layoutEngine: LayoutEngine
+      state: SheetState
+      doc: any
+      rawXMind: any
+      themeData: any
+      getStyle: (nodeId: string) => any
+      getClassStyle: (nodeType: string) => any
+    }
+  }
+}
+
 async function init() {
   const container = document.getElementById('app')
   if (!container) {
@@ -17,18 +34,17 @@ async function init() {
   const layoutEngine = new LayoutEngine()
 
   // 加载 xmind 文件
-  let doc
+  let doc: any
+  let rawXMind: any
   let xmindThemeData: Record<string, unknown> | undefined
   try {
     const resp = await fetch('./demo.xmind')
     const buffer = await resp.arrayBuffer()
-    const tree = await parseXMind(new Uint8Array(buffer))
-    const topicNode = modelToNodeDesc(tree)
-    // 直接用 XMind 根节点作为 doc root，不包裹合成 root
-    // 这样 classifyNode 能正确分类：root(depth 0) → centralTopic
+    rawXMind = await parseXMind(new Uint8Array(buffer))
+    const topicNode = modelToNodeDesc(rawXMind)
     doc = topicNode
-    xmindThemeData = tree.themeData
-    console.log('[demo] loaded xmind:', tree.title)
+    xmindThemeData = rawXMind.themeData
+    console.log('[demo] loaded xmind:', rawXMind.title)
   } catch (e) {
     console.error('[demo] failed to load xmind, using sample data:', e)
     const { createSampleDoc } = await import('./sample-data')
@@ -48,7 +64,6 @@ async function init() {
   if (xmindThemeData) {
     const themeId = (xmindThemeData as any).map?.id || (xmindThemeData as any).centralTopic?.id || 'xmind'
     
-    // 分离 skeleton（shapeClass, lineClass 等）和 color（fillColor, borderColor 等）
     const skeleton: ThemeData = {}
     const color: ThemeData = {}
     
@@ -88,6 +103,30 @@ async function init() {
   })
 
   workbook.setup()
+
+  // 暴露调试接口到 window
+  window.__tomind = {
+    workbook,
+    styleEngine,
+    layoutEngine,
+    state,
+    doc,
+    rawXMind,
+    themeData: xmindThemeData,
+    getStyle: (nodeId: string) => {
+      const activeSheet = workbook.getActiveSheet()
+      if (!activeSheet) return null
+      return styleEngine.getLeaferStyle(activeSheet.state, nodeId)
+    },
+    getClassStyle: (nodeType: string) => {
+      const theme = styleEngine.getActiveTheme()
+      if (!theme) return null
+      return theme[nodeType] ?? null
+    },
+  }
+
+  console.log('[demo] debug interface ready: window.__tomind')
+  console.log('[demo] try: __tomind.doc, __tomind.state.doc, __tomind.getStyle("nodeId"), __tomind.getClassStyle("mainTopic")')
 }
 
 document.addEventListener('DOMContentLoaded', init)
