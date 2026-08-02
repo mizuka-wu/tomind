@@ -81,25 +81,6 @@ export interface CommandDef<TInput = unknown, TOutput = unknown> {
   readonly canExecute?: (params: TInput, state: SheetState) => boolean
 }
 
-// ==================== CommandFn（对外暴露的函数形式）====================
-
-/** 命令函数（保持现有调用方式） */
-export interface CommandFn {
-  (state: SheetState, dispatch?: (tr: Transaction) => void, params?: unknown): boolean
-  /** 命令名称 */
-  readonly commandName: string
-  /** 命令描述 */
-  readonly description: string
-  /** 输入 Schema */
-  readonly inputSchema: JSONSchema
-  /** 输出 Schema */
-  readonly outputSchema?: JSONSchema
-  /** 命令分类 */
-  readonly category?: CommandCategory
-  /** 命令标签 */
-  readonly tags?: readonly string[]
-}
-
 // ==================== MCP Tool ====================
 
 export interface MCPTool {
@@ -141,24 +122,13 @@ export function defineCommand<TInput, TOutput>(config: {
 }
 
 /**
- * 将 CommandDef 转换为 CommandFn（函数形式，保持现有调用方式）
+ * 将 CommandDef 转换为函数形式（兼容扩展系统的 CommandFn 签名）
  */
-export function commandToFn<TInput, TOutput>(def: CommandDef<TInput, TOutput>): CommandFn {
-  const fn = ((state: SheetState, dispatch?: (tr: Transaction) => void, params?: unknown): boolean => {
-    // 执行命令（简化版，不做 schema 验证）
+export function commandToFn<TInput, TOutput>(def: CommandDef<TInput, TOutput>) {
+  return (state: SheetState, dispatch?: (tr: Transaction) => void, params?: unknown): boolean => {
     const result = def.execute(params as TInput, state, dispatch)
     return result.success
-  }) as CommandFn
-
-  // 附加元数据
-  Object.defineProperty(fn, 'commandName', { value: def.name })
-  Object.defineProperty(fn, 'description', { value: def.description })
-  Object.defineProperty(fn, 'inputSchema', { value: def.inputSchema })
-  Object.defineProperty(fn, 'outputSchema', { value: def.outputSchema })
-  Object.defineProperty(fn, 'category', { value: def.category })
-  Object.defineProperty(fn, 'tags', { value: def.tags })
-
-  return fn
+  }
 }
 
 /**
