@@ -222,6 +222,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) {
+      console.warn(`[updateStyle] SKIP ${this.node.type}#${this.node.id} — renderer=${!!this.renderer} styleEngine=${!!NodeViewDesc.styleEngine} state=${!!NodeViewDesc.state}`)
       return
     }
     
@@ -253,6 +254,9 @@ export class TopicNodeViewDesc extends NodeViewDesc {
         this.element.x = nodeLayout.x
         this.element.y = nodeLayout.y
       }
+      console.log(`[updateStyle] ${this.node.type}#${this.node.id} layout=(${nodeLayout.x},${nodeLayout.y} ${nodeLayout.width}x${nodeLayout.height}) element=(${this.element.x},${this.element.y}) parent=${parentViewDesc?.node.id ?? 'none'} group=(${this.element.width ?? '?'},${this.element.height ?? '?'})`)
+    } else {
+      console.warn(`[updateStyle] ${this.node.type}#${this.node.id} NO LAYOUT — nodeLayout=${!!nodeLayout} element=${!!this.element} layoutNodes=${layout.nodes.size}`)
     }
 
     this.renderer.render(layout, style, this.node.attrs)
@@ -281,7 +285,12 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 
     // 遍历子节点（attached slot）
     const children = this.node.children['attached'] ?? []
-    if (children.length === 0) return
+    if (children.length === 0) {
+      console.log(`[renderConnections] ${this.node.type}#${this.node.id} — no attached children`)
+      return
+    }
+
+    console.log(`[renderConnections] ${this.node.type}#${this.node.id} — ${children.length} children: [${children.map(c => c.id).join(',')}]`)
 
     const leaferStyle = NodeViewDesc.styleEngine && NodeViewDesc.state
       ? NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)

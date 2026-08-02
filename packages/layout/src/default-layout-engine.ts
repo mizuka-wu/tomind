@@ -39,15 +39,20 @@ export class LayoutEngine implements ILayoutEngine {
       // fallback: 尝试 'tree'，再 fallback 到第一个可用算法
       const fallback = this._registry.get('tree') ?? this._registry.values().next().value
       if (!fallback) {
-        console.warn(`No layout algorithm registered`)
+        console.warn(`[LayoutEngine] No layout algorithm registered. activeLayout=${this._activeLayout} registry=[${[...this._registry.keys()].join(',')}]`)
         return { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
       }
+      console.log(`[LayoutEngine] Using fallback algorithm: ${fallback.name}`)
       this._lastResult = fallback.layout(
         state.doc,
         DEFAULT_LAYOUT_OPTIONS,
         this._styleEngine ?? null,
         state,
       )
+      console.log(`[LayoutEngine] compute result: ${this._lastResult.nodes.size} nodes, ${this._lastResult.totalWidth}x${this._lastResult.totalHeight}`)
+      for (const [id, n] of this._lastResult.nodes) {
+        console.log(`  [layout] ${id} → (${n.x},${n.y} ${n.width}x${n.height})`)
+      }
       return this._lastResult
     }
     this._lastResult = algorithm.layout(
@@ -56,6 +61,10 @@ export class LayoutEngine implements ILayoutEngine {
       this._styleEngine ?? null,
       state,
     )
+    console.log(`[LayoutEngine] compute(${algorithm.name}): ${this._lastResult.nodes.size} nodes, ${this._lastResult.totalWidth}x${this._lastResult.totalHeight}`)
+    for (const [id, n] of this._lastResult.nodes) {
+      console.log(`  [layout] ${id} → (${n.x},${n.y} ${n.width}x${n.height})`)
+    }
     return this._lastResult
   }
 

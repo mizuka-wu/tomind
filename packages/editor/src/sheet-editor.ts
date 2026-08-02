@@ -335,25 +335,36 @@ export class SheetEditor {
       // 首次渲染前必须先 compute 布局，否则 getLayoutResult() 返回空 Map，
       // TopicRenderer.render() 会因找不到 nodeLayout 而跳过所有节点渲染
       const result = this.layoutEngine.compute(this._state)
+      console.log(`[renderInitial] layout computed: ${result.nodes.size} nodes, doc=${this._state.doc?.id} docType=${this._state.doc?.type}`)
       this.initialRender(this._docView)
 
       // 初始 viewport 对准根节点：将 viewport 平移到根节点中心
       const doc = this._state.doc
       if (doc) {
-        const rootLayout = result.nodes.get(doc.id)
+        // 布局算法只计算 topic 节点，root 节点不在布局结果中
+        // 优先用 doc.id 查找，找不到则用第一个 attached 子节点
+        let rootLayout = result.nodes.get(doc.id)
+        if (!rootLayout && doc.children?.attached?.[0]) {
+          rootLayout = result.nodes.get(doc.children.attached[0].id)
+        }
         if (rootLayout) {
           const rootCX = rootLayout.x + rootLayout.width / 2
           const rootCY = rootLayout.y + rootLayout.height / 2
           // 获取画布尺寸，计算偏移使根节点居中
           const canvasWidth = this.dom.clientWidth
           const canvasHeight = this.dom.clientHeight
+          console.log(`[renderInitial] viewport center: root=(${rootCX},${rootCY}) canvas=(${canvasWidth}x${canvasHeight})`)
           this.setViewport({
             x: canvasWidth / 2 - rootCX,
             y: canvasHeight / 2 - rootCY,
             zoom: this._state.viewport.zoom,
           })
+        } else {
+          console.warn(`[renderInitial] no rootLayout for doc.id=${doc.id}`)
         }
       }
+    } else {
+      console.warn(`[renderInitial] no _docView`)
     }
   }
 
@@ -448,6 +459,7 @@ export class SheetEditor {
     // 对当前节点调用 update（触发 updateStyle/updateContent）
     if (view instanceof NodeViewDesc) {
       try {
+        console.log(`[initialRender] updating ${view.node.type}#${view.node.id}`)
         view.update(view.node)
       } catch (e) {
         console.error(`[initialRender] error on ${view.node.type}#${view.node.id}:`, e)
@@ -594,6 +606,7 @@ export class SheetEditor {
 
     // 监听 LeaferJS 的 viewport 变化事件
     this.app.tree.on_('viewport', (e: { x: number; y: number; zoom: number }) => {
+      console.log(`[viewportSync] LeaferJS viewport event: x=${e.x} y=${e.y} zoom=${e.zoom}`)
       const viewport: Viewport = {
         x: e.x,
         y: e.y,
@@ -613,12 +626,25 @@ export class SheetEditor {
    * LeaferJS 的 tree 层是可视区域的根，移动它的 x/y 相当于平移画布
    */
   private applyViewportToLeaferJS(viewport: Viewport): void {
-    if (!this.app.tree) return
+    if (!this.app.tree) {
+      console.warn('[applyViewport] no app.tree!')
+      return
+    }
     const tree = this.app.tree
-    tree.x = viewport.x
-    tree.y = viewport.y
+    console.log(`[applyViewport] before: tree.x=${tree.x} tree.y=${tree.y} tree.scaleX=${tree.scaleX}`)
+    
+    // 尝试使用 scrollX/scrollY（Leafer 实例的滚动 API）
+    // 如果不存在，fallback 到 x/y（容器偏移）
+    if ('scrollX' in tree) {
+      (tree as any).scrollX = -viewport.x
+      ;(tree as any).scrollY = -viewport.y
+    } else {
+      tree.x = viewport.x
+      tree.y = viewport.y
+    }
     tree.scaleX = viewport.zoom
     tree.scaleY = viewport.zoom
+    console.log(`[applyViewport] after: viewport=(${viewport.x},${viewport.y} zoom=${viewport.zoom}) tree.x=${tree.x} tree.y=${tree.y}`)
   }
 
   get viewport(): Viewport {

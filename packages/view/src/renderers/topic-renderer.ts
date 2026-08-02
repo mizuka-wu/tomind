@@ -75,14 +75,18 @@ export class TopicRenderer implements Renderer {
 
   render(layout: LayoutResult, style: Record<string, unknown>, nodeAttrs?: Record<string, unknown>): void {
     if (!this.group || !this.text || !this.shape) {
+      console.warn(`[TopicRenderer] SKIP ${this.nodeId} — group=${!!this.group} text=${!!this.text} shape=${!!this.shape}`)
       return
     }
 
     // 从 LayoutResult Map 中获取节点布局
     const nodeLayout = layout.nodes.get(this.nodeId)
     if (!nodeLayout) {
+      console.warn(`[TopicRenderer] SKIP ${this.nodeId} — no nodeLayout in result (nodes=${layout.nodes.size})`)
       return
     }
+
+    console.log(`[TopicRenderer] render ${this.nodeId} layout=(${nodeLayout.width}x${nodeLayout.height}) style.fill=${style.fill ?? 'none'} style.stroke=${style.stroke ?? 'none'} style.shapeClass=${style.shapeClass ?? 'default'}`)
 
     // 坐标由 TopicNodeViewDesc.updateStyle() 设到 element 上
     // renderer.group 保持 (0,0)，只负责 shape+text 的相对布局
