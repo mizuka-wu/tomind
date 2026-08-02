@@ -60,7 +60,16 @@ async function init() {
     extensions: [StarterKit],
   })
 
-  // 如果有 XMind 主题，分离 skeleton/color 并加载
+  workbook.addSheet({
+    id: 'sheet-1',
+    name: 'Main Sheet',
+    state,
+    dom: container,
+  })
+
+  workbook.setup()
+
+  // XMind 主题必须在 workbook.setup() 之后加载，否则会被 PresetThemeExtension 覆盖
   if (xmindThemeData) {
     const themeId = (xmindThemeData as any).map?.id || (xmindThemeData as any).centralTopic?.id || 'xmind'
     
@@ -94,15 +103,6 @@ async function init() {
     styleEngine.setActiveTheme(themeId)
     console.log('[demo] loaded xmind theme:', Object.keys(xmindThemeData))
   }
-
-  workbook.addSheet({
-    id: 'sheet-1',
-    name: 'Main Sheet',
-    state,
-    dom: container,
-  })
-
-  workbook.setup()
 
   // 暴露调试接口到 window
   window.__tomind = {
