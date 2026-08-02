@@ -229,8 +229,8 @@ export function setupDragMove(
   let lastPoint: Point | null = null
 
   const handleMouseDown = (e: MouseEvent) => {
-    // 只响应右键或中键拖拽
-    if (e.button === 1 || e.button === 2) {
+    // 响应左键、中键、右键拖拽
+    if (e.button === 0 || e.button === 1 || e.button === 2) {
       isDragging = false
       startPoint = { x: e.clientX, y: e.clientY }
       lastPoint = { x: e.clientX, y: e.clientY }

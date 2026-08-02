@@ -125,6 +125,17 @@ function createStarterKit(options: StarterKitOptions = {}) {
     type: 'extension',
     defaultOptions: { enabled: true },
 
+    addKeyboardShortcuts() {
+      const shortcuts: Record<string, import('@tomind/core').KeyboardShortcutHandler> = {}
+      for (const ext of allExtensions) {
+        if (!ext.isEnabled()) continue
+        if (ext.addKeyboardShortcuts) {
+          Object.assign(shortcuts, ext.addKeyboardShortcuts())
+        }
+      }
+      return shortcuts
+    },
+
     onCreate(ctx) {
       const cleanupFns: (() => void)[] = []
 
