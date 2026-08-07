@@ -35,11 +35,12 @@
 import type { SheetState } from '@tomind/state'
 import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue } from './style-types'
 import { isThemeClassEntry, resolveColorVariables } from './style-types'
-import { classifyNode, getParentId, findById } from './classify'
+import { classifyNode, getParentId, findById, getMainTopicAncestor } from './classify'
 import { DEFAULT_STYLES } from './default-styles'
 import { normalizeStyleObject, serializeStyleObject, normalizeClassName } from './style-converter'
 import { parseClassList, getClassStyles } from '@tomind/state'
 import { SKELETON_KEY_SET, COLOR_KEY_SET } from './style-keys'
+import tinycolor from 'tinycolor2'
 
 /**
  * 主题包接口（外部主题来源实现）
@@ -208,6 +209,11 @@ export class StyleEngine {
       }
     }
 
+    // 层 4.6: Multi-Line Colors（按 mainTopic 分支索引分配颜色）
+    if (!options.ignoreTheme) {
+      result = this.resolveMultiLineColors(result, state, topicId, theme)
+    }
+
     // 层 4: Parent Inherit（继承父级）
     if (!options.ignoreParent) {
       const parentId = getParentId(state.doc, topicId)
@@ -245,6 +251,22 @@ export class StyleEngine {
 
     // 最终清理：处理 User 层可能引入的 inherit/initial 值
     result = this.resolveSpecialValues(result, state, topicId, options)
+
+    // borderColor 回退到 lineColor（与 snowbrush 行为一致）
+    if ((!result.borderColor || result.borderColor === 'none') && result.lineColor) {
+      result.borderColor = result.lineColor
+    }
+
+    // fontColor 根据 fillColor 自动计算对比色（与 snowbrush 行为一致）
+    if (result.fillColor && result.fillColor !== 'none' && !node.attrs.style?.fontColor) {
+      const bg = tinycolor(result.fillColor as string)
+      if (bg.isValid()) {
+        const white = tinycolor('#ffffff')
+        const black = tinycolor('#333333')
+        const ratio = tinycolor.readability(bg, white)
+        result.fontColor = ratio >= 3 ? '#ffffff' : '#333333'
+      }
+    }
 
     // 解析颜色变量引用（$PRIMARY_COLOR_0$ 等 → 主题 colorFieldsMap）
     result = this.resolveColorVarsInStyle(result, theme.colorFieldsMap)
@@ -598,6 +620,46 @@ export class StyleEngine {
       }
     }
     return (result as ResolvedStyle) ?? style
+  }
+
+  /**
+   * 解析 multiLineColors：按 mainTopic 分支索引分配颜色
+   *
+   * 逻辑：
+   * 1. 跳过 centralTopic / floatingTopic
+   * 2. 从 map 主题读取 multiLineColors（空格分隔的颜色列表）
+   * 3. 向上查找 mainTopic 祖先，途中遇到 user lineColor 则放弃
+   * 4. 按 mainTopic 在兄弟中的索引取色
+   * 5. 应用到 lineColor / borderColor / fillColor / fontColor
+   */
+  private resolveMultiLineColors(
+    result: ResolvedStyle,
+    state: SheetState,
+    topicId: string,
+    theme: ThemeData,
+  ): ResolvedStyle {
+    const nodeType = classifyNode(state.doc, topicId)
+    if (nodeType === 'centralTopic' || nodeType === 'floatingTopic') return result
+
+    const mapEntry = theme['map']
+    if (!isThemeClassEntry(mapEntry)) return result
+
+    const multiLineColors = mapEntry.properties.multiLineColors
+    if (!multiLineColors || multiLineColors === 'none') return result
+
+    const colors = (multiLineColors as string).split(' ').filter(Boolean)
+    if (colors.length === 0) return result
+
+    const ancestor = getMainTopicAncestor(state.doc, topicId, (id) => {
+      const node = findById(state.doc, id)
+      return node?.attrs?.style as Record<string, unknown> | undefined
+    })
+    if (!ancestor) return result
+
+    const color = colors[ancestor.index % colors.length]
+    if (!color) return result
+
+    return { ...result, lineColor: color, borderColor: color, fillColor: color }
   }
 }
 

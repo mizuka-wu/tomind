@@ -86,3 +86,49 @@ export function getParentId(doc: NodeDesc, nodeId: string): string | null {
   }
   return walk(doc, null)
 }
+
+/** 获取节点在父节点中的索引 */
+export function getChildIndex(doc: NodeDesc, nodeId: string): number {
+  const parentId = getParentId(doc, nodeId)
+  if (!parentId) return -1
+  const parent = findById(doc, parentId)
+  if (!parent) return -1
+  for (const children of Object.values(parent.children)) {
+    const idx = children.findIndex((c) => c.id === nodeId)
+    if (idx >= 0) return idx
+  }
+  return -1
+}
+
+export interface MainTopicAncestor {
+  id: string
+  index: number
+  hasUserLineColor: boolean
+}
+
+/** 向上查找 mainTopic 祖先及其在兄弟中的索引 */
+export function getMainTopicAncestor(
+  doc: NodeDesc,
+  nodeId: string,
+  getUserStyle: (id: string) => Record<string, unknown> | undefined,
+): MainTopicAncestor | null {
+  const root = doc
+  let currentId: string | null = nodeId
+
+  while (currentId) {
+    const nodeType = classifyNode(doc, currentId)
+    if (nodeType === 'centralTopic' || nodeType === 'floatingTopic') {
+      return null
+    }
+    if (nodeType === 'mainTopic') {
+      const index = getChildIndex(doc, currentId)
+      return { id: currentId, index: Math.max(index, 0), hasUserLineColor: false }
+    }
+    const userStyle = getUserStyle(currentId)
+    if (userStyle?.lineColor) {
+      return null
+    }
+    currentId = getParentId(doc, currentId)
+  }
+  return null
+}

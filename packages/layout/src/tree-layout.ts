@@ -42,7 +42,7 @@ function getAttachedChildren(node: NodeDesc): readonly NodeDesc[] {
 }
 
 function findRootTopic(doc: NodeDesc): NodeDesc | null {
-  if (doc.type === 'topic') return doc
+  if (doc.type === 'topic' || doc.type === 'root') return doc
   const attached = getAttachedChildren(doc)
   if (attached.length > 0) return attached[0]
   for (const children of Object.values(doc.children)) {
@@ -241,22 +241,25 @@ function layoutSubtree(
   }
 
   if (h) {
+    // ── 水平布局（right/left）──
     // 子节点沿 Y 轴排列，从子树空间的起始位置开始
     const subtreeStartY = y - (branchAxisSize - size.height) / 2
     let childY = subtreeStartY
     for (const child of children) {
       const childSubtreeSize = subtreeAxisSize(ctx, child, sizeMap, direction)
       const childNodeSize = sizeMap.get(child.id)!
+
       const childX = direction === 'right'
         ? x + size.width + spacing.horizontalGap
         : x - childNodeSize.width - spacing.horizontalGap
+
       // 垂直居中节点在它的子树空间内
       const childYCentered = childY + (childSubtreeSize - childNodeSize.height) / 2
       layoutSubtree(ctx, child, childX, childYCentered, direction, sizeMap, nodes)
       childY += childSubtreeSize + spacing.verticalGap
     }
   } else {
-    // 子节点沿 X 轴排列，从子树空间的起始位置开始
+    // ── 垂直布局（down/up）──
     const subtreeStartX = x - (branchAxisSize - size.width) / 2
     let childX = subtreeStartX
     for (const child of children) {
@@ -328,25 +331,6 @@ export function createTreeLayoutAlgorithm(name: string, direction: TreeDirection
         const oy = minY < 0 ? -minY : 0
         for (const l of nodes.values()) { l.x += ox; l.y += oy }
         maxX += ox; maxY += oy
-      }
-
-      // 居中根节点：将根节点移到 bounding box 中心
-      const rootLayout = nodes.get(root.id)
-      if (rootLayout) {
-        const bbCenterX = maxX / 2
-        const bbCenterY = maxY / 2
-        const rootCenterX = rootLayout.x + rootLayout.width / 2
-        const rootCenterY = rootLayout.y + rootLayout.height / 2
-        const offsetX = bbCenterX - rootCenterX
-        const offsetY = bbCenterY - rootCenterY
-        if (Math.abs(offsetX) > 0.5 || Math.abs(offsetY) > 0.5) {
-          for (const l of nodes.values()) {
-            l.x += offsetX
-            l.y += offsetY
-          }
-          maxX += offsetX
-          maxY += offsetY
-        }
       }
 
       return { nodes, totalWidth: maxX, totalHeight: maxY }
