@@ -151,7 +151,7 @@ function convertTopic(topic: XMindTopic): ModelNode {
     ...(topic.image ? { image: { url: topic.image.src, width: topic.image.width, height: topic.image.height } } : {}),
     ...(topic.notes?.plain?.content ? { note: topic.notes.plain.content } : {}),
     ...(topic.href ? { href: topic.href } : {}),
-    ...(topic.style?.properties ? { style: topic.style.properties } : {}),
+    ...(topic.style?.properties ? { style: convertXMindProps(topic.style.properties) } : {}),
   }
 }
 

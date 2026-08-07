@@ -69,7 +69,7 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
     type: 'topic',
     attrs: {
       title: node.title,
-      ...node.style,
+      ...(node.style ? { style: node.style } : {}),
       ...(node.markers?.length ? { markers: node.markers } : {}),
       ...(node.labels?.length ? { labels: node.labels } : {}),
       ...(node.image ? { image: node.image } : {}),
