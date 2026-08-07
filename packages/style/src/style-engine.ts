@@ -262,9 +262,8 @@ export class StyleEngine {
       const bg = tinycolor(result.fillColor as string)
       if (bg.isValid()) {
         const white = tinycolor('#ffffff')
-        const black = tinycolor('#333333')
         const ratio = tinycolor.readability(bg, white)
-        result.fontColor = ratio >= 3 ? '#ffffff' : '#333333'
+        result.fontColor = ratio >= 3 ? '#ffffff' : '#000000'
       }
     }
 
@@ -659,8 +658,24 @@ export class StyleEngine {
     const color = colors[ancestor.index % colors.length]
     if (!color) return result
 
-    return { ...result, lineColor: color, borderColor: color, fillColor: color }
+    const mapFill = (mapEntry.properties.fillColor as string) || '#ffffff'
+
+    return {
+      ...result,
+      lineColor: color,
+      borderColor: color,
+      fillColor: nodeType === 'subTopic' ? blendAlpha(color, 0.2, mapFill) : color,
+    }
   }
+}
+
+function blendAlpha(foreground: string, alpha: number, background: string): string {
+  const fg = tinycolor(foreground).toRgb()
+  const bg = tinycolor(background).toRgb()
+  const r = Math.round(alpha * fg.r + (1 - alpha) * bg.r)
+  const g = Math.round(alpha * fg.g + (1 - alpha) * bg.g)
+  const b = Math.round(alpha * fg.b + (1 - alpha) * bg.b)
+  return tinycolor({ r, g, b }).toHexString()
 }
 
 /** 按类型合并主题数据：skeleton 合并结构键和颜色键，color 只合并颜色键 */
