@@ -39,12 +39,12 @@ export interface LayoutOptions {
 }
 
 export const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
-  horizontalGap: 20,
-  verticalGap: 8,
+  horizontalGap: 10,
+  verticalGap: 40,
   nodePadding: { top: 8, right: 16, bottom: 8, left: 16 },
   rootOffsetX: 50,
-  lineHeight: 1.0,   // 行高倍率（× fontSize），SB 用 lines × fontSize
-  charWidthFactor: 0.8,  // 中文字符实际宽度 ≈ 0.8×fontSize（SB canvas 测量值）
+  lineHeight: 1.0,
+  charWidthFactor: 0.8,
 }
 
 export interface LayoutAlgorithm {
