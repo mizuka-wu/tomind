@@ -64,6 +64,8 @@ export interface LayoutAlgorithm {
 let canvas: HTMLCanvasElement | null = null
 let ctx: CanvasRenderingContext2D | null = null
 
+const DEFAULT_FONT_FAMILY = 'NeverMind, Microsoft YaHei, PingFang SC, Microsoft JhengHei'
+
 function getCanvasContext(): CanvasRenderingContext2D | null {
   if (typeof document === 'undefined') return null
   if (!canvas) {
@@ -77,7 +79,7 @@ export function measureTextSize(
   text: string,
   fontSize: number,
   options: LayoutOptions,
-  fontFamily: string = 'sans-serif',
+  fontFamily: string = DEFAULT_FONT_FAMILY,
   fontWeight: string | number = 'normal',
   fontStyle: string = 'normal',
 ): { width: number; height: number } {

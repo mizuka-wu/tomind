@@ -15,7 +15,15 @@ function getTitle(node: NodeDesc): string {
 
 function getFontSize(node: NodeDesc): number {
   const style = node.attrs.style as Record<string, unknown> | undefined
-  return (style?.fontSize as number) ?? 14
+  const fontSize = style?.fontSize
+  if (typeof fontSize === 'string') {
+    const parsed = parseInt(fontSize)
+    return isNaN(parsed) ? 14 : parsed
+  }
+  if (typeof fontSize === 'number') {
+    return fontSize
+  }
+  return 14
 }
 
 function isCollapsed(node: NodeDesc): boolean {
@@ -48,7 +56,7 @@ function measureNode(node: NodeDesc, options: LayoutOptions): NodeSize {
   const fontSize = getFontSize(node)
   const title = getTitle(node)
   const style = node.attrs.style as Record<string, unknown> | undefined
-  const fontFamily = (style?.fontFamily as string) || 'sans-serif'
+  const fontFamily = (style?.fontFamily as string) || 'NeverMind, Microsoft YaHei, PingFang SC, Microsoft JhengHei'
   const fontWeight = (style?.fontWeight as string | number) || 'normal'
   const fontStyle = (style?.fontStyle as string) || 'normal'
   const { width, height } = measureTextSize(title, fontSize, options, fontFamily, fontWeight, fontStyle)
