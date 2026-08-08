@@ -67,10 +67,15 @@ export function measureTextSize(
   options: LayoutOptions,
 ): { width: number; height: number } {
   if (!text) return { width: 0, height: 0 }
-  const charWidth = fontSize * options.charWidthFactor
+
+  const lines = text.split('\n')
   const maxWidth = 200
-  const textWidth = Math.min(text.length * charWidth, maxWidth)
-  const lines = Math.ceil((text.length * charWidth) / maxWidth)
   const lineHeight = Math.floor(fontSize * options.lineHeight)
-  return { width: Math.ceil(textWidth), height: lines * lineHeight }
+
+  const charWidth = fontSize * options.charWidthFactor
+  const lineWidths = lines.map(line => Math.min(line.length * charWidth, maxWidth))
+  const width = Math.max(...lineWidths)
+  const height = lines.length * lineHeight
+
+  return { width: Math.ceil(width), height }
 }
