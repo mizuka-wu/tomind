@@ -116,22 +116,21 @@ function subtreeHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<stri
   return Math.max(size.height, total)
 }
 
-function getWeight(node: NodeDesc, sizeMap: Map<string, NodeSize>): number {
-  const size = sizeMap.get(node.id)!
-  return size.height + 30
+function getWeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+  return subtreeHeight(node, options, sizeMap) + 30
 }
 
-function calcNumRight(children: readonly NodeDesc[], sizeMap: Map<string, NodeSize>): number {
+function calcNumRight(children: readonly NodeDesc[], options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
   if (children.length <= 1) return children.length
 
-  const totalWeight = children.reduce((sum, child) => sum + getWeight(child, sizeMap), 0)
+  const totalWeight = children.reduce((sum, child) => sum + getWeight(child, options, sizeMap), 0)
   const halfWeight = totalWeight / 2
 
   let rightWeight = 0
   let lastIndex = -1
 
   for (let i = 0; i < children.length; i++) {
-    const weight = getWeight(children[i], sizeMap)
+    const weight = getWeight(children[i], options, sizeMap)
     const newRightWeight = rightWeight + weight
 
     if (newRightWeight >= halfWeight) {
@@ -215,7 +214,7 @@ function layoutSubtree(
     return
   }
 
-  const numRight = calcNumRight(children, sizeMap)
+  const numRight = calcNumRight(children, options, sizeMap)
   const rightChildren = children.slice(0, numRight)
   const leftChildren = children.slice(numRight)
 
