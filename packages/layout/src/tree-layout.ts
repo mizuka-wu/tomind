@@ -292,12 +292,17 @@ export function createTreeLayoutAlgorithm(name: string, direction: TreeDirection
       let rootX: number
       let rootY: number
 
+      const canvasWidth = options.canvasWidth ?? 10000
+      const canvasHeight = options.canvasHeight ?? 10000
+      const centerX = canvasWidth / 2
+      const centerY = canvasHeight / 2
+
       if (isHorizontal(direction)) {
-        rootX = direction === 'right' ? options.rootOffsetX : 0
-        rootY = 0
+        rootX = centerX - rootSize.width / 2
+        rootY = centerY - rootSize.height / 2
       } else {
-        rootX = 0
-        rootY = direction === 'down' ? options.rootOffsetX : 0
+        rootX = centerX - rootSize.width / 2
+        rootY = centerY - rootSize.height / 2
       }
 
       layoutSubtree(ctx, root, rootX, rootY, direction, sizeMap, nodes)
@@ -308,6 +313,17 @@ export function createTreeLayoutAlgorithm(name: string, direction: TreeDirection
         minY = Math.min(minY, l.y)
         maxX = Math.max(maxX, l.x + l.width)
         maxY = Math.max(maxY, l.y + l.height)
+      }
+
+      if (minX < 0 || minY < 0) {
+        const offsetX = minX < 0 ? -minX : 0
+        const offsetY = minY < 0 ? -minY : 0
+        for (const l of nodes.values()) {
+          l.x += offsetX
+          l.y += offsetY
+        }
+        maxX += offsetX
+        maxY += offsetY
       }
 
       return { nodes, totalWidth: maxX, totalHeight: maxY }
