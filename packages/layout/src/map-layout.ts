@@ -13,7 +13,21 @@ function getTitle(node: NodeDesc): string {
   return ''
 }
 
-function getFontSize(node: NodeDesc): number {
+function getFontSize(node: NodeDesc, styleEngine?: any, state?: any): number {
+  if (styleEngine && state) {
+    const resolved = styleEngine.computeStyle(state, node.id)
+    if (resolved?.fontSize != null) {
+      const value = resolved.fontSize
+      if (typeof value === 'string') {
+        const parsed = parseInt(value)
+        return isNaN(parsed) ? 14 : parsed
+      }
+      if (typeof value === 'number') {
+        return value
+      }
+    }
+  }
+
   const style = node.attrs.style as Record<string, unknown> | undefined
   const fontSize = style?.fontSize
   if (typeof fontSize === 'string') {
@@ -52,8 +66,8 @@ interface NodeSize {
   height: number
 }
 
-function measureNode(node: NodeDesc, options: LayoutOptions): NodeSize {
-  const fontSize = getFontSize(node)
+function measureNode(node: NodeDesc, options: LayoutOptions, styleEngine?: any, state?: any): NodeSize {
+  const fontSize = getFontSize(node, styleEngine, state)
   const title = getTitle(node)
   const style = node.attrs.style as Record<string, unknown> | undefined
   const fontFamily = (style?.fontFamily as string) || 'NeverMind, Microsoft YaHei, PingFang SC, Microsoft JhengHei'
@@ -66,11 +80,11 @@ function measureNode(node: NodeDesc, options: LayoutOptions): NodeSize {
   }
 }
 
-function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): void {
-  sizeMap.set(node.id, measureNode(node, options))
+function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: any, state?: any): void {
+  sizeMap.set(node.id, measureNode(node, options, styleEngine, state))
   if (!isCollapsed(node)) {
     for (const child of getAttachedChildren(node)) {
-      measureSubtree(child, options, sizeMap)
+      measureSubtree(child, options, sizeMap, styleEngine, state)
     }
   }
 }
@@ -292,7 +306,7 @@ export const mapClockwiseLayoutAlgorithm: LayoutAlgorithm = {
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSubtree(root, options, sizeMap)
+    measureSubtree(root, options, sizeMap, styleEngine, state)
 
     const rootSize = sizeMap.get(root.id)!
     const rootX = 0
