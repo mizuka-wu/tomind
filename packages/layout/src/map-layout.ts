@@ -159,19 +159,38 @@ function layoutSideChildren(
 ): void {
   if (children.length === 0) return
 
-  const verticalGap = options.verticalGap
-  const totalH = children.reduce((sum, child) => {
-    const size = sizeMap.get(child.id)!
-    return sum + size.height
-  }, 0) + (children.length - 1) * verticalGap
+  const minSumTopicSpacing = getMinSumTopicSpacing(children, parentHeight, sizeMap)
+  let sumTopicSpacing = minSumTopicSpacing
 
-  let cy = startY - totalH / 2
-  for (const child of children) {
+  const yPosRelativeToFirstChild = [0]
+  for (let i = 1; i < children.length; i++) {
+    const pre = children[i - 1]
+    const now = children[i]
+    const preSize = sizeMap.get(pre.id)!
+    const nowSize = sizeMap.get(now.id)!
+
+    const gap1 = options.verticalGap
+    const gap2 = sumTopicSpacing / (children.length - i)
+
+    yPosRelativeToFirstChild[i] = Math.max(
+      yPosRelativeToFirstChild[i - 1] + preSize.height + gap1,
+      yPosRelativeToFirstChild[i - 1] + preSize.height + gap2,
+    )
+
+    sumTopicSpacing -= (yPosRelativeToFirstChild[i] - yPosRelativeToFirstChild[i - 1] - preSize.height)
+  }
+
+  const lastChildSize = sizeMap.get(children[children.length - 1].id)!
+  const totalH = yPosRelativeToFirstChild[children.length - 1] + lastChildSize.height
+  const firstChildY = -totalH / 2
+
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
     const size = sizeMap.get(child.id)!
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child), options)
+    const cy = startY + firstChildY + yPosRelativeToFirstChild[i]
     nodes.set(child.id, { x: startX, y: cy, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })
     layoutSubtree(child, startX, cy, options, sizeMap, nodes)
-    cy += size.height + verticalGap
   }
 }
 
