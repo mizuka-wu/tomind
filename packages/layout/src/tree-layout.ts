@@ -231,47 +231,30 @@ function layoutSubtree(
 
   if (isCollapsed(node) || children.length === 0) return
 
-  // 计算所有子节点的子树总跨度
-  let childrenTotal = 0
-  for (let i = 0; i < children.length; i++) {
-    childrenTotal += subtreeAxisSize(ctx, children[i], sizeMap, direction)
-    if (i < children.length - 1) {
-      childrenTotal += h ? spacing.verticalGap : spacing.horizontalGap
-    }
-  }
-
   if (h) {
     // ── 水平布局（right/left）──
-    // 子节点沿 Y 轴排列，从子树空间的起始位置开始
-    const subtreeStartY = y - (branchAxisSize - size.height) / 2
-    let childY = subtreeStartY
+    // 子节点从 parent 下方开始，顺序堆叠（与 snowbrush 行为一致）
+    let childY = y + size.height + spacing.verticalGap
     for (const child of children) {
-      const childSubtreeSize = subtreeAxisSize(ctx, child, sizeMap, direction)
       const childNodeSize = sizeMap.get(child.id)!
 
       const childX = direction === 'right'
         ? x + size.width + spacing.horizontalGap
         : x - childNodeSize.width - spacing.horizontalGap
 
-      // 垂直居中节点在它的子树空间内
-      const childYCentered = childY + (childSubtreeSize - childNodeSize.height) / 2
-      layoutSubtree(ctx, child, childX, childYCentered, direction, sizeMap, nodes)
-      childY += childSubtreeSize + spacing.verticalGap
+      layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes)
+      childY += childNodeSize.height + spacing.verticalGap
     }
   } else {
     // ── 垂直布局（down/up）──
-    const subtreeStartX = x - (branchAxisSize - size.width) / 2
-    let childX = subtreeStartX
+    let childX = x + size.width + spacing.horizontalGap
     for (const child of children) {
-      const childSubtreeSize = subtreeAxisSize(ctx, child, sizeMap, direction)
       const childNodeSize = sizeMap.get(child.id)!
       const childY = direction === 'down'
         ? y + size.height + spacing.verticalGap
         : y - childNodeSize.height - spacing.verticalGap
-      // 水平居中节点在它的子树空间内
-      const childXCentered = childX + (childSubtreeSize - childNodeSize.width) / 2
-      layoutSubtree(ctx, child, childXCentered, childY, direction, sizeMap, nodes)
-      childX += childSubtreeSize + spacing.horizontalGap
+      layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes)
+      childX += childNodeSize.width + spacing.horizontalGap
     }
   }
 }
@@ -310,27 +293,20 @@ export function createTreeLayoutAlgorithm(name: string, direction: TreeDirection
 
       if (isHorizontal(direction)) {
         rootX = direction === 'right' ? options.rootOffsetX : 0
-        rootY = (rootAxisSize - rootSize.height) / 2
+        rootY = 0
       } else {
-        rootX = (rootAxisSize - rootSize.width) / 2
+        rootX = 0
         rootY = direction === 'down' ? options.rootOffsetX : 0
       }
 
       layoutSubtree(ctx, root, rootX, rootY, direction, sizeMap, nodes)
 
-      // 平移到正数区
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
       for (const l of nodes.values()) {
         minX = Math.min(minX, l.x)
         minY = Math.min(minY, l.y)
         maxX = Math.max(maxX, l.x + l.width)
         maxY = Math.max(maxY, l.y + l.height)
-      }
-      if (minX < 0 || minY < 0) {
-        const ox = minX < 0 ? -minX : 0
-        const oy = minY < 0 ? -minY : 0
-        for (const l of nodes.values()) { l.x += ox; l.y += oy }
-        maxX += ox; maxY += oy
       }
 
       return { nodes, totalWidth: maxX, totalHeight: maxY }
