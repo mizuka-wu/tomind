@@ -258,7 +258,7 @@ export class StyleEngine {
     }
 
     // fontColor 根据 fillColor 自动计算对比色（与 snowbrush 行为一致）
-    if (result.fillColor && result.fillColor !== 'none' && !node.attrs.style?.fontColor) {
+    if (result.fillColor && result.fillColor !== 'none' && !result.fontColor) {
       const bg = tinycolor(result.fillColor as string)
       if (bg.isValid()) {
         const white = tinycolor('#ffffff')
@@ -660,11 +660,45 @@ export class StyleEngine {
 
     const mapFill = (mapEntry.properties.fillColor as string) || '#ffffff'
 
+    const fill = nodeType === 'subTopic' ? blendAlpha(color, 0.2, mapFill) : color
+
+    // fontColor 根据分支颜色计算（与 snowbrush getSmartTextColor 行为一致）
+    // 1. 先检查白色：如果白色对比度 >= 3，直接返回白色
+    // 2. 否则从候选色中找最高对比度的
+    let fontColor: string | undefined
+    const fillBg = tinycolor(fill)
+    if (fillBg.isValid()) {
+      const whiteRatio = tinycolor.readability(fillBg, tinycolor('#ffffff'))
+      if (whiteRatio >= 3) {
+        fontColor = '#ffffff'
+      } else {
+        const candidates: string[] = []
+        if (nodeType === 'subTopic') {
+          const branchHsl = tinycolor(color).toHsl()
+          const darkBranch = hslToHex(branchHsl.h, branchHsl.s * 100, 20)
+          candidates.push(darkBranch)
+        } else {
+          candidates.push('#000000')
+        }
+        let bestColor = candidates[0]
+        let bestRatio = tinycolor.readability(fillBg, tinycolor(bestColor))
+        for (let i = 1; i < candidates.length; i++) {
+          const ratio = tinycolor.readability(fillBg, tinycolor(candidates[i]))
+          if (ratio > bestRatio) {
+            bestRatio = ratio
+            bestColor = candidates[i]
+          }
+        }
+        fontColor = bestColor
+      }
+    }
+
     return {
       ...result,
       lineColor: color,
       borderColor: color,
-      fillColor: nodeType === 'subTopic' ? blendAlpha(color, 0.2, mapFill) : color,
+      fillColor: fill,
+      fontColor,
     }
   }
 }
@@ -676,6 +710,43 @@ function blendAlpha(foreground: string, alpha: number, background: string): stri
   const g = Math.round(alpha * fg.g + (1 - alpha) * bg.g)
   const b = Math.round(alpha * fg.b + (1 - alpha) * bg.b)
   return tinycolor({ r, g, b }).toHexString()
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  h = h / 360
+  s = s / 100
+  l = l / 100
+  let t2: number
+  let t3: number
+  let val: number
+  if (s === 0) {
+    val = l * 255
+    const v = parseInt(`${val}`, 10)
+    return '#' + ((1 << 24) + (v << 16) + (v << 8) + v).toString(16).slice(1)
+  }
+  if (l < 0.5) {
+    t2 = l * (1 + s)
+  } else {
+    t2 = l + s - l * s
+  }
+  const t1 = l * 2 - t2
+  const rgb = [0, 0, 0]
+  for (let i = 0; i < 3; i++) {
+    t3 = h + (1 / 3) * -(i - 1)
+    if (t3 < 0) t3++
+    if (t3 > 1) t3--
+    if (t3 * 6 < 1) {
+      val = t1 + (t2 - t1) * 6 * t3
+    } else if (t3 * 2 < 1) {
+      val = t2
+    } else if (t3 * 3 < 2) {
+      val = t1 + (t2 - t1) * (2 / 3 - t3) * 6
+    } else {
+      val = t1
+    }
+    rgb[i] = parseInt(`${val * 255}`, 10)
+  }
+  return '#' + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1)
 }
 
 /** 按类型合并主题数据：skeleton 合并结构键和颜色键，color 只合并颜色键 */
