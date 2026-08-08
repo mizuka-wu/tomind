@@ -33,7 +33,7 @@ function getAttachedChildren(node: NodeDesc): readonly NodeDesc[] {
 }
 
 function findRootTopic(doc: NodeDesc): NodeDesc | null {
-  if (doc.type === 'topic') return doc
+  if (doc.type === 'topic' || doc.type === 'root') return doc
   const attached = getAttachedChildren(doc)
   if (attached.length > 0) return attached[0]
   for (const children of Object.values(doc.children)) {
