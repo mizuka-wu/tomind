@@ -1,11 +1,3 @@
-// TODO: 与 XMind map.clockwise 分支均匀分布验证
-// TODO: map.unbalanced 一侧偏移量对齐
-// TODO: 多层嵌套时上下分组平衡性
-/**
- * Map Clockwise 布局 — 均衡导图
- *
- * 根节点居中，子节点均匀分布在上下两侧（右侧为主）
- */
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
@@ -71,17 +63,97 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
   }
 }
 
+function getMinSumTopicSpacing(children: readonly NodeDesc[], parentHeight: number, options: LayoutOptions): number {
+  if (children.length <= 1) return 0
+
+  const minTotalSpacing = 80
+  const maxTotalSpacing = 180
+  const parentThreshold = 230
+
+  let baseSpacing = minTotalSpacing
+  if (parentHeight > parentThreshold) {
+    baseSpacing = Math.min(maxTotalSpacing, parentHeight - parentThreshold + minTotalSpacing)
+  }
+
+  return baseSpacing
+}
+
+function getNodeSize(node: NodeDesc, options: LayoutOptions): NodeSize {
+  const fontSize = getFontSize(node)
+  const title = getTitle(node)
+  const { width, height } = measureTextSize(title, fontSize, options)
+  return {
+    width: width + options.nodePadding.left + options.nodePadding.right,
+    height: height + options.nodePadding.top + options.nodePadding.bottom,
+  }
+}
+
 function subtreeHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
   const size = sizeMap.get(node.id)!
   if (isCollapsed(node)) return size.height
   const children = getAttachedChildren(node)
   if (children.length === 0) return size.height
+
   let total = 0
   for (let i = 0; i < children.length; i++) {
     total += subtreeHeight(children[i], options, sizeMap)
     if (i < children.length - 1) total += options.verticalGap
   }
   return Math.max(size.height, total)
+}
+
+function getWeight(node: NodeDesc, sizeMap: Map<string, NodeSize>): number {
+  const size = sizeMap.get(node.id)!
+  return size.height + 30
+}
+
+function calcNumRight(children: readonly NodeDesc[], sizeMap: Map<string, NodeSize>): number {
+  if (children.length <= 1) return children.length
+
+  const totalWeight = children.reduce((sum, child) => sum + getWeight(child, sizeMap), 0)
+  const halfWeight = totalWeight / 2
+
+  let rightWeight = 0
+  let lastIndex = -1
+
+  for (let i = 0; i < children.length; i++) {
+    const weight = getWeight(children[i], sizeMap)
+    const newRightWeight = rightWeight + weight
+
+    if (newRightWeight >= halfWeight) {
+      if (lastIndex >= 0 && newRightWeight - halfWeight > halfWeight - rightWeight) {
+        return lastIndex + 1
+      }
+      return i + 1
+    }
+
+    rightWeight = newRightWeight
+    lastIndex = i
+  }
+
+  return children.length
+}
+
+function layoutSideChildren(
+  children: readonly NodeDesc[],
+  startX: number,
+  startY: number,
+  parentHeight: number,
+  options: LayoutOptions,
+  sizeMap: Map<string, NodeSize>,
+  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+): void {
+  if (children.length === 0) return
+
+  const verticalGap = options.verticalGap
+  let cy = startY
+  for (const child of children) {
+    const size = sizeMap.get(child.id)!
+    const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child), options)
+    nodes.set(child.id, { x: startX, y: cy, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })
+    layoutSubtree(child, startX, cy, options, sizeMap, nodes)
+    cy += size.height + verticalGap
+  }
 }
 
 function layoutSubtree(
@@ -105,53 +177,30 @@ function layoutSubtree(
     return
   }
 
-  // 分成上下两组
-  const topChildren: NodeDesc[] = []
-  const bottomChildren: NodeDesc[] = []
-  for (let i = 0; i < children.length; i++) {
-    if (i % 2 === 0) {
-      bottomChildren.push(children[i])
-    } else {
-      topChildren.push(children[i])
-    }
+  const numRight = calcNumRight(children, sizeMap)
+  const rightChildren = children.slice(0, numRight)
+  const leftChildren = children.slice(numRight)
+
+  const verticalGap = options.verticalGap
+  const rightTotalH = rightChildren.reduce((sum, child) => sum + subtreeHeight(child, options, sizeMap), 0) + Math.max(0, rightChildren.length - 1) * verticalGap
+  const leftTotalH = leftChildren.reduce((sum, child) => sum + subtreeHeight(child, options, sizeMap), 0) + Math.max(0, leftChildren.length - 1) * verticalGap
+
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: Math.max(rightTotalH, leftTotalH) })
+
+  if (rightChildren.length > 0) {
+    const childX = x + size.width + options.horizontalGap
+    const childY = y + size.height / 2 - rightTotalH / 2
+    layoutSideChildren(rightChildren, childX, childY, size.height, options, sizeMap, nodes)
   }
 
-  const childX = x + size.width + options.horizontalGap
-
-  // 上方组总高度
-  let topTotalH = 0
-  if (topChildren.length > 0) {
-    for (const c of topChildren) topTotalH += subtreeHeight(c, options, sizeMap)
-    topTotalH += (topChildren.length - 1) * options.verticalGap
-  }
-  // 下方组总高度
-  let botTotalH = 0
-  if (bottomChildren.length > 0) {
-    for (const c of bottomChildren) botTotalH += subtreeHeight(c, options, sizeMap)
-    botTotalH += (bottomChildren.length - 1) * options.verticalGap
-  }
-
-  // 分支高度 = 上下两组子节点的总高度
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: topTotalH + botTotalH })
-
-  // 布局上方子节点（从上到下）
-  if (topChildren.length > 0) {
-    let cy = y + size.height / 2 - topTotalH / 2
-    for (const child of topChildren) {
-      const ch = subtreeHeight(child, options, sizeMap)
-      layoutSubtree(child, childX, cy, options, sizeMap, nodes)
-      cy += ch + options.verticalGap
-    }
-  }
-
-  // 布局下方子节点
-  if (bottomChildren.length > 0) {
-    let cy = y + size.height / 2 + (topChildren.length > 0 ? 0 : -botTotalH / 2)
-    for (const child of bottomChildren) {
-      const ch = subtreeHeight(child, options, sizeMap)
-      layoutSubtree(child, childX, cy, options, sizeMap, nodes)
-      cy += ch + options.verticalGap
-    }
+  if (leftChildren.length > 0) {
+    const maxLeftWidth = leftChildren.reduce((max, child) => {
+      const childSize = sizeMap.get(child.id)!
+      return Math.max(max, childSize.width)
+    }, 0)
+    const childX = x - maxLeftWidth - options.horizontalGap
+    const childY = y + size.height / 2 - leftTotalH / 2
+    layoutSideChildren(leftChildren, childX, childY, size.height, options, sizeMap, nodes)
   }
 }
 
@@ -165,35 +214,26 @@ export const mapClockwiseLayoutAlgorithm: LayoutAlgorithm = {
     const sizeMap = new Map<string, NodeSize>()
     measureSubtree(root, options, sizeMap)
 
-    const rootH = subtreeHeight(root, options, sizeMap)
-    const rootX = options.rootOffsetX
-    const rootY = (rootH - sizeMap.get(root.id)!.height) / 2
+    const rootSize = sizeMap.get(root.id)!
+    const rootX = 0
+    const rootY = 0
 
     layoutSubtree(root, rootX, rootY, options, sizeMap, nodes)
+
+    const rootNode = nodes.get(root.id)
+    if (rootNode) {
+      const ox = -rootNode.x
+      const oy = -rootNode.y
+      for (const l of nodes.values()) {
+        l.x += ox
+        l.y += oy
+      }
+    }
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {
       maxX = Math.max(maxX, l.x + l.width)
       maxY = Math.max(maxY, l.y + l.height)
-    }
-
-    // 居中根节点：将根节点移到 bounding box 中心
-    const rootLayout = nodes.get(root.id)
-    if (rootLayout) {
-      const bbCenterX = maxX / 2
-      const bbCenterY = maxY / 2
-      const rootCenterX = rootLayout.x + rootLayout.width / 2
-      const rootCenterY = rootLayout.y + rootLayout.height / 2
-      const offsetX = bbCenterX - rootCenterX
-      const offsetY = bbCenterY - rootCenterY
-      if (Math.abs(offsetX) > 0.5 || Math.abs(offsetY) > 0.5) {
-        for (const l of nodes.values()) {
-          l.x += offsetX
-          l.y += offsetY
-        }
-        maxX += offsetX
-        maxY += offsetY
-      }
     }
 
     return { nodes, totalWidth: maxX, totalHeight: maxY }

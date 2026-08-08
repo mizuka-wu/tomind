@@ -1,7 +1,7 @@
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
-import type { ILayoutEngine, LayoutResult, LayoutAlgorithm } from './layout-engine'
+import type { ILayoutEngine, LayoutResult, LayoutAlgorithm, LayoutOptions } from './layout-engine'
 
 export class LayoutEngine implements ILayoutEngine {
   private _styleEngine: StyleEngine | null = null
@@ -33,10 +33,10 @@ export class LayoutEngine implements ILayoutEngine {
     return this._activeLayout
   }
 
-  compute(state: SheetState): LayoutResult {
+  compute(state: SheetState, customOptions?: Partial<LayoutOptions>): LayoutResult {
+    const options = { ...DEFAULT_LAYOUT_OPTIONS, ...customOptions }
     const algorithm = this._registry.get(this._activeLayout)
     if (!algorithm) {
-      // fallback: 尝试 'tree'，再 fallback 到第一个可用算法
       const fallback = this._registry.get('tree') ?? this._registry.values().next().value
       if (!fallback) {
         console.warn(`[LayoutEngine] No layout algorithm registered. activeLayout=${this._activeLayout} registry=[${[...this._registry.keys()].join(',')}]`)
@@ -45,7 +45,7 @@ export class LayoutEngine implements ILayoutEngine {
       console.log(`[LayoutEngine] Using fallback algorithm: ${fallback.name}`)
       this._lastResult = fallback.layout(
         state.doc,
-        DEFAULT_LAYOUT_OPTIONS,
+        options,
         this._styleEngine ?? null,
         state,
       )
@@ -57,7 +57,7 @@ export class LayoutEngine implements ILayoutEngine {
     }
     this._lastResult = algorithm.layout(
       state.doc,
-      DEFAULT_LAYOUT_OPTIONS,
+      options,
       this._styleEngine ?? null,
       state,
     )
