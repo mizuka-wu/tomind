@@ -39,12 +39,12 @@ export interface LayoutOptions {
 }
 
 export const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
-  horizontalGap: 40,
-  verticalGap: 10,
+  horizontalGap: 20,
+  verticalGap: 8,
   nodePadding: { top: 8, right: 16, bottom: 8, left: 16 },
   rootOffsetX: 50,
-  lineHeight: 20,
-  charWidthFactor: 1.0,  // 中英文混合近似：中文≈1.0，英文≈0.6，取 1.0 保守估算
+  lineHeight: 1.0,   // 行高倍率（× fontSize），SB 用 lines × fontSize
+  charWidthFactor: 0.8,  // 中文字符实际宽度 ≈ 0.8×fontSize（SB canvas 测量值）
 }
 
 export interface LayoutAlgorithm {
@@ -67,6 +67,6 @@ export function measureTextSize(
   const maxWidth = 200
   const textWidth = Math.min(text.length * charWidth, maxWidth)
   const lines = Math.ceil((text.length * charWidth) / maxWidth)
-  const textHeight = lines * options.lineHeight
-  return { width: Math.ceil(textWidth), height: Math.ceil(textHeight) }
+  const lineHeight = Math.floor(fontSize * options.lineHeight)
+  return { width: Math.ceil(textWidth), height: lines * lineHeight }
 }
