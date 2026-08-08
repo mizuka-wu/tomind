@@ -252,12 +252,12 @@ export class StyleEngine {
     // 最终清理：处理 User 层可能引入的 inherit/initial 值
     result = this.resolveSpecialValues(result, state, topicId, options)
 
-    // borderColor 回退到 lineColor（与 snowbrush 行为一致）
+    // borderColor 回退到 lineColor
     if ((!result.borderColor || result.borderColor === 'none') && result.lineColor) {
       result.borderColor = result.lineColor
     }
 
-    // fontColor 根据 fillColor 自动计算对比色（与 snowbrush 行为一致）
+    // fontColor 根据 fillColor 自动计算对比色
     if (result.fillColor && result.fillColor !== 'none' && !result.fontColor) {
       const bg = tinycolor(result.fillColor as string)
       if (bg.isValid()) {
@@ -662,7 +662,7 @@ export class StyleEngine {
 
     const fill = nodeType === 'subTopic' ? blendAlpha(color, 0.2, mapFill) : color
 
-    // fontColor 根据分支颜色计算（与 snowbrush getSmartTextColor 行为一致）
+    // fontColor 根据分支颜色计算（优先白色，其次深色分支色）
     // 1. 先检查白色：如果白色对比度 >= 3，直接返回白色
     // 2. 否则从候选色中找最高对比度的
     let fontColor: string | undefined

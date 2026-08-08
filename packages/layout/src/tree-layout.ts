@@ -233,7 +233,7 @@ function layoutSubtree(
 
   if (h) {
     // ── 水平布局（right/left）──
-    // 子节点从 parent 下方开始，顺序堆叠（与 snowbrush 行为一致）
+    // 子节点从 parent 下方开始，顺序堆叠
     let childY = y + size.height + spacing.verticalGap
     for (const child of children) {
       const childNodeSize = sizeMap.get(child.id)!
