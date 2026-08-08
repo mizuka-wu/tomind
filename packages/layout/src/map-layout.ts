@@ -47,7 +47,11 @@ interface NodeSize {
 function measureNode(node: NodeDesc, options: LayoutOptions): NodeSize {
   const fontSize = getFontSize(node)
   const title = getTitle(node)
-  const { width, height } = measureTextSize(title, fontSize, options)
+  const style = node.attrs.style as Record<string, unknown> | undefined
+  const fontFamily = (style?.fontFamily as string) || 'sans-serif'
+  const fontWeight = (style?.fontWeight as string | number) || 'normal'
+  const fontStyle = (style?.fontStyle as string) || 'normal'
+  const { width, height } = measureTextSize(title, fontSize, options, fontFamily, fontWeight, fontStyle)
   return {
     width: width + options.nodePadding.left + options.nodePadding.right,
     height: height + options.nodePadding.top + options.nodePadding.bottom,

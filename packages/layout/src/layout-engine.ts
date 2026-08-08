@@ -61,21 +61,55 @@ export interface LayoutAlgorithm {
   ): LayoutResult
 }
 
+let canvas: HTMLCanvasElement | null = null
+let ctx: CanvasRenderingContext2D | null = null
+
+function getCanvasContext(): CanvasRenderingContext2D | null {
+  if (typeof document === 'undefined') return null
+  if (!canvas) {
+    canvas = document.createElement('canvas')
+    ctx = canvas.getContext('2d')
+  }
+  return ctx
+}
+
 export function measureTextSize(
   text: string,
   fontSize: number,
   options: LayoutOptions,
+  fontFamily: string = 'sans-serif',
+  fontWeight: string | number = 'normal',
+  fontStyle: string = 'normal',
 ): { width: number; height: number } {
   if (!text) return { width: 0, height: 0 }
 
   const lines = text.split('\n')
-  const maxWidth = 200
-  const lineHeight = Math.floor(fontSize * options.lineHeight)
+  const preFontSize = fontSize
+  let ratio = 1
+  if (fontSize < 12) {
+    ratio = fontSize / 12
+    fontSize = 12
+  }
 
-  const charWidth = fontSize * options.charWidthFactor
-  const lineWidths = lines.map(line => Math.min(line.length * charWidth, maxWidth))
+  const ctx = getCanvasContext()
+  if (ctx) {
+    const fontWeightStr = typeof fontWeight === 'number' ? fontWeight.toString() : fontWeight
+    const fontSizePx = `${fontSize}px`
+    const fontArr = [fontStyle, fontWeightStr, fontSizePx, fontFamily]
+    ctx.font = fontArr.filter(Boolean).join(' ')
+
+    const widthArr = lines.map(line => ctx.measureText(line).width)
+    const width = Math.max(...widthArr) * ratio
+    const height = lines.length * preFontSize
+
+    return { width: Math.ceil(width), height }
+  }
+
+  // Fallback to charWidthFactor if canvas not available
+  const charWidth = preFontSize * options.charWidthFactor
+  const lineWidths = lines.map(line => line.length * charWidth)
   const width = Math.max(...lineWidths)
-  const height = lines.length * lineHeight
+  const height = lines.length * preFontSize
 
   return { width: Math.ceil(width), height }
 }
