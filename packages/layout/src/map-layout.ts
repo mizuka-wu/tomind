@@ -160,7 +160,12 @@ function layoutSideChildren(
   if (children.length === 0) return
 
   const verticalGap = options.verticalGap
-  let cy = startY
+  const totalH = children.reduce((sum, child) => {
+    const size = sizeMap.get(child.id)!
+    return sum + size.height
+  }, 0) + (children.length - 1) * verticalGap
+
+  let cy = startY - totalH / 2
   for (const child of children) {
     const size = sizeMap.get(child.id)!
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child), options)
@@ -203,7 +208,7 @@ function layoutSubtree(
 
   if (rightChildren.length > 0) {
     const childX = x + size.width + options.horizontalGap
-    const childY = y + size.height / 2 - rightTotalH / 2
+    const childY = y + size.height / 2
     layoutSideChildren(rightChildren, childX, childY, size.height, options, sizeMap, nodes)
   }
 
@@ -213,7 +218,7 @@ function layoutSubtree(
       return Math.max(max, childSize.width)
     }, 0)
     const childX = x - maxLeftWidth - options.horizontalGap
-    const childY = y + size.height / 2 - leftTotalH / 2
+    const childY = y + size.height / 2
     layoutSideChildren(leftChildren, childX, childY, size.height, options, sizeMap, nodes)
   }
 }
