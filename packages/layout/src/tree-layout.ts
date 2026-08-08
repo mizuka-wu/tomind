@@ -234,7 +234,8 @@ function layoutSubtree(
   if (h) {
     // ── 水平布局（right/left）──
     // 子节点从 parent 下方开始，顺序堆叠
-    let childY = y + size.height + spacing.verticalGap
+    const PARENT_GAP = 40
+    let childY = y + size.height + PARENT_GAP
     for (const child of children) {
       const childNodeSize = sizeMap.get(child.id)!
 
