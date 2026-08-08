@@ -36,6 +36,7 @@ export interface LayoutOptions {
   rootOffsetX: number
   lineHeight: number
   charWidthFactor: number
+  maxTitleWidth: number
   canvasWidth: number
   canvasHeight: number
 }
@@ -43,10 +44,11 @@ export interface LayoutOptions {
 export const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
   horizontalGap: 10,
   verticalGap: 40,
-  nodePadding: { top: 8, right: 16, bottom: 8, left: 16 },
+  nodePadding: { top: 5, right: 10, bottom: 5, left: 10 },
   rootOffsetX: 50,
-  lineHeight: 1.0,
+  lineHeight: 1.34,
   charWidthFactor: 0.8,
+  maxTitleWidth: 300,
   canvasWidth: 10000,
   canvasHeight: 10000,
 }
@@ -66,6 +68,12 @@ let ctx: CanvasRenderingContext2D | null = null
 
 const SNOWBRUSH_FONT_FAMILY = 'NeverMind, Microsoft YaHei, PingFang SC, Microsoft JhengHei'
 
+const FONT_WEIGHT_STRING_TO_NUMBER: Record<string, number> = {
+  normal: 400,
+  regular: 400,
+  bold: 700,
+}
+
 function getCanvasContext(): CanvasRenderingContext2D | null {
   if (typeof document === 'undefined') return null
   if (!canvas) {
@@ -73,6 +81,85 @@ function getCanvasContext(): CanvasRenderingContext2D | null {
     ctx = canvas.getContext('2d')
   }
   return ctx
+}
+
+function normalizeFontWeight(fontWeight: string | number): number | string {
+  if (typeof fontWeight === 'number') return fontWeight
+  
+  const str = fontWeight.toString().toLowerCase()
+  if (FONT_WEIGHT_STRING_TO_NUMBER[str] !== undefined) {
+    return FONT_WEIGHT_STRING_TO_NUMBER[str]
+  }
+  
+  if (/\dpt\b/.test(fontWeight.toString())) {
+    const num = parseInt(fontWeight.toString())
+    if (!isNaN(num)) return num
+  }
+  
+  const num = parseInt(fontWeight.toString())
+  if (!isNaN(num)) return num
+  
+  return fontWeight
+}
+
+function isCJK(char: string): boolean {
+  const code = char.charCodeAt(0)
+  return (code >= 0x4E00 && code <= 0x9FFF) || 
+         (code >= 0x3400 && code <= 0x4DBF) ||
+         (code >= 0x20000 && code <= 0x2A6DF)
+}
+
+function isPunctuation(char: string): boolean {
+  return /[.,;:!?、，；：！？。]/.test(char)
+}
+
+function wrapLine(line: string, measureFn: (text: string) => number, maxWidth: number): string[] {
+  if (!line) return ['']
+  
+  const result: string[] = []
+  let currentLine = ''
+  let currentWidth = 0
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    const charWidth = measureFn(char)
+    
+    if (currentWidth + charWidth > maxWidth && currentLine) {
+      result.push(currentLine)
+      currentLine = char
+      currentWidth = charWidth
+    } else {
+      currentLine += char
+      currentWidth += charWidth
+    }
+  }
+  
+  if (currentLine) {
+    result.push(currentLine)
+  }
+  
+  return result.length > 0 ? result : ['']
+}
+
+function wrapText(
+  text: string, 
+  measureFn: (text: string) => number, 
+  maxWidth: number
+): string[] {
+  const originalLines = text.split('\n')
+  const wrappedLines: string[] = []
+  
+  for (const line of originalLines) {
+    const lineWidth = measureFn(line)
+    if (lineWidth <= maxWidth) {
+      wrappedLines.push(line)
+    } else {
+      const wrapped = wrapLine(line, measureFn, maxWidth)
+      wrappedLines.push(...wrapped)
+    }
+  }
+  
+  return wrappedLines
 }
 
 export function measureTextSize(
@@ -85,7 +172,6 @@ export function measureTextSize(
 ): { width: number; height: number } {
   if (!text) return { width: 0, height: 0 }
 
-  const lines = text.split('\n')
   const preFontSize = fontSize
   let ratio = 1
   if (fontSize < 12) {
@@ -95,23 +181,29 @@ export function measureTextSize(
 
   const ctx = getCanvasContext()
   if (ctx) {
-    const fontWeightStr = typeof fontWeight === 'number' ? fontWeight.toString() : fontWeight
+    const normalizedWeight = normalizeFontWeight(fontWeight)
+    const fontWeightStr = typeof normalizedWeight === 'number' ? normalizedWeight.toString() : normalizedWeight
     const fontSizePx = `${fontSize}px`
     const fontArr = [fontStyle, fontWeightStr, fontSizePx, fontFamily]
     ctx.font = fontArr.filter(Boolean).join(' ')
 
-    const widthArr = lines.map(line => ctx.measureText(line).width)
+    const measureFn = (t: string) => ctx.measureText(t).width
+    const lines = wrapText(text, measureFn, options.maxTitleWidth)
+    const widthArr = lines.map(line => measureFn(line))
     const width = Math.max(...widthArr) * ratio
-    const height = lines.length * preFontSize
+    const lineHeight = Math.floor(preFontSize * options.lineHeight)
+    const height = lines.length * lineHeight
 
     return { width: Math.ceil(width), height }
   }
 
-  // Fallback to charWidthFactor if canvas not available
   const charWidth = preFontSize * options.charWidthFactor
-  const lineWidths = lines.map(line => line.length * charWidth)
+  const measureFn = (t: string) => t.length * charWidth
+  const lines = wrapText(text, measureFn, options.maxTitleWidth)
+  const lineWidths = lines.map(line => measureFn(line))
   const width = Math.max(...lineWidths)
-  const height = lines.length * preFontSize
+  const lineHeight = Math.floor(preFontSize * options.lineHeight)
+  const height = lines.length * lineHeight
 
   return { width: Math.ceil(width), height }
 }
