@@ -159,6 +159,19 @@ function calcNumRight(children: readonly NodeDesc[], options: LayoutOptions, siz
   return children.length
 }
 
+function getSpacingMinor(node: NodeDesc, options: LayoutOptions): number {
+  const style = node.attrs.style as Record<string, unknown> | undefined
+  const spacingMinor = style?.spacingMinor
+  if (typeof spacingMinor === 'string') {
+    const parsed = parseInt(spacingMinor)
+    return isNaN(parsed) ? options.verticalGap : parsed
+  }
+  if (typeof spacingMinor === 'number') {
+    return spacingMinor
+  }
+  return options.verticalGap
+}
+
 function layoutSideChildren(
   children: readonly NodeDesc[],
   startX: number,
@@ -180,7 +193,7 @@ function layoutSideChildren(
     const preSize = sizeMap.get(pre.id)!
     const nowSize = sizeMap.get(now.id)!
 
-    const gap1 = options.verticalGap
+    const gap1 = getSpacingMinor(now, options)
     const gap2 = sumTopicSpacing / (children.length - i)
 
     yPosRelativeToFirstChild[i] = Math.max(
