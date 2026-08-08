@@ -159,7 +159,21 @@ function calcNumRight(children: readonly NodeDesc[], options: LayoutOptions, siz
   return children.length
 }
 
-function getSpacingMinor(node: NodeDesc, options: LayoutOptions): number {
+function getSpacingMinor(node: NodeDesc, options: LayoutOptions, styleEngine?: any, state?: any): number {
+  if (styleEngine && state) {
+    const resolved = styleEngine.computeStyle(state, node.id)
+    if (resolved?.spacingMinor != null) {
+      const value = resolved.spacingMinor
+      if (typeof value === 'string') {
+        const parsed = parseInt(value)
+        return isNaN(parsed) ? options.verticalGap : parsed
+      }
+      if (typeof value === 'number') {
+        return value
+      }
+    }
+  }
+
   const style = node.attrs.style as Record<string, unknown> | undefined
   const spacingMinor = style?.spacingMinor
   if (typeof spacingMinor === 'string') {
@@ -180,6 +194,8 @@ function layoutSideChildren(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  styleEngine?: any,
+  state?: any,
 ): void {
   if (children.length === 0) return
 
@@ -193,7 +209,7 @@ function layoutSideChildren(
     const preSize = sizeMap.get(pre.id)!
     const nowSize = sizeMap.get(now.id)!
 
-    const gap1 = getSpacingMinor(now, options)
+    const gap1 = getSpacingMinor(now, options, styleEngine, state)
     const gap2 = sumTopicSpacing / (children.length - i)
 
     yPosRelativeToFirstChild[i] = Math.max(
@@ -214,7 +230,7 @@ function layoutSideChildren(
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child), options)
     const cy = startY + firstChildY + yPosRelativeToFirstChild[i]
     nodes.set(child.id, { x: startX, y: cy, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })
-    layoutSubtree(child, startX, cy, options, sizeMap, nodes)
+    layoutSubtree(child, startX, cy, options, sizeMap, nodes, styleEngine, state)
   }
 }
 
@@ -225,6 +241,8 @@ function layoutSubtree(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  styleEngine?: any,
+  state?: any,
 ): void {
   const size = sizeMap.get(node.id)!
   const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
@@ -252,7 +270,7 @@ function layoutSubtree(
   if (rightChildren.length > 0) {
     const childX = x + size.width + options.horizontalGap
     const childY = y + size.height / 2
-    layoutSideChildren(rightChildren, childX, childY, size.height, options, sizeMap, nodes)
+    layoutSideChildren(rightChildren, childX, childY, size.height, options, sizeMap, nodes, styleEngine, state)
   }
 
   if (leftChildren.length > 0) {
@@ -262,13 +280,13 @@ function layoutSubtree(
     }, 0)
     const childX = x - maxLeftWidth - options.horizontalGap
     const childY = y + size.height / 2
-    layoutSideChildren(leftChildren, childX, childY, size.height, options, sizeMap, nodes)
+    layoutSideChildren(leftChildren, childX, childY, size.height, options, sizeMap, nodes, styleEngine, state)
   }
 }
 
 export const mapClockwiseLayoutAlgorithm: LayoutAlgorithm = {
   name: 'map-clockwise',
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS): LayoutResult {
+  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine?: any, state?: any): LayoutResult {
     const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
@@ -280,16 +298,17 @@ export const mapClockwiseLayoutAlgorithm: LayoutAlgorithm = {
     const rootX = 0
     const rootY = 0
 
-    layoutSubtree(root, rootX, rootY, options, sizeMap, nodes)
+    layoutSubtree(root, rootX, rootY, options, sizeMap, nodes, styleEngine, state)
 
-    const rootNode = nodes.get(root.id)
-    if (rootNode) {
-      const ox = -rootNode.x
-      const oy = -rootNode.y
-      for (const l of nodes.values()) {
-        l.x += ox
-        l.y += oy
-      }
+    let minX = Infinity, minY = Infinity
+    for (const l of nodes.values()) {
+      minX = Math.min(minX, l.x)
+      minY = Math.min(minY, l.y)
+    }
+
+    for (const l of nodes.values()) {
+      l.x -= minX
+      l.y -= minY
     }
 
     let maxX = 0, maxY = 0
