@@ -36,6 +36,8 @@ export interface LayoutOptions {
   rootOffsetX: number
   lineHeight: number
   charWidthFactor: number
+  canvasWidth: number
+  canvasHeight: number
 }
 
 export const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
@@ -45,6 +47,8 @@ export const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
   rootOffsetX: 50,
   lineHeight: 1.0,
   charWidthFactor: 0.8,
+  canvasWidth: 10000,
+  canvasHeight: 10000,
 }
 
 export interface LayoutAlgorithm {
