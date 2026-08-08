@@ -229,9 +229,16 @@ function layoutSideChildren(
     const gap1 = getSpacingMinor(now, options, styleEngine, state)
     const gap2 = sumTopicSpacing / (children.length - i)
 
+    // 使用类似 snowbrush 的 boundaryBounds 计算方式
+    // boundaryBounds.y 是子节点边界框的 Y 坐标（相对于父节点）
+    // boundaryBounds.height 是子节点的总高度，包括子节点之间的间距
+    const preBoundsY = yPosRelativeToFirstChild[i - 1]
+    const preBoundsHeight = preSize.height
+    const nowBoundsY = 0 // 当前子节点的边界框 Y 坐标（相对于自身）
+
     yPosRelativeToFirstChild[i] = Math.max(
-      yPosRelativeToFirstChild[i - 1] + preSize.height + gap1,
-      yPosRelativeToFirstChild[i - 1] + preSize.height + gap2,
+      preBoundsY + preBoundsHeight + gap1 - nowBoundsY,
+      preBoundsY + preBoundsHeight + gap2 - nowBoundsY,
     )
 
     sumTopicSpacing -= (yPosRelativeToFirstChild[i] - yPosRelativeToFirstChild[i - 1] - preSize.height)
