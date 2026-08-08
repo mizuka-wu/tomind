@@ -63,19 +63,33 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
   }
 }
 
-function getMinSumTopicSpacing(children: readonly NodeDesc[], parentHeight: number, options: LayoutOptions): number {
-  if (children.length <= 1) return 0
+function getMinSumTopicSpacing(children: readonly NodeDesc[], parentHeight: number, sizeMap: Map<string, NodeSize>): number {
+  const minTopBottomSpacing = 80
+  const maxTopBottomSpacing = 180
+  const parentTopicThreshold = 230
 
-  const minTotalSpacing = 80
-  const maxTotalSpacing = 180
-  const parentThreshold = 230
-
-  let baseSpacing = minTotalSpacing
-  if (parentHeight > parentThreshold) {
-    baseSpacing = Math.min(maxTotalSpacing, parentHeight - parentThreshold + minTotalSpacing)
+  let topBottomSpacing = minTopBottomSpacing
+  if (parentHeight > parentTopicThreshold) {
+    topBottomSpacing = Math.min(
+      maxTopBottomSpacing,
+      parentHeight - parentTopicThreshold + minTopBottomSpacing,
+    )
   }
 
-  return baseSpacing
+  const n = children.length
+  if (n <= 2) {
+    return topBottomSpacing
+  }
+
+  let sumSpacing = topBottomSpacing
+  for (let i = 0; i < n; i++) {
+    if (i !== 0 && i !== n - 1) {
+      const childSize = sizeMap.get(children[i].id)!
+      sumSpacing -= childSize.height
+    }
+  }
+
+  return Math.max(0, sumSpacing)
 }
 
 function getNodeSize(node: NodeDesc, options: LayoutOptions): NodeSize {
