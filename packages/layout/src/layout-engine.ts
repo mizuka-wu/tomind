@@ -102,66 +102,6 @@ function normalizeFontWeight(fontWeight: string | number): number | string {
   return fontWeight
 }
 
-function isCJK(char: string): boolean {
-  const code = char.charCodeAt(0)
-  return (code >= 0x4E00 && code <= 0x9FFF) || 
-         (code >= 0x3400 && code <= 0x4DBF) ||
-         (code >= 0x20000 && code <= 0x2A6DF)
-}
-
-function isPunctuation(char: string): boolean {
-  return /[.,;:!?、，；：！？。]/.test(char)
-}
-
-function wrapLine(line: string, measureFn: (text: string) => number, maxWidth: number): string[] {
-  if (!line) return ['']
-  
-  const result: string[] = []
-  let currentLine = ''
-  let currentWidth = 0
-  
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
-    const charWidth = measureFn(char)
-    
-    if (currentWidth + charWidth > maxWidth && currentLine) {
-      result.push(currentLine)
-      currentLine = char
-      currentWidth = charWidth
-    } else {
-      currentLine += char
-      currentWidth += charWidth
-    }
-  }
-  
-  if (currentLine) {
-    result.push(currentLine)
-  }
-  
-  return result.length > 0 ? result : ['']
-}
-
-function wrapText(
-  text: string, 
-  measureFn: (text: string) => number, 
-  maxWidth: number
-): string[] {
-  const originalLines = text.split('\n')
-  const wrappedLines: string[] = []
-  
-  for (const line of originalLines) {
-    const lineWidth = measureFn(line)
-    if (lineWidth <= maxWidth) {
-      wrappedLines.push(line)
-    } else {
-      const wrapped = wrapLine(line, measureFn, maxWidth)
-      wrappedLines.push(...wrapped)
-    }
-  }
-  
-  return wrappedLines
-}
-
 export function measureTextSize(
   text: string,
   fontSize: number,
@@ -188,22 +128,20 @@ export function measureTextSize(
     ctx.font = fontArr.filter(Boolean).join(' ')
 
     const measureFn = (t: string) => ctx.measureText(t).width
-    const lines = wrapText(text, measureFn, options.maxTitleWidth)
+    const lines = text.split('\n')
     const widthArr = lines.map(line => measureFn(line))
     const width = Math.max(...widthArr) * ratio
-    const lineHeight = Math.floor(preFontSize * options.lineHeight)
-    const height = lines.length * lineHeight
+    const height = lines.length * preFontSize
 
     return { width: Math.ceil(width), height }
   }
 
   const charWidth = preFontSize * options.charWidthFactor
   const measureFn = (t: string) => t.length * charWidth
-  const lines = wrapText(text, measureFn, options.maxTitleWidth)
+  const lines = text.split('\n')
   const lineWidths = lines.map(line => measureFn(line))
   const width = Math.max(...lineWidths)
-  const lineHeight = Math.floor(preFontSize * options.lineHeight)
-  const height = lines.length * lineHeight
+  const height = lines.length * preFontSize
 
   return { width: Math.ceil(width), height }
 }
