@@ -270,16 +270,23 @@ function layoutSideChildren(
     const gap1 = getSpacingMinor(now, options, styleEngine, state)
     const gap2 = sumTopicSpacing / (children.length - i)
 
-    // snowbrush 使用 boundaryBounds（子树边界框）
-    // 对于有子节点的节点，boundaryBounds 包含整个子树
-    // 使用 subtreeHeight * 0.01 作为近似
-    const preChildren = getAttachedChildren(pre)
-    const preExtent = preChildren.length > 0 ? subtreeHeight(pre, options, sizeMap, styleEngine, state) * 0.01 : preSize.height
+    // 使用 boundaryBounds（子树边界框）计算间距
+    // snowbrush 使用 boundaryBounds.y + boundaryBounds.height（从中心到子树底部）
+    // 使用 boundaryBounds.height * 0.02 作为近似
+    if (boundaryBoundsMap) {
+      const preBounds = boundaryBoundsMap.get(pre.id)
+      const preExtent = preBounds ? preBounds.height * 0.02 : preSize.height
 
-    yPosRelativeToFirstChild[i] = Math.max(
-      yPosRelativeToFirstChild[i - 1] + preExtent + gap1,
-      yPosRelativeToFirstChild[i - 1] + preSize.height + gap2,
-    )
+      yPosRelativeToFirstChild[i] = Math.max(
+        yPosRelativeToFirstChild[i - 1] + preExtent + gap1,
+        yPosRelativeToFirstChild[i - 1] + preSize.height + gap2,
+      )
+    } else {
+      yPosRelativeToFirstChild[i] = Math.max(
+        yPosRelativeToFirstChild[i - 1] + preSize.height + gap1,
+        yPosRelativeToFirstChild[i - 1] + preSize.height + gap2,
+      )
+    }
 
     sumTopicSpacing -= (yPosRelativeToFirstChild[i] - yPosRelativeToFirstChild[i - 1] - preSize.height)
   }
