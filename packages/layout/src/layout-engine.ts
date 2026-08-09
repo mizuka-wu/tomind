@@ -66,7 +66,7 @@ export interface LayoutAlgorithm {
 let canvas: HTMLCanvasElement | null = null
 let ctx: CanvasRenderingContext2D | null = null
 
-const SNOWBRUSH_FONT_FAMILY = 'NeverMind, Microsoft YaHei, PingFang SC, Microsoft JhengHei'
+const SNOWBRUSH_FONT_FAMILY = "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif"
 
 const FONT_WEIGHT_STRING_TO_NUMBER: Record<string, number> = {
   normal: 400,
