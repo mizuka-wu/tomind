@@ -323,7 +323,8 @@ function layoutSideChildren(
     const child = children[i]
     const size = sizeMap.get(child.id)!
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child), options)
-    const cy = startY + firstChildY + yPosRelativeToFirstChild[i] - posYoffsetToClosestChild
+    // 中心坐标：子节点中心 Y = 子节点顶部 Y + 子节点半高
+    const cy = startY + firstChildY + yPosRelativeToFirstChild[i] - posYoffsetToClosestChild + size.height / 2
     nodes.set(child.id, { x: startX, y: cy, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })
     layoutSubtree(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
   }
