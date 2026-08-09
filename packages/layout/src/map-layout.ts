@@ -322,7 +322,7 @@ function layoutSideChildren(
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
     const size = sizeMap.get(child.id)!
-    const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child), options)
+    const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child, styleEngine, state), options)
     // 中心坐标：子节点中心 Y = 子节点顶部 Y + 子节点半高
     const cy = startY + firstChildY + yPosRelativeToFirstChild[i] - posYoffsetToClosestChild + size.height / 2
     nodes.set(child.id, { x: startX, y: cy, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })
@@ -342,7 +342,7 @@ function layoutSubtree(
   state?: any,
 ): void {
   const size = sizeMap.get(node.id)!
-  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
+  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
 
   if (isCollapsed(node)) {
     nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })

@@ -435,7 +435,7 @@ export class StyleEngine {
 
         // ── 字体映射 ──
         case 'fontSize':
-          result.fontSize = parsePtToPx(value)
+          result.fontSize = typeof value === 'string' ? parseInt(value) : value
           break
         case 'fontWeight':
           result.fontWeight = parseFontWeight(value)
