@@ -4,6 +4,13 @@ import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 
 const ATTACHED = 'attached'
 
+interface BoundaryBounds {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 function getTitle(node: NodeDesc): string {
   const title = node.attrs.title
   if (typeof title === 'string') return title
@@ -87,6 +94,39 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
       measureSubtree(child, options, sizeMap, styleEngine, state)
     }
   }
+}
+
+function computeBoundaryBounds(
+  node: NodeDesc,
+  nodes: Map<string, { x: number; y: number; width: number; height: number }>,
+  boundaryBoundsMap: Map<string, BoundaryBounds>,
+): BoundaryBounds {
+  const nl = nodes.get(node.id)
+  if (!nl) return { x: 0, y: 0, width: 0, height: 0 }
+
+  let minX = nl.x
+  let minY = nl.y
+  let maxX = nl.x + nl.width
+  let maxY = nl.y + nl.height
+
+  if (!isCollapsed(node)) {
+    for (const child of getAttachedChildren(node)) {
+      const childBounds = computeBoundaryBounds(child, nodes, boundaryBoundsMap)
+      minX = Math.min(minX, childBounds.x)
+      minY = Math.min(minY, childBounds.y)
+      maxX = Math.max(maxX, childBounds.x + childBounds.width)
+      maxY = Math.max(maxY, childBounds.y + childBounds.height)
+    }
+  }
+
+  const bounds: BoundaryBounds = {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  }
+  boundaryBoundsMap.set(node.id, bounds)
+  return bounds
 }
 
 function getMinSumTopicSpacing(children: readonly NodeDesc[], parentHeight: number, sizeMap: Map<string, NodeSize>): number {
@@ -211,6 +251,7 @@ function layoutSideChildren(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  boundaryBoundsMap?: Map<string, BoundaryBounds>,
   styleEngine?: any,
   state?: any,
 ): void {
@@ -229,16 +270,9 @@ function layoutSideChildren(
     const gap1 = getSpacingMinor(now, options, styleEngine, state)
     const gap2 = sumTopicSpacing / (children.length - i)
 
-    // 使用类似 snowbrush 的 boundaryBounds 计算方式
-    // boundaryBounds.y 是子节点边界框的 Y 坐标（相对于父节点）
-    // boundaryBounds.height 是子节点的总高度，包括子节点之间的间距
-    const preBoundsY = yPosRelativeToFirstChild[i - 1]
-    const preBoundsHeight = preSize.height
-    const nowBoundsY = 0 // 当前子节点的边界框 Y 坐标（相对于自身）
-
     yPosRelativeToFirstChild[i] = Math.max(
-      preBoundsY + preBoundsHeight + gap1 - nowBoundsY,
-      preBoundsY + preBoundsHeight + gap2 - nowBoundsY,
+      yPosRelativeToFirstChild[i - 1] + preSize.height + gap1,
+      yPosRelativeToFirstChild[i - 1] + preSize.height + gap2,
     )
 
     sumTopicSpacing -= (yPosRelativeToFirstChild[i] - yPosRelativeToFirstChild[i - 1] - preSize.height)
@@ -248,13 +282,37 @@ function layoutSideChildren(
   const totalH = yPosRelativeToFirstChild[children.length - 1] + lastChildSize.height
   const firstChildY = -totalH / 2
 
+  // snowbrush: posYoffsetToClosestChild — 对齐离父节点中心最近的子节点
+  // 只在子节点数 >= 3 且偏移量在阈值内时应用
+  let posYoffsetToClosestChild = 0
+  if (children.length >= 3) {
+    const childrenHeight = totalH
+    const maxOffset = Math.min(30, childrenHeight * 0.15)
+    let minAbsOffset = Infinity
+
+    for (let i = 0; i < children.length; i++) {
+      const size = sizeMap.get(children[i].id)!
+      const cy = firstChildY + yPosRelativeToFirstChild[i]
+      const childCenterY = cy + size.height / 2
+      const offset = childCenterY
+
+      if (Math.abs(offset) < Math.abs(minAbsOffset)) {
+        minAbsOffset = offset
+      }
+    }
+
+    if (Math.abs(minAbsOffset) < maxOffset) {
+      posYoffsetToClosestChild = minAbsOffset
+    }
+  }
+
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
     const size = sizeMap.get(child.id)!
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child), options)
-    const cy = startY + firstChildY + yPosRelativeToFirstChild[i]
+    const cy = startY + firstChildY + yPosRelativeToFirstChild[i] - posYoffsetToClosestChild
     nodes.set(child.id, { x: startX, y: cy, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })
-    layoutSubtree(child, startX, cy, options, sizeMap, nodes, styleEngine, state)
+    layoutSubtree(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
   }
 }
 
@@ -265,6 +323,7 @@ function layoutSubtree(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  boundaryBoundsMap?: Map<string, BoundaryBounds>,
   styleEngine?: any,
   state?: any,
 ): void {
@@ -295,7 +354,7 @@ function layoutSubtree(
   if (rightChildren.length > 0) {
     const childX = x + size.width + options.horizontalGap
     const childY = y + size.height / 2
-    layoutSideChildren(rightChildren, childX, childY, size.height, options, sizeMap, nodes, styleEngine, state)
+    layoutSideChildren(rightChildren, childX, childY, size.height, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
   }
 
   if (leftChildren.length > 0) {
@@ -305,7 +364,7 @@ function layoutSubtree(
     }, 0)
     const childX = x - maxLeftWidth - options.horizontalGap
     const childY = y + size.height / 2
-    layoutSideChildren(leftChildren, childX, childY, size.height, options, sizeMap, nodes, styleEngine, state)
+    layoutSideChildren(leftChildren, childX, childY, size.height, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
   }
 }
 
@@ -323,25 +382,34 @@ export const mapClockwiseLayoutAlgorithm: LayoutAlgorithm = {
     const rootX = 0
     const rootY = 0
 
-    layoutSubtree(root, rootX, rootY, options, sizeMap, nodes, styleEngine, state)
+    // 第一遍：用当前逻辑计算位置
+    layoutSubtree(root, rootX, rootY, options, sizeMap, nodes, undefined, styleEngine, state)
+
+    // 计算 boundaryBounds（子树边界框）
+    const boundaryBoundsMap = new Map<string, BoundaryBounds>()
+    computeBoundaryBounds(root, nodes, boundaryBoundsMap)
+
+    // 第二遍：用 boundaryBounds 重新计算位置
+    const nodes2 = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
+    layoutSubtree(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap, styleEngine, state)
 
     let minX = Infinity, minY = Infinity
-    for (const l of nodes.values()) {
+    for (const l of nodes2.values()) {
       minX = Math.min(minX, l.x)
       minY = Math.min(minY, l.y)
     }
 
-    for (const l of nodes.values()) {
+    for (const l of nodes2.values()) {
       l.x -= minX
       l.y -= minY
     }
 
     let maxX = 0, maxY = 0
-    for (const l of nodes.values()) {
+    for (const l of nodes2.values()) {
       maxX = Math.max(maxX, l.x + l.width)
       maxY = Math.max(maxY, l.y + l.height)
     }
 
-    return { nodes, totalWidth: maxX, totalHeight: maxY }
+    return { nodes: nodes2, totalWidth: maxX, totalHeight: maxY }
   },
 }

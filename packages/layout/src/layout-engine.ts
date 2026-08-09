@@ -43,7 +43,7 @@ export interface LayoutOptions {
 
 export const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
   horizontalGap: 22,
-  verticalGap: 5,
+  verticalGap: 0,
   nodePadding: { top: 5, right: 6, bottom: 5, left: 6 },
   rootOffsetX: 50,
   lineHeight: 1.34,

@@ -33,7 +33,7 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     marginTop: '15pt',
     marginBottom: '15pt',
     spacingMajor: '50pt',
-    spacingMinor: '35pt',
+    spacingMinor: '10pt',
   },
   mainTopic: {
     fontWeight: 'normal',
@@ -61,7 +61,7 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     marginTop: '10pt',
     marginBottom: '10pt',
     spacingMajor: '26pt',
-    spacingMinor: '6pt',
+    spacingMinor: '5pt',
   },
   subTopic: {
     fontWeight: 'normal',
@@ -89,7 +89,7 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     marginTop: '6pt',
     marginBottom: '6pt',
     spacingMajor: '26pt',
-    spacingMinor: '8pt',
+    spacingMinor: '5pt',
   },
   floatingTopic: {
     fontWeight: 'normal',
@@ -117,7 +117,7 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     marginTop: '11pt',
     marginBottom: '11pt',
     spacingMajor: '26pt',
-    spacingMinor: '8pt',
+    spacingMinor: '5pt',
   },
   calloutTopic: {
     fontWeight: 'normal',
@@ -145,7 +145,7 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     marginTop: '6pt',
     marginBottom: '6pt',
     spacingMajor: '26pt',
-    spacingMinor: '8pt',
+    spacingMinor: '5pt',
   },
   summaryTopic: {
     fontWeight: 'normal',
