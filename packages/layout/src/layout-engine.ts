@@ -119,6 +119,8 @@ export function measureTextSize(
     fontSize = 12
   }
 
+  const maxWidth = options.maxTitleWidth || 300
+
   const ctx = getCanvasContext()
   if (ctx) {
     const normalizedWeight = normalizeFontWeight(fontWeight)
@@ -128,20 +130,60 @@ export function measureTextSize(
     ctx.font = fontArr.filter(Boolean).join(' ')
 
     const measureFn = (t: string) => ctx.measureText(t).width
-    const lines = text.split('\n')
-    const widthArr = lines.map(line => measureFn(line))
-    const width = Math.max(...widthArr) * ratio
-    const height = lines.length * preFontSize
+    const rawLines = text.split('\n')
+    const wrappedLines: string[] = []
 
-    return { width: Math.ceil(width), height }
+    for (const line of rawLines) {
+      if (measureFn(line) <= maxWidth) {
+        wrappedLines.push(line)
+      } else {
+        let current = ''
+        for (const char of line) {
+          const test = current + char
+          if (measureFn(test) > maxWidth && current) {
+            wrappedLines.push(current)
+            current = char
+          } else {
+            current = test
+          }
+        }
+        if (current) wrappedLines.push(current)
+      }
+    }
+
+    const widthArr = wrappedLines.map(line => measureFn(line))
+    const width = Math.max(...widthArr) * ratio
+    const height = wrappedLines.length * preFontSize * (options.lineHeight || 1.2)
+
+    return { width: Math.ceil(width), height: Math.ceil(height) }
   }
 
   const charWidth = preFontSize * options.charWidthFactor
   const measureFn = (t: string) => t.length * charWidth
-  const lines = text.split('\n')
-  const lineWidths = lines.map(line => measureFn(line))
-  const width = Math.max(...lineWidths)
-  const height = lines.length * preFontSize
+  const rawLines = text.split('\n')
+  const wrappedLines: string[] = []
 
-  return { width: Math.ceil(width), height }
+  for (const line of rawLines) {
+    if (measureFn(line) <= maxWidth) {
+      wrappedLines.push(line)
+    } else {
+      let current = ''
+      for (const char of line) {
+        const test = current + char
+        if (measureFn(test) > maxWidth && current) {
+          wrappedLines.push(current)
+          current = char
+        } else {
+          current = test
+        }
+      }
+      if (current) wrappedLines.push(current)
+    }
+  }
+
+  const lineWidths = wrappedLines.map(line => measureFn(line))
+  const width = Math.max(...lineWidths)
+  const height = wrappedLines.length * preFontSize * (options.lineHeight || 1.2)
+
+  return { width: Math.ceil(width), height: Math.ceil(height) }
 }

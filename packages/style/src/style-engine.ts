@@ -894,7 +894,7 @@ function angleToFromTo(
 }
 
 /**
- * pt → px 转换（1pt = 96/72 px ≈ 1.333px）
+ * pt/数字 → px 数值
  * 支持："16pt"、"16"、16
  */
 function parsePtToPx(value: unknown): number {
