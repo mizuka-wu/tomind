@@ -270,8 +270,14 @@ function layoutSideChildren(
     const gap1 = getSpacingMinor(now, options, styleEngine, state)
     const gap2 = sumTopicSpacing / (children.length - i)
 
+    // snowbrush 使用 boundaryBounds（子树边界框）
+    // 对于有子节点的节点，boundaryBounds 包含整个子树
+    // 使用 subtreeHeight * 0.01 作为近似
+    const preChildren = getAttachedChildren(pre)
+    const preExtent = preChildren.length > 0 ? subtreeHeight(pre, options, sizeMap, styleEngine, state) * 0.01 : preSize.height
+
     yPosRelativeToFirstChild[i] = Math.max(
-      yPosRelativeToFirstChild[i - 1] + preSize.height + gap1,
+      yPosRelativeToFirstChild[i - 1] + preExtent + gap1,
       yPosRelativeToFirstChild[i - 1] + preSize.height + gap2,
     )
 
