@@ -107,6 +107,17 @@ function getMinSumTopicSpacing(children: readonly NodeDesc[], parentHeight: numb
     return topBottomSpacing
   }
 
+  // 计算子节点实际排列高度（不包括父节点高度）
+  let childrenTotalHeight = 0
+  for (let i = 0; i < n; i++) {
+    childrenTotalHeight += subtreeHeight(children[i], options, sizeMap, styleEngine, state)
+    if (i < n - 1) {
+      childrenTotalHeight += getSpacingMinor(children[i], options, styleEngine, state)
+    }
+  }
+
+  // SB 公式: minSumTopicSpacing = topBottomSpacing - Σ(interior children height)
+  // 但需要确保 minSumTopicSpacing >= 0
   let sumSpacing = topBottomSpacing
   for (let i = 0; i < n; i++) {
     if (i !== 0 && i !== n - 1) {
@@ -141,7 +152,9 @@ function subtreeHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<stri
       total += spacingMinor
     }
   }
-  return Math.max(size.height, total)
+  // 返回父节点高度 + 子节点实际排列高度
+  // 这与 SB 的 boundaryBounds.height 一致
+  return size.height + total
 }
 
 function getWeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: any, state?: any): number {
@@ -249,12 +262,13 @@ function layoutSideChildren(
   for (let i = 1; i < children.length; i++) {
     const pre = children[i - 1]
     const now = children[i]
-    const preSubtreeH = subtreeHeight(pre, options, sizeMap, styleEngine, state)
+    const preSize = sizeMap.get(pre.id)!
     const nowSize = sizeMap.get(now.id)!
 
     const gap1 = getSpacingMinor(now, options, styleEngine, state)
     const gap2 = sumTopicSpacing / (children.length - i)
 
+    const preSubtreeH = subtreeHeight(pre, options, sizeMap, styleEngine, state)
     yPosRelativeToFirstChild[i] = Math.max(
       yPosRelativeToFirstChild[i - 1] + preSubtreeH + gap1,
       yPosRelativeToFirstChild[i - 1] + nowSize.height + gap2,
