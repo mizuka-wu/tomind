@@ -4,6 +4,13 @@ import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 
 const ATTACHED = 'attached'
 
+interface BoundaryBounds {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 function getTitle(node: NodeDesc): string {
   const title = node.attrs.title
   if (typeof title === 'string') return title
@@ -128,14 +135,43 @@ function getMinSumTopicSpacing(children: readonly NodeDesc[], parentHeight: numb
   return Math.max(0, sumSpacing)
 }
 
-function getNodeSize(node: NodeDesc, options: LayoutOptions): NodeSize {
-  const fontSize = getFontSize(node)
-  const title = getTitle(node)
-  const { width, height } = measureTextSize(title, fontSize, options)
-  return {
-    width: width + options.nodePadding.left + options.nodePadding.right,
-    height: height + options.nodePadding.top + options.nodePadding.bottom,
+function computeBoundaryBounds(
+  node: NodeDesc,
+  nodes: Map<string, { x: number; y: number; width: number; height: number }>,
+  boundaryBoundsMap: Map<string, BoundaryBounds>,
+): BoundaryBounds {
+  const nl = nodes.get(node.id)
+  if (!nl) return { x: 0, y: 0, width: 0, height: 0 }
+
+  // 子树边界框（绝对坐标）
+  let minX = nl.x
+  let minY = nl.y
+  let maxX = nl.x + nl.width
+  let maxY = nl.y + nl.height
+
+  if (!isCollapsed(node)) {
+    for (const child of getAttachedChildren(node)) {
+      const childBounds = computeBoundaryBounds(child, nodes, boundaryBoundsMap)
+      // childBounds 是相对于 child 原点的偏移，需要转换为绝对坐标
+      const childNode = nodes.get(child.id)!
+      const childAbsX = childNode.x + childBounds.x
+      const childAbsY = childNode.y + childBounds.y
+      minX = Math.min(minX, childAbsX)
+      minY = Math.min(minY, childAbsY)
+      maxX = Math.max(maxX, childAbsX + childBounds.width)
+      maxY = Math.max(maxY, childAbsY + childBounds.height)
+    }
   }
+
+  // 返回相对于节点原点的偏移
+  const bounds: BoundaryBounds = {
+    x: minX - nl.x,
+    y: minY - nl.y,
+    width: maxX - minX,
+    height: maxY - minY,
+  }
+  boundaryBoundsMap.set(node.id, bounds)
+  return bounds
 }
 
 function subtreeHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: any, state?: any): number {
@@ -260,6 +296,7 @@ function layoutSideChildren(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  boundaryBoundsMap?: Map<string, BoundaryBounds>,
   styleEngine?: any,
   state?: any,
 ): void {
@@ -272,19 +309,53 @@ function layoutSideChildren(
   for (let i = 1; i < children.length; i++) {
     const pre = children[i - 1]
     const now = children[i]
-    const preSize = sizeMap.get(pre.id)!
     const nowSize = sizeMap.get(now.id)!
 
     const gap1 = getSpacingMinor(now, options, styleEngine, state)
     const gap2 = sumTopicSpacing / (children.length - i)
 
-    const preSubtreeH = subtreeHeight(pre, options, sizeMap, styleEngine, state)
-    yPosRelativeToFirstChild[i] = Math.max(
-      yPosRelativeToFirstChild[i - 1] + preSubtreeH + gap1,
-      yPosRelativeToFirstChild[i - 1] + nowSize.height + gap2,
-    )
+    // 使用 boundaryBounds 计算间距（如果可用）
+    if (boundaryBoundsMap) {
+      const preBounds = boundaryBoundsMap.get(pre.id)
+      const nowBounds = boundaryBoundsMap.get(now.id)
+      if (preBounds && nowBounds) {
+        // 使用节点的实际位置计算间距
+        const preNode = nodes.get(pre.id)
+        const nowNode = nodes.get(now.id)
+        if (preNode && nowNode) {
+          // pre 子树底部的绝对 Y 坐标
+          const preBottomY = preNode.y + preBounds.y + preBounds.height
+          // now 子树顶部的绝对 Y 坐标
+          const nowTopY = nowNode.y + nowBounds.y
+          // 间距 = now 子树顶部 - pre 子树底部 + spacingMinor
+          const gap = nowTopY - preBottomY + gap1
+          yPosRelativeToFirstChild[i] = Math.max(
+            yPosRelativeToFirstChild[i - 1] + gap,
+            yPosRelativeToFirstChild[i - 1] + nowSize.height + gap2,
+          )
+        } else {
+          const preSubtreeH = subtreeHeight(pre, options, sizeMap, styleEngine, state)
+          yPosRelativeToFirstChild[i] = Math.max(
+            yPosRelativeToFirstChild[i - 1] + preSubtreeH + gap1,
+            yPosRelativeToFirstChild[i - 1] + nowSize.height + gap2,
+          )
+        }
+      } else {
+        const preSubtreeH = subtreeHeight(pre, options, sizeMap, styleEngine, state)
+        yPosRelativeToFirstChild[i] = Math.max(
+          yPosRelativeToFirstChild[i - 1] + preSubtreeH + gap1,
+          yPosRelativeToFirstChild[i - 1] + nowSize.height + gap2,
+        )
+      }
+    } else {
+      const preSubtreeH = subtreeHeight(pre, options, sizeMap, styleEngine, state)
+      yPosRelativeToFirstChild[i] = Math.max(
+        yPosRelativeToFirstChild[i - 1] + preSubtreeH + gap1,
+        yPosRelativeToFirstChild[i - 1] + nowSize.height + gap2,
+      )
+    }
 
-    sumTopicSpacing -= (yPosRelativeToFirstChild[i] - yPosRelativeToFirstChild[i - 1] - preSubtreeH)
+    sumTopicSpacing -= (yPosRelativeToFirstChild[i] - yPosRelativeToFirstChild[i - 1] - subtreeHeight(pre, options, sizeMap, styleEngine, state))
   }
 
   const lastChildSize = sizeMap.get(children[children.length - 1].id)!
@@ -321,7 +392,7 @@ function layoutSideChildren(
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child, styleEngine, state), options)
     const cy = startY + firstChildY + yPosRelativeToFirstChild[i] - posYoffsetToClosestChild + size.height / 2
     nodes.set(child.id, { x: startX, y: cy, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })
-    layoutSubtree(child, startX, cy, options, sizeMap, nodes, styleEngine, state)
+    layoutSubtree(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
   }
 }
 
@@ -332,11 +403,13 @@ function layoutSubtree(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  boundaryBoundsMap?: Map<string, BoundaryBounds>,
   styleEngine?: any,
   state?: any,
 ): void {
   const size = sizeMap.get(node.id)!
   const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
+  const title = getTitle(node)
 
   if (isCollapsed(node)) {
     nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })
@@ -349,23 +422,24 @@ function layoutSubtree(
   }
 
   const numRight = calcNumRight(children, options, sizeMap, styleEngine, state)
+  const spacingMajor = getSpacingMajor(node, options, styleEngine, state)
+  const spacingMinor = getSpacingMinor(node, options, styleEngine, state)
+
   const rightChildren = children.slice(0, numRight)
   // 左侧子节点反转以实现顺时针缠绕：index pos 在底部，index n-1 在顶部
   const leftChildren = children.slice(numRight).reverse()
 
-  const rightSpacingMinor = rightChildren.length > 0 ? getSpacingMinor(rightChildren[0], options, styleEngine, state) : getSpacingMinor(node, options, styleEngine, state)
-  const leftSpacingMinor = leftChildren.length > 0 ? getSpacingMinor(leftChildren[0], options, styleEngine, state) : getSpacingMinor(node, options, styleEngine, state)
+  const rightSpacingMinor = rightChildren.length > 0 ? getSpacingMinor(rightChildren[0], options, styleEngine, state) : spacingMinor
+  const leftSpacingMinor = leftChildren.length > 0 ? getSpacingMinor(leftChildren[0], options, styleEngine, state) : spacingMinor
   const rightTotalH = rightChildren.reduce((sum, child) => sum + subtreeHeight(child, options, sizeMap, styleEngine, state), 0) + Math.max(0, rightChildren.length - 1) * rightSpacingMinor
   const leftTotalH = leftChildren.reduce((sum, child) => sum + subtreeHeight(child, options, sizeMap, styleEngine, state), 0) + Math.max(0, leftChildren.length - 1) * leftSpacingMinor
 
   nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: Math.max(rightTotalH, leftTotalH) })
 
-  const spacingMajor = getSpacingMajor(node, options, styleEngine, state)
-
   if (rightChildren.length > 0) {
     const childX = x + size.width + spacingMajor
     const childY = y + size.height / 2
-    layoutSideChildren(rightChildren, childX, childY, size.height, options, sizeMap, nodes, styleEngine, state)
+    layoutSideChildren(rightChildren, childX, childY, size.height, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
   }
 
   if (leftChildren.length > 0) {
@@ -375,7 +449,7 @@ function layoutSubtree(
     }, 0)
     const childX = x - maxLeftWidth - spacingMajor
     const childY = y + size.height / 2
-    layoutSideChildren(leftChildren, childX, childY, size.height, options, sizeMap, nodes, styleEngine, state)
+    layoutSideChildren(leftChildren, childX, childY, size.height, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
   }
 }
 
@@ -389,29 +463,37 @@ export const mapClockwiseLayoutAlgorithm: LayoutAlgorithm = {
     const sizeMap = new Map<string, NodeSize>()
     measureSubtree(root, options, sizeMap, styleEngine, state)
 
-    const rootSize = sizeMap.get(root.id)!
     const rootX = 0
     const rootY = 0
 
-    layoutSubtree(root, rootX, rootY, options, sizeMap, nodes, styleEngine, state)
+    // 第一遍：用当前逻辑计算位置
+    layoutSubtree(root, rootX, rootY, options, sizeMap, nodes, undefined, styleEngine, state)
+
+    // 计算 boundaryBounds（子树边界框）
+    const boundaryBoundsMap = new Map<string, BoundaryBounds>()
+    computeBoundaryBounds(root, nodes, boundaryBoundsMap)
+
+    // 第二遍：用 boundaryBounds 重新计算位置
+    const nodes2 = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
+    layoutSubtree(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap, styleEngine, state)
 
     let minX = Infinity, minY = Infinity
-    for (const l of nodes.values()) {
+    for (const l of nodes2.values()) {
       minX = Math.min(minX, l.x)
       minY = Math.min(minY, l.y)
     }
 
-    for (const l of nodes.values()) {
+    for (const l of nodes2.values()) {
       l.x -= minX
       l.y -= minY
     }
 
     let maxX = 0, maxY = 0
-    for (const l of nodes.values()) {
+    for (const l of nodes2.values()) {
       maxX = Math.max(maxX, l.x + l.width)
       maxY = Math.max(maxY, l.y + l.height)
     }
 
-    return { nodes, totalWidth: maxX, totalHeight: maxY }
+    return { nodes: nodes2, totalWidth: maxX, totalHeight: maxY }
   },
 }
