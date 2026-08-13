@@ -161,6 +161,10 @@ function getWeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, 
   return subtreeHeight(node, options, sizeMap, styleEngine, state) + 30
 }
 
+function isWithinThreshold(node: NodeDesc, totalChildren: number, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: any, state?: any): boolean {
+  return getWeight(node, options, sizeMap, styleEngine, state) < (Math.log(totalChildren) + 1) * 200
+}
+
 function calcNumRight(children: readonly NodeDesc[], options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: any, state?: any): number {
   if (children.length <= 1) return children.length
 
@@ -176,6 +180,12 @@ function calcNumRight(children: readonly NodeDesc[], options: LayoutOptions, siz
 
     if (newRightWeight >= halfWeight) {
       if (lastIndex >= 0 && newRightWeight - halfWeight > halfWeight - rightWeight) {
+        // SB 特殊处理：2 个节点且都在阈值内时返回 2
+        if (i === 1 && lastIndex === 0 &&
+            isWithinThreshold(children[0], children.length, options, sizeMap, styleEngine, state) &&
+            isWithinThreshold(children[i], children.length, options, sizeMap, styleEngine, state)) {
+          return 2
+        }
         return lastIndex + 1
       }
       return i + 1
