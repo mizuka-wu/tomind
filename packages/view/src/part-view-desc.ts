@@ -343,3 +343,70 @@ export class LinkPartViewDesc extends PartViewDesc {
     }
   }
 }
+
+// ==================== CommentsPartViewDesc ====================
+
+/** CommentData 结构（对齐 schema CommentData） */
+interface CommentItemData {
+  readonly author: string
+  readonly content: string
+  readonly time?: number
+}
+
+export class CommentsPartViewDesc extends PartViewDesc {
+  private _icon: Rect | null = null
+  private _badge: Text | null = null
+
+  constructor(node: NodeDesc, role: NodeRole) {
+    super(node, role, 'comments', 'right', 45)
+  }
+
+  protected createElement(): Group {
+    const group = new Group()
+    // 评论图标（绿色方块）
+    this._icon = new Rect({
+      width: 16,
+      height: 16,
+      fill: '#4CAF50',
+      cornerRadius: 2,
+    })
+    group.add(this._icon)
+    // 评论数量角标
+    this._badge = new Text({
+      text: '',
+      fontSize: 10,
+      fill: '#fff',
+      x: 10,
+      y: -2,
+    })
+    group.add(this._badge)
+    return group
+  }
+
+  protected createContentGroup(): null {
+    return null
+  }
+
+  protected updatePart(data: unknown): void {
+    const comments = data as CommentItemData[] | undefined
+    const hasComments = !!comments && comments.length > 0
+
+    if (this._icon) {
+      this._icon.visible = hasComments
+    }
+    if (this._badge) {
+      if (hasComments && comments) {
+        this._badge.text = String(comments.length)
+        this._badge.visible = comments.length > 1
+      } else {
+        this._badge.visible = false
+      }
+    }
+  }
+
+  override destroy(): void {
+    this._icon = null
+    this._badge = null
+    super.destroy()
+  }
+}

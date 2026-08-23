@@ -60,6 +60,7 @@ interface XMindTopic {
   notes?: { plain?: { content: string }; html?: { content: string } }
   href?: string
   style?: { properties?: Record<string, string> }
+  comments?: Array<{ author: string; content: string; time?: number }>
 }
 
 interface XMindThemeEntry {
@@ -192,6 +193,52 @@ function convertTopic(topic: XMindTopic): ModelNode {
   }
 }
 
+/** 收集树中所有节点 ID → ModelNode 的映射 */
+function collectTopicIds(node: ModelNode, map: Map<string, ModelNode>): void {
+  map.set(node.id, node)
+  for (const child of node.children) {
+    collectTopicIds(child, map)
+  }
+}
+
+/** 从 comments.xml 解析评论并挂载到对应节点 */
+function attachComments(root: ModelNode, commentsXml: string): void {
+  // 使用正则解析 XML（避免引入 DOMParser 依赖）
+  // 匹配 <comment object-id="..." time="..." author="...">...<content>...</content>...</comment>
+  const commentRegex = /<comment\s[^>]*object-id="([^"]*)"[^>]*>([\s\S]*?)<\/comment>/g
+  const topicMap = new Map<string, ModelNode>()
+  collectTopicIds(root, topicMap)
+
+  let match: RegExpExecArray | null
+  while ((match = commentRegex.exec(commentsXml)) !== null) {
+    const commentTag = match[0]
+    const objectId = match[1]
+
+    // 提取 time 和 author 属性
+    const timeMatch = commentTag.match(/time="(\d+)"/)
+    const authorMatch = commentTag.match(/author="([^"]*)"/)
+
+    // 提取 <content>...</content>
+    const contentMatch = commentTag.match(/<content[^>]*>([\s\S]*?)<\/content>/)
+
+    if (!contentMatch) continue
+
+    const node = topicMap.get(objectId)
+    if (!node) continue
+
+    const comment = {
+      author: authorMatch?.[1] ?? '',
+      content: contentMatch[1] ?? '',
+      ...(timeMatch ? { time: Number(timeMatch[1]) } : {}),
+    }
+
+    if (!node.comments) {
+      node.comments = []
+    }
+    node.comments.push(comment)
+  }
+}
+
 /**
  * 从 XMind ZIP 文件解析
  *
@@ -229,14 +276,65 @@ export async function parseXMind(
     themeData = Object.keys(converted).length > 0 ? converted : undefined
   }
 
+  const root = convertTopic(sheet.rootTopic)
+
+  // 读取 comments.xml（可选文件）
+  const commentsFile = zip.file('comments.xml')
+  if (commentsFile) {
+    const commentsXml = await commentsFile.async('text')
+    attachComments(root, commentsXml)
+  }
+
   return {
-    root: convertTopic(sheet.rootTopic),
+    root,
     title: sheet.title,
     themeData,
   }
 }
 
 // ==================== 导出 ====================
+
+/** XML 特殊字符转义 */
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
+/** 收集树中所有评论（object-id → comments） */
+function collectAllComments(
+  node: ModelNode,
+  map: Map<string, Array<{ author: string; content: string; time?: number }>>,
+): void {
+  if (node.comments?.length) {
+    map.set(node.id, node.comments)
+  }
+  for (const child of node.children) {
+    collectAllComments(child, map)
+  }
+}
+
+/** 生成 comments.xml 内容 */
+function generateCommentsXml(
+  commentsMap: Map<string, Array<{ author: string; content: string; time?: number }>>,
+): string {
+  if (commentsMap.size === 0) return ''
+
+  const comments: string[] = []
+  for (const [objectId, commentList] of commentsMap) {
+    for (const comment of commentList) {
+      const timeAttr = comment.time != null ? ` time="${comment.time}"` : ''
+      comments.push(
+        `<comment author="${escapeXml(comment.author)}"${timeAttr} object-id="${objectId}"><content>${escapeXml(comment.content)}</content></comment>`,
+      )
+    }
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="no"?><comments xmlns="urn:xmind:xmap:xmlns:comments:2.0" version="2.0">${comments.join('')}</comments>`
+}
 
 /** ModelNode → XMindTopic */
 function modelToXMindTopic(node: ModelNode): XMindTopic {
@@ -299,7 +397,20 @@ export async function exportXMind(
 
   zip.file('content.json', JSON.stringify([sheet], null, 2))
   zip.file('metadata.json', JSON.stringify({ creator: { name: 'tomind', version: '0.1.0' } }))
-  zip.file('manifest.json', JSON.stringify({ 'file-entries': { 'content.json': {}, 'metadata.json': {} } }))
+
+  // 收集并导出 comments.xml
+  const commentsMap = new Map<string, Array<{ author: string; content: string; time?: number }>>()
+  collectAllComments(tree.root, commentsMap)
+
+  const manifestEntries: Record<string, unknown> = { 'content.json': {}, 'metadata.json': {} }
+
+  if (commentsMap.size > 0) {
+    const commentsXml = generateCommentsXml(commentsMap)
+    zip.file('comments.xml', commentsXml)
+    manifestEntries['comments.xml'] = {}
+  }
+
+  zip.file('manifest.json', JSON.stringify({ 'file-entries': manifestEntries }))
 
   return zip.generateAsync({ type: 'blob', mimeType: 'application/x-xmind' })
 }

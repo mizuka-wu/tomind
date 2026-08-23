@@ -10,7 +10,7 @@ import { measureTextSize } from './layout-engine'
 
 // ==================== 类型定义 ====================
 
-export type PartType = 'title' | 'image' | 'markers' | 'labels' | 'note' | 'link' | 'numbering'
+export type PartType = 'title' | 'image' | 'markers' | 'labels' | 'note' | 'link' | 'numbering' | 'comments'
 export type PartPosition = 'top' | 'bottom' | 'left' | 'right' | 'outside' | 'center'
 
 export interface PartMeasurement {
@@ -30,6 +30,7 @@ const DEFAULT_PART_CONFIG: Record<PartType, { position: PartPosition; order: num
   labels: { position: 'bottom', order: 30 },
   note: { position: 'right', order: 40 },
   link: { position: 'right', order: 5 },
+  comments: { position: 'right', order: 45 },
 }
 
 const MARKER_SIZE = 16
@@ -106,6 +107,12 @@ interface NumberingData {
   readonly suffix?: string
   readonly numberSeparator?: string
   readonly prependingNumbers?: string
+}
+
+interface CommentData {
+  readonly author: string
+  readonly content: string
+  readonly time?: number
 }
 
 // ==================== 测量函数 ====================
@@ -219,6 +226,17 @@ function measureNumbering(node: NodeDesc, options: LayoutOptions): { width: numb
   return measureTextSize(numberingText, getFontSize(node), options)
 }
 
+/**
+ * 测量 comments 尺寸
+ */
+function measureComments(node: NodeDesc): { width: number; height: number } {
+  const comments = node.attrs.comments as CommentData[] | undefined
+  if (!comments || comments.length === 0) return { width: 0, height: 0 }
+
+  // 图标 16×16 + 角标数字占位
+  return { width: INFO_ICON_SIZE, height: INFO_ICON_SIZE }
+}
+
 // ==================== 主函数 ====================
 
 /**
@@ -316,6 +334,17 @@ export function measureNodeParts(
     })
   }
 
+  // 测量 comments
+  const commentsSize = measureComments(node)
+  if (commentsSize.width > 0 || commentsSize.height > 0) {
+    parts.push({
+      partType: 'comments',
+      position: DEFAULT_PART_CONFIG.comments.position,
+      order: DEFAULT_PART_CONFIG.comments.order,
+      size: commentsSize,
+    })
+  }
+
   return parts
 }
 
@@ -329,7 +358,8 @@ export function hasNonTitleParts(node: NodeDesc): boolean {
     (node.attrs.labels && (node.attrs.labels as LabelData[]).length > 0) ||
     node.attrs.note ||
     node.attrs.link ||
-    node.attrs.numbering
+    node.attrs.numbering ||
+    (node.attrs.comments && (node.attrs.comments as CommentData[]).length > 0)
   )
 }
 

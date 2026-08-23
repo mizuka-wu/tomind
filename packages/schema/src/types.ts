@@ -114,6 +114,7 @@ export interface TopicNodeDesc extends NodeDesc {
     title: string                    // 纯文本标题（序列化用）
     attributeTitle: AttributeTitle   // 富文本标题（必填，始终存在）
     style?: StyleData
+    comments?: readonly CommentData[]
     [key: string]: unknown
   }>
 }
@@ -268,4 +269,17 @@ export interface NumberingData {
 export interface Position {
   readonly x: number
   readonly y: number
+}
+
+// ==================== CommentData ====================
+
+/**
+ * CommentData — 评论数据
+ *
+ * 对齐 XMind comments.xml 格式
+ */
+export interface CommentData {
+  readonly author: string
+  readonly content: string
+  readonly time?: number  // creation timestamp
 }

@@ -57,6 +57,12 @@ export interface ModelNode {
     numberSeparator?: string
     prependingNumbers?: string
   }
+  /** 评论列表 */
+  comments?: Array<{
+    author: string
+    content: string
+    time?: number
+  }>
 }
 
 /** 格式解析器输出的完整树 */
@@ -109,6 +115,7 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
       ...(node.structureClass ? { structureClass: node.structureClass } : {}),
       ...(node.collapsed ? { collapsed: true } : {}),
       ...(node.numbering ? { numbering: node.numbering } : {}),
+      ...(node.comments?.length ? { comments: node.comments } : {}),
     },
     children,
   }

@@ -45,7 +45,8 @@ export {
   MarkersPartViewDesc,
   LabelsPartViewDesc,
   NotePartViewDesc,
-  LinkPartViewDesc
+  LinkPartViewDesc,
+  CommentsPartViewDesc,
 } from './part-view-desc'
 
 // 事件系统 - 类型
