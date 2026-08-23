@@ -9,9 +9,9 @@
  * - NUMBERSEPARATOR: org.xmind.numbering.separator.comma / dot / hyphen / dash / oblique
  */
 
-import { createExtension } from '@tomind/extension'
+import { createExtension } from '@tomind/core'
 import { createNumberingPlugin } from '@tomind/state'
-import type { ExtensionContext } from '@tomind/extension'
+import type { ExtensionContext } from '@tomind/core'
 
 // ==================== Extension ====================
 

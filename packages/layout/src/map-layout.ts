@@ -409,7 +409,6 @@ function layoutSubtree(
 ): void {
   const size = sizeMap.get(node.id)!
   const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
-  const title = getTitle(node)
 
   if (isCollapsed(node)) {
     nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height })

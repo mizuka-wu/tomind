@@ -287,7 +287,6 @@ export function createTreeLayoutAlgorithm(name: string, direction: TreeDirection
       const sizeMap = new Map<string, NodeSize>()
       measureSubtree(ctx, root, sizeMap, direction)
 
-      const rootAxisSize = subtreeAxisSize(ctx, root, sizeMap, direction)
       const rootSize = sizeMap.get(root.id)!
       let rootX: number
       let rootY: number

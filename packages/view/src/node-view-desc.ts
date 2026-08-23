@@ -7,8 +7,8 @@
  * 3. 处理样式和布局
  * 4. 应用 Node Decoration（样式装饰）
  */
+import { Group, Ellipse, Line, Path } from 'leafer-ui'
 
-import { Group, Rect, Ellipse, Line, Path } from 'leafer-ui'
 import { ViewDesc, DirtyFlag } from './view-desc'
 import type {
   NodeDesc,

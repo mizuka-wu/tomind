@@ -112,7 +112,6 @@ export function getMainTopicAncestor(
   nodeId: string,
   getUserStyle: (id: string) => Record<string, unknown> | undefined,
 ): MainTopicAncestor | null {
-  const root = doc
   let currentId: string | null = nodeId
 
   while (currentId) {

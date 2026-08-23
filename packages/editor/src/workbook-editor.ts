@@ -427,6 +427,12 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       unregisterLayout: (name: string) => {
         workbook.layoutEngine.unregister?.(name)
       },
+      registerPlugin: (_plugin: unknown) => {
+        // Plugin registration is handled at SheetEditor level
+      },
+      unregisterPlugin: (_plugin: unknown) => {
+        // Plugin unregistration is handled at SheetEditor level
+      },
     }
   }
 

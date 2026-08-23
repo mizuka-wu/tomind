@@ -44,6 +44,7 @@ import {
   FishboneRightHeadedExtension,
   SpreadsheetExtension,
   TreeTableExtension,
+  NumberingExtension,
 } from '@tomind/extensions'
 
 // ==================== 内置扩展列表 ====================

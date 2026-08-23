@@ -13,7 +13,7 @@
   "dependencies": {
     "@tomind/schema": "workspace:*",
     "@tomind/state": "workspace:*",
-    "tinycolor2": "^1.6.0"
+    "colord": "^2.10.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

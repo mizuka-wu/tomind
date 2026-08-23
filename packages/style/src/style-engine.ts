@@ -42,7 +42,10 @@ import { DEFAULT_STYLES } from './default-styles'
 import { normalizeStyleObject, serializeStyleObject, normalizeClassName } from './style-converter'
 import { parseClassList, getClassStyles } from '@tomind/state'
 import { SKELETON_KEY_SET, COLOR_KEY_SET } from './style-keys'
-import tinycolor from 'tinycolor2'
+import { colord, extend } from 'colord'
+import a11yPlugin from 'colord/plugins/a11y'
+
+extend([a11yPlugin])
 
 /**
  * 主题包接口（外部主题来源实现）
@@ -261,10 +264,10 @@ export class StyleEngine {
 
     // fontColor 根据 fillColor 自动计算对比色
     if (result.fillColor && result.fillColor !== 'none' && !result.fontColor) {
-      const bg = tinycolor(result.fillColor as string)
+      const bg = colord(result.fillColor as string)
       if (bg.isValid()) {
-        const white = tinycolor('#ffffff')
-        const ratio = tinycolor.readability(bg, white)
+        const white = colord('#ffffff')
+        const ratio = bg.contrast(white)
         result.fontColor = ratio >= 3 ? '#ffffff' : '#000000'
       }
     }
@@ -686,24 +689,24 @@ export class StyleEngine {
     // 1. 先检查白色：如果白色对比度 >= 3，直接返回白色
     // 2. 否则从候选色中找最高对比度的
     let fontColor: string | undefined
-    const fillBg = tinycolor(fill)
+    const fillBg = colord(fill)
     if (fillBg.isValid()) {
-      const whiteRatio = tinycolor.readability(fillBg, tinycolor('#ffffff'))
+      const whiteRatio = fillBg.contrast(colord('#ffffff'))
       if (whiteRatio >= 3) {
         fontColor = '#ffffff'
       } else {
         const candidates: string[] = []
         if (nodeType === 'subTopic') {
-          const branchHsl = tinycolor(color).toHsl()
+          const branchHsl = colord(color).toHsl()
           const darkBranch = hslToHex(branchHsl.h, branchHsl.s * 100, 20)
           candidates.push(darkBranch)
         } else {
           candidates.push('#000000')
         }
         let bestColor = candidates[0]
-        let bestRatio = tinycolor.readability(fillBg, tinycolor(bestColor))
+        let bestRatio = fillBg.contrast(colord(bestColor))
         for (let i = 1; i < candidates.length; i++) {
-          const ratio = tinycolor.readability(fillBg, tinycolor(candidates[i]))
+          const ratio = fillBg.contrast(colord(candidates[i]))
           if (ratio > bestRatio) {
             bestRatio = ratio
             bestColor = candidates[i]
@@ -724,12 +727,12 @@ export class StyleEngine {
 }
 
 function blendAlpha(foreground: string, alpha: number, background: string): string {
-  const fg = tinycolor(foreground).toRgb()
-  const bg = tinycolor(background).toRgb()
+  const fg = colord(foreground).toRgb()
+  const bg = colord(background).toRgb()
   const r = Math.round(alpha * fg.r + (1 - alpha) * bg.r)
   const g = Math.round(alpha * fg.g + (1 - alpha) * bg.g)
   const b = Math.round(alpha * fg.b + (1 - alpha) * bg.b)
-  return tinycolor({ r, g, b }).toHexString()
+  return colord({ r, g, b }).toHex()
 }
 
 function hslToHex(h: number, s: number, l: number): string {
