@@ -52,6 +52,10 @@ export interface ExtensionContext {
   registerPartView: (partType: string, viewDesc: unknown) => void
   /** 注销 PartViewDesc */
   unregisterPartView: (partType: string) => void
+  /** 注册 Plugin */
+  registerPlugin: (plugin: unknown) => void
+  /** 注销 Plugin */
+  unregisterPlugin: (plugin: unknown) => void
 }
 
 /** 主题数据结构（内联定义，避免循环依赖） */

@@ -5,3 +5,4 @@
 export * from './types'
 export * from './attribute-title'
 export * from './node-factory'
+export * from './numbering-utils'

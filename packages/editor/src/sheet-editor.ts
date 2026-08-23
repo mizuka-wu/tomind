@@ -320,6 +320,60 @@ export class SheetEditor {
     return this.extensionManager.getExtension(name)
   }
 
+  // ==================== Plugin 管理 ====================
+
+  /** 已注册的 Plugin 列表（动态追加） */
+  private _dynamicPlugins: Plugin[] = []
+
+  /**
+   * 注册 Plugin（供 Extension 使用）
+   *
+   * 将 Plugin 添加到 state 中，并触发一次空事务以初始化 plugin state。
+   */
+  registerPlugin(plugin: unknown): void {
+    const p = plugin as Plugin
+    // 避免重复注册
+    if (this._dynamicPlugins.some((dp) => dp.key.name === p.key.name)) return
+    this._dynamicPlugins.push(p)
+
+    // 重建 state，包含新 plugin
+    const newPlugins = [...this.plugins, ...this._dynamicPlugins]
+    const newState = SheetState.create({
+      doc: this._state.doc,
+      selection: this._state.selection,
+      viewport: this._state.viewport,
+      plugins: newPlugins,
+      decorations: this._state.decorations,
+    })
+    // 触发一次空事务以初始化所有 plugin states
+    const emptyTr = Transaction.empty(this._state.doc)
+    const initializedState = newState.apply(emptyTr)
+    this.updateState(initializedState)
+  }
+
+  /**
+   * 注销 Plugin
+   */
+  unregisterPlugin(plugin: unknown): void {
+    const p = plugin as Plugin
+    const idx = this._dynamicPlugins.findIndex((dp) => dp.key.name === p.key.name)
+    if (idx === -1) return
+    this._dynamicPlugins.splice(idx, 1)
+
+    // 重建 state，排除该 plugin
+    const newPlugins = [...this.plugins, ...this._dynamicPlugins]
+    const newState = SheetState.create({
+      doc: this._state.doc,
+      selection: this._state.selection,
+      viewport: this._state.viewport,
+      plugins: newPlugins,
+      decorations: this._state.decorations,
+    })
+    const emptyTr = Transaction.empty(this._state.doc)
+    const initializedState = newState.apply(emptyTr)
+    this.updateState(initializedState)
+  }
+
   /**
    * 初始化扩展系统（幂等：已 setup 则跳过）
    */
@@ -420,6 +474,12 @@ export class SheetEditor {
       },
       unregisterPartView: (partType: string) => {
         editor.unregisterPartView(partType)
+      },
+      registerPlugin: (plugin: unknown) => {
+        editor.registerPlugin(plugin)
+      },
+      unregisterPlugin: (plugin: unknown) => {
+        editor.unregisterPlugin(plugin)
       },
     }
   }

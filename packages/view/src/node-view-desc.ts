@@ -350,12 +350,40 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       }
 
       let path: string
-      if (lineClass === 'curve') {
+      if (lineClass === 'none') {
+        path = ''
+      } else if (lineClass === 'curve') {
         path = this.computeCurvePath(startX, startY, endX, endY, isHorizontal)
       } else if (lineClass === 'roundedElbow') {
         const r = cornerRadius > 0 ? cornerRadius : 8
         path = this.computeRoundedElbowPath(startX, startY, endX, endY, isHorizontal, r)
+      } else if (lineClass === 'straight') {
+        path = this.computeStraightPath(startX, startY, endX, endY, isHorizontal)
+      } else if (lineClass === 'fold') {
+        path = this.computeFoldPath(startX, startY, endX, endY, isHorizontal)
+      } else if (lineClass === 'fold2') {
+        path = this.computeFold2Path(startX, startY, endX, endY, isHorizontal)
+      } else if (lineClass === 'roundedfold') {
+        const r = cornerRadius > 0 ? cornerRadius : 8
+        path = this.computeRoundedFoldPath(startX, startY, endX, endY, isHorizontal, r)
+      } else if (lineClass === 'bight') {
+        path = this.computeBightPath(startX, startY, endX, endY, isHorizontal)
+      } else if (lineClass === 'horizontal') {
+        path = this.computeHorizontalPath(startX, startY, endX, endY)
+      } else if (lineClass === 'brace') {
+        path = this.computeBracePath(startX, startY, endX, endY, isHorizontal)
+      } else if (lineClass === 'brace2') {
+        path = this.computeBrace2Path(startX, startY, endX, endY, isHorizontal)
+      } else if (lineClass === 'brace3') {
+        path = this.computeBrace3Path(startX, startY, endX, endY, isHorizontal)
+      } else if (lineClass === 'brace4') {
+        path = this.computeBrace4Path(startX, startY, endX, endY, isHorizontal, width)
+      } else if (lineClass === 'brace5') {
+        path = this.computeBrace5Path(startX, startY, endX, endY, isHorizontal, width)
+      } else if (lineClass === 'calloutLine') {
+        path = this.computeCalloutLinePath(startX, startY, endX, endY, isHorizontal)
       } else {
+        // default: elbow (right-angle with midpoint)
         if (isHorizontal) {
           const midX = (startX + endX) / 2
           path = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`
@@ -412,6 +440,236 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       path = `M ${x} ${y} L ${x - size / 2} ${y - size} L ${x + size / 2} ${y - size} Z`
     }
     return new Path({ path, fill: color })
+  }
+
+  // ==================== Connection path computation methods ====================
+
+  /**
+   * 直线 — start → ctrl → end（三段折线，但 ctrl 在中点使前两段为一条直线）
+   */
+  private computeStraightPath(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
+  ): string {
+    if (isHorizontal) {
+      const midX = (sx + ex) / 2
+      return `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${ey} L ${ex} ${ey}`
+    } else {
+      const midY = (sy + ey) / 2
+      return `M ${sx} ${sy} L ${sx} ${midY} L ${ex} ${midY} L ${ex} ${ey}`
+    }
+  }
+
+  /**
+   * 折线（fold / skewElbow）— ctrl 处走一段，flex 处拐向 end
+   * ratio 控制 flex 在 ctrl→end 间的比例（snowbrush TREE_SE_RATIO=0.5）
+   */
+  private computeFoldPath(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, ratio = 0.5
+  ): string {
+    if (isHorizontal) {
+      const midX = (sx + ex) / 2
+      const flexX = midX + (ex - midX) * ratio
+      return `M ${sx} ${sy} L ${midX} ${sy} L ${flexX} ${ey} L ${ex} ${ey}`
+    } else {
+      const midY = (sy + ey) / 2
+      const flexY = midY + (ey - midY) * ratio
+      return `M ${sx} ${sy} L ${sx} ${midY} L ${ex} ${flexY} L ${ex} ${ey}`
+    }
+  }
+
+  /**
+   * 折线变体（fold2）— 与 fold 相同比例，统一使用默认 ratio
+   */
+  private computeFold2Path(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
+  ): string {
+    return this.computeFoldPath(sx, sy, ex, ey, isHorizontal)
+  }
+
+  /**
+   * 圆角折线（roundedfold / horn）— flex 处用 Q 圆角
+   * cornerRadius 控制圆角半径
+   */
+  private computeRoundedFoldPath(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, r: number
+  ): string {
+    if (isHorizontal) {
+      const midX = (sx + ex) / 2
+      const dx = Math.abs(ex - midX)
+      const dy = Math.abs(ey - sy)
+      const corner = Math.min(dx, dy) / 4
+      const c = corner > 0 ? corner : Math.min(r, Math.abs(ey - sy) / 2)
+      if (ey > sy) {
+        const beforeY = sy + c
+        const afterX = midX + c
+        return `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${beforeY} Q ${midX} ${ey} ${afterX} ${ey} L ${ex} ${ey}`
+      } else {
+        const beforeY = sy - c
+        const afterX = midX + c
+        return `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${beforeY} Q ${midX} ${ey} ${afterX} ${ey} L ${ex} ${ey}`
+      }
+    } else {
+      const midY = (sy + ey) / 2
+      const dx = Math.abs(ex - sx)
+      const dy = Math.abs(ey - midY)
+      const corner = Math.min(dx, dy) / 4
+      const c = corner > 0 ? corner : Math.min(r, Math.abs(ex - sx) / 2)
+      if (ex > sx) {
+        const beforeX = sx + c
+        const afterY = midY + c
+        return `M ${sx} ${sy} L ${sx} ${midY} L ${beforeX} ${midY} Q ${ex} ${midY} ${ex} ${afterY} L ${ex} ${ey}`
+      } else {
+        const beforeX = sx - c
+        const afterY = midY + c
+        return `M ${sx} ${sy} L ${sx} ${midY} L ${beforeX} ${midY} Q ${ex} ${midY} ${ex} ${afterY} L ${ex} ${ey}`
+      }
+    }
+  }
+
+  /**
+   * 弯曲线（bight / sinus）— ctrl 处直走，然后 cubic bezier 拐向 end
+   */
+  private computeBightPath(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
+  ): string {
+    if (isHorizontal) {
+      const midX = (sx + ex) / 2
+      const dx = ex - midX
+      const flexX = (ex + midX) / 2
+      return `M ${sx} ${sy} L ${midX} ${sy} C ${ex - dx / 4} ${sy} ${flexX} ${ey} ${ex} ${ey}`
+    } else {
+      const midY = (sy + ey) / 2
+      const dy = ey - midY
+      const flexY = (ey + midY) / 2
+      return `M ${sx} ${sy} L ${sx} ${midY} C ${sx} ${ey - dy / 4} ${ex} ${flexY} ${ex} ${ey}`
+    }
+  }
+
+  /**
+   * 水平线 — 始终走水平直线
+   */
+  private computeHorizontalPath(
+    sx: number, sy: number, ex: number, ey: number
+  ): string {
+    return `M ${sx} ${sy} L ${ex} ${ey}`
+  }
+
+  /**
+   * 大括号线（brace）— 对称 S 曲线，Q 在水平中点转弯
+   */
+  private computeBracePath(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
+  ): string {
+    if (isHorizontal) {
+      const midX = (sx + ex) / 2
+      return `M ${sx} ${sy} Q ${midX} ${sy} ${midX} ${(sy + ey) / 2} L ${midX} ${(sy + ey) / 2} Q ${midX} ${ey} ${ex} ${ey}`
+    } else {
+      const midY = (sy + ey) / 2
+      return `M ${sx} ${sy} Q ${sx} ${midY} ${(sx + ex) / 2} ${midY} L ${(sx + ex) / 2} ${midY} Q ${ex} ${midY} ${ex} ${ey}`
+    }
+  }
+
+  /**
+   * brace2 — ctrl 处直走，然后直线拐到中点，再直走拐向 end
+   */
+  private computeBrace2Path(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
+  ): string {
+    if (isHorizontal) {
+      const midX = (sx + ex) / 2
+      const dy = ey - sy
+      const a = Math.abs(dy) * 0.3
+      const ver = dy >= 0 ? 1 : -1
+      return `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${sy + ver * a} L ${midX} ${ey - ver * a} L ${midX} ${ey} L ${ex} ${ey}`
+    } else {
+      const midY = (sy + ey) / 2
+      const dx = ex - sx
+      const a = Math.abs(dx) * 0.3
+      const hor = dx >= 0 ? 1 : -1
+      return `M ${sx} ${sy} L ${sx} ${midY} L ${sx + hor * a} ${midY} L ${ex - hor * a} ${midY} L ${ex} ${midY} L ${ex} ${ey}`
+    }
+  }
+
+  /**
+   * brace3 — ctrl 直走，带25°角的斜线到中点，竖直到 end
+   */
+  private computeBrace3Path(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
+  ): string {
+    if (isHorizontal) {
+      const midX = (sx + ex) / 2
+      const dx = Math.abs(ex - sx)
+      const ver = ey >= sy ? 1 : -1
+      const angleDy = Math.tan(25 * Math.PI / 180) * dx / 2
+      return `M ${sx} ${sy} L ${midX} ${sy + ver * angleDy} L ${midX} ${ey} L ${ex} ${ey}`
+    } else {
+      const midY = (sy + ey) / 2
+      const dy = Math.abs(ey - sy)
+      const hor = ex >= sx ? 1 : -1
+      const angleDx = Math.tan(25 * Math.PI / 180) * dy / 2
+      return `M ${sx} ${sy} L ${sx + hor * angleDx} ${midY} L ${ex} ${midY} L ${ex} ${ey}`
+    }
+  }
+
+  /**
+   * brace4 — ctrl 直走，竖直到 end 附近，带 Q 尾巴返回
+   */
+  private computeBrace4Path(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, lineWidth: number
+  ): string {
+    if (isHorizontal) {
+      const midX = (sx + ex) / 2
+      const hw = lineWidth / 2
+      const ver = ey >= sy ? 1 : -1
+      return `M ${midX - hw} ${sy} L ${midX - hw} ${ey - ver * hw} L ${ex} ${ey - ver * hw} L ${ex} ${ey + ver * hw} L ${midX + hw} ${ey + ver * hw * 1.2} Q ${midX + hw * 2} ${ey * 0.6 + sy * 0.4} ${midX + hw * 2} ${sy}`
+    } else {
+      const midY = (sy + ey) / 2
+      const hw = lineWidth / 2
+      const hor = ex >= sx ? 1 : -1
+      return `M ${sx} ${midY - hw} L ${ex - hor * hw} ${midY - hw} L ${ex - hor * hw} ${ey} L ${ex + hor * hw} ${ey} L ${ex + hor * hw * 1.2} ${midY + hw} Q ${ex * 0.6 + sx * 0.4} ${midY + hw * 2} ${sx} ${midY + hw * 2}`
+    }
+  }
+
+  /**
+   * brace5 — ctrl 直走，Q 圆角拐向 end，再 Q 圆角尾巴返回
+   */
+  private computeBrace5Path(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, lineWidth: number
+  ): string {
+    if (isHorizontal) {
+      const midX = (sx + ex) / 2
+      const hw = lineWidth / 2
+      const dy = Math.abs(ey - sy)
+      const corner = Math.min(Math.abs(ex - sx), dy / 2) / 4
+      return `M ${midX - hw} ${sy} L ${midX - hw} ${ey - corner} Q ${midX - hw} ${ey} ${ex} ${ey} Q ${midX + hw} ${ey} ${midX + hw} ${ey - corner} Q ${midX + hw + corner} ${ey * 0.6 + sy * 0.4} ${midX + hw + corner} ${sy}`
+    } else {
+      const midY = (sy + ey) / 2
+      const hw = lineWidth / 2
+      const dx = Math.abs(ex - sx)
+      const corner = Math.min(dx, Math.abs(ey - sy) / 2) / 4
+      return `M ${sx} ${midY - hw} L ${ex - corner} ${midY - hw} Q ${ex} ${midY - hw} ${ex} ${ey} Q ${ex} ${midY + hw} ${ex - corner} ${midY + hw} Q ${ex * 0.6 + sx * 0.4} ${midY + hw + corner} ${sx} ${midY + hw + corner}`
+    }
+  }
+
+  /**
+   * 气泡线（calloutLine）— ctrl 处直走，然后两段斜线到 end 左右偏移点
+   */
+  private computeCalloutLinePath(
+    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
+  ): string {
+    // calloutLine: V 形线，从子节点两侧偏移点出发，汇聚到父节点出口点
+    // snowbrush: crossPtA → parentInsectPt → crossPtB
+    const dx = ex - sx
+    const dy = ey - sy
+    const dist = Math.hypot(dx, dy)
+    const offset = Math.max(dist * 0.06, 8)
+    if (isHorizontal) {
+      const ver = dy >= 0 ? 1 : -1
+      return `M ${ex} ${ey - ver * offset} L ${sx} ${sy} L ${ex} ${ey + ver * offset}`
+    } else {
+      const hor = dx >= 0 ? 1 : -1
+      return `M ${ex - hor * offset} ${ey} L ${sx} ${sy} L ${ex + hor * offset} ${ey}`
+    }
   }
 
   protected updateContent(): void {
@@ -681,19 +939,19 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
 
   private updateSelectBoxVisibility(visible: boolean): void {
     if (!this.renderer) return
-    const rect = (this.renderer as unknown as { rect: Rect | null }).rect
-    if (!rect) return
+    const shape = (this.renderer as unknown as { shapePath: Path | null }).shapePath
+    if (!shape) return
 
     if (visible) {
       // 高亮：蓝色边框 + 加粗
-      this._savedStroke = rect.stroke as string
-      this._savedStrokeWidth = rect.strokeWidth as number
-      rect.stroke = '#2563eb'
-      rect.strokeWidth = 2
+      this._savedStroke = shape.stroke as string
+      this._savedStrokeWidth = shape.strokeWidth as number
+      shape.stroke = '#2563eb'
+      shape.strokeWidth = 2
     } else {
       // 恢复原始样式
-      if (this._savedStroke !== undefined) rect.stroke = this._savedStroke
-      if (this._savedStrokeWidth !== undefined) rect.strokeWidth = this._savedStrokeWidth
+      if (this._savedStroke !== undefined) shape.stroke = this._savedStroke
+      if (this._savedStrokeWidth !== undefined) shape.strokeWidth = this._savedStrokeWidth
     }
   }
 

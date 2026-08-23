@@ -242,9 +242,18 @@ export interface LinkData {
   readonly title?: string
 }
 
+/**
+ * NumberingData — 编号配置数据（对齐 snowbrush NumberingData）
+ *
+ * 编号配置在父节点上，控制子节点的显示编号。
+ * 例：父节点设置了 numbering，其子节点会显示 "1.", "2.", "3." 等编号。
+ */
 export interface NumberingData {
-  readonly type: string
-  readonly value: string
+  readonly numberFormat: string       // 'org.xmind.numbering.arabic' | 'org.xmind.numbering.roman' | 'org.xmind.numbering.lowercase' | 'org.xmind.numbering.uppercase' | 'org.xmind.numbering.none'
+  readonly prefix?: string            // 编号前缀（如 "Chapter "）
+  readonly suffix?: string            // 编号后缀（如 "."）
+  readonly numberSeparator?: string   // 层级间分隔符常量（org.xmind.numbering.separator.*）
+  readonly prependingNumbers?: string // 继承的前缀编号
 }
 
 export interface Position {

@@ -33,6 +33,8 @@
  */
 
 import type { SheetState } from '@tomind/state'
+import { numberingKey } from '@tomind/state'
+import type { NumberingState } from '@tomind/state' 
 import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue } from './style-types'
 import { isThemeClassEntry, resolveColorVariables } from './style-types'
 import { classifyNode, getParentId, findById, getMainTopicAncestor } from './classify'
@@ -302,7 +304,25 @@ export class StyleEngine {
     options: StyleComputeOptions = {},
   ): Record<string, unknown> {
     const style = this.computeStyle(state, topicId, options)
-    return this.toLeaferStyle(style)
+    const leaferStyle = this.toLeaferStyle(style)
+
+    // 从 NumberingPlugin state 读取编号文本
+    try {
+      const numberingState = state.field(numberingKey) as NumberingState | undefined
+      if (numberingState) {
+        const numberingText = numberingState.texts.get(topicId)
+        if (numberingText) {
+          leaferStyle.numberingText = numberingText
+          leaferStyle.numberingVisible = true
+        } else {
+          leaferStyle.numberingVisible = false
+        }
+      }
+    } catch {
+      // Plugin 未注册时 field() 会抛异常，忽略
+    }
+
+    return leaferStyle
   }
 
   /**

@@ -31,6 +31,13 @@ interface XMindTopic {
   title: string
   structureClass?: string
   collapsed?: boolean
+  numbering?: {
+    numberFormat?: string
+    numberSeparator?: string
+    prefix?: string
+    suffix?: string
+    prependingNumbers?: string
+  }
   children?: {
     attached?: XMindTopic[]
     summary?: XMindTopic[]
@@ -152,6 +159,13 @@ function convertTopic(topic: XMindTopic): ModelNode {
     ...(topic.notes?.plain?.content ? { note: topic.notes.plain.content } : {}),
     ...(topic.href ? { href: topic.href } : {}),
     ...(topic.style?.properties ? { style: convertXMindProps(topic.style.properties) } : {}),
+    ...(topic.numbering ? { numbering: {
+      numberFormat: topic.numbering.numberFormat ?? 'org.xmind.numbering.arabic',
+      ...(topic.numbering.numberSeparator ? { numberSeparator: topic.numbering.numberSeparator } : {}),
+      ...(topic.numbering.prefix ? { prefix: topic.numbering.prefix } : {}),
+      ...(topic.numbering.suffix ? { suffix: topic.numbering.suffix } : {}),
+      ...(topic.numbering.prependingNumbers ? { prependingNumbers: topic.numbering.prependingNumbers } : {}),
+    } } : {}),
   }
 }
 
@@ -216,6 +230,7 @@ function modelToXMindTopic(node: ModelNode): XMindTopic {
   if (node.image) topic.image = { src: node.image.url, width: node.image.width, height: node.image.height }
   if (node.note) topic.notes = { plain: { content: node.note } }
   if (node.href) topic.href = node.href
+  if (node.numbering) topic.numbering = node.numbering
 
   if (node.children.length > 0) {
     topic.children = {

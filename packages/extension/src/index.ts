@@ -47,6 +47,8 @@ export function createExtensionContext(editor: {
   unregisterPartView: (partType: string) => void
   registerLayout?: (algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => void
   unregisterLayout?: (name: string) => void
+  registerPlugin?: (plugin: unknown) => void
+  unregisterPlugin?: (plugin: unknown) => void
 }): import('./types').ExtensionContext {
   return {
     storage: {},
@@ -66,5 +68,7 @@ export function createExtensionContext(editor: {
     unregisterPartView: editor.unregisterPartView,
     registerLayout: editor.registerLayout ?? (() => {}),
     unregisterLayout: editor.unregisterLayout ?? (() => {}),
+    registerPlugin: editor.registerPlugin ?? (() => {}),
+    unregisterPlugin: editor.unregisterPlugin ?? (() => {}),
   }
 }

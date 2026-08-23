@@ -91,6 +91,9 @@ const builtInExtensions: Extension<any>[] = [
 
   // 交互
   CopyPasteExtension,
+
+  // 编号
+  NumberingExtension,
   ContextMenuExtension,
 
   // 主题

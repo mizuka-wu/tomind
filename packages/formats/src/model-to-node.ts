@@ -36,6 +36,14 @@ export interface ModelNode {
   structureClass?: string
   /** 折叠状态 */
   collapsed?: boolean
+  /** 编号配置 */
+  numbering?: {
+    numberFormat: string
+    prefix?: string
+    suffix?: string
+    numberSeparator?: string
+    prependingNumbers?: string
+  }
 }
 
 /** 格式解析器输出的完整树 */
@@ -77,6 +85,7 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
       ...(node.href ? { href: node.href } : {}),
       ...(node.structureClass ? { structureClass: node.structureClass } : {}),
       ...(node.collapsed ? { collapsed: true } : {}),
+      ...(node.numbering ? { numbering: node.numbering } : {}),
     },
     children,
   }

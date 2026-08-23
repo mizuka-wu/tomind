@@ -45,6 +45,10 @@ export {
   getClassStyles,
 } from './class-list'
 
+// Numbering 系统
+export { createNumberingPlugin, numberingKey } from './numbering-plugin'
+export type { NumberingState } from './numbering-plugin'
+
 // Workbook 系统
 export { WorkbookState } from './workbook-state'
 export type { WorkbookMetadata } from './workbook-state'

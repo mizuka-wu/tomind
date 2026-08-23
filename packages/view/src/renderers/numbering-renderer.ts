@@ -43,8 +43,8 @@ export class NumberingRenderer implements Renderer {
     this.group.x = nodeLayout.x
     this.group.y = nodeLayout.y
 
-    // 从 style 中提取属性
-    const text = style.text as string | undefined
+    // 从 style 中提取属性（优先使用 numberingText，其次 text）
+    const text = (style.numberingText ?? style.text) as string | undefined
     const textColor = style.textColor as string | undefined
     const textDecoration = style.textDecoration as string | undefined
     const textAlign = style.textAlign as string | undefined
@@ -97,8 +97,11 @@ export class NumberingRenderer implements Renderer {
       })
     }
 
-    // 可见性
-    if (visible !== undefined) {
+    // 可见性（优先使用 numberingVisible）
+    const numberingVisible = style.numberingVisible as boolean | undefined
+    if (numberingVisible !== undefined) {
+      this.group.visible = numberingVisible && !!text
+    } else if (visible !== undefined) {
       this.group.visible = visible
     }
   }
