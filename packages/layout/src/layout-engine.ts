@@ -21,6 +21,7 @@ export interface NodeLayout {
   titleHeight: number
   branchHeight: number
   parentId?: string
+  partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
 }
 
 export interface LayoutResult {

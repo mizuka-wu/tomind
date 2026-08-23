@@ -33,3 +33,16 @@ export { timelineThroughVerticalLayoutAlgorithm } from './timeline-through-verti
 
 // Fishbone 布局
 export { fishboneLeftHeadedLayoutAlgorithm, fishboneRightHeadedLayoutAlgorithm } from './fishbone-layout'
+
+// Part-Aware Layout 系统
+export { CellLayout, CellGridLayout } from './cell-layout'
+export type { CellLayoutData, Size, Position, Bounds, Margins, HorizontalAlignment, VerticalAlignment } from './cell-layout'
+
+export { measureNodeParts, hasNonTitleParts } from './part-measure'
+export type { PartMeasurement, PartType, PartPosition } from './part-measure'
+
+export { buildTopicCellTree } from './part-cell-builder'
+export type { TopicCellTree } from './part-cell-builder'
+
+export { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
+export type { PartAwareNodeSize } from './part-node-size'

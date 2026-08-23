@@ -12,6 +12,8 @@ import type { SheetState } from '@tomind/state'
 import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
+import { hasNonTitleParts } from './part-measure'
+import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 
 const ATTACHED = 'attached'
 
@@ -128,6 +130,7 @@ interface NodeSize {
   height: number
   titleWidth: number
   titleHeight: number
+  partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
 }
 
 function measureNodeSize(
@@ -135,14 +138,27 @@ function measureNodeSize(
   padding: { top: number; right: number; bottom: number; left: number },
   options: LayoutOptions,
 ): NodeSize {
-  const fontSize = getFontSize(node)
-  const title = getTitle(node)
-  const { width: titleWidth, height: titleHeight } = measureTextSize(title, fontSize, options)
+  // 检查是否有非 title 的 part
+  if (hasNonTitleParts(node)) {
+    // 使用 part-aware 测量
+    const result = measurePartAwareNode(node, options)
+    return {
+      width: result.width,
+      height: result.height,
+      titleWidth: result.titleWidth,
+      titleHeight: result.titleHeight,
+      partBounds: result.partBounds,
+    }
+  }
+
+  // 快速路径：只测量 title + padding
+  const result = measureTitleOnlyNode(node, padding, options)
   return {
-    width: titleWidth + padding.left + padding.right,
-    height: titleHeight + padding.top + padding.bottom,
-    titleWidth,
-    titleHeight,
+    width: result.width,
+    height: result.height,
+    titleWidth: result.titleWidth,
+    titleHeight: result.titleHeight,
+    partBounds: result.partBounds,
   }
 }
 
@@ -163,6 +179,15 @@ function measureSubtree(
 
 // ─── 布局 ───
 
+function subtreeHeight(node: NodeDesc, sizeMap: Map<string, NodeSize>): number {
+  const size = sizeMap.get(node.id)!
+  return size.height
+}
+
+function isHorizontal(dir: TreeDirection): boolean {
+  return dir === 'right' || dir === 'left'
+}
+
 interface NodeLayoutOutput {
   x: number
   y: number
@@ -171,6 +196,7 @@ interface NodeLayoutOutput {
   titleWidth: number
   titleHeight: number
   branchHeight: number
+  partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
 }
 
 /** 子树在主轴方向的总跨度（递归计算） */
@@ -207,10 +233,6 @@ function subtreeAxisSize(
   return Math.max(selfSize, childrenTotal)
 }
 
-function isHorizontal(dir: TreeDirection): boolean {
-  return dir === 'right' || dir === 'left'
-}
-
 function layoutSubtree(
   ctx: TreeLayoutContext,
   node: NodeDesc,
@@ -227,7 +249,15 @@ function layoutSubtree(
 
   const branchAxisSize = subtreeAxisSize(ctx, node, sizeMap, direction)
 
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight: branchAxisSize })
+  nodes.set(node.id, { 
+    x, y, 
+    width: size.width, 
+    height: size.height, 
+    titleWidth: size.titleWidth, 
+    titleHeight: size.titleHeight, 
+    branchHeight: branchAxisSize,
+    partBounds: size.partBounds,
+  })
 
   if (isCollapsed(node) || children.length === 0) return
 
