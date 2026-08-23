@@ -302,6 +302,9 @@ importers:
 
   packages/view:
     dependencies:
+      '@leafer-in/html':
+        specifier: ^2.2.9
+        version: 2.2.9(@leafer-in/interface@2.2.8(@leafer-ui/interface@2.2.8)(@leafer/interface@2.2.8))(@leafer-ui/draw@2.2.8)(@leafer-ui/interface@2.2.8)
       '@tomind/layout':
         specifier: workspace:*
         version: link:../layout
