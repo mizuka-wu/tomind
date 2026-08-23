@@ -24,6 +24,10 @@ export { SelectionExtension } from './selection'
 export { CopyPasteExtension } from './copy-paste'
 export { NumberingExtension } from './numbering'
 export { CommentsExtension } from './comments'
+export { MarkersExtension } from './markers'
+export { LabelsExtension } from './labels'
+export { NoteExtension } from './note'
+export { LinkExtension } from './link'
 
 // ─── 布局扩展（一个大类一个文件夹） ───
 export { TreeRightExtension, TreeLeftExtension, TreeDownExtension, TreeUpExtension } from './tree'
