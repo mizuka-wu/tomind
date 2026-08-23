@@ -23,6 +23,7 @@ export { TopicExtension } from './topic'
 export { SelectionExtension } from './selection'
 export { CopyPasteExtension } from './copy-paste'
 export { NumberingExtension } from './numbering'
+export { CommentsExtension } from './comments'
 
 // ─── 布局扩展（一个大类一个文件夹） ───
 export { TreeRightExtension, TreeLeftExtension, TreeDownExtension, TreeUpExtension } from './tree'

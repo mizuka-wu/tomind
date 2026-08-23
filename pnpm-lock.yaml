@@ -221,6 +221,9 @@ importers:
       '@tomind/style':
         specifier: workspace:*
         version: link:../style
+      '@tomind/view':
+        specifier: workspace:^
+        version: link:../view
       leafer-ui:
         specifier: ^2.1.8
         version: 2.2.8

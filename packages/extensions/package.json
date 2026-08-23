@@ -4,7 +4,9 @@
   "description": "@tomind built-in extensions — Keymap, Viewport, Selection, etc.",
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
@@ -14,6 +16,7 @@
     "@tomind/schema": "workspace:*",
     "@tomind/state": "workspace:*",
     "@tomind/style": "workspace:*",
+    "@tomind/view": "workspace:^",
     "leafer-ui": "^2.1.8"
   },
   "devDependencies": {
