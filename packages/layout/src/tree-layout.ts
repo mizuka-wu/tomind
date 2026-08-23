@@ -21,20 +21,6 @@ export type TreeDirection = 'right' | 'left' | 'down' | 'up'
 
 // ─── 工具函数 ───
 
-function getTitle(node: NodeDesc): string {
-  const title = node.attrs.title
-  if (typeof title === 'string') return title
-  if (Array.isArray(title)) {
-    return title.map((u: { text?: string }) => u.text ?? '').join('')
-  }
-  return ''
-}
-
-function getFontSize(node: NodeDesc): number {
-  const style = node.attrs.style as Record<string, unknown> | undefined
-  return (style?.fontSize as number) ?? 14
-}
-
 function isCollapsed(node: NodeDesc): boolean {
   return (node.attrs.collapsed as boolean) ?? false
 }
@@ -178,11 +164,6 @@ function measureSubtree(
 }
 
 // ─── 布局 ───
-
-function subtreeHeight(node: NodeDesc, sizeMap: Map<string, NodeSize>): number {
-  const size = sizeMap.get(node.id)!
-  return size.height
-}
 
 function isHorizontal(dir: TreeDirection): boolean {
   return dir === 'right' || dir === 'left'
