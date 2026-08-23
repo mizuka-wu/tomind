@@ -36,7 +36,7 @@ export { fishboneLeftHeadedLayoutAlgorithm, fishboneRightHeadedLayoutAlgorithm }
 
 // Part-Aware Layout 系统
 export { CellLayout, CellGridLayout } from './cell-layout'
-export type { CellLayoutData, Size, Position, Bounds, Margins, HorizontalAlignment, VerticalAlignment } from './cell-layout'
+export type { CellLayoutData, Size, Bounds, Margins, HorizontalAlignment, VerticalAlignment } from './cell-layout'
 
 export { measureNodeParts, hasNonTitleParts } from './part-measure'
 export type { PartMeasurement, PartType, PartPosition } from './part-measure'

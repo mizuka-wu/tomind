@@ -18,7 +18,7 @@
  * └── labelsCell (1-col vertical) ← labels（在 shape 外部）
  */
 
-import type { PartMeasurement, PartType, PartPosition } from './part-measure'
+import type { PartMeasurement, PartPosition } from './part-measure'
 import { CellLayout, CellGridLayout } from './cell-layout'
 import type { Margins } from './cell-layout'
 

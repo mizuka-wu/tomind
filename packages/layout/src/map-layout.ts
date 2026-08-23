@@ -78,7 +78,7 @@ interface NodeSize {
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
 }
 
-function measureNode(node: NodeDesc, options: LayoutOptions, styleEngine?: any, state?: any): NodeSize {
+function measureNode(node: NodeDesc, options: LayoutOptions, _styleEngine?: any, _state?: any): NodeSize {
   // 检查是否有非 title 的 part
   if (hasNonTitleParts(node)) {
     // 使用 part-aware 测量
@@ -110,45 +110,6 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
       measureSubtree(child, options, sizeMap, styleEngine, state)
     }
   }
-}
-
-function getMinSumTopicSpacing(children: readonly NodeDesc[], parentHeight: number, sizeMap: Map<string, NodeSize>, options: LayoutOptions, styleEngine?: any, state?: any): number {
-  const minTopBottomSpacing = 80
-  const maxTopBottomSpacing = 180
-  const parentTopicThreshold = 230
-
-  let topBottomSpacing = minTopBottomSpacing
-  if (parentHeight > parentTopicThreshold) {
-    topBottomSpacing = Math.min(
-      maxTopBottomSpacing,
-      parentHeight - parentTopicThreshold + minTopBottomSpacing,
-    )
-  }
-
-  const n = children.length
-  if (n <= 2) {
-    return topBottomSpacing
-  }
-
-  // 计算子节点实际排列高度（不包括父节点高度）
-  let childrenTotalHeight = 0
-  for (let i = 0; i < n; i++) {
-    childrenTotalHeight += subtreeHeight(children[i], options, sizeMap, styleEngine, state)
-    if (i < n - 1) {
-      childrenTotalHeight += getSpacingMinor(children[i], options, styleEngine, state)
-    }
-  }
-
-  // SB 公式: minSumTopicSpacing = topBottomSpacing - Σ(interior children height)
-  // 但需要确保 minSumTopicSpacing >= 0
-  let sumSpacing = topBottomSpacing
-  for (let i = 0; i < n; i++) {
-    if (i !== 0 && i !== n - 1) {
-      sumSpacing -= subtreeHeight(children[i], options, sizeMap, styleEngine, state)
-    }
-  }
-
-  return Math.max(0, sumSpacing)
 }
 
 function computeBoundaryBounds(
@@ -214,12 +175,12 @@ function getSpacingMinor(node: NodeDesc, options: LayoutOptions, styleEngine?: a
   return options.verticalGap
 }
 
-function subtreeHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: any, state?: any): number {
+function subtreeHeight(node: NodeDesc, _options: LayoutOptions, sizeMap: Map<string, NodeSize>, _styleEngine?: any, _state?: any): number {
   const size = sizeMap.get(node.id)!
   return size.height
 }
 
-function calcNumRight(children: readonly NodeDesc[], options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: any, state?: any): number {
+function calcNumRight(children: readonly NodeDesc[], _options: LayoutOptions, _sizeMap: Map<string, NodeSize>, _styleEngine?: any, _state?: any): number {
   // 默认右半放置 50% 的子节点
   return Math.ceil(children.length / 2)
 }
@@ -228,7 +189,7 @@ function layoutSideChildren(
   children: readonly NodeDesc[],
   startX: number,
   startY: number,
-  parentHeight: number,
+  _parentHeight: number,
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>,

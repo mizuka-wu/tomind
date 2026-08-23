@@ -220,7 +220,7 @@ export class CellGridLayout {
     grid: (CellLayout | null)[][],
     rowCount: number,
     columnCount: number,
-    wHint: number,
+    _wHint: number,
   ): number[] {
     const widths = new Array(columnCount).fill(0)
 
@@ -274,7 +274,7 @@ export class CellGridLayout {
     grid: (CellLayout | null)[][],
     rowCount: number,
     columnCount: number,
-    hHint: number,
+    _hHint: number,
   ): number[] {
     const heights = new Array(rowCount).fill(0)
 

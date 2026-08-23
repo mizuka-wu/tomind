@@ -13,8 +13,7 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
-import type { PartMeasurement } from './part-measure'
-import { measureNodeParts, hasNonTitleParts } from './part-measure'
+import { measureNodeParts } from './part-measure'
 import { buildTopicCellTree } from './part-cell-builder'
 import type { CellLayout } from './cell-layout'
 

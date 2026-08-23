@@ -11,7 +11,7 @@ import type { NodeDesc } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
-import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
+import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 
