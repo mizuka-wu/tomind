@@ -241,7 +241,9 @@ export interface MathJaxData {
 
 export interface NoteData {
   readonly content: string
-  readonly format?: 'plain' | 'markdown'
+  readonly format?: 'plain' | 'markdown' | 'html'
+  /** 原始 HTML 内容（对齐 snowbrush realHTML） */
+  readonly htmlContent?: string
 }
 
 export interface LinkData {

@@ -41,6 +41,8 @@ export interface ModelNode {
   }
   /** 备注 */
   note?: string
+  /** 备注 HTML 内容（对齐 snowbrush realHTML） */
+  noteHtml?: string
   /** 超链接 */
   href?: string
   /** 结构类型 */
@@ -75,6 +77,16 @@ function genId(): string {
   return `node-${Date.now()}-${++idCounter}`
 }
 
+/** 构建 NoteData（对齐 snowbrush realHTML） */
+function buildNoteData(note?: string, noteHtml?: string): Record<string, unknown> {
+  const content = note ?? ''
+  const hasHtml = !!noteHtml
+  return {
+    content,
+    ...(hasHtml ? { format: 'html' as const, htmlContent: noteHtml } : {}),
+  }
+}
+
 /** ModelNode → NodeDesc */
 function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
   const children: Record<string, readonly NodeDesc[]> = {}
@@ -92,7 +104,7 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
       ...(node.markers?.length ? { markers: node.markers } : {}),
       ...(node.labels?.length ? { labels: node.labels } : {}),
       ...(node.image ? { image: node.image } : {}),
-      ...(node.note ? { note: node.note } : {}),
+      ...(node.note || node.noteHtml ? { note: buildNoteData(node.note, node.noteHtml) } : {}),
       ...(node.href ? { href: node.href } : {}),
       ...(node.structureClass ? { structureClass: node.structureClass } : {}),
       ...(node.collapsed ? { collapsed: true } : {}),

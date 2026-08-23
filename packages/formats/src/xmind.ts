@@ -57,7 +57,7 @@ interface XMindTopic {
     lockRatio?: boolean
     flipAndRotateRecords?: string
   }
-  notes?: { plain?: { content: string } }
+  notes?: { plain?: { content: string }; html?: { content: string } }
   href?: string
   style?: { properties?: Record<string, string> }
 }
@@ -179,6 +179,7 @@ function convertTopic(topic: XMindTopic): ModelNode {
       ...(topic.image.flipAndRotateRecords ? { flipAndRotateRecords: topic.image.flipAndRotateRecords } : {}),
     } } : {}),
     ...(topic.notes?.plain?.content ? { note: topic.notes.plain.content } : {}),
+    ...(topic.notes?.html?.content ? { noteHtml: topic.notes.html.content } : {}),
     ...(topic.href ? { href: topic.href } : {}),
     ...(topic.style?.properties ? { style: convertXMindProps(topic.style.properties) } : {}),
     ...(topic.numbering ? { numbering: {
@@ -263,7 +264,11 @@ function modelToXMindTopic(node: ModelNode): XMindTopic {
       ...(node.image.flipAndRotateRecords ? { flipAndRotateRecords: node.image.flipAndRotateRecords } : {}),
     }
   }
-  if (node.note) topic.notes = { plain: { content: node.note } }
+  if (node.note || node.noteHtml) {
+    topic.notes = {}
+    if (node.note) topic.notes.plain = { content: node.note }
+    if (node.noteHtml) topic.notes.html = { content: node.noteHtml }
+  }
   if (node.href) topic.href = node.href
   if (node.numbering) topic.numbering = node.numbering
 

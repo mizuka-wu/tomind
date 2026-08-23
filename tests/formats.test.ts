@@ -33,6 +33,72 @@ describe('modelToNodeDesc', () => {
     expect(nodeDesc.children.attached[0].attrs.title).toBe('Child 1')
     expect(nodeDesc.children.attached[1].children.attached).toHaveLength(1)
   })
+
+  it('should convert note with HTML content', () => {
+    const tree: ModelTree = {
+      root: {
+        id: 'root-1',
+        title: 'Root',
+        children: [
+          {
+            id: 'child-1',
+            title: 'Child 1',
+            children: [],
+            note: 'Plain note',
+            noteHtml: '<p>Rich <b>text</b></p>',
+          },
+          {
+            id: 'child-2',
+            title: 'Child 2',
+            children: [],
+            note: 'Plain only',
+          },
+        ],
+      },
+      title: 'Test',
+    }
+
+    const nodeDesc = modelToNodeDesc(tree)
+    const child1 = nodeDesc.children.attached[0]
+    const child2 = nodeDesc.children.attached[1]
+
+    // child1: 有 HTML 内容
+    const note1 = child1.attrs.note as { content: string; format?: string; htmlContent?: string }
+    expect(note1.content).toBe('Plain note')
+    expect(note1.format).toBe('html')
+    expect(note1.htmlContent).toBe('<p>Rich <b>text</b></p>')
+
+    // child2: 只有纯文本
+    const note2 = child2.attrs.note as { content: string; format?: string; htmlContent?: string }
+    expect(note2.content).toBe('Plain only')
+    expect(note2.format).toBeUndefined()
+    expect(note2.htmlContent).toBeUndefined()
+  })
+
+  it('should convert note with only HTML content (no plain)', () => {
+    const tree: ModelTree = {
+      root: {
+        id: 'root-1',
+        title: 'Root',
+        children: [
+          {
+            id: 'child-1',
+            title: 'Child 1',
+            children: [],
+            noteHtml: '<p>Only HTML</p>',
+          },
+        ],
+      },
+      title: 'Test',
+    }
+
+    const nodeDesc = modelToNodeDesc(tree)
+    const child1 = nodeDesc.children.attached[0]
+    const note = child1.attrs.note as { content: string; format?: string; htmlContent?: string }
+    expect(note.content).toBe('')
+    expect(note.format).toBe('html')
+    expect(note.htmlContent).toBe('<p>Only HTML</p>')
+  })
 })
 
 // ==================== OPML ====================

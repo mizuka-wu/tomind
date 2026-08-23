@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@leafer-in/html':
+        specifier: ^2.2.9
+        version: 2.2.9(@leafer-in/interface@2.2.8(@leafer-ui/interface@2.2.8)(@leafer/interface@2.2.8))(@leafer-ui/draw@2.2.8)(@leafer-ui/interface@2.2.8)
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -821,6 +825,13 @@ packages:
 
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
+
+  '@leafer-in/html@2.2.9':
+    resolution: {integrity: sha512-cOPq//6sfjkT9yiGNxtT1fOuuSQwW7laRHb8A7n4Ehx4luKeGrwiqgjolboN+grKn3tsV8bqsw3HY0/ePMfXZg==}
+    peerDependencies:
+      '@leafer-in/interface': ^2.2.9
+      '@leafer-ui/draw': ^2.2.9
+      '@leafer-ui/interface': ^2.2.9
 
   '@leafer-in/interface@2.2.8':
     resolution: {integrity: sha512-zwRc2WO9WA5WqQ6RBbDnqSa9Ii6Q3+zuo5oBjqAkx5IWWzaG11dzGc4nOvdEask7MyigCHZeGIBu5OzK0HXFnQ==}
@@ -2406,6 +2417,12 @@ snapshots:
   '@iconify/types@2.0.0': {}
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
+
+  '@leafer-in/html@2.2.9(@leafer-in/interface@2.2.8(@leafer-ui/interface@2.2.8)(@leafer/interface@2.2.8))(@leafer-ui/draw@2.2.8)(@leafer-ui/interface@2.2.8)':
+    dependencies:
+      '@leafer-in/interface': 2.2.8(@leafer-ui/interface@2.2.8)(@leafer/interface@2.2.8)
+      '@leafer-ui/draw': 2.2.8
+      '@leafer-ui/interface': 2.2.8
 
   '@leafer-in/interface@2.2.8(@leafer-ui/interface@2.2.8)(@leafer/interface@2.2.8)':
     dependencies:

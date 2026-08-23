@@ -11,6 +11,7 @@
  */
 
 import { Group, Text, Image as LeaferImage, Rect } from 'leafer-ui'
+import { HTMLText } from '@leafer-in/html'
 import { ViewDesc } from './view-desc'
 import type { NodeDesc, NodeRole } from '@tomind/schema'
 import { getTitleText } from '@tomind/schema'
@@ -192,8 +193,17 @@ export class LabelsPartViewDesc extends PartViewDesc {
 
 // ==================== NotePartViewDesc ====================
 
+/** NoteData 结构（对齐 schema NoteData） */
+interface NoteData {
+  readonly content: string
+  readonly format?: 'plain' | 'markdown' | 'html'
+  readonly htmlContent?: string
+}
+
 export class NotePartViewDesc extends PartViewDesc {
   private _noteIcon: Rect | null = null
+  private _htmlText: HTMLText | null = null
+  private _plainText: Text | null = null
 
   constructor(node: NodeDesc, role: NodeRole) {
     super(node, role, 'note', 'right', 40)
@@ -216,9 +226,89 @@ export class NotePartViewDesc extends PartViewDesc {
   }
 
   protected updatePart(data: unknown): void {
+    const note = data as NoteData | undefined
+    const hasNote = !!note && (!!(note as NoteData).content || !!(note as NoteData).htmlContent)
+
+    // 图标可见性
     if (this._noteIcon) {
-      this._noteIcon.visible = !!data
+      this._noteIcon.visible = hasNote
     }
+
+    if (!hasNote || !note) {
+      // 清除内容
+      this._clearContent()
+      return
+    }
+
+    const noteData = note as NoteData
+    // 优先使用 HTML 内容（对齐 snowbrush realHTML）
+    if (noteData.htmlContent) {
+      this._renderHtml(noteData.htmlContent)
+    } else if (noteData.content) {
+      this._renderPlain(noteData.content)
+    }
+  }
+
+  private _renderHtml(html: string): void {
+    // 清除纯文本
+    if (this._plainText) {
+      this.element?.remove(this._plainText)
+      this._plainText = null
+    }
+
+    if (!this._htmlText) {
+      this._htmlText = new HTMLText({
+        text: html,
+        width: 280,
+        fill: '#333',
+        fontSize: 13,
+        fontFamily: 'Microsoft YaHei, PingFang SC, sans-serif',
+        y: 20, // 图标下方
+      })
+      this.element?.add(this._htmlText)
+    } else {
+      this._htmlText.text = html
+    }
+  }
+
+  private _renderPlain(text: string): void {
+    // 清除 HTML
+    if (this._htmlText) {
+      this.element?.remove(this._htmlText)
+      this._htmlText = null
+    }
+
+    if (!this._plainText) {
+      this._plainText = new Text({
+        text,
+        width: 280,
+        fill: '#333',
+        fontSize: 13,
+        fontFamily: 'Microsoft YaHei, PingFang SC, sans-serif',
+        y: 20, // 图标下方
+      })
+      this.element?.add(this._plainText)
+    } else {
+      this._plainText.text = text
+    }
+  }
+
+  private _clearContent(): void {
+    if (this._htmlText) {
+      this.element?.remove(this._htmlText)
+      this._htmlText = null
+    }
+    if (this._plainText) {
+      this.element?.remove(this._plainText)
+      this._plainText = null
+    }
+  }
+
+  override destroy(): void {
+    this._htmlText = null
+    this._plainText = null
+    this._noteIcon = null
+    super.destroy()
   }
 }
 

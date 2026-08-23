@@ -14,7 +14,8 @@
     "@tomind/schema": "workspace:*",
     "@tomind/state": "workspace:*",
     "@tomind/layout": "workspace:*",
-    "@tomind/style": "workspace:*"
+    "@tomind/style": "workspace:*",
+    "@leafer-in/html": "^2.2.9"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

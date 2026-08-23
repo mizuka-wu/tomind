@@ -91,7 +91,8 @@ interface ImageData {
 
 interface NoteData {
   readonly content: string
-  readonly format?: 'plain' | 'markdown'
+  readonly format?: 'plain' | 'markdown' | 'html'
+  readonly htmlContent?: string
 }
 
 interface LinkData {
@@ -175,8 +176,22 @@ function measureNote(node: NodeDesc): { width: number; height: number } {
   const note = node.attrs.note as NoteData | undefined
   if (!note) return { width: 0, height: 0 }
 
-  // 固定 16×16
-  return { width: INFO_ICON_SIZE, height: INFO_ICON_SIZE }
+  // 图标 + 内容区域
+  const hasContent = !!(note as NoteData).htmlContent || !!(note as NoteData).content
+  if (!hasContent) return { width: INFO_ICON_SIZE, height: INFO_ICON_SIZE }
+
+  // 估算内容高度：每行约 20px，每行约 40 字符
+  const content = (note as NoteData).htmlContent || (note as NoteData).content || ''
+  const maxWidth = 280
+  const charsPerLine = 40
+  const lineHeight = 20
+  const estimatedLines = Math.max(1, Math.ceil(content.length / charsPerLine))
+  const contentHeight = Math.min(estimatedLines * lineHeight, 400) // 最大 400px
+
+  return {
+    width: Math.max(INFO_ICON_SIZE, maxWidth),
+    height: INFO_ICON_SIZE + 4 + contentHeight, // 图标 + 间距 + 内容
+  }
 }
 
 /**
