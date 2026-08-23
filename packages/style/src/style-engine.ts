@@ -309,6 +309,35 @@ export class StyleEngine {
     const style = this.computeStyle(state, topicId, options)
     const leaferStyle = this.toLeaferStyle(style)
 
+    // 从 node.attrs.image 读取图片属性
+    const node = findById(state.doc, topicId)
+    if (node) {
+      const imageData = node.attrs.image as Record<string, unknown> | undefined
+      if (imageData) {
+        if (imageData.url) {
+          leaferStyle.imageUrl = imageData.url
+        }
+        if (typeof imageData.width === 'number') {
+          leaferStyle.imageWidth = imageData.width
+        }
+        if (typeof imageData.height === 'number') {
+          leaferStyle.imageHeight = imageData.height
+        }
+        if (typeof imageData.borderWidth === 'number') {
+          leaferStyle.imageBorderWidth = imageData.borderWidth
+        }
+        if (imageData.borderColor) {
+          leaferStyle.imageBorderColor = imageData.borderColor
+        }
+        if (typeof imageData.opacity === 'number') {
+          leaferStyle.imageOpacity = imageData.opacity
+        }
+        if (imageData.shadowVisible != null) {
+          leaferStyle.imageShadowVisible = imageData.shadowVisible
+        }
+      }
+    }
+
     // 从 NumberingPlugin state 读取编号文本
     try {
       const numberingState = state.field(numberingKey) as NumberingState | undefined

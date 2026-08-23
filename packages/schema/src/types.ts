@@ -225,6 +225,13 @@ export interface ImageData {
   readonly src: string
   readonly width?: number
   readonly height?: number
+  readonly align?: string
+  readonly borderWidth?: number
+  readonly borderColor?: string
+  readonly opacity?: number
+  readonly shadowVisible?: boolean
+  readonly lockRatio?: boolean
+  readonly flipAndRotateRecords?: string
 }
 
 export interface MathJaxData {

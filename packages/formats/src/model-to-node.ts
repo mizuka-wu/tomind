@@ -27,7 +27,18 @@ export interface ModelNode {
   /** 标签 */
   labels?: string[]
   /** 图片 */
-  image?: { url: string; width: number; height: number }
+  image?: {
+    url: string
+    width: number
+    height: number
+    align?: string
+    borderWidth?: number
+    borderColor?: string
+    opacity?: number
+    shadowVisible?: boolean
+    lockRatio?: boolean
+    flipAndRotateRecords?: string
+  }
   /** 备注 */
   note?: string
   /** 超链接 */

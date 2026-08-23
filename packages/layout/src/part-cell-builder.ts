@@ -40,6 +40,7 @@ export interface TopicCellTree {
   rightPartsCell: CellLayout
   bottomPartsCell: CellLayout
   labelsCell: CellLayout
+  imageCell: CellLayout
 }
 
 // ==================== 默认配置 ====================
@@ -344,6 +345,18 @@ export function buildTopicCellTree(parts: PartMeasurement[]): TopicCellTree {
   topicCell.add(shapePaddingCell)
   topicCell.add(labelsCell)
 
+  // Image Cell (image part，放在 innerCell 右侧)
+  const imageCell = createCell('image', {
+    layout: new CellGridLayout(1, {
+      horizontalSpacing: 0,
+      verticalSpacing: 0,
+    }),
+    data: {
+      horizontalAlignment: 'center',
+      verticalAlignment: 'center',
+    },
+  })
+
   return {
     topicCell,
     shapePaddingCell,
@@ -360,6 +373,7 @@ export function buildTopicCellTree(parts: PartMeasurement[]): TopicCellTree {
     rightPartsCell,
     bottomPartsCell,
     labelsCell,
+    imageCell,
   }
 }
 

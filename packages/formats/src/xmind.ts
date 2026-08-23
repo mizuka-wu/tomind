@@ -45,7 +45,18 @@ interface XMindTopic {
   }
   markers?: { markerId: string }[]
   labels?: string[]
-  image?: { src: string; width: number; height: number }
+  image?: {
+    src: string
+    width: number
+    height: number
+    align?: string
+    borderWidth?: number
+    borderColor?: string
+    opacity?: number
+    shadowVisible?: boolean
+    lockRatio?: boolean
+    flipAndRotateRecords?: string
+  }
   notes?: { plain?: { content: string } }
   href?: string
   style?: { properties?: Record<string, string> }
@@ -155,7 +166,18 @@ function convertTopic(topic: XMindTopic): ModelNode {
     ...(topic.collapsed ? { collapsed: true } : {}),
     ...(topic.markers?.length ? { markers: topic.markers.map((m) => m.markerId) } : {}),
     ...(topic.labels?.length ? { labels: topic.labels } : {}),
-    ...(topic.image ? { image: { url: topic.image.src, width: topic.image.width, height: topic.image.height } } : {}),
+    ...(topic.image ? { image: {
+      url: topic.image.src,
+      width: topic.image.width,
+      height: topic.image.height,
+      ...(topic.image.align ? { align: topic.image.align } : {}),
+      ...(topic.image.borderWidth != null ? { borderWidth: topic.image.borderWidth } : {}),
+      ...(topic.image.borderColor ? { borderColor: topic.image.borderColor } : {}),
+      ...(topic.image.opacity != null ? { opacity: topic.image.opacity } : {}),
+      ...(topic.image.shadowVisible != null ? { shadowVisible: topic.image.shadowVisible } : {}),
+      ...(topic.image.lockRatio != null ? { lockRatio: topic.image.lockRatio } : {}),
+      ...(topic.image.flipAndRotateRecords ? { flipAndRotateRecords: topic.image.flipAndRotateRecords } : {}),
+    } } : {}),
     ...(topic.notes?.plain?.content ? { note: topic.notes.plain.content } : {}),
     ...(topic.href ? { href: topic.href } : {}),
     ...(topic.style?.properties ? { style: convertXMindProps(topic.style.properties) } : {}),
@@ -227,7 +249,20 @@ function modelToXMindTopic(node: ModelNode): XMindTopic {
   if (node.collapsed) topic.collapsed = true
   if (node.markers?.length) topic.markers = node.markers.map((m) => ({ markerId: m }))
   if (node.labels?.length) topic.labels = node.labels
-  if (node.image) topic.image = { src: node.image.url, width: node.image.width, height: node.image.height }
+  if (node.image) {
+    topic.image = {
+      src: node.image.url,
+      width: node.image.width,
+      height: node.image.height,
+      ...(node.image.align ? { align: node.image.align } : {}),
+      ...(node.image.borderWidth != null ? { borderWidth: node.image.borderWidth } : {}),
+      ...(node.image.borderColor ? { borderColor: node.image.borderColor } : {}),
+      ...(node.image.opacity != null ? { opacity: node.image.opacity } : {}),
+      ...(node.image.shadowVisible != null ? { shadowVisible: node.image.shadowVisible } : {}),
+      ...(node.image.lockRatio != null ? { lockRatio: node.image.lockRatio } : {}),
+      ...(node.image.flipAndRotateRecords ? { flipAndRotateRecords: node.image.flipAndRotateRecords } : {}),
+    }
+  }
   if (node.note) topic.notes = { plain: { content: node.note } }
   if (node.href) topic.href = node.href
   if (node.numbering) topic.numbering = node.numbering
