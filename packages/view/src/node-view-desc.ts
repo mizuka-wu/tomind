@@ -1473,8 +1473,40 @@ export class ImageNodeViewDesc extends NodeViewDesc {
   protected updateStyle(): void {
     if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
     const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
-    const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
-    this.renderer.render(layout, style)
+
+    // 从布局引擎获取 layout，查找父 topic 的 partBounds 来定位 image
+    let layout: LayoutResult
+    if (NodeViewDesc.layoutEngine) {
+      layout = NodeViewDesc.layoutEngine.getLayoutResult()
+    } else {
+      layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
+    }
+
+    // 查找父 topic 的 partBounds
+    const parentViewDesc = this._parent
+    const parentId = parentViewDesc?.node.id
+    const parentLayout = parentId ? layout.nodes.get(parentId) : null
+    const imageBounds = parentLayout?.partBounds?.get('image')
+
+    if (imageBounds) {
+      // 用 partBounds 构造一个虚拟的 LayoutResult 传给 renderer
+      const virtualLayout: LayoutResult = {
+        nodes: new Map([[this.node.id, {
+          x: imageBounds.x,
+          y: imageBounds.y,
+          width: imageBounds.width,
+          height: imageBounds.height,
+          titleWidth: 0,
+          titleHeight: 0,
+          branchHeight: 0,
+        }]]),
+        totalWidth: imageBounds.x + imageBounds.width,
+        totalHeight: imageBounds.y + imageBounds.height,
+      }
+      this.renderer.render(virtualLayout, style)
+    } else {
+      this.renderer.render(layout, style)
+    }
   }
 
   protected updateContent(): void {

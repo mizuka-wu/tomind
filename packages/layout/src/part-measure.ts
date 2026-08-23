@@ -26,7 +26,7 @@ const DEFAULT_PART_CONFIG: Record<PartType, { position: PartPosition; order: num
   title: { position: 'center', order: 0 },
   numbering: { position: 'left', order: -1 },
   markers: { position: 'top', order: 1 },
-  image: { position: 'center', order: 10 },
+  image: { position: 'top', order: 10 },
   labels: { position: 'bottom', order: 30 },
   note: { position: 'right', order: 40 },
   link: { position: 'right', order: 5 },
@@ -252,7 +252,14 @@ export function measureNodeParts(
   const imageSize = measureImage(node)
   if (imageSize.width > 0 || imageSize.height > 0) {
     const image = node.attrs.image as ImageData | undefined
-    const position = (image?.align as PartPosition) ?? DEFAULT_PART_CONFIG.image.position
+    const rawAlign = image?.align as string | undefined
+    // snowbrush: 'up' 和 undefined 都映射到 'top'
+    let position: PartPosition = DEFAULT_PART_CONFIG.image.position
+    if (rawAlign === 'up' || rawAlign === 'top') {
+      position = 'top'
+    } else if (rawAlign === 'bottom' || rawAlign === 'left' || rawAlign === 'right' || rawAlign === 'outside') {
+      position = rawAlign
+    }
     parts.push({
       partType: 'image',
       position,

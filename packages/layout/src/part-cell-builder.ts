@@ -193,11 +193,27 @@ export function buildTopicCellTree(parts: PartMeasurement[]): TopicCellTree {
     infoCell.add(linkCell)
   }
 
+  // Center Image Cell — position=center 的 image 与 title 水平并排
+  const centerImageParts = (groups.get('center') ?? []).filter(p => p.partType === 'image')
+  const hasCenterImage = centerImageParts.length > 0
+  const imageCell = createCell('image', {
+    data: {
+      horizontalAlignment: 'center',
+      verticalAlignment: 'center',
+    },
+    calcSize: () => {
+      if (centerImageParts.length === 0) return { width: 0, height: 0 }
+      return centerImageParts[0].size
+    },
+  })
+
   // ─── 创建容器 cells ───
 
   // Inner Cell (4-col horizontal: numbering, markers, title, info)
+  // 当 center 有 image 时扩展为 5 列（image 放在 title 之后）
+  const innerNumCols = hasCenterImage ? 5 : 4
   const innerCell = createCell('inner', {
-    layout: new CellGridLayout(4, {
+    layout: new CellGridLayout(innerNumCols, {
       horizontalSpacing: 10,
       verticalSpacing: 0,
     }),
@@ -209,6 +225,9 @@ export function buildTopicCellTree(parts: PartMeasurement[]): TopicCellTree {
   innerCell.add(numberingCell)
   innerCell.add(markerCell)
   innerCell.add(titleGroupCell)
+  if (hasCenterImage) {
+    innerCell.add(imageCell)
+  }
   innerCell.add(infoCell)
 
   // Left Parts Cell (position=left, 除去 numbering)
@@ -344,18 +363,6 @@ export function buildTopicCellTree(parts: PartMeasurement[]): TopicCellTree {
   })
   topicCell.add(shapePaddingCell)
   topicCell.add(labelsCell)
-
-  // Image Cell (image part，放在 innerCell 右侧)
-  const imageCell = createCell('image', {
-    layout: new CellGridLayout(1, {
-      horizontalSpacing: 0,
-      verticalSpacing: 0,
-    }),
-    data: {
-      horizontalAlignment: 'center',
-      verticalAlignment: 'center',
-    },
-  })
 
   return {
     topicCell,
