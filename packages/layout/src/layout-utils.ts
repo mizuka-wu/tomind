@@ -4,6 +4,7 @@
  */
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutOptions } from './layout-engine'
+import { measureTextSize } from './layout-engine'
 
 const ATTACHED = 'attached'
 
@@ -52,7 +53,36 @@ export function findRootTopic(doc: NodeDesc): NodeDesc | null {
   return null
 }
 
-// ─── 测量辅助 ───
+// ─── 测量 ───
 
-/** 测量文本尺寸（包装 layout-engine 的 measureTextSize） */
-export { measureTextSize } from './layout-engine'
+export { measureTextSize }
+
+export interface SimpleNodeSize {
+  width: number
+  height: number
+}
+
+/** 简单节点测量（title + padding），适用于不需要 part-aware 的布局 */
+export function measureSimpleNode(node: NodeDesc, options: LayoutOptions): SimpleNodeSize {
+  const fontSize = getFontSize(node)
+  const title = getTitle(node)
+  const { width, height } = measureTextSize(title, fontSize, options)
+  return {
+    width: width + options.nodePadding.left + options.nodePadding.right,
+    height: height + options.nodePadding.top + options.nodePadding.bottom,
+  }
+}
+
+/** 递归测量整棵子树，填充 sizeMap */
+export function measureSimpleSubtree(
+  node: NodeDesc,
+  options: LayoutOptions,
+  sizeMap: Map<string, SimpleNodeSize>,
+): void {
+  sizeMap.set(node.id, measureSimpleNode(node, options))
+  if (!isCollapsed(node)) {
+    for (const child of getAttachedChildren(node)) {
+      measureSimpleSubtree(child, options, sizeMap)
+    }
+  }
+}

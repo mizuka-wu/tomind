@@ -8,31 +8,8 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
-import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
-
-interface NodeSize {
-  width: number
-  height: number
-}
-
-function measureNode(node: NodeDesc, options: LayoutOptions): NodeSize {
-  const fontSize = getFontSize(node)
-  const title = getTitle(node)
-  const { width, height } = measureTextSize(title, fontSize, options)
-  return {
-    width: width + options.nodePadding.left + options.nodePadding.right,
-    height: height + options.nodePadding.top + options.nodePadding.bottom,
-  }
-}
-
-function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): void {
-  sizeMap.set(node.id, measureNode(node, options))
-  if (!isCollapsed(node)) {
-    for (const child of getAttachedChildren(node)) {
-      measureSubtree(child, options, sizeMap)
-    }
-  }
-}
+import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleNode, measureSimpleSubtree } from './layout-utils'
+type NodeSize = import('./layout-utils').SimpleNodeSize
 
 /** 递归计算子树总高度（垂直方向的总跨度） */
 function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
@@ -161,7 +138,7 @@ export const braceRightLayoutAlgorithm: LayoutAlgorithm = {
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSubtree(root, options, sizeMap)
+    measureSimpleSubtree(root, options, sizeMap)
 
     const totalH = subtreeTotalHeight(root, options, sizeMap)
     const rootX = options.rootOffsetX
@@ -187,7 +164,7 @@ export const braceLeftLayoutAlgorithm: LayoutAlgorithm = {
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSubtree(root, options, sizeMap)
+    measureSimpleSubtree(root, options, sizeMap)
 
     const totalH = subtreeTotalHeight(root, options, sizeMap)
     const totalW = subtreeTotalWidth(root, options, sizeMap)

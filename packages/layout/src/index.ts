@@ -2,7 +2,8 @@ export { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 export type { ILayoutEngine, NodeLayout, LayoutResult, LayoutOptions, LayoutAlgorithm } from './layout-engine'
 
 // 公共工具函数
-export { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
+export { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleNode, measureSimpleSubtree } from './layout-utils'
+export type { SimpleNodeSize } from './layout-utils'
 
 export { LayoutEngine } from './default-layout-engine'
 
