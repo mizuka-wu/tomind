@@ -15,7 +15,7 @@ import { Group, Rect } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
 import type { ViewLike } from './shared-types'
-import { typedStorage } from './shared-utils'
+import { typedStorage, findOne } from './shared-utils'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
 
 // ==================== 常量 ====================
@@ -171,7 +171,7 @@ function setupAnchorDrag(
   }
 
   for (const dir of anchorKeys) {
-    const anchorGroup = overlay.findOne(`anchor-${dir}`) as Group
+    const anchorGroup = findOne<Group>(overlay, `anchor-${dir}`)
     if (!anchorGroup) continue
 
     const reg = new DraggableRegister(anchorGroup, {
@@ -217,7 +217,7 @@ function setupAnchorDrag(
       }
 
       // 更新 overlay 边框
-      const box = overlay.findOne('') as Rect
+      const box = findOne<Rect>(overlay, '')
       if (box) {
         box.set({ width: newWidth, height: newHeight })
       }
@@ -225,7 +225,7 @@ function setupAnchorDrag(
       // 更新锚点位置
       const newPos = { l: 0, m: newHeight / 2, r: newWidth, t: 0, c: newWidth / 2, b: newHeight }
       for (const k of anchorKeys) {
-        const ag = overlay.findOne(`anchor-${k}`) as Group
+        const ag = findOne<Group>(overlay, `anchor-${k}`)
         if (ag) {
           ag.set({
             x: -ANCHOR_SIZE / 2 + newPos[k[0] as keyof typeof newPos],
@@ -238,7 +238,7 @@ function setupAnchorDrag(
     })
 
     reg.dragEnd(() => {
-      const box = overlay.findOne('') as Rect
+      const box = findOne<Rect>(overlay, '')
       if (!box) return
 
       const finalWidth = box.width ?? startWidth

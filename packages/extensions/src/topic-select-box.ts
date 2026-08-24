@@ -17,7 +17,7 @@ import { createExtension } from '@tomind/core'
 import type { ViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo, type DragPosition } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
-import { typedStorage } from './shared-utils'
+import { typedStorage, findOne } from './shared-utils'
 
 // ==================== 常量 ====================
 
@@ -101,7 +101,7 @@ function setupBarDrag(
   startWidth: number,
   minWidth: number,
 ): DraggableRegister | null {
-  const bar = overlay.findOne(barName) as Rect
+  const bar = findOne<Rect>(overlay, barName)
   if (!bar) return null
 
   const isLeft = barName === 'left-bar'

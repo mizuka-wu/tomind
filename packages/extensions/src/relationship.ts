@@ -17,7 +17,7 @@ import { createExtension } from '@tomind/core'
 import type { ViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
-import { typedStorage } from './shared-utils'
+import { typedStorage, findOne } from './shared-utils'
 
 // ==================== 常量 ====================
 
@@ -319,7 +319,7 @@ function setupEndpointDrag(
   pathName: string,
   nodeId: string,
 ): DraggableRegister | null {
-  const dot = overlay.findOne(dotName) as Ellipse
+  const dot = findOne<Ellipse>(overlay, dotName)
   if (!dot) return null
 
   const reg = new DraggableRegister(dot, {
@@ -340,8 +340,8 @@ function setupEndpointDrag(
     dot.set({ x: finalX, y: finalY })
 
     // 更新连接线
-    const cp = overlay.findOne(cpName) as Ellipse
-    const cpLine = overlay.findOne(cpLineName) as Path
+    const cp = findOne<Ellipse>(overlay, cpName)
+    const cpLine = findOne<Path>(overlay, cpLineName)
     if (cp && cpLine) {
       cpLine.path = `M ${finalX} ${finalY} L ${cp.x ?? 0} ${cp.y ?? 0}`
     }
@@ -372,7 +372,7 @@ function setupControlPointDrag(
   pathName: string,
   nodeId: string,
 ): DraggableRegister | null {
-  const cp = overlay.findOne(cpName) as Ellipse
+  const cp = findOne<Ellipse>(overlay, cpName)
   if (!cp) return null
 
   const reg = new DraggableRegister(cp, {
@@ -387,8 +387,8 @@ function setupControlPointDrag(
     })
 
     // 更新连接线
-    const dot = overlay.findOne(dotName) as Ellipse
-    const cpLine = overlay.findOne(cpLineName) as Path
+    const dot = findOne<Ellipse>(overlay, dotName)
+    const cpLine = findOne<Path>(overlay, cpLineName)
     if (dot && cpLine) {
       cpLine.path = `M ${dot.x ?? 0} ${dot.y ?? 0} L ${cp.x ?? 0} ${cp.y ?? 0}`
     }
@@ -411,11 +411,11 @@ function setupControlPointDrag(
 
 /** 更新主路径（根据当前端点和控制点位置） */
 function updateMainPath(overlay: Group): void {
-  const startDot = overlay.findOne('start-point') as Ellipse
-  const endDot = overlay.findOne('end-point') as Ellipse
-  const cp1 = overlay.findOne('control-point-1') as Ellipse
-  const cp2 = overlay.findOne('control-point-2') as Ellipse
-  const path = overlay.findOne('main-path') as Path
+  const startDot = findOne<Ellipse>(overlay, 'start-point')
+  const endDot = findOne<Ellipse>(overlay, 'end-point')
+  const cp1 = findOne<Ellipse>(overlay, 'control-point-1')
+  const cp2 = findOne<Ellipse>(overlay, 'control-point-2')
+  const path = findOne<Path>(overlay, 'main-path')
 
   if (startDot && endDot && cp1 && cp2 && path) {
     path.path = generateCubicPath(

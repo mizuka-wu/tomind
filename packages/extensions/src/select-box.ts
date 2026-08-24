@@ -17,7 +17,7 @@ import { createExtension } from '@tomind/core'
 import type { ViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo, type DragPosition } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
-import { typedStorage } from './shared-utils'
+import { typedStorage, findOne } from './shared-utils'
 
 // ==================== 常量 ====================
 
@@ -313,9 +313,9 @@ function applyVisualState(storage: SelectBoxStorage): void {
   const overlay = storage.overlayGroup
   if (!overlay) return
 
-  const box = overlay.findOne('select-box') as Path
-  const bar1 = overlay.findOne('bar-one') as Path
-  const bar2 = overlay.findOne('bar-two') as Path
+  const box = findOne<Path>(overlay, 'select-box')
+  const bar1 = findOne<Path>(overlay, 'bar-one')
+  const bar2 = findOne<Path>(overlay, 'bar-two')
 
   switch (storage.state) {
     case 'select':
@@ -416,7 +416,7 @@ function setupBarDrag(
   size: { x: number; y: number; width: number; height: number },
   direction: Direction,
 ): DraggableRegister | null {
-  const bar = overlay.findOne(barName) as Path
+  const bar = findOne<Path>(overlay, barName)
   if (!bar) return null
 
   const isUD = direction === 'UD' || direction === 'up' || direction === 'down'
@@ -464,7 +464,7 @@ function setupBarDrag(
     const newY = startSize.y + offsetY
     const newBoxPath = generateBoxPath(newX, newY, newWidth, newHeight)
 
-    const box = overlay.findOne('select-box') as Path
+    const box = findOne<Path>(overlay, 'select-box')
     if (box) box.path = newBoxPath
 
     // 更新控制条
@@ -472,8 +472,8 @@ function setupBarDrag(
     const bar2Dir = isUD ? 'down' : 'right'
     const bar1Path = generateControlBarPath(bar1Dir, newX, newY, newWidth, newHeight)
     const bar2Path = generateControlBarPath(bar2Dir, newX, newY, newWidth, newHeight)
-    const b1 = overlay.findOne('bar-one') as Path
-    const b2 = overlay.findOne('bar-two') as Path
+    const b1 = findOne<Path>(overlay, 'bar-one')
+    const b2 = findOne<Path>(overlay, 'bar-two')
     if (b1) b1.path = bar1Path
     if (b2) b2.path = bar2Path
 
