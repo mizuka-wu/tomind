@@ -1,10 +1,13 @@
 /**
  * ExtensionManager — 扩展管理器
  *
- * 管理扩展的生命周期、命令注册、事件系统、快捷键
- * 支持 Tiptap 风格的 onCreate、addOptions、addStorage 钩子
+ * 生命周期：
+ *   register(ext) → 存储扩展，若 ctx 已就绪则立即初始化
+ *   setup(ctx)    → 设置上下文，批量初始化所有已注册扩展
+ *   destroy()     → 清理所有扩展
+ *
+ * 初始化路径唯一：所有扩展通过 initializeExtension() 完成完整生命周期
  */
-
 import type {
   Extension,
   ExtensionContext,
@@ -14,19 +17,21 @@ import type {
   CommandFn
 } from './types'
 
-/**
- * 扩展管理器实现
- */
 export class ExtensionManager implements IExtensionManager {
   private _extensions = new Map<string, Extension>()
+  private _initialized = new Set<string>()
   private _cleanupFns = new Map<string, () => void>()
   private _ctx: ExtensionContext | null = null
   private _eventHandlers = new Map<string, Set<EventHandler>>()
   private _commands = new Map<string, CommandFn>()
   private _keyboardShortcuts = new Map<string, KeyboardShortcutHandler>()
 
+  // ==================== 注册 / 注销 ====================
+
   /**
    * 注册扩展
+   * - 若 ctx 未就绪（setup 前）：仅存储，等 setup 批量初始化
+   * - 若 ctx 已就绪（setup 后）：存储 + 立即初始化
    */
   register(extension: Extension): void {
     if (this._extensions.has(extension.name)) {
@@ -36,12 +41,18 @@ export class ExtensionManager implements IExtensionManager {
 
     this._extensions.set(extension.name, extension)
 
-    // 注册扩展的命令
+    // 注册旧式 commands（兼容）
     if (extension.commands) {
       for (const [cmdName, cmdFactory] of Object.entries(extension.commands)) {
         const fullName = `${extension.name}.${cmdName}`
         this._commands.set(fullName, cmdFactory as unknown as CommandFn)
       }
+    }
+
+    // ctx 已就绪 → 立即初始化
+    if (this._ctx) {
+      this.initializeExtension(extension, this._ctx)
+      this.rebuildKeyboardShortcuts()
     }
   }
 
@@ -62,57 +73,71 @@ export class ExtensionManager implements IExtensionManager {
     }
 
     this._extensions.delete(name)
+    this._initialized.delete(name)
+
+    // 重建快捷键（移除该扩展的快捷键）
+    if (this._ctx) {
+      this.rebuildKeyboardShortcuts()
+    }
   }
 
-  /**
-   * 获取扩展
-   */
+  // ==================== 查询 ====================
+
   getExtension(name: string): Extension | undefined {
     return this._extensions.get(name)
   }
 
-  /**
-   * 获取所有扩展
-   */
   getExtensions(): Extension[] {
     return Array.from(this._extensions.values())
   }
 
-  /**
-   * 是否已 setup
-   */
   isSetup(): boolean {
     return this._ctx !== null
   }
 
-  /**
-   * 单独初始化一个扩展（用于后注册的扩展）
-   */
-  setupExtension(extension: Extension, ctx: ExtensionContext): void {
-    if (!extension.isEnabled()) return
+  // ==================== 初始化 ====================
 
-    // 更新 ctx
+  /**
+   * 初始化所有扩展（幂等：已 setup 则跳过）
+   */
+  setup(ctx: ExtensionContext): void {
     this._ctx = ctx
 
-    // 调用 addOptions 合并选项
+    for (const [, extension] of this._extensions) {
+      if (this._initialized.has(extension.name)) continue
+      this.initializeExtension(extension, ctx)
+    }
+
+    this.rebuildKeyboardShortcuts()
+  }
+
+  /**
+   * 单个扩展的完整初始化（唯一初始化路径）
+   */
+  private initializeExtension(extension: Extension, ctx: ExtensionContext): void {
+    if (!extension.isEnabled()) return
+    if (this._initialized.has(extension.name)) return
+
+    // 1. addOptions
     if (extension.addOptions) {
       const extraOptions = extension.addOptions()
       extension.defaultOptions = { ...extension.defaultOptions, ...extraOptions }
     }
 
-    // 调用 addStorage 初始化存储
+    // 2. addStorage
     if (extension.addStorage) {
       const storage = extension.addStorage()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(extension as any).storage = storage
     }
 
-    // 调用 addNodeView 注册 NodeView
+    // 3. addNodeView
     if (extension.type === 'node' && extension.addNodeView) {
       const NodeViewClass = extension.addNodeView()
       ctx.registerNodeView(extension.name, NodeViewClass)
     }
 
-    // 调用 addCommands 注册命令
+    // 4. addCommands
     if (extension.addCommands) {
       const commands = extension.addCommands()
       for (const [cmdName, cmdFn] of Object.entries(commands)) {
@@ -121,17 +146,15 @@ export class ExtensionManager implements IExtensionManager {
       }
     }
 
-    // 调用 addLayout 注册布局算法
+    // 5. addLayout
     if (extension.addLayout) {
       const layoutAlgorithm = extension.addLayout()
       ctx.registerLayout(layoutAlgorithm)
     }
 
-    // 重建所有快捷键（包含新注册的扩展，保持与 setup() 一致）
-    this.setupKeyboardShortcuts(ctx)
-
-    // 调用 onCreate 钩子
+    // 6. onCreate
     if (extension.onCreate) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const storage = (extension as any).storage ?? {}
       const extensionCtx: ExtensionContext = { ...ctx, storage }
       const cleanup = extension.onCreate(extensionCtx)
@@ -139,211 +162,14 @@ export class ExtensionManager implements IExtensionManager {
         this._cleanupFns.set(extension.name, cleanup)
       }
     }
+
+    this._initialized.add(extension.name)
   }
 
   /**
-   * 初始化所有扩展
+   * 重建所有快捷键（清除 + 从所有已启用扩展重新收集）
    */
-  setup(ctx: ExtensionContext): void {
-    this._ctx = ctx
-
-    for (const [name, extension] of this._extensions) {
-      if (!extension.isEnabled()) continue
-
-      // 调用 addOptions 合并选项
-      if (extension.addOptions) {
-        const extraOptions = extension.addOptions()
-        extension.defaultOptions = { ...extension.defaultOptions, ...extraOptions }
-      }
-
-      // 调用 addStorage 初始化存储
-      if (extension.addStorage) {
-        const storage = extension.addStorage()
-        ;(extension as any).storage = storage
-      }
-
-      // 调用 addNodeView 注册 NodeView（Tiptap 风格）
-      if (extension.type === 'node' && extension.addNodeView) {
-        const NodeViewClass = extension.addNodeView()
-        ctx.registerNodeView(name, NodeViewClass)
-      }
-
-      // 调用 addCommands 注册命令（Tiptap 风格）
-      if (extension.addCommands) {
-        const commands = extension.addCommands()
-        for (const [cmdName, cmdFn] of Object.entries(commands)) {
-          const fullName = `${name}.${cmdName}`
-          ctx.registerCommand(fullName, cmdFn)
-        }
-      }
-
-      // 调用 addLayout 注册布局算法（Tiptap 风格）
-      if (extension.addLayout) {
-        const layoutAlgorithm = extension.addLayout()
-        ctx.registerLayout(layoutAlgorithm)
-      }
-
-      // 调用 onCreate 钩子（Tiptap 风格）
-      // 注入 per-extension storage 到 ctx
-      if (extension.onCreate) {
-        const storage = (extension as any).storage ?? {}
-        const extensionCtx: ExtensionContext = { ...ctx, storage }
-        const cleanup = extension.onCreate(extensionCtx)
-        if (cleanup) {
-          this._cleanupFns.set(name, cleanup)
-        }
-      }
-    }
-
-    // 注册快捷键
-    this.setupKeyboardShortcuts(ctx)
-  }
-
-  /**
-   * 销毁所有扩展
-   */
-  destroy(): void {
-    for (const [name, cleanup] of this._cleanupFns) {
-      try {
-        cleanup()
-      } catch (error) {
-        console.error(`Error cleaning up extension "${name}":`, error)
-      }
-    }
-    this._cleanupFns.clear()
-
-    for (const [name, extension] of this._extensions) {
-      try {
-        extension.destroy?.()
-      } catch (error) {
-        console.error(`Error destroying extension "${name}":`, error)
-      }
-    }
-
-    this._extensions.clear()
-    this._commands.clear()
-    this._eventHandlers.clear()
-    this._keyboardShortcuts.clear()
-    this._ctx = null
-  }
-
-  /**
-   * 更新状态
-   */
-  updateState(state: unknown): void {
-    this.emit('stateUpdate', state)
-  }
-
-  /**
-   * 触发事件
-   */
-  emit(event: string, ...args: unknown[]): void {
-    const handlers = this._eventHandlers.get(event)
-    if (handlers) {
-      for (const handler of handlers) {
-        try {
-          handler(...args)
-        } catch (error) {
-          console.error(`Error in event handler for "${event}":`, error)
-        }
-      }
-    }
-  }
-
-  /**
-   * 监听事件
-   */
-  on(event: string, handler: EventHandler): void {
-    if (!this._eventHandlers.has(event)) {
-      this._eventHandlers.set(event, new Set())
-    }
-    this._eventHandlers.get(event)!.add(handler)
-  }
-
-  /**
-   * 注销事件监听
-   */
-  off(event: string, handler: EventHandler): void {
-    this._eventHandlers.get(event)?.delete(handler)
-  }
-
-  /**
-   * 执行命令
-   */
-  executeCommand(name: string, args?: unknown): boolean {
-    const command = this._commands.get(name)
-    if (!command) {
-      console.warn(`Command "${name}" not found`)
-      return false
-    }
-
-    if (!this._ctx) {
-      console.warn('ExtensionManager not setup')
-      return false
-    }
-
-    const state = this._ctx.getState()
-    const dispatch = this._ctx.dispatch
-    return command(state, dispatch, args)
-  }
-
-  /**
-   * 注册命令（供 ExtensionContext.registerCommand 桥接）
-   */
-  registerCommand(name: string, command: CommandFn): void {
-    this._commands.set(name, command)
-  }
-
-  /**
-   * 注销命令（供 ExtensionContext.unregisterCommand 桥接）
-   */
-  unregisterCommand(name: string): void {
-    this._commands.delete(name)
-  }
-
-  /**
-   * 处理键盘快捷键
-   */
-  handleKeyboardShortcut(shortcut: string): boolean {
-    const handler = this._keyboardShortcuts.get(shortcut)
-    if (!handler || !this._ctx) {
-      return false
-    }
-
-    try {
-      return handler(this._ctx)
-    } catch (error) {
-      console.error(`Error handling keyboard shortcut "${shortcut}":`, error)
-      return false
-    }
-  }
-
-  /**
-   * 获取所有注册的快捷键
-   */
-  getKeyboardShortcuts(): Map<string, KeyboardShortcutHandler> {
-    return new Map(this._keyboardShortcuts)
-  }
-
-  /**
-   * 清理单个扩展
-   */
-  private cleanupExtension(name: string): void {
-    const cleanup = this._cleanupFns.get(name)
-    if (cleanup) {
-      try {
-        cleanup()
-      } catch (error) {
-        console.error(`Error cleaning up extension "${name}":`, error)
-      }
-      this._cleanupFns.delete(name)
-    }
-  }
-
-  /**
-   * 设置快捷键（Tiptap 风格）
-   */
-  private setupKeyboardShortcuts(_ctx: ExtensionContext): void {
+  private rebuildKeyboardShortcuts(): void {
     this._keyboardShortcuts.clear()
 
     for (const [, extension] of this._extensions) {
@@ -357,7 +183,7 @@ export class ExtensionManager implements IExtensionManager {
         }
       }
 
-      // 旧方式：shortcuts
+      // 旧方式：shortcuts（string → command name 映射）
       if (extension.shortcuts) {
         for (const [shortcut, commandName] of Object.entries(extension.shortcuts)) {
           this._keyboardShortcuts.set(shortcut, () => {
@@ -366,6 +192,95 @@ export class ExtensionManager implements IExtensionManager {
           })
         }
       }
+    }
+  }
+
+  // ==================== 销毁 ====================
+
+  destroy(): void {
+    for (const [name, cleanup] of this._cleanupFns) {
+      try { cleanup() } catch (e) { console.error(`Cleanup error "${name}":`, e) }
+    }
+    this._cleanupFns.clear()
+
+    for (const [name, extension] of this._extensions) {
+      try { extension.destroy?.() } catch (e) { console.error(`Destroy error "${name}":`, e) }
+    }
+
+    this._extensions.clear()
+    this._initialized.clear()
+    this._commands.clear()
+    this._eventHandlers.clear()
+    this._keyboardShortcuts.clear()
+    this._ctx = null
+  }
+
+  // ==================== 事件系统 ====================
+
+  emit(event: string, ...args: unknown[]): void {
+    const handlers = this._eventHandlers.get(event)
+    if (handlers) {
+      for (const handler of handlers) {
+        try { handler(...args) } catch (e) { console.error(`Event error "${event}":`, e) }
+      }
+    }
+  }
+
+  on(event: string, handler: EventHandler): void {
+    if (!this._eventHandlers.has(event)) {
+      this._eventHandlers.set(event, new Set())
+    }
+    this._eventHandlers.get(event)!.add(handler)
+  }
+
+  off(event: string, handler: EventHandler): void {
+    this._eventHandlers.get(event)?.delete(handler)
+  }
+
+  updateState(state: unknown): void {
+    this.emit('stateUpdate', state)
+  }
+
+  // ==================== 命令系统 ====================
+
+  executeCommand(name: string, args?: unknown): boolean {
+    const command = this._commands.get(name)
+    if (!command) { console.warn(`Command "${name}" not found`); return false }
+    if (!this._ctx) { console.warn('ExtensionManager not setup'); return false }
+
+    const state = this._ctx.getState()
+    const dispatch = this._ctx.dispatch
+    return command(state, dispatch, args)
+  }
+
+  registerCommand(name: string, command: CommandFn): void {
+    this._commands.set(name, command)
+  }
+
+  unregisterCommand(name: string): void {
+    this._commands.delete(name)
+  }
+
+  handleKeyboardShortcut(shortcut: string): boolean {
+    const handler = this._keyboardShortcuts.get(shortcut)
+    if (!handler || !this._ctx) return false
+    try { return handler(this._ctx) } catch (e) {
+      console.error(`Shortcut error "${shortcut}":`, e)
+      return false
+    }
+  }
+
+  getKeyboardShortcuts(): Map<string, KeyboardShortcutHandler> {
+    return new Map(this._keyboardShortcuts)
+  }
+
+  // ==================== 内部工具 ====================
+
+  private cleanupExtension(name: string): void {
+    const cleanup = this._cleanupFns.get(name)
+    if (cleanup) {
+      try { cleanup() } catch (e) { console.error(`Cleanup error "${name}":`, e) }
+      this._cleanupFns.delete(name)
     }
   }
 }

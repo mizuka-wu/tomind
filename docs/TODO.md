@@ -68,7 +68,7 @@
 ## 🟡 P1 — 中等问题
 
 ### State 层
-- [ ] **Transaction.docChanged 遗漏 viewport/selection 变更** — 只检查 insertNode/removeNode/updateNode，`SetSelectionStep`/`SetViewportStep` 不触发 docChanged
+- [x] **Transaction.docChanged** — 正确行为：selection/viewport 变更不算 doc 变更（对齐 ProseMirror）
 - [ ] **Transaction 继承 Transform** — "是一个"关系但语义不同，导致 9 处 `transform['_meta']` 重复访问。建议改为组合（has-a）。✅ meta getter 已添加，组合重构待完成
 
 ### View 层

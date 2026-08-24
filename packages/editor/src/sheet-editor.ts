@@ -300,12 +300,8 @@ export class SheetEditor {
     // 避免重复注册：如果已注册则跳过
     if (this.extensionManager.getExtension(extension.name)) return
 
+    // register() 内部判断：ctx 未就绪时仅存储，ctx 已就绪时立即初始化
     this.extensionManager.register(extension)
-
-    // 如果已经 setup 过，单独初始化这个扩展（完整流程）
-    if (this.extensionManager.isSetup()) {
-      this.extensionManager.setupExtension(extension, this.createExtensionContext())
-    }
   }
 
   /**
