@@ -10,14 +10,7 @@
 
 import { createExtension, parseArgs } from '@tomind/core'
 import type { ExtensionContext, CommandFn, EventHandler } from '@tomind/core'
-
-// ==================== 类型安全辅助 ====================
-
-/** 从 ExtensionContext.storage 安全提取类型化存储 */
-function typedStorage<T>(ctx: ExtensionContext): T {
-  return ctx.storage as T
-}
-
+import { typedStorage } from './shared-utils'
 // ==================== 类型定义 ====================
 
 interface ContextMenuOptions {

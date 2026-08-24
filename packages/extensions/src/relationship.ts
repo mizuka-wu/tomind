@@ -17,6 +17,7 @@ import { createExtension } from '@tomind/core'
 import type { ViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
+import { typedStorage } from './shared-utils'
 
 // ==================== 常量 ====================
 
@@ -429,7 +430,7 @@ function updateMainPath(overlay: Group): void {
 // ==================== Hover 处理 ====================
 
 function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
-  const storage = ctx.storage as RelationshipStorage
+  const storage = typedStorage<RelationshipStorage>(ctx)
   const state = ctx.getState<any>()
   if (!state) return
 
@@ -518,7 +519,7 @@ function handleHoverLeave(ctx: ExtensionContext, _nodeId: string): void {
 }
 
 function destroyOverlay(ctx: ExtensionContext): void {
-  const storage = ctx.storage as RelationshipStorage
+  const storage = typedStorage<RelationshipStorage>(ctx)
 
   for (const reg of storage.registers) {
     reg.destroy()

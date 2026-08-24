@@ -15,13 +15,7 @@ import { Group, Rect } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
 import type { ViewLike } from './shared-types'
-
-// ==================== 类型安全辅助 ====================
-
-/** 从 ExtensionContext.storage 安全提取类型化存储 */
-function typedStorage<T>(ctx: ExtensionContext): T {
-  return ctx.storage as T
-}
+import { typedStorage } from './shared-utils'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
 
 // ==================== 常量 ====================

@@ -12,6 +12,7 @@
 import { createExtension, Transaction, getAttributeTitle, getPlainTextFromAttributeTitle, createAttributeTitleFromPlainText } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
 import type { ViewLike } from './shared-types'
+import { typedStorage } from './shared-utils'
 
 // ==================== Storage ====================
 
@@ -69,7 +70,7 @@ export const EditBridgeExtension = createExtension({
     }
 
     return () => {
-      const storage = ctx.storage as EditBridgeStorage
+      const storage = typedStorage<EditBridgeStorage>(ctx)
       if (storage.isEditing) {
         handleEditCancel(ctx)
       }
@@ -87,7 +88,7 @@ export const EditBridgeExtension = createExtension({
  * 流程：获取当前文字 → 打开 LeaferJS TextEditor → 监听关闭事件
  */
 function handleEditStart(ctx: ExtensionContext, nodeId: string, node: any): void {
-  const storage = ctx.storage as EditBridgeStorage
+  const storage = typedStorage<EditBridgeStorage>(ctx)
 
   // 如果正在编辑其他节点，先取消
   if (storage.isEditing && storage.editingNodeId !== nodeId) {
@@ -136,7 +137,7 @@ function handleEditStart(ctx: ExtensionContext, nodeId: string, node: any): void
  * 编辑结束：写入 model → 重算 layout
  */
 function handleEditEnd(ctx: ExtensionContext, nodeId: string, finalText: string): void {
-  const storage = ctx.storage as EditBridgeStorage
+  const storage = typedStorage<EditBridgeStorage>(ctx)
 
   // 如果文字没变，直接结束
   if (finalText === storage.originalText) {
@@ -162,7 +163,7 @@ function handleEditEnd(ctx: ExtensionContext, nodeId: string, finalText: string)
  * 取消编辑：恢复原始文字
  */
 function handleEditCancel(ctx: ExtensionContext): void {
-  const storage = ctx.storage as EditBridgeStorage
+  const storage = typedStorage<EditBridgeStorage>(ctx)
   // LeaferJS TextEditor 取消时会恢复原始文字
   resetStorage(storage)
 }
