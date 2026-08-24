@@ -78,7 +78,7 @@
 ### Layout 层
 - [x] **部分布局忽略 StyleEngine 间距覆盖** — fishbone/logic/org-chart/timeline 已接入 styleEngine spacingMajor/spacingMinor
 - [x] **其他布局的 part-aware 测量** — logic/org-chart/fishbone 已接入 part-aware 测量
-- [ ] **measureTextSize 可配置** — 支持中英文混合宽度计算、CSS white-space 等行为
+- [x] **measureTextSize 可配置** — LayoutOptions 添加 fontFamily/fontWeight，支持中英文混合宽度
 
 ### Extension 层
 - [x] **`selection.ts` 模块级缓存变量** — `cachedLayoutResult`/`cachedLayoutState` 多 Sheet 场景下共享缓存（已修复：改为每次重新计算）
@@ -129,7 +129,7 @@
 ## 🟢 P4 — 架构改善
 
 - [ ] **Transaction 继承 Transform → 组合** — 消除 `_meta` 私有字段访问问题
-- [ ] **ExtensionContext 泛型化 state** — `getState<T>()` 替代 `getState(): unknown`
+- [x] **ExtensionContext 泛型化 state** — `getState<T>()` 已实现，消除 10 处 `as` 断言
 - [ ] **`TopicData` 旧类型清理** — `types.ts:194-253` 标记为迁移用，设 deadline 删除
 
 ---
