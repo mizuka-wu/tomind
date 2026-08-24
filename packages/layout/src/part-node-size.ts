@@ -13,7 +13,7 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
-import { measureNodeParts } from './part-measure'
+import { measureNodeParts, measureLabels } from './part-measure'
 import { buildTopicCellTree } from './part-cell-builder'
 import type { CellLayout } from './cell-layout'
 
@@ -88,8 +88,27 @@ export function measurePartAwareNode(
   node: NodeDesc,
   options: LayoutOptions,
 ): PartAwareNodeSize {
-  // 测量各 part 尺寸
+  // 第一轮：测量非 labels 的 parts，用于计算 contentWidth
   const parts = measureNodeParts(node, options)
+
+  // 从非 labels parts 计算 contentWidth（对齐 snowbrush parentWidth）
+  // contentWidth = max(titleWidth + padding, markersWidth, numberingWidth, ...)
+  const nonLabelsParts = parts.filter(p => p.partType !== 'labels')
+  const shapePadding = { top: 5, right: 6, bottom: 5, left: 6 }
+  let contentWidth = 0
+  for (const part of nonLabelsParts) {
+    contentWidth = Math.max(contentWidth, part.size.width)
+  }
+  contentWidth = contentWidth + shapePadding.left + shapePadding.right
+
+  // 第二轮：用 contentWidth 重新测量 labels（流式布局需要 parentWidth）
+  const labelsSize = measureLabels(node, options, contentWidth)
+  const labelsPartIndex = parts.findIndex(p => p.partType === 'labels')
+  if (labelsPartIndex >= 0 && (labelsSize.width > 0 || labelsSize.height > 0)) {
+    parts[labelsPartIndex] = { ...parts[labelsPartIndex], size: labelsSize }
+  } else if (labelsPartIndex >= 0) {
+    parts.splice(labelsPartIndex, 1)
+  }
 
   // 构建 cell 树
   const cellTree = buildTopicCellTree(parts)

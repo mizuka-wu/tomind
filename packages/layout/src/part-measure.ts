@@ -156,24 +156,83 @@ function measureMarkers(node: NodeDesc): { width: number; height: number } {
   return { width, height }
 }
 
+// ==================== Labels 流式布局常量（对齐 snowbrush） ====================
+
+const LABEL_FONT_SIZE = 12
+const LABEL_UNIT_HEIGHT = 20
+const LABEL_UNIT_MIN_WIDTH = 38
+const LABEL_UNIT_PADDING_HORIZON = 6
+const LABEL_UNIT_MARGIN_HORIZON = 4
+const LABEL_UNIT_MARGIN_VERTICAL = 2
+const LABEL_MAX_ROWS = 3
+/** 特殊 "N+" 单元的理想推测宽度 */
+const LABEL_SPECIAL_UNIT_PREFER_WIDTH = 46
+
 /**
  * 测量 labels 尺寸
+ *
+ * 对齐 snowbrush LabelsView 流式布局：
+ * 1. 水平排列，宽度不足时自动换行
+ * 2. 最多 3 行，超过 3 行显示 "N+" 特殊单元
+ * 3. 宽度继承 parentWidth（与父 topic 一致）
  */
-function measureLabels(node: NodeDesc, options: LayoutOptions): { width: number; height: number } {
+export function measureLabels(node: NodeDesc, options: LayoutOptions, parentWidth?: number): { width: number; height: number } {
   const labels = node.attrs.labels as LabelData[] | undefined
   if (!labels || labels.length === 0) return { width: 0, height: 0 }
 
-  // 每个 label 文本宽度，垂直排列
-  let maxWidth = 0
-  let totalHeight = 0
+  // 去重（对齐 snowbrush：Array.from(new Set(labels.map(l => l.trim())))）
+  const uniqueTexts = Array.from(new Set(labels.map(l => l.text.trim())))
+  if (uniqueTexts.length === 0) return { width: 0, height: 0 }
 
-  for (const label of labels) {
-    const { width, height } = measureTextSize(label.text, 12, options)
-    maxWidth = Math.max(maxWidth, width)
-    totalHeight += height
+  const contentWidth = Math.max(parentWidth ?? 0, LABEL_UNIT_MIN_WIDTH)
+
+  let currentLine = 1
+  let lineRemainWidth = contentWidth
+  let remainLabelsCount = uniqueTexts.length
+  let stopLayout = false
+
+  for (let i = 0; i < uniqueTexts.length; i++) {
+    if (stopLayout) break
+
+    const text = uniqueTexts[i].replace(/\n|\r/g, '')
+    const { width: textWidth } = measureTextSize(text, LABEL_FONT_SIZE, options)
+
+    let unitWidth = textWidth + LABEL_UNIT_PADDING_HORIZON * 2
+    if (unitWidth > contentWidth) unitWidth = contentWidth
+    if (unitWidth < LABEL_UNIT_MIN_WIDTH) unitWidth = LABEL_UNIT_MIN_WIDTH
+
+    // 若剩下的宽度不支持再放一个 unit，换行
+    if (
+      lineRemainWidth - LABEL_UNIT_MARGIN_HORIZON < unitWidth &&
+      lineRemainWidth !== unitWidth &&
+      lineRemainWidth !== contentWidth
+    ) {
+      currentLine++
+      lineRemainWidth = contentWidth
+    }
+
+    // 若已到第 3 行，还有剩余 label 无法放下，显示 "N+" 特殊单元
+    if (
+      currentLine === LABEL_MAX_ROWS &&
+      remainLabelsCount > 1 &&
+      LABEL_SPECIAL_UNIT_PREFER_WIDTH + LABEL_UNIT_MARGIN_HORIZON + unitWidth > lineRemainWidth
+    ) {
+      stopLayout = true
+      // "N+" 单元宽度
+      const specialText = `${remainLabelsCount}+`
+      const { width: specialWidth } = measureTextSize(specialText, LABEL_FONT_SIZE, options)
+      unitWidth = specialWidth + LABEL_UNIT_PADDING_HORIZON * 2
+    }
+
+    lineRemainWidth = lineRemainWidth - unitWidth - LABEL_UNIT_MARGIN_HORIZON
+    remainLabelsCount--
   }
 
-  return { width: maxWidth, height: totalHeight }
+  // bounds 宽度 = max(parentWidth, UNIT_MIN_WIDTH)
+  const width = contentWidth
+  const height = currentLine * LABEL_UNIT_HEIGHT + (currentLine - 1) * LABEL_UNIT_MARGIN_VERTICAL
+
+  return { width, height }
 }
 
 /**

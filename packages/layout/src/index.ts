@@ -38,7 +38,7 @@ export { fishboneLeftHeadedLayoutAlgorithm, fishboneRightHeadedLayoutAlgorithm }
 export { CellLayout, CellGridLayout } from './cell-layout'
 export type { CellLayoutData, Size, Bounds, Margins, HorizontalAlignment, VerticalAlignment } from './cell-layout'
 
-export { measureNodeParts, hasNonTitleParts } from './part-measure'
+export { measureNodeParts, hasNonTitleParts, measureLabels } from './part-measure'
 export type { PartMeasurement, PartType, PartPosition } from './part-measure'
 
 export { buildTopicCellTree } from './part-cell-builder'

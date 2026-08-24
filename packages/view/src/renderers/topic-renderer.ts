@@ -139,6 +139,20 @@ function convexrectPath(bx: number, by: number, bw: number, bh: number): string 
   ].join(' ')
 }
 
+/** 手绘椭圆路径（handDrawnEllipse）— 不对称贝塞尔曲线模拟手绘效果 */
+function handDrawnEllipsePath(x: number, y: number, w: number, h: number): string {
+  const capOffset = h * 0.03
+  const capPoint = {
+    x: x + w * 0.8,
+    y: y + h * 0.05,
+  }
+  return [
+    `M ${capPoint.x} ${capPoint.y + capOffset}`,
+    `C ${x - w / 7} ${y - h / 4}, ${x - w / 4} ${y + h}, ${x + w / 2} ${y + h}`,
+    `C ${x + w * 1.1} ${y + h}, ${x + w * 1.1} ${y + h / 6}, ${capPoint.x} ${capPoint.y - capOffset}`,
+  ].join(' ')
+}
+
 /** flexCorner: 在 start→flex→end 路径上，距 flex 点 corner 距离处取两个过渡点 */
 function flexCorner(
   start: { x: number; y: number },
@@ -324,7 +338,7 @@ type ShapeClass =
   | 'hexagon' | 'diamond' | 'cutdiamond' | 'parallelogram'
   | 'cloud' | 'simpleCloud' | 'waterdrop' | 'star' | 'shield'
   | 'fatLeftArrow' | 'fatRightArrow' | 'noBorder' | 'label' | 'bookmark'
-  | 'heart' | 'leaf' | (string & {})
+  | 'heart' | 'leaf' | 'handDrawnEllipse' | (string & {})
 
 // ─── TopicRenderer ────────────────────────────────────────────────────────────
 
@@ -476,6 +490,9 @@ export class TopicRenderer implements Renderer {
         break
       case 'leaf':
         this.renderLeaf(layout, style)
+        break
+      case 'handDrawnEllipse':
+        this.renderHandDrawnEllipse(layout, style)
         break
       default:
         this.renderRoundedRect(layout, style)
@@ -945,6 +962,15 @@ export class TopicRenderer implements Renderer {
       `Z`,
     ].join(' ')
 
+    this.ensurePath(pathData)
+    applyPathInset(this.shape as Path, style)
+    this.applyPathFillAndStroke(style)
+  }
+
+  /** handDrawnEllipse：手绘椭圆（不对称贝塞尔曲线） */
+  private renderHandDrawnEllipse(layout: NodeLayout, style: Record<string, unknown>): void {
+    const { x, y, w, h } = computeDrawBounds(layout, style)
+    const pathData = handDrawnEllipsePath(x, y, w, h)
     this.ensurePath(pathData)
     applyPathInset(this.shape as Path, style)
     this.applyPathFillAndStroke(style)
