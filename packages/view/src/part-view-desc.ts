@@ -52,10 +52,12 @@ export abstract class PartViewDesc extends ViewDesc {
     const oldData = this.getPartData()
     const newData = newNode.attrs[this.partType]
 
-    if (oldData === newData) return true
-
     this.updateNode(newNode)
-    this.updatePart(newData)
+
+    if (oldData !== newData) {
+      this.updatePart(newData)
+    }
+
     this.clearDirty()
     return true
   }

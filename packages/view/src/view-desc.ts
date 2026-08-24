@@ -429,8 +429,8 @@ export abstract class ViewDesc {
     if (this._eventEmitter) {
       this._eventEmitter.emit(event)
     }
-    // 向父节点冒泡
-    if (this._parent) {
+    // 向父节点冒泡（检查是否已阻止）
+    if (this._parent && !event.propagationStopped) {
       this._parent.emit(event)
     }
   }

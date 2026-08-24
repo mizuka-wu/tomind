@@ -120,6 +120,10 @@ export interface ViewEvent<T = unknown> {
   preventDefault: () => void
   /** 阻止冒泡 */
   stopPropagation: () => void
+  /** 是否已阻止冒泡 */
+  readonly propagationStopped: boolean
+  /** 是否已阻止默认行为 */
+  readonly defaultPrevented: boolean
 }
 
 // ==================== 事件注册接口 ====================
@@ -182,6 +186,8 @@ export function createViewEvent<T>(
   modifiers: { ctrlKey?: boolean; shiftKey?: boolean; altKey?: boolean } = {},
   extra?: { drag?: DragEventData; keyboard?: KeyboardEventData; gesture?: GestureEventData }
 ): ViewEvent<T> {
+  let _propagationStopped = false
+  let _defaultPrevented = false
   return {
     type,
     targetId,
@@ -194,8 +200,10 @@ export function createViewEvent<T>(
     drag: extra?.drag,
     keyboard: extra?.keyboard,
     gesture: extra?.gesture,
-    preventDefault: () => { /* 默认行为控制 */ },
-    stopPropagation: () => { /* 冒泡控制 */ },
+    get propagationStopped() { return _propagationStopped },
+    preventDefault: () => { _defaultPrevented = true },
+    get defaultPrevented() { return _defaultPrevented },
+    stopPropagation: () => { _propagationStopped = true },
   }
 }
 
