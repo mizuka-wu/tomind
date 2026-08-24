@@ -76,8 +76,8 @@
 无（全部已完成）
 
 ### Layout 层
-- [ ] **部分布局忽略 StyleEngine 间距覆盖** — fishbone/logic/org-chart/timeline 硬编码使用 `DEFAULT_LAYOUT_OPTIONS`，未接入 styleEngine
-- [ ] **其他布局的 part-aware 测量** — tree/logic/org-chart 等布局未使用 part-aware 测量，Labels/Markers 等 Part 在这些布局中不生效
+- [x] **部分布局忽略 StyleEngine 间距覆盖** — fishbone/logic/org-chart/timeline 已接入 styleEngine spacingMajor/spacingMinor
+- [x] **其他布局的 part-aware 测量** — logic/org-chart/fishbone 已接入 part-aware 测量
 - [ ] **measureTextSize 可配置** — 支持中英文混合宽度计算、CSS white-space 等行为
 
 ### Extension 层
