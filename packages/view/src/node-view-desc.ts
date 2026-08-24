@@ -44,6 +44,7 @@ import { FishboneHeadLineRenderer } from './renderers/fishbone-head-line-rendere
 import { MatrixCellRenderer } from './renderers/matrix-cell-renderer'
 import { TreeTableCellRenderer } from './renderers/tree-table-cell-renderer'
 import { ConnectionRenderer } from './renderers/connection-renderer'
+import { LegendRenderer } from './renderers/legend-renderer'
 import type { Renderer } from './renderers/renderer'
 
 // ==================== NodeViewDesc ====================
@@ -1915,8 +1916,12 @@ export class ConnectionNodeViewDesc extends NodeViewDesc {
 // ==================== LegendNodeViewDesc ====================
 
 export class LegendNodeViewDesc extends NodeViewDesc {
+  private renderer: LegendRenderer | null = null
+
   protected createElement(): Group {
     const group = new Group()
+    this.renderer = new LegendRenderer()
+    this.renderer.create(group)
     // LeaferJS 原生拖拽
     group.draggable = true
     this.setupEvents(group)
@@ -1944,8 +1949,49 @@ export class LegendNodeViewDesc extends NodeViewDesc {
   }
 
   protected createContentGroup(): null { return null }
-  protected updateStyle(): void {}
-  protected updateContent(): void {}
+
+  protected updateStyle(): void {
+    if (!this.renderer) return
+
+    // 可见性
+    const visibility = this.node.attrs.visibility as string | undefined
+    this.renderer.setVisible(visibility !== 'hidden')
+
+    // 位置
+    const position = this.node.attrs.position as { x: number; y: number } | undefined
+    if (position) {
+      this.renderer.setPosition(position.x, position.y)
+    }
+  }
+
+  protected updateContent(): void {
+    if (!this.renderer || !NodeViewDesc.state) return
+
+    // 从 state 中收集所有 topic 的 markers
+    const markerSet = new Map<string, string>()
+    const topicIds = NodeViewDesc.state.getTopicIds()
+    for (const topicId of topicIds) {
+      const nodeInfo = NodeViewDesc.state.getNode(topicId)
+      if (!nodeInfo) continue
+      const markers = nodeInfo.attrs.markers as string[] | undefined
+      if (!markers) continue
+      for (const markerId of markers) {
+        if (!markerSet.has(markerId)) {
+          markerSet.set(markerId, markerId)
+        }
+      }
+    }
+
+    // 用户自定义的 marker 描述（attrs.markers 为 Record<markerId, {name?: string}> 时）
+    const userMarkerDescMap = (this.node.attrs.markers ?? {}) as Record<string, { name?: string }>
+
+    const markerItems = Array.from(markerSet.entries()).map(([id]) => ({
+      id,
+      name: userMarkerDescMap[id]?.name ?? id,
+    }))
+
+    this.renderer.updateMarkers(markerItems)
+  }
 }
 
 // ==================== MarkerNodeViewDesc ====================

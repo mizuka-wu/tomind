@@ -28,3 +28,5 @@ export { MatrixCellRenderer } from './matrix-cell-renderer'
 export { TreeTableCellRenderer } from './tree-table-cell-renderer'
 // 带事件支持的 Renderer
 export { TopicRendererWithEvents } from './topic-renderer-with-events'
+export { LegendRenderer } from './legend-renderer'
+export type { LegendMarkerItem } from './legend-renderer'
