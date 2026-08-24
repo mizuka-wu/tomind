@@ -15,7 +15,7 @@ import { Group, Rect } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
 import type { ViewLike } from './shared-types'
-import { typedStorage, findOne } from './shared-utils'
+import { findOne } from './shared-utils'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
 
 // ==================== 常量 ====================
@@ -154,7 +154,7 @@ function setupAnchorDrag(
   startHeight: number,
   rotation: number,
 ): void {
-  const storage = typedStorage<ResizeBoxStorage>(ctx)
+  const storage = ctx.storage
   const registers: DraggableRegister[] = []
   const anchorKeys: Direction[] = ['lt', 'lm', 'lb', 'ct', 'cb', 'rt', 'rm', 'rb']
 
@@ -259,8 +259,8 @@ function setupAnchorDrag(
 
 // ==================== Hover 处理 ====================
 
-function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
-  const storage = typedStorage<ResizeBoxStorage>(ctx)
+function handleHoverEnter(ctx: ExtensionContext<ResizeBoxStorage>, nodeId: string): void {
+  const storage = ctx.storage
   const state = ctx.getState<any>()
   if (!state) return
 
@@ -299,12 +299,12 @@ function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   setupAnchorDrag(ctx, nodeId, overlay, width, height, rotation)
 }
 
-function handleHoverLeave(ctx: ExtensionContext, _nodeId: string): void {
+function handleHoverLeave(ctx: ExtensionContext<ResizeBoxStorage>, _nodeId: string): void {
   destroyOverlay(ctx)
 }
 
-function destroyOverlay(ctx: ExtensionContext): void {
-  const storage = typedStorage<ResizeBoxStorage>(ctx)
+function destroyOverlay(ctx: ExtensionContext<ResizeBoxStorage>): void {
+  const storage = ctx.storage
 
   for (const reg of storage.anchorRegisters) {
     reg.destroy()
@@ -319,18 +319,18 @@ function destroyOverlay(ctx: ExtensionContext): void {
 
 // ==================== 扩展定义 ====================
 
-export const ResizeBoxExtension = createExtension({
+export const ResizeBoxExtension = createExtension<Record<string, unknown>, ResizeBoxStorage>({
   name: 'resize-box',
   type: 'extension',
 
-  addStorage(): Record<string, unknown> {
+  addStorage(): ResizeBoxStorage {
     return {
       anchorRegisters: [],
       overlayGroup: null,
-    } as ResizeBoxStorage
+    }
   },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx) {
     ctx.on('selection:hoverEnter', (data: unknown) => {
       const { nodeId } = data as { nodeId: string }
       handleHoverEnter(ctx, nodeId)

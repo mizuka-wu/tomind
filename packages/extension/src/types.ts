@@ -17,9 +17,9 @@ export type ExtensionOptions<T = {}> = T & {
 // ==================== 扩展上下文 ====================
 
 /** 扩展上下文 - 提供给扩展的编辑器接口 */
-export interface ExtensionContext {
+export interface ExtensionContext<Storage = Record<string, unknown>> {
   /** 当前扩展的存储（由 addStorage 初始化） */
-  storage: Record<string, unknown>
+  storage: Storage
   /** 获取 WorkbookEditor 实例 */
   getWorkbook: () => WorkbookEditorInterface
   /** 获取当前状态 */
@@ -104,7 +104,7 @@ export type CommandFn<S = unknown> = (state: S, dispatch: ((tr: unknown) => void
 export type EventHandler = (...args: unknown[]) => void
 
 /** 快捷键处理器 */
-export type KeyboardShortcutHandler = (ctx: ExtensionContext) => boolean
+export type KeyboardShortcutHandler = (ctx: ExtensionContext<any>) => boolean
 
 // ==================== 扩展类型 ====================
 
@@ -112,7 +112,7 @@ export type KeyboardShortcutHandler = (ctx: ExtensionContext) => boolean
 export type ExtensionType = 'extension' | 'node' | 'part'
 
 /** 扩展定义（Tiptap 风格） */
-export interface Extension<Options = {}> {
+export interface Extension<Options = {}, Storage = Record<string, unknown>> {
   /** 扩展名称 */
   name: string
   /** 扩展类型 */
@@ -120,15 +120,15 @@ export interface Extension<Options = {}> {
   /** 默认选项 */
   defaultOptions: ExtensionOptions<Options>
   /** 配置选项（返回新实例，不可变） */
-  configure: (options: Partial<ExtensionOptions<Options>>) => Extension<Options>
+  configure: (options: Partial<ExtensionOptions<Options>>) => Extension<Options, Storage>
   /** 生命周期：创建（Tiptap 风格） */
-  onCreate?: (ctx: ExtensionContext) => CleanupFn | void
+  onCreate?: (ctx: ExtensionContext<Storage>) => CleanupFn | void
   /** 添加选项 */
   addOptions?: () => Partial<Options> | Record<string, unknown>
   /** 添加存储 */
-  addStorage?: () => Record<string, unknown>
+  addStorage?: () => Storage
   /** 运行时存储（由 ExtensionManager 在初始化时注入） */
-  storage?: Record<string, unknown>
+  storage?: Storage
   /** 生命周期：销毁 */
   destroy?: () => void
   /** 命令定义 */

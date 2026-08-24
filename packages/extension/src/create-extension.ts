@@ -20,20 +20,20 @@ import type {
 /**
  * 创建扩展
  */
-export function createExtension<Options extends Record<string, unknown> = {}>(definition: {
+export function createExtension<Options extends Record<string, unknown> = {}, Storage = Record<string, unknown>>(definition: {
   name: string
   type: ExtensionType
   defaultOptions?: ExtensionOptions<Options>
-  onCreate?: (ctx: import('./types').ExtensionContext) => CleanupFn | void
+  onCreate?: (ctx: import('./types').ExtensionContext<Storage>) => CleanupFn | void
   addOptions?: () => Partial<Options> | Record<string, unknown>
-  addStorage?: () => Record<string, unknown>
+  addStorage?: () => Storage
   destroy?: () => void
   commands?: Record<string, (...args: unknown[]) => CommandFn>
   shortcuts?: Record<string, string>
   addKeyboardShortcuts?: () => Record<string, KeyboardShortcutHandler>
   addLayout?: () => { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }
   addNodeView?: () => new (...args: any[]) => any
-}): Extension<Options> {
+}): Extension<Options, Storage> {
   // 合并默认选项
   const defaultOptions: ExtensionOptions<Options> = {
     ...(definition.defaultOptions || {} as ExtensionOptions<Options>),
@@ -44,12 +44,12 @@ export function createExtension<Options extends Record<string, unknown> = {}>(de
   let currentOptions: ExtensionOptions<Options> = { ...defaultOptions }
   let cleanupFn: CleanupFn | null = null
 
-  const extension: Extension<Options> = {
+  const extension: Extension<Options, Storage> = {
     name: definition.name,
     type: definition.type,
     defaultOptions,
 
-    configure(options: Partial<ExtensionOptions<Options>>): Extension<Options> {
+    configure(options: Partial<ExtensionOptions<Options>>): Extension<Options, Storage> {
       const mergedOptions: ExtensionOptions<Options> = {
         ...currentOptions,
         ...options,
@@ -89,18 +89,18 @@ export function createExtension<Options extends Record<string, unknown> = {}>(de
 /**
  * 创建节点扩展（type='node'）
  */
-export function createNodeExtension<Options extends Record<string, unknown> = {}>(definition: {
+export function createNodeExtension<Options extends Record<string, unknown> = {}, Storage = Record<string, unknown>>(definition: {
   name: string
   defaultOptions?: ExtensionOptions<Options>
-  onCreate?: (ctx: ExtensionContext) => CleanupFn | void
+  onCreate?: (ctx: ExtensionContext<Storage>) => CleanupFn | void
   addNodeView?: () => new (...args: any[]) => any
   addOptions?: () => Partial<Options> | Record<string, unknown>
-  addStorage?: () => Record<string, unknown>
+  addStorage?: () => Storage
   destroy?: () => void
   commands?: Record<string, (...args: unknown[]) => CommandFn>
   addKeyboardShortcuts?: () => Record<string, KeyboardShortcutHandler>
   addLayout?: () => { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }
-}): Extension<Options> {
+}): Extension<Options, Storage> {
   return createExtension({
     ...definition,
     type: 'node',
@@ -110,16 +110,16 @@ export function createNodeExtension<Options extends Record<string, unknown> = {}
 /**
  * 创建 Part 扩展（type='part'）
  */
-export function createPartExtension<Options extends Record<string, unknown> = {}>(definition: {
+export function createPartExtension<Options extends Record<string, unknown> = {}, Storage = Record<string, unknown>>(definition: {
   name: string
   defaultOptions?: ExtensionOptions<Options>
-  onCreate?: (ctx: ExtensionContext) => CleanupFn | void
+  onCreate?: (ctx: ExtensionContext<Storage>) => CleanupFn | void
   addOptions?: () => Partial<Options> | Record<string, unknown>
-  addStorage?: () => Record<string, unknown>
+  addStorage?: () => Storage
   destroy?: () => void
   commands?: Record<string, (...args: unknown[]) => CommandFn>
   addKeyboardShortcuts?: () => Record<string, KeyboardShortcutHandler>
-}): Extension<Options> {
+}): Extension<Options, Storage> {
   return createExtension({
     ...definition,
     type: 'part',

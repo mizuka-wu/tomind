@@ -17,7 +17,7 @@ import { createExtension } from '@tomind/core'
 import type { ViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
-import { typedStorage, findOne } from './shared-utils'
+import { findOne } from './shared-utils'
 
 // ==================== 常量 ====================
 
@@ -429,8 +429,8 @@ function updateMainPath(overlay: Group): void {
 
 // ==================== Hover 处理 ====================
 
-function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
-  const storage = typedStorage<RelationshipStorage>(ctx)
+function handleHoverEnter(ctx: ExtensionContext<RelationshipStorage>, nodeId: string): void {
+  const storage = ctx.storage
   const state = ctx.getState<any>()
   if (!state) return
 
@@ -514,12 +514,12 @@ function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   if (cp2Reg) storage.registers.push(cp2Reg)
 }
 
-function handleHoverLeave(ctx: ExtensionContext, _nodeId: string): void {
+function handleHoverLeave(ctx: ExtensionContext<RelationshipStorage>, _nodeId: string): void {
   destroyOverlay(ctx)
 }
 
-function destroyOverlay(ctx: ExtensionContext): void {
-  const storage = typedStorage<RelationshipStorage>(ctx)
+function destroyOverlay(ctx: ExtensionContext<RelationshipStorage>): void {
+  const storage = ctx.storage
 
   for (const reg of storage.registers) {
     reg.destroy()
@@ -536,19 +536,19 @@ function destroyOverlay(ctx: ExtensionContext): void {
 
 // ==================== 扩展定义 ====================
 
-export const RelationshipExtension = createExtension({
+export const RelationshipExtension = createExtension<Record<string, unknown>, RelationshipStorage>({
   name: 'relationship',
   type: 'extension',
 
-  addStorage(): Record<string, unknown> {
+  addStorage(): RelationshipStorage {
     return {
       overlayGroup: null,
       currentTargetId: null,
       registers: [],
-    } as RelationshipStorage
+    }
   },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx) {
     ctx.on('selection:hoverEnter', (data: unknown) => {
       const { nodeId } = data as { nodeId: string }
       handleHoverEnter(ctx, nodeId)

@@ -18,7 +18,7 @@ import type {
 } from './types'
 
 export class ExtensionManager implements IExtensionManager {
-  private _extensions = new Map<string, Extension>()
+  private _extensions = new Map<string, Extension<any, any>>
   private _initialized = new Set<string>()
   private _cleanupFns = new Map<string, () => void>()
   private _ctx: ExtensionContext | null = null

@@ -10,7 +10,6 @@
 
 import { createExtension, parseArgs } from '@tomind/core'
 import type { ExtensionContext, CommandFn, EventHandler } from '@tomind/core'
-import { typedStorage } from './shared-utils'
 // ==================== 类型定义 ====================
 
 interface ContextMenuOptions {
@@ -72,7 +71,7 @@ interface ContextMenuStorage extends Record<string, unknown> {
 
 // ==================== ContextMenuExtension ====================
 
-export const ContextMenuExtension = createExtension<ContextMenuOptions>({
+export const ContextMenuExtension = createExtension<ContextMenuOptions, ContextMenuStorage>({
   name: 'contextMenu',
   type: 'extension',
   defaultOptions: {
@@ -82,7 +81,7 @@ export const ContextMenuExtension = createExtension<ContextMenuOptions>({
     longPressDuration: 500,
   },
 
-  addStorage(): Record<string, unknown> {
+  addStorage(): ContextMenuStorage {
     return {
       menuItems: new Map<string, ContextMenuItem>(),
       opts: {
@@ -95,7 +94,7 @@ export const ContextMenuExtension = createExtension<ContextMenuOptions>({
   },
 
   onCreate(ctx) {
-    const storage = typedStorage<ContextMenuStorage>(ctx)
+    const storage = ctx.storage
     const opts = storage.opts
 
     // 注册命令

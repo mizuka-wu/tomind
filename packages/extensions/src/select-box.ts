@@ -17,7 +17,7 @@ import { createExtension } from '@tomind/core'
 import type { ViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo, type DragPosition } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
-import { typedStorage, findOne } from './shared-utils'
+import { findOne } from './shared-utils'
 
 // ==================== 常量 ====================
 
@@ -409,7 +409,7 @@ function computeRangeFromDragResult(
 }
 
 function setupBarDrag(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<SelectBoxStorage>,
   nodeId: string,
   overlay: Group,
   barName: 'bar-one' | 'bar-two',
@@ -431,7 +431,7 @@ function setupBarDrag(
 
   reg.dragStart(() => {
     startSize = { ...size }
-    transitionState(typedStorage<SelectBoxStorage>(ctx), 'drag')
+    transitionState(ctx.storage, 'drag')
   })
 
   reg.dragMove((info: DragMoveInfo, _e: MouseEvent | TouchEvent) => {
@@ -478,14 +478,14 @@ function setupBarDrag(
     if (b2) b2.path = bar2Path
 
     // 保存最终尺寸
-    ;(typedStorage<SelectBoxStorage>(ctx)).lastSize = { x: newX, y: newY, width: newWidth, height: newHeight }
+    ;(ctx.storage).lastSize = { x: newX, y: newY, width: newWidth, height: newHeight }
   })
 
   reg.dragEnd((_pos: DragPosition, _e: MouseEvent | TouchEvent) => {
-    transitionState(typedStorage<SelectBoxStorage>(ctx), 'dragEnd')
+    transitionState(ctx.storage, 'dragEnd')
 
     // 从拖拽结果反算 rangeStart/rangeEnd
-    const storage = typedStorage<SelectBoxStorage>(ctx)
+    const storage = ctx.storage
     const state = ctx.getState<any>()
     if (state && storage.lastSize) {
       const rangeResult = computeRangeFromDragResult(state, nodeId, storage.lastSize, direction)
@@ -535,8 +535,8 @@ function transitionState(storage: SelectBoxStorage, event: string): void {
 
 // ==================== Hover 处理 ====================
 
-function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
-  const storage = typedStorage<SelectBoxStorage>(ctx)
+function handleHoverEnter(ctx: ExtensionContext<SelectBoxStorage>, nodeId: string): void {
+  const storage = ctx.storage
   const state = ctx.getState<any>()
   if (!state) return
 
@@ -582,14 +582,14 @@ function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   transitionState(storage, 'select')
 }
 
-function handleHoverLeave(ctx: ExtensionContext, _nodeId: string): void {
-  const storage = typedStorage<SelectBoxStorage>(ctx)
+function handleHoverLeave(ctx: ExtensionContext<SelectBoxStorage>, _nodeId: string): void {
+  const storage = ctx.storage
   transitionState(storage, 'deselect')
   destroyOverlay(ctx)
 }
 
-function destroyOverlay(ctx: ExtensionContext): void {
-  const storage = typedStorage<SelectBoxStorage>(ctx)
+function destroyOverlay(ctx: ExtensionContext<SelectBoxStorage>): void {
+  const storage = ctx.storage
 
   for (const reg of storage.registers) {
     reg.destroy()
@@ -607,21 +607,21 @@ function destroyOverlay(ctx: ExtensionContext): void {
 
 // ==================== 扩展定义 ====================
 
-export const SelectBoxExtension = createExtension({
+export const SelectBoxExtension = createExtension<Record<string, unknown>, SelectBoxStorage>({
   name: 'select-box',
   type: 'extension',
 
-  addStorage(): Record<string, unknown> {
+  addStorage(): SelectBoxStorage {
     return {
       overlayGroup: null,
       currentTargetId: null,
       state: 'normal',
       registers: [],
       lastSize: null,
-    } as SelectBoxStorage
+    }
   },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx) {
     ctx.on('selection:hoverEnter', (data: unknown) => {
       const { nodeId } = data as { nodeId: string }
       handleHoverEnter(ctx, nodeId)

@@ -17,7 +17,7 @@ import { createExtension } from '@tomind/core'
 import type { ViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo, type DragPosition } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
-import { typedStorage, findOne } from './shared-utils'
+import { findOne } from './shared-utils'
 
 // ==================== 常量 ====================
 
@@ -162,8 +162,8 @@ function setupBarDrag(
 
 // ==================== Hover 处理 ====================
 
-function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
-  const storage = typedStorage<TopicSelectBoxStorage>(ctx)
+function handleHoverEnter(ctx: ExtensionContext<TopicSelectBoxStorage>, nodeId: string): void {
+  const storage = ctx.storage
   const state = ctx.getState<any>()
   if (!state) return
 
@@ -205,12 +205,12 @@ function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   storage.rightRegister = setupBarDrag(ctx, nodeId, overlay, 'right-bar', width, minWidth)
 }
 
-function handleHoverLeave(ctx: ExtensionContext, _nodeId: string): void {
+function handleHoverLeave(ctx: ExtensionContext<TopicSelectBoxStorage>, _nodeId: string): void {
   destroyOverlay(ctx)
 }
 
-function destroyOverlay(ctx: ExtensionContext): void {
-  const storage = typedStorage<TopicSelectBoxStorage>(ctx)
+function destroyOverlay(ctx: ExtensionContext<TopicSelectBoxStorage>): void {
+  const storage = ctx.storage
 
   storage.leftRegister?.destroy()
   storage.leftRegister = null
@@ -228,11 +228,11 @@ function destroyOverlay(ctx: ExtensionContext): void {
 
 // ==================== 扩展定义 ====================
 
-export const TopicSelectBoxExtension = createExtension({
+export const TopicSelectBoxExtension = createExtension<Record<string, unknown>, TopicSelectBoxStorage>({
   name: 'topic-select-box',
   type: 'extension',
 
-  addStorage(): Record<string, unknown> {
+  addStorage(): TopicSelectBoxStorage {
     return {
       leftRegister: null,
       rightRegister: null,
@@ -241,7 +241,7 @@ export const TopicSelectBoxExtension = createExtension({
     } as TopicSelectBoxStorage
   },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx) {
     ctx.on('selection:hoverEnter', (data: unknown) => {
       const { nodeId } = data as { nodeId: string }
       handleHoverEnter(ctx, nodeId)
