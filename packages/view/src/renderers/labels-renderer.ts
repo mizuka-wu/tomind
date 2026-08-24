@@ -157,7 +157,7 @@ export class LabelsRenderer implements Renderer {
         if (finalUnitWidth < LABEL_UNIT_MIN_WIDTH) finalUnitWidth = LABEL_UNIT_MIN_WIDTH
       }
 
-      // 创建背景
+      // 创建背景（带 tooltip）
       const bg = new Rect({
         width: finalUnitWidth,
         height: LABEL_UNIT_HEIGHT,
@@ -166,6 +166,9 @@ export class LabelsRenderer implements Renderer {
         cornerRadius: LABEL_UNIT_RADIUS,
         x: contentWidth - lineRemainWidth,
         y: (currentLine - 1) * (LABEL_UNIT_HEIGHT + LABEL_UNIT_MARGIN_VERTICAL),
+        tooltip: isSpecialUnit
+          ? uniqueLabels.slice(i).map(l => l.text).join(', ')
+          : label,
       })
       this.group!.add(bg)
 
@@ -177,6 +180,9 @@ export class LabelsRenderer implements Renderer {
         fill: LABEL_UNIT_TEXT_COLOR,
         x: contentWidth - lineRemainWidth + LABEL_UNIT_PADDING_HORIZON,
         y: (currentLine - 1) * (LABEL_UNIT_HEIGHT + LABEL_UNIT_MARGIN_VERTICAL) + LABEL_UNIT_HEIGHT / 2,
+        tooltip: isSpecialUnit
+          ? uniqueLabels.slice(i).map(l => l.text).join(', ')
+          : label,
       })
       this.group!.add(text)
 
