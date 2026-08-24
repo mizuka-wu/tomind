@@ -6,36 +6,46 @@
  * 节点沿水平/垂直轴排列，子节点挂在时间线上方/下方（或左右）
  */
 import type { NodeDesc } from '@tomind/schema'
+import type { StyleEngine } from '@tomind/style'
+import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleSubtree } from './layout-utils'
 type NodeSize = import('./layout-utils').SimpleNodeSize
 
+function getSpacing(node: NodeDesc, key: 'spacingMajor' | 'spacingMinor', fallback: number, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  if (styleEngine && state) {
+    const val = styleEngine.getStyleValue(state, node.id, key)
+    if (typeof val === 'number') return val
+  }
+  return fallback
+}
+
 /** 递归计算子树总高度（垂直方向的总跨度） */
-function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine: StyleEngine | null, state: SheetState | null, gapKey: 'spacingMajor' | 'spacingMinor'): number {
   const size = sizeMap.get(node.id)!
   if (isCollapsed(node)) return size.height
   const children = getAttachedChildren(node)
   if (children.length === 0) return size.height
   let total = 0
   for (let i = 0; i < children.length; i++) {
-    total += subtreeTotalHeight(children[i], options, sizeMap)
-    if (i < children.length - 1) total += options.verticalGap
+    total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, gapKey)
+    if (i < children.length - 1) total += getSpacing(node, gapKey, options.verticalGap, styleEngine, state)
   }
   return Math.max(size.height, total)
 }
 
 /** 递归计算子树总宽度（水平方向的总跨度） */
-function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine: StyleEngine | null, state: SheetState | null, gapKey: 'spacingMajor' | 'spacingMinor'): number {
   const size = sizeMap.get(node.id)!
   if (isCollapsed(node)) return size.width
   const children = getAttachedChildren(node)
   if (children.length === 0) return size.width
   let maxChildWidth = 0
   for (const child of children) {
-    maxChildWidth = Math.max(maxChildWidth, subtreeTotalWidth(child, options, sizeMap))
+    maxChildWidth = Math.max(maxChildWidth, subtreeTotalWidth(child, options, sizeMap, styleEngine, state, gapKey))
   }
-  return size.width + options.horizontalGap + maxChildWidth
+  return size.width + getSpacing(node, gapKey, options.horizontalGap, styleEngine, state) + maxChildWidth
 }
 
 // ─── 水平时间线 ───
@@ -47,6 +57,8 @@ function layoutTimelineHorizontal(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
   const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
@@ -58,10 +70,10 @@ function layoutTimelineHorizontal(
     let topH = 0
     let bottomH = 0
     for (let i = 0; i < children.length; i++) {
-      if (i % 2 === 0) topH = Math.max(topH, subtreeTotalHeight(children[i], options, sizeMap))
-      else bottomH = Math.max(bottomH, subtreeTotalHeight(children[i], options, sizeMap))
+      if (i % 2 === 0) topH = Math.max(topH, subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, 'spacingMinor'))
+      else bottomH = Math.max(bottomH, subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, 'spacingMinor'))
     }
-    branchHeight = topH + size.height + bottomH + options.verticalGap * 2
+    branchHeight = topH + size.height + bottomH + getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state) * 2
   }
 
   nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
@@ -70,21 +82,21 @@ function layoutTimelineHorizontal(
   if (children.length === 0) return
 
   // 子节点沿水平轴排列，交替上下
-  let childX = x + size.width + options.horizontalGap
+  let childX = x + size.width + getSpacing(node, 'spacingMajor', options.horizontalGap, styleEngine, state)
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
     const cs = sizeMap.get(child.id)!
     const childY = (i % 2 === 0)
-      ? y - cs.height - options.verticalGap  // 上方
-      : y + size.height + options.verticalGap  // 下方
-    layoutTimelineHorizontal(child, childX, childY, options, sizeMap, nodes)
-    childX += subtreeTotalWidth(child, options, sizeMap) + options.horizontalGap
+      ? y - cs.height - getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state)  // 上方
+      : y + size.height + getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state)  // 下方
+    layoutTimelineHorizontal(child, childX, childY, options, sizeMap, nodes, styleEngine, state)
+    childX += subtreeTotalWidth(child, options, sizeMap, styleEngine, state, 'spacingMajor') + getSpacing(node, 'spacingMajor', options.horizontalGap, styleEngine, state)
   }
 }
 
 export const timelineHorizontalLayoutAlgorithm: LayoutAlgorithm = {
   name: 'timeline-horizontal',
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS): LayoutResult {
+  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
     const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
@@ -92,7 +104,7 @@ export const timelineHorizontalLayoutAlgorithm: LayoutAlgorithm = {
     const sizeMap = new Map<string, NodeSize>()
     measureSimpleSubtree(root, options, sizeMap)
 
-    layoutTimelineHorizontal(root, options.rootOffsetX, 200, options, sizeMap, nodes)
+    layoutTimelineHorizontal(root, options.rootOffsetX, 200, options, sizeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {
@@ -124,6 +136,8 @@ function layoutTimelineVertical(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
   const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
@@ -134,8 +148,8 @@ function layoutTimelineVertical(
   if (!isCollapsed(node) && children.length > 0) {
     let total = 0
     for (let i = 0; i < children.length; i++) {
-      total += subtreeTotalHeight(children[i], options, sizeMap)
-      if (i < children.length - 1) total += options.verticalGap
+      total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, 'spacingMajor')
+      if (i < children.length - 1) total += getSpacing(node, 'spacingMajor', options.verticalGap, styleEngine, state)
     }
     branchHeight = Math.max(size.height, total)
   }
@@ -146,21 +160,21 @@ function layoutTimelineVertical(
   if (children.length === 0) return
 
   // 子节点沿垂直轴排列，交替左右
-  let childY = y + size.height + options.verticalGap
+  let childY = y + size.height + getSpacing(node, 'spacingMajor', options.verticalGap, styleEngine, state)
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
     const cs = sizeMap.get(child.id)!
     const childX = (i % 2 === 0)
-      ? x - cs.width - options.horizontalGap  // 左侧
-      : x + size.width + options.horizontalGap  // 右侧
-    layoutTimelineVertical(child, childX, childY, options, sizeMap, nodes)
-    childY += subtreeTotalHeight(child, options, sizeMap) + options.verticalGap
+      ? x - cs.width - getSpacing(node, 'spacingMinor', options.horizontalGap, styleEngine, state)  // 左侧
+      : x + size.width + getSpacing(node, 'spacingMinor', options.horizontalGap, styleEngine, state)  // 右侧
+    layoutTimelineVertical(child, childX, childY, options, sizeMap, nodes, styleEngine, state)
+    childY += subtreeTotalHeight(child, options, sizeMap, styleEngine, state, 'spacingMajor') + getSpacing(node, 'spacingMajor', options.verticalGap, styleEngine, state)
   }
 }
 
 export const timelineVerticalLayoutAlgorithm: LayoutAlgorithm = {
   name: 'timeline-vertical',
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS): LayoutResult {
+  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
     const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
@@ -168,7 +182,7 @@ export const timelineVerticalLayoutAlgorithm: LayoutAlgorithm = {
     const sizeMap = new Map<string, NodeSize>()
     measureSimpleSubtree(root, options, sizeMap)
 
-    layoutTimelineVertical(root, 200, options.rootOffsetX, options, sizeMap, nodes)
+    layoutTimelineVertical(root, 200, options.rootOffsetX, options, sizeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {

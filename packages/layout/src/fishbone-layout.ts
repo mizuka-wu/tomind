@@ -8,35 +8,53 @@
  * rightHeaded: 鱼头在右（问题在右，原因在左）
  */
 import type { NodeDesc } from '@tomind/schema'
+import type { StyleEngine } from '@tomind/style'
+import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleSubtree } from './layout-utils'
 type NodeSize = import('./layout-utils').SimpleNodeSize
 
+function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  if (styleEngine && state) {
+    const val = styleEngine.getStyleValue(state, node.id, 'spacingMajor')
+    if (typeof val === 'number') return val
+  }
+  return options.horizontalGap
+}
+
+function getSpacingMinor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  if (styleEngine && state) {
+    const val = styleEngine.getStyleValue(state, node.id, 'spacingMinor')
+    if (typeof val === 'number') return val
+  }
+  return options.verticalGap
+}
+
 /** 递归计算子树总高度（垂直方向的总跨度） */
-function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine: StyleEngine | null, state: SheetState | null): number {
   const size = sizeMap.get(node.id)!
   if (isCollapsed(node)) return size.height
   const children = getAttachedChildren(node)
   if (children.length === 0) return size.height
   let total = 0
   for (let i = 0; i < children.length; i++) {
-    total += subtreeTotalHeight(children[i], options, sizeMap)
-    if (i < children.length - 1) total += options.verticalGap
+    total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state)
+    if (i < children.length - 1) total += getSpacingMinor(node, options, styleEngine, state)
   }
   return Math.max(size.height, total)
 }
 
 /** 递归计算子树总宽度（水平方向的总跨度），沿主脊方向使用 spineGap */
-function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine: StyleEngine | null, state: SheetState | null): number {
   const size = sizeMap.get(node.id)!
   if (isCollapsed(node)) return size.width
   const children = getAttachedChildren(node)
   if (children.length === 0) return size.width
-  const spineGap = options.horizontalGap * 1.5
+  const spineGap = getSpacingMajor(node, options, styleEngine, state) * 1.5
   let maxChildWidth = 0
   for (const child of children) {
-    maxChildWidth = Math.max(maxChildWidth, subtreeTotalWidth(child, options, sizeMap))
+    maxChildWidth = Math.max(maxChildWidth, subtreeTotalWidth(child, options, sizeMap, styleEngine, state))
   }
   return size.width + spineGap + maxChildWidth
 }
@@ -49,6 +67,8 @@ function layoutFishbone(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
   const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
@@ -60,10 +80,10 @@ function layoutFishbone(
     let topH = 0
     let bottomH = 0
     for (let i = 0; i < children.length; i++) {
-      if (i % 2 === 0) topH = Math.max(topH, subtreeTotalHeight(children[i], options, sizeMap))
-      else bottomH = Math.max(bottomH, subtreeTotalHeight(children[i], options, sizeMap))
+      if (i % 2 === 0) topH = Math.max(topH, subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state))
+      else bottomH = Math.max(bottomH, subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state))
     }
-    branchHeight = topH + size.height + bottomH + options.verticalGap * 4
+    branchHeight = topH + size.height + bottomH + getSpacingMinor(node, options, styleEngine, state) * 4
   }
 
   nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
@@ -72,7 +92,7 @@ function layoutFishbone(
   if (children.length === 0) return
 
   // 鱼骨: 子节点沿主脊排列，交替上下
-  const spineGap = options.horizontalGap * 1.5
+  const spineGap = getSpacingMajor(node, options, styleEngine, state) * 1.5
   let childX = headLeft
     ? x + size.width + spineGap  // 鱼头在左，原因向右
     : x - spineGap  // 鱼头在右，原因向左
@@ -81,23 +101,24 @@ function layoutFishbone(
     const child = children[i]
     const cs = sizeMap.get(child.id)!
     const childY = (i % 2 === 0)
-      ? y - cs.height - options.verticalGap * 2  // 上方（斜向上）
-      : y + size.height + options.verticalGap * 2  // 下方（斜向下）
+      ? y - cs.height - getSpacingMinor(node, options, styleEngine, state) * 2  // 上方（斜向上）
+      : y + size.height + getSpacingMinor(node, options, styleEngine, state) * 2  // 下方（斜向下）
 
     // 水平偏移（斜线效果）
-    const offsetX = headLeft ? -options.horizontalGap * 0.3 : options.horizontalGap * 0.3
+    const spacingMajor = getSpacingMajor(node, options, styleEngine, state)
+    const offsetX = headLeft ? -spacingMajor * 0.3 : spacingMajor * 0.3
 
-    layoutFishbone(child, childX + offsetX, childY, headLeft, options, sizeMap, nodes)
+    layoutFishbone(child, childX + offsetX, childY, headLeft, options, sizeMap, nodes, styleEngine, state)
 
     childX = headLeft
-      ? childX + subtreeTotalWidth(child, options, sizeMap) + spineGap
-      : childX - subtreeTotalWidth(child, options, sizeMap) - spineGap
+      ? childX + subtreeTotalWidth(child, options, sizeMap, styleEngine, state) + spineGap
+      : childX - subtreeTotalWidth(child, options, sizeMap, styleEngine, state) - spineGap
   }
 }
 
 export const fishboneLeftHeadedLayoutAlgorithm: LayoutAlgorithm = {
   name: 'fishbone-leftHeaded',
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS): LayoutResult {
+  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
     const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
@@ -106,7 +127,7 @@ export const fishboneLeftHeadedLayoutAlgorithm: LayoutAlgorithm = {
     measureSimpleSubtree(root, options, sizeMap)
 
     // 鱼头在左侧
-    layoutFishbone(root, options.rootOffsetX, 200, true, options, sizeMap, nodes)
+    layoutFishbone(root, options.rootOffsetX, 200, true, options, sizeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {
@@ -131,7 +152,7 @@ export const fishboneLeftHeadedLayoutAlgorithm: LayoutAlgorithm = {
 
 export const fishboneRightHeadedLayoutAlgorithm: LayoutAlgorithm = {
   name: 'fishbone-rightHeaded',
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS): LayoutResult {
+  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
     const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
@@ -144,12 +165,12 @@ export const fishboneRightHeadedLayoutAlgorithm: LayoutAlgorithm = {
       let w = 0
       const children = getAttachedChildren(root)
       for (let i = 0; i < children.length; i++) {
-        w += subtreeTotalWidth(children[i], options, sizeMap) + options.horizontalGap * 1.5
+        w += subtreeTotalWidth(children[i], options, sizeMap, styleEngine, state) + getSpacingMajor(root, options, styleEngine, state) * 1.5
       }
       return w + sizeMap.get(root.id)!.width
     })()
 
-    layoutFishbone(root, totalW - sizeMap.get(root.id)!.width - options.rootOffsetX, 200, false, options, sizeMap, nodes)
+    layoutFishbone(root, totalW - sizeMap.get(root.id)!.width - options.rootOffsetX, 200, false, options, sizeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {
