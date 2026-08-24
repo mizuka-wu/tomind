@@ -43,6 +43,7 @@ export { DEFAULT_STYLES } from './default-styles'
 export type {
   StyleValue,
   ResolvedStyle,
+  LeaferStyle,
   ThemeData,
   ThemeClassEntry,
   StyleComputeOptions,

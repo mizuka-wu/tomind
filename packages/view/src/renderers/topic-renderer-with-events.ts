@@ -178,7 +178,7 @@ export class TopicRendererWithEvents implements Renderer {
     // === 拖拽事件 ===
     
     // 拖拽开始
-    this.on('dragstart' as DragEventType, (event) => {
+    this.on('dragstart', (event) => {
       console.log(`Topic ${this.nodeId} drag start`, {
         position: event.position,
         drag: event.drag,
@@ -187,7 +187,7 @@ export class TopicRendererWithEvents implements Renderer {
     })
 
     // 拖拽中
-    this.on('drag' as DragEventType, (event) => {
+    this.on('drag', (event) => {
       console.log(`Topic ${this.nodeId} dragging`, {
         delta: event.drag?.delta,
       })
@@ -195,7 +195,7 @@ export class TopicRendererWithEvents implements Renderer {
     })
 
     // 拖拽结束
-    this.on('dragend' as DragEventType, (event) => {
+    this.on('dragend', (event) => {
       console.log(`Topic ${this.nodeId} drag end`, {
         position: event.position,
       })
@@ -203,25 +203,25 @@ export class TopicRendererWithEvents implements Renderer {
     })
 
     // 拖拽进入目标
-    this.on('dragenter' as DragEventType, (event) => {
+    this.on('dragenter', (event) => {
       console.log(`Topic ${this.nodeId} drag enter`, event)
       // 可以在这里显示放置区域高亮
     })
 
     // 拖拽离开目标
-    this.on('dragleave' as DragEventType, (event) => {
+    this.on('dragleave', (event) => {
       console.log(`Topic ${this.nodeId} drag leave`, event)
       // 可以在这里移除放置区域高亮
     })
 
     // 拖拽悬停在目标上
-    this.on('dragover' as DragEventType, (event) => {
+    this.on('dragover', (event) => {
       console.log(`Topic ${this.nodeId} drag over`, event)
       // 可以在这里显示放置位置提示
     })
 
     // 放置
-    this.on('drop' as DragEventType, (event) => {
+    this.on('drop', (event) => {
       console.log(`Topic ${this.nodeId} drop`, {
         data: event.drag?.data,
         dropTargetId: event.drag?.dropTargetId,
@@ -232,7 +232,7 @@ export class TopicRendererWithEvents implements Renderer {
     // === 手势事件 ===
     
     // 双指缩放开始
-    this.on('pinchstart' as GestureEventType, (event) => {
+    this.on('pinchstart', (event) => {
       console.log(`Topic ${this.nodeId} pinch start`, {
         center: event.gesture?.center,
       })
@@ -240,7 +240,7 @@ export class TopicRendererWithEvents implements Renderer {
     })
 
     // 双指缩放中
-    this.on('pinch' as GestureEventType, (event) => {
+    this.on('pinch', (event) => {
       console.log(`Topic ${this.nodeId} pinching`, {
         scale: event.gesture?.scale,
         totalScale: event.gesture?.totalScale,
@@ -249,7 +249,7 @@ export class TopicRendererWithEvents implements Renderer {
     })
 
     // 双指缩放结束
-    this.on('pinchend' as GestureEventType, (event) => {
+    this.on('pinchend', (event) => {
       console.log(`Topic ${this.nodeId} pinch end`, {
         totalScale: event.gesture?.totalScale,
       })
@@ -257,7 +257,7 @@ export class TopicRendererWithEvents implements Renderer {
     })
 
     // 旋转开始
-    this.on('rotatestart' as GestureEventType, (event) => {
+    this.on('rotatestart', (event) => {
       console.log(`Topic ${this.nodeId} rotate start`, {
         center: event.gesture?.center,
       })
@@ -265,7 +265,7 @@ export class TopicRendererWithEvents implements Renderer {
     })
 
     // 旋转中
-    this.on('rotate' as GestureEventType, (event) => {
+    this.on('rotate', (event) => {
       console.log(`Topic ${this.nodeId} rotating`, {
         rotation: event.gesture?.rotation,
         totalRotation: event.gesture?.totalRotation,
@@ -274,7 +274,7 @@ export class TopicRendererWithEvents implements Renderer {
     })
 
     // 旋转结束
-    this.on('rotateend' as GestureEventType, (event) => {
+    this.on('rotateend', (event) => {
       console.log(`Topic ${this.nodeId} rotate end`, {
         totalRotation: event.gesture?.totalRotation,
       })
@@ -369,18 +369,18 @@ export function dragDropExample() {
   let dragSource: string | null = null
 
   renderers.forEach(renderer => {
-    renderer.on('dragstart' as DragEventType, (event) => {
+    renderer.on('dragstart', (event) => {
       dragSource = event.targetId
       console.log('Drag started:', dragSource)
     })
 
-    renderer.on('dragenter' as DragEventType, (event) => {
+    renderer.on('dragenter', (event) => {
       if (dragSource && dragSource !== event.targetId) {
         console.log(`Can drop ${dragSource} on ${event.targetId}`)
       }
     })
 
-    renderer.on('drop' as DragEventType, (event) => {
+    renderer.on('drop', (event) => {
       if (dragSource && dragSource !== event.targetId) {
         console.log(`Dropped ${dragSource} on ${event.targetId}`)
         // 这里处理排序逻辑
@@ -388,7 +388,7 @@ export function dragDropExample() {
       dragSource = null
     })
 
-    renderer.on('dragend' as DragEventType, () => {
+    renderer.on('dragend', () => {
       dragSource = null
     })
   })
@@ -472,34 +472,34 @@ export function gestureExample() {
   let currentRotation = 0
 
   // 监听缩放手势
-  renderer.on('pinchstart' as GestureEventType, (event) => {
+  renderer.on('pinchstart', (event) => {
     console.log('Pinch started at:', event.gesture?.center)
   })
 
-  renderer.on('pinch' as GestureEventType, (event) => {
+  renderer.on('pinch', (event) => {
     const scaleDelta = event.gesture?.scale ?? 1
     currentScale *= scaleDelta
     console.log('Current scale:', currentScale)
     // 应用缩放到画布
   })
 
-  renderer.on('pinchend' as GestureEventType, () => {
+  renderer.on('pinchend', () => {
     console.log('Pinch ended, final scale:', currentScale)
   })
 
   // 监听旋转手势
-  renderer.on('rotatestart' as GestureEventType, (event) => {
+  renderer.on('rotatestart', (event) => {
     console.log('Rotate started at:', event.gesture?.center)
   })
 
-  renderer.on('rotate' as GestureEventType, (event) => {
+  renderer.on('rotate', (event) => {
     const rotationDelta = event.gesture?.rotation ?? 0
     currentRotation += rotationDelta
     console.log('Current rotation:', currentRotation)
     // 应用旋转到画布
   })
 
-  renderer.on('rotateend' as GestureEventType, () => {
+  renderer.on('rotateend', () => {
     console.log('Rotate ended, final rotation:', currentRotation)
   })
 

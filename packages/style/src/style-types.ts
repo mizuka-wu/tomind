@@ -137,3 +137,62 @@ export interface StyleComputeOptions {
   /** 临时主题覆盖（不修改全局） */
   themeOverride?: ThemeData
 }
+
+/**
+ * LeaferStyle — toLeaferStyle() + getLeaferStyle() 输出的类型化结构
+ *
+ * 消除 view 层大量的 `as string` / `as number` 断言。
+ * 未列出的扩展属性通过 [key: string] 索引签名访问。
+ */
+export interface LeaferStyle {
+  // 填充
+  fill?: string | Record<string, unknown> | null
+  fillPattern?: unknown
+  fillColor?: string
+  // 边框/描边
+  stroke?: string
+  strokeWidth?: number
+  strokeDash?: number[] | null
+  dashPattern?: number[] | null
+  cornerRadius?: number
+  opacity?: number
+  visibility?: string
+  // 字体
+  fontColor?: string
+  fontSize?: number
+  fontFamily?: string
+  fontWeight?: string
+  fontStyle?: string
+  textAlign?: string
+  textDecoration?: string
+  textTransform?: string
+  textColor?: string
+  // 连线
+  lineColor?: string
+  lineStrokeWidth?: number
+  lineCornerRadius?: number
+  lineClass?: string
+  linePattern?: string
+  linePath?: unknown
+  // 箭头
+  arrowEndClass?: string
+  arrowBeginClass?: string
+  // 形状
+  shapeClass?: string
+  // 标注
+  calloutLineClass?: string
+  calloutShapeClass?: string
+  // 图片
+  imageUrl?: string
+  imageWidth?: number
+  imageHeight?: number
+  imageBorderWidth?: number
+  imageBorderColor?: string
+  imageOpacity?: number
+  imageShadowVisible?: boolean
+  // 编号
+  numberingText?: string
+  numberingStyle?: Record<string, unknown>
+  // 扩展
+  [key: string]: unknown
+}

@@ -35,7 +35,7 @@
 import type { SheetState } from '@tomind/state'
 import { numberingKey } from '@tomind/state'
 import type { NumberingState } from '@tomind/state' 
-import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue } from './style-types'
+import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue, LeaferStyle } from './style-types'
 import { isThemeClassEntry, resolveColorVariables } from './style-types'
 import { classifyNode, getParentId, findById, getMainTopicAncestor } from './classify'
 import { DEFAULT_STYLES } from './default-styles'
@@ -305,7 +305,7 @@ export class StyleEngine {
     state: SheetState,
     topicId: string,
     options: StyleComputeOptions = {},
-  ): Record<string, unknown> {
+  ): LeaferStyle {
     const style = this.computeStyle(state, topicId, options)
     const leaferStyle = this.toLeaferStyle(style)
 
@@ -354,7 +354,7 @@ export class StyleEngine {
       // Plugin 未注册时 field() 会抛异常，忽略
     }
 
-    return leaferStyle
+    return leaferStyle as LeaferStyle
   }
 
   /**

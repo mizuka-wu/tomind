@@ -17,7 +17,7 @@ import type {
   BoundaryNodeDesc,
   SummaryNodeDesc,
 } from '@tomind/schema'
-import type { StyleEngine } from '@tomind/style'
+import type { StyleEngine, LeaferStyle } from '@tomind/style'
 import type { LayoutEngine, LayoutResult } from '@tomind/layout'
 import { getTitleText } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
@@ -54,6 +54,14 @@ export interface ViewContext {
   layoutEngine: LayoutEngine | null
   state: SheetState | null
   eventEmitter: { emit: (event: string, ...args: unknown[]) => void } | null
+}
+
+// ==================== 工具函数 ====================
+
+/** 获取类型化的 LeaferStyle（消除 Record<string, unknown> 断言） */
+export function getLeaferStyle(ctx: ViewContext, nodeId: string): LeaferStyle {
+  if (!ctx.styleEngine || !ctx.state) return {} as LeaferStyle
+  return ctx.styleEngine.getLeaferStyle(ctx.state, nodeId) as LeaferStyle
 }
 
 // ==================== NodeViewDesc ====================
@@ -232,7 +240,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     }
     
     // 获取 LeaferJS 格式样式
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     
     // 读取缓存的布局结果（由 SheetEditor.updateState 统一 compute）
     let layout: LayoutResult
@@ -271,7 +279,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
   }
 
   /**
-   * 绘制从当前节点到每个子节点的连线
+   * 渲染子节点连接线（elbow/curve/line 等）
    * 使用 Line + points，样式从 StyleEngine 的 LeaferJS 映射读取
    */
   private renderConnections(layout: LayoutResult): void {
@@ -298,18 +306,18 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     console.log(`[renderConnections] ${this.node.type}#${this.node.id} — ${children.length} children: [${children.map(c => c.id).join(',')}]`)
 
     const leaferStyle = this.ctx.styleEngine && this.ctx.state
-      ? this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+      ? getLeaferStyle(this.ctx, this.node.id)
       : {}
 
-    const color = (leaferStyle.lineColor as string) ?? '#999999'
+    const color = leaferStyle.lineColor ?? '#999999'
     const multiLineColors = typeof leaferStyle.multiLineColors === 'string'
       ? leaferStyle.multiLineColors.split(/\s+/).filter(Boolean)
       : []
-    const width = (leaferStyle.strokeWidth as number) ?? 1.5
-    const cornerRadius = (leaferStyle.lineCornerRadius as number) ?? (leaferStyle.cornerRadius as number) ?? 0
-    const strokeDash = leaferStyle.strokeDash as number[] | null | undefined
-    const lineClass = (leaferStyle.lineClass as string) ?? 'elbow'
-    const arrowEndClass = leaferStyle.arrowEndClass as string | undefined
+    const width = leaferStyle.strokeWidth ?? 1.5
+    const cornerRadius = leaferStyle.lineCornerRadius ?? leaferStyle.cornerRadius ?? 0
+    const strokeDash = leaferStyle.strokeDash
+    const lineClass = leaferStyle.lineClass ?? 'elbow'
+    const arrowEndClass = leaferStyle.arrowEndClass
 
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
@@ -826,7 +834,7 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -966,7 +974,7 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1066,7 +1074,7 @@ export class SummaryNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.topicRenderer || !this.summaryRenderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.topicRenderer.render(layout, style)
     this.summaryRenderer.render(layout, style)
@@ -1180,7 +1188,7 @@ export class CollapseExtendNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1208,7 +1216,7 @@ export class NumberingNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1237,7 +1245,7 @@ export class TopicTitleNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1310,7 +1318,7 @@ export class InformationNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1383,7 +1391,7 @@ export class LabelNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1411,7 +1419,7 @@ export class PlaceholderTopicNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1477,7 +1485,7 @@ export class ImageNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
 
     // 从布局引擎获取 layout，查找父 topic 的 partBounds 来定位 image
     let layout: LayoutResult
@@ -1537,7 +1545,7 @@ export class IndicatorNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1565,7 +1573,7 @@ export class BoundaryTitleNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1638,7 +1646,7 @@ export class MathjaxNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1666,7 +1674,7 @@ export class SelectBoxNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1694,7 +1702,7 @@ export class TopicSelectBoxNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1722,7 +1730,7 @@ export class ResizeBoxNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1750,7 +1758,7 @@ export class FishboneMainLineNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1778,7 +1786,7 @@ export class FishboneHeadLineNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1806,7 +1814,7 @@ export class MatrixCellNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1834,7 +1842,7 @@ export class TreeTableCellNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1885,7 +1893,7 @@ export class ConnectionNodeViewDesc extends NodeViewDesc {
 
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
-    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
+    const style = getLeaferStyle(this.ctx, this.node.id)
 
     // 读取缓存的布局结果（由 SheetEditor.updateState 统一 compute）
     let layout: LayoutResult

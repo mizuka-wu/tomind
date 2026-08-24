@@ -291,7 +291,7 @@ function computeDrawBounds(
  * 在 ensurePath() 之后、applyPathFillAndStroke() 之前调用。
  */
 function applyPathInset(
-  path: Path,
+  path: Rect | Line | Ellipse | Path,
   style: Record<string, unknown>,
 ): void {
   const sw = typeof style.strokeWidth === 'number' ? style.strokeWidth : 0
@@ -630,7 +630,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathStroke(style)
   }
 
@@ -640,7 +640,7 @@ export class TopicRenderer implements Renderer {
   private renderEllipseRect(layout: NodeLayout, style: Record<string, unknown>): void {
     const pathData = ellipseRectPath(0, 0, layout.width, layout.height)
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -648,7 +648,7 @@ export class TopicRenderer implements Renderer {
   private renderEllipticRectangle(layout: NodeLayout, style: Record<string, unknown>): void {
     const pathData = convexrectPath(0, 0, layout.width, layout.height)
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -656,7 +656,7 @@ export class TopicRenderer implements Renderer {
   private renderRoundedHexagon(layout: NodeLayout, style: Record<string, unknown>): void {
     const pathData = peakrectPath(0, 0, layout.width, layout.height)
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -675,7 +675,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -689,7 +689,7 @@ export class TopicRenderer implements Renderer {
     const rightBracket = `M ${w - bracketWidth} 0 L ${w} 0 L ${w} ${h} L ${w - bracketWidth} ${h}`
 
     this.ensurePath(`${leftBracket} ${rightBracket}`)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathStroke(style)
   }
 
@@ -705,7 +705,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -760,7 +760,7 @@ export class TopicRenderer implements Renderer {
   private renderCloud(layout: NodeLayout, style: Record<string, unknown>): void {
     const pathData = cloudPath(0, 0, layout.width, layout.height)
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -780,7 +780,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -797,7 +797,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -825,7 +825,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -847,7 +847,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -869,7 +869,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -891,7 +891,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -928,7 +928,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -947,7 +947,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -968,7 +968,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -985,7 +985,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -994,7 +994,7 @@ export class TopicRenderer implements Renderer {
     const { x, y, w, h } = computeDrawBounds(layout, style)
     const pathData = handDrawnEllipsePath(x, y, w, h)
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
   }
 
@@ -1011,7 +1011,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathStroke(style)
   }
 
@@ -1034,7 +1034,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathStroke(style)
   }
 
@@ -1062,7 +1062,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathStroke(style)
   }
 
@@ -1114,7 +1114,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathStroke(style)
   }
 
@@ -1139,7 +1139,7 @@ export class TopicRenderer implements Renderer {
     ].join(' ')
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathStroke(style)
   }
 
@@ -1188,7 +1188,7 @@ export class TopicRenderer implements Renderer {
     const pathData = `${leftBracket} ${rightBracket}`
 
     this.ensurePath(pathData)
-    applyPathInset(this.shape as Path, style)
+    applyPathInset(this.shape!, style)
     this.applyPathStroke(style)
   }
 
