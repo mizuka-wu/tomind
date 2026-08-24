@@ -7,43 +7,7 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
-
-const ATTACHED = 'attached'
-
-function getTitle(node: NodeDesc): string {
-  const title = node.attrs.title
-  if (typeof title === 'string') return title
-  if (Array.isArray(title)) {
-    return title.map((u: { text?: string }) => u.text ?? '').join('')
-  }
-  return ''
-}
-
-function getFontSize(node: NodeDesc): number {
-  const style = node.attrs.style as Record<string, unknown> | undefined
-  return (style?.fontSize as number) ?? 14
-}
-
-function isCollapsed(node: NodeDesc): boolean {
-  return (node.attrs.collapsed as boolean) ?? false
-}
-
-function getAttachedChildren(node: NodeDesc): readonly NodeDesc[] {
-  return node.children[ATTACHED] ?? []
-}
-
-function findRootTopic(doc: NodeDesc): NodeDesc | null {
-  if (doc.type === 'topic') return doc
-  const attached = getAttachedChildren(doc)
-  if (attached.length > 0) return attached[0]
-  for (const children of Object.values(doc.children)) {
-    for (const child of children) {
-      const found = findRootTopic(child)
-      if (found) return found
-    }
-  }
-  return null
-}
+import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
 
 interface NodeSize {
   width: number

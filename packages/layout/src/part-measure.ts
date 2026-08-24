@@ -7,6 +7,7 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
+import { getTitle, getFontSize } from './layout-utils'
 
 // ==================== 类型定义 ====================
 
@@ -37,20 +38,6 @@ const MARKER_SIZE = 16
 const INFO_ICON_SIZE = 16
 
 // ==================== 工具函数 ====================
-
-function getTitle(node: NodeDesc): string {
-  const title = node.attrs.title
-  if (typeof title === 'string') return title
-  if (Array.isArray(title)) {
-    return title.map((u: { text?: string }) => u.text ?? '').join('')
-  }
-  return ''
-}
-
-function getFontSize(node: NodeDesc): number {
-  const style = node.attrs.style as Record<string, unknown> | undefined
-  return (style?.fontSize as number) ?? 14
-}
 
 function getFontFamily(node: NodeDesc): string {
   const style = node.attrs.style as Record<string, unknown> | undefined

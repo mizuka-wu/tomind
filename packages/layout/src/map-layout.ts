@@ -3,8 +3,13 @@ import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engi
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
-
-const ATTACHED = 'attached'
+import {
+  getTitle,
+  getFontSize,
+  isCollapsed,
+  getAttachedChildren,
+  findRootTopic,
+} from './layout-utils'
 
 // ─── 配置 ───
 
@@ -42,61 +47,6 @@ type NodeLayout = {
   titleHeight: number
   branchHeight: number
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
-}
-
-// ─── 工具函数 ───
-
-function getTitle(node: NodeDesc): string {
-  const title = node.attrs.title
-  if (typeof title === 'string') return title
-  if (Array.isArray(title)) {
-    return title.map((u: { text?: string }) => u.text ?? '').join('')
-  }
-  return ''
-}
-
-function getFontSize(node: NodeDesc, styleEngine?: unknown, state?: unknown): number {
-  if (styleEngine && state) {
-    const se = styleEngine as { computeStyle: (s: unknown, id: string) => Record<string, unknown> | undefined }
-    const resolved = se.computeStyle(state, node.id)
-    if (resolved?.fontSize != null) {
-      const value = resolved.fontSize
-      if (typeof value === 'string') {
-        const parsed = parseInt(value)
-        return isNaN(parsed) ? 14 : parsed
-      }
-      if (typeof value === 'number') return value
-    }
-  }
-  const style = node.attrs.style as Record<string, unknown> | undefined
-  const fontSize = style?.fontSize
-  if (typeof fontSize === 'string') {
-    const parsed = parseInt(fontSize)
-    return isNaN(parsed) ? 14 : parsed
-  }
-  if (typeof fontSize === 'number') return fontSize
-  return 14
-}
-
-function isCollapsed(node: NodeDesc): boolean {
-  return (node.attrs.collapsed as boolean) ?? false
-}
-
-function getAttachedChildren(node: NodeDesc): readonly NodeDesc[] {
-  return node.children[ATTACHED] ?? []
-}
-
-function findRootTopic(doc: NodeDesc): NodeDesc | null {
-  if (doc.type === 'topic' || doc.type === 'root') return doc
-  const attached = getAttachedChildren(doc)
-  if (attached.length > 0) return attached[0]
-  for (const children of Object.values(doc.children)) {
-    for (const child of children) {
-      const found = findRootTopic(child)
-      if (found) return found
-    }
-  }
-  return null
 }
 
 // ─── 测量 ───

@@ -10,37 +10,13 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine, ResolvedStyle } from '@tomind/style'
-import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
+import type { LayoutAlgorithm, LayoutResult, LayoutOptions, NodeLayout } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
-
-const ATTACHED = 'attached'
+import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
 
 export type TreeDirection = 'right' | 'left' | 'down' | 'up'
-
-// ─── 工具函数 ───
-
-function isCollapsed(node: NodeDesc): boolean {
-  return (node.attrs.collapsed as boolean) ?? false
-}
-
-function getAttachedChildren(node: NodeDesc): readonly NodeDesc[] {
-  return node.children[ATTACHED] ?? []
-}
-
-function findRootTopic(doc: NodeDesc): NodeDesc | null {
-  if (doc.type === 'topic' || doc.type === 'root') return doc
-  const attached = getAttachedChildren(doc)
-  if (attached.length > 0) return attached[0]
-  for (const children of Object.values(doc.children)) {
-    for (const child of children) {
-      const found = findRootTopic(child)
-      if (found) return found
-    }
-  }
-  return null
-}
 
 function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value

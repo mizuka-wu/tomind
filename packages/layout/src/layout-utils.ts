@@ -1,0 +1,58 @@
+/**
+ * Layout 公共工具函数
+ * 所有布局算法共享的基础操作
+ */
+import type { NodeDesc } from '@tomind/schema'
+import type { LayoutOptions } from './layout-engine'
+
+const ATTACHED = 'attached'
+
+// ─── 节点属性读取 ───
+
+export function getTitle(node: NodeDesc): string {
+  const title = node.attrs.title
+  if (typeof title === 'string') return title
+  if (Array.isArray(title)) {
+    return title.map((u: { text?: string }) => u.text ?? '').join('')
+  }
+  return ''
+}
+
+export function getFontSize(node: NodeDesc): number {
+  const style = node.attrs.style as Record<string, unknown> | undefined
+  const fontSize = style?.fontSize
+  if (typeof fontSize === 'string') {
+    const parsed = parseInt(fontSize)
+    return isNaN(parsed) ? 14 : parsed
+  }
+  if (typeof fontSize === 'number') return fontSize
+  return 14
+}
+
+export function isCollapsed(node: NodeDesc): boolean {
+  return (node.attrs.collapsed as boolean) ?? false
+}
+
+// ─── 树遍历 ───
+
+export function getAttachedChildren(node: NodeDesc): readonly NodeDesc[] {
+  return node.children[ATTACHED] ?? []
+}
+
+export function findRootTopic(doc: NodeDesc): NodeDesc | null {
+  if (doc.type === 'topic' || doc.type === 'root') return doc
+  const attached = getAttachedChildren(doc)
+  if (attached.length > 0) return attached[0]
+  for (const children of Object.values(doc.children)) {
+    for (const child of children) {
+      const found = findRootTopic(child)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+// ─── 测量辅助 ───
+
+/** 测量文本尺寸（包装 layout-engine 的 measureTextSize） */
+export { measureTextSize } from './layout-engine'
