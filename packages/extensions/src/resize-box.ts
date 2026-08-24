@@ -14,6 +14,7 @@
 import { Group, Rect } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
+import type { ViewLike } from './shared-types'
 
 // ==================== 类型安全辅助 ====================
 
@@ -272,7 +273,7 @@ function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   const node = state.nodes?.get(nodeId)
   if (!node || node.type !== 'image') return
 
-  const view = ctx.getView() as any
+  const view = ctx.getView() as ViewLike
   const layoutEngine = view?.layoutEngine
   if (!layoutEngine) return
 

@@ -77,12 +77,14 @@ interface PresetThemeOptions extends Record<string, unknown> {
   themeId?: string
 }
 
+const DEFAULT_THEME_ID = 'preset-default'
+
 export const PresetThemeExtension = createExtension({
   name: 'presetTheme',
   type: 'extension',
   defaultOptions: {
     enabled: true,
-    themeId: 'preset-default',
+    themeId: DEFAULT_THEME_ID,
   } as PresetThemeOptions,
 
   onCreate(ctx) {
@@ -92,7 +94,7 @@ export const PresetThemeExtension = createExtension({
     if (!styleEngine) return
 
     // 从 defaultOptions 读取配置（ctx.storage 为空因为没有 addStorage）
-    const themeId = (this as any).defaultOptions?.themeId || 'preset-default'
+    const themeId = DEFAULT_THEME_ID
     const theme = PRESET_THEMES[themeId]
 
     if (!theme) {

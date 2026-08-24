@@ -11,6 +11,7 @@
 
 import { createExtension, Transaction, getAttributeTitle, getPlainTextFromAttributeTitle, createAttributeTitleFromPlainText } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
+import type { ViewLike } from './shared-types'
 
 // ==================== Storage ====================
 
@@ -108,7 +109,7 @@ function handleEditStart(ctx: ExtensionContext, nodeId: string, node: any): void
   storage.isEditing = true
 
   // 获取 LeaferJS App
-  const view = ctx.getView() as any
+  const view = ctx.getView() as ViewLike
   const app = view?.leaferView?.app
   if (!app) {
     console.warn('[EditBridge] no LeaferJS App found')

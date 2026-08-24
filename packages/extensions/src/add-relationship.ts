@@ -1,5 +1,6 @@
 import { createExtension, Transaction } from '@tomind/core'
 import type { ExtensionContext, CommandFn, SheetState } from '@tomind/core'
+import type { ViewLike } from './shared-types'
 /**
  * AddRelationshipExtension — 添加关系线扩展
  *
@@ -231,7 +232,7 @@ function finish(ctx: ExtensionContext, stateManager: any): void {
   const relationshipId = createRelationship(ctx, end1Id, end2Id)
 
   // 从 layout 获取端点位置
-  const view = ctx.getView() as any
+  const view = ctx.getView() as ViewLike
   const layoutEngine = view?.layoutEngine
   const layoutResult = layoutEngine?.getLayoutResult()
   const end1Layout = layoutResult?.nodes?.get(end1Id)

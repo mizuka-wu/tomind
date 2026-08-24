@@ -33,9 +33,8 @@ export const AssetsExtension: Extension<AssetsExtensionOptions> = {
     // 获取 assets provider
     const assetsProvider = getAssetsProvider()
 
-    // 将 assetsProvider 注册到上下文，供其他扩展访问
-    // 当 preset 系统实现后，应通过 ctx.emit('preset:registerAssets', assetsProvider) 注册
-    ;(ctx as any).assetsProvider = assetsProvider
+    // 将 assetsProvider 注册到 storage，供其他扩展访问
+    ctx.storage.assetsProvider = assetsProvider
 
     // 返回清理函数
     return () => {

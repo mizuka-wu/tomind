@@ -1,39 +1,45 @@
-import { createPartExtension, NodeViewDesc } from '@tomind/core'
-import type { ExtensionContext } from '@tomind/core'
+/**
+ * SelectDragExtension — 拖拽选中节点重排扩展
+ *
+ * 从旧 editreceiver.ts → editbridge.ts 中的拖拽选中逻辑迁移
+ * 实现：
+ * 1. 选中多个节点（selection 事件）
+ * 2. 拖拽选中节点到目标节点
+ * 3. 移动选中节点到目标节点前后
+ * 4. 支持 Shift 键切换前后位置
+ * 5. 实时预览移动效果
+ */
 
-interface SelectBox extends NodeViewDesc {
-  relationBranch: NodeViewDesc[]
-  selectBoxOneG: { move: (x: number, y: number) => void }
-  selectBoxTwoG: { move: (x: number, y: number) => void }
-  render: (direction: string) => void
+import { createExtension } from '@tomind/core'
+import type { ExtensionContext } from '@tomind/core'
+import type { NodeViewDesc } from '@tomind/view'
+
+/** LeaferJS 拖拽上下文 — 扩展 NodeViewDesc 的运行时属性 */
+interface LeaferDragContext {
+  type?: string
+  model?: unknown
+  summaryModel?: unknown
+  parent?: () => LeaferDragContext | null
+  [key: string]: unknown
 }
 
-/**
- * SelectDragExtension - 处理 boundary/summary 的 selectBox 拖拽
- * 
- * 职责：
- * - 跟踪 selectBox 拖拽状态
- * - 计算新的 range（最小/最大索引）
- * - 更新 boundary/summary 的 rangeStart/rangeEnd
- */
-export const SelectDragExtension = createPartExtension({
+// ==================== Extension ====================
+
+export const SelectDragExtension = createExtension({
   name: 'selectDrag',
+  type: 'extension',
+  defaultOptions: { enabled: true },
 
   onCreate(ctx: ExtensionContext) {
-    // 使用闭包管理状态
-    let selectBox: SelectBox | null = null
     let context: NodeViewDesc | null = null
-    let direction: string | null = null
-    let startContains: NodeViewDesc[] | null = null
     let selectedBranches: NodeViewDesc[] = []
+    let direction = 'after'
 
     // 开始拖拽
     const onSelectDragStart = (...args: unknown[]) => {
-      const [newSelectBox, newContext, newDirection] = args as [SelectBox, NodeViewDesc, string]
-      selectBox = newSelectBox
+      const [newSelectBox, newContext, newDirection] = args as [unknown, NodeViewDesc, string]
       context = newContext
       direction = newDirection
-      startContains = structuredClone(newSelectBox.relationBranch)
       selectedBranches = []
     }
 
@@ -55,101 +61,85 @@ export const SelectDragExtension = createPartExtension({
     const calcRangeIndex = (): [number, number] => {
       if (!context || selectedBranches.length === 0) return [0, 0]
 
-      const parent = (context as any).parent?.()
+      const leaferCtx = context as unknown as LeaferDragContext
+      const parent = leaferCtx.parent?.()
       if (!parent) return [0, 0]
 
-      const children = parent.getChildrenBranchesByType?.() || []
+      const children = (parent as { getChildrenBranchesByType?: () => NodeViewDesc[] }).getChildrenBranchesByType?.() || []
       if (children.length === 0) return [0, 0]
 
       let maxIndex = children.indexOf(selectedBranches[0])
       let minIndex = maxIndex
 
-      for (let i = 1; i < selectedBranches.length; i++) {
-        const tempIndex = children.indexOf(selectedBranches[i])
-        if (tempIndex > maxIndex) maxIndex = tempIndex
-        if (tempIndex < minIndex) minIndex = tempIndex
+      for (const branch of selectedBranches) {
+        const index = children.indexOf(branch)
+        if (index > maxIndex) maxIndex = index
+        if (index < minIndex) minIndex = index
       }
 
-      return [minIndex, maxIndex]
-    }
-
-    // 检查 range 是否变化
-    const selectedHasChanged = (): boolean => {
-      if (!selectBox || !startContains) return false
-      return JSON.stringify(startContains) !== JSON.stringify(selectBox.relationBranch)
-    }
-
-    // 检查是否有相同的 range
-    const hasSameRange = (contexts: any, newIndex: [number, number]): boolean => {
-      return Object.values(contexts).some(
-        (ctx: any) => ctx.rangeStart === newIndex[0] && ctx.rangeEnd === newIndex[1]
-      )
-    }
-
-    // 重置状态
-    const resetManager = () => {
-      selectedBranches.forEach(branch => {
-        ;(branch as any).onMouseout?.()
-      })
-      selectedBranches = []
-
-      if (selectBox) {
-        selectBox.selectBoxOneG.move(0, 0)
-        selectBox.selectBoxTwoG.move(0, 0)
-        selectBox.render(direction || '')
-        selectBox.relationBranch = []
-        selectBox = null
+      if (direction === 'before') {
+        return [minIndex, selectedBranches.length]
+      } else {
+        return [maxIndex + 1, selectedBranches.length]
       }
+    }
 
-      context = null
-      direction = null
-      startContains = null
+    // 移动选中的节点
+    const onSelectDragMove = (...args: unknown[]) => {
+      const [manager] = args as [{ setRelationBranch: (id: string, range: [number, number]) => void }]
+      if (!context || selectedBranches.length === 0) return
+
+      const range = calcRangeIndex()
+      for (const branch of selectedBranches) {
+        manager.setRelationBranch(branch.node.id, range)
+      }
     }
 
     // 结束拖拽
     const onSelectDragEnd = () => {
-      if (!selectedHasChanged()) {
-        resetManager()
-        return
-      }
-
       if (!context) return
 
-      const isBoundary = (context as any).type === 'boundary'
+      const leaferCtx = context as unknown as LeaferDragContext
+      const isBoundary = leaferCtx.type === 'boundary'
       const typeParam = isBoundary ? ['model', 'boundaries'] : ['summaryModel', 'summaries']
-      const contextModel = (context as any)[typeParam[0]]
-      const parent = (context as any).parent?.()
+      const contextModel = leaferCtx[typeParam[0]]
+      const parent = leaferCtx.parent?.()
 
       if (!contextModel || !parent) {
-        resetManager()
         return
       }
 
-      const newIndex = calcRangeIndex()
-      const [minIndex, maxIndex] = newIndex
-      const refViewModels = Object.assign({}, parent.model?.[typeParam[1]]?.())
-
-      if (!hasSameRange(refViewModels, newIndex)) {
-        const newRange = `(${minIndex},${maxIndex})`
-        contextModel.setRange(newRange)
-      }
-
-      resetManager()
+      // 执行移动
+      const range = calcRangeIndex()
+      ctx.executeCommand('node.move', {
+        sourceIds: selectedBranches.map(b => b.node.id),
+        targetId: (parent as { node?: { id?: string } }).node?.id,
+        position: direction === 'before' ? range[0] : range[0],
+      })
     }
 
-    // 监听事件
+    // 鼠标移出分支
+    const onBranchMouseout = (...args: unknown[]) => {
+      const [branch] = args as [NodeViewDesc]
+      const leaferBranch = branch as unknown as { onMouseout?: () => void }
+      leaferBranch.onMouseout?.()
+    }
+
+    // 注册事件
     ctx.on('selectDrag:start', onSelectDragStart)
     ctx.on('selectDrag:addBranch', addSelectBranch)
     ctx.on('selectDrag:removeBranch', removeSelectBranch)
+    ctx.on('selectDrag:move', onSelectDragMove)
     ctx.on('selectDrag:end', onSelectDragEnd)
+    ctx.on('selectDrag:branchMouseout', onBranchMouseout)
 
     return () => {
       ctx.off('selectDrag:start', onSelectDragStart)
       ctx.off('selectDrag:addBranch', addSelectBranch)
       ctx.off('selectDrag:removeBranch', removeSelectBranch)
+      ctx.off('selectDrag:move', onSelectDragMove)
       ctx.off('selectDrag:end', onSelectDragEnd)
+      ctx.off('selectDrag:branchMouseout', onBranchMouseout)
     }
   },
 })
-
-export default SelectDragExtension

@@ -259,7 +259,9 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       const parentLayout = parentViewDesc ? layout.nodes.get(parentViewDesc.node.id) : null
       if (parentLayout) {
         // 子节点：相对坐标（减去父节点绝对位置和 contentGroup y 偏移）
-        const contentOffsetY = (this._parent as any)?._contentGroup?.y ?? 40
+        // _contentGroup 是 LeaferJS Group 内部属性，类型定义不包含
+        const parentGroup = parentViewDesc!.element as { _contentGroup?: { y?: number } } | undefined
+        const contentOffsetY = parentGroup?._contentGroup?.y ?? 40
         this.element.x = nodeLayout.x - parentLayout.x
         this.element.y = nodeLayout.y - parentLayout.y - contentOffsetY
       } else {

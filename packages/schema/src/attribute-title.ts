@@ -124,7 +124,7 @@ export function extractGlobalStyle(title: AttributeTitle | undefined): Partial<A
 
     const allSame = title.every(unit => unit[key] === firstValue)
     if (allSame) {
-      (globalStyle as any)[key] = firstValue
+      globalStyle[key] = firstValue as never
       hasGlobalStyle = true
     }
   }

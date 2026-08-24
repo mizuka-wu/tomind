@@ -88,7 +88,7 @@ const FileTypeTools = {
     return {
       name: file.name,
       type: file.type,
-      path: (file as any).path, // Electron 环境
+      path: (file as unknown as { path?: string }).path, // Electron 环境
       size: file.size,
     }
   },

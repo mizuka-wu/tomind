@@ -248,11 +248,11 @@ export const ThemeExporterExtension = createExtension<ThemeExporterOptions>({
     })
 
     ctx.registerCommand('theme.exportColor', (state, dispatch, args) => {
-      return ctx.executeCommand('theme.export', { ...args as any, filter: 'color' })
+      return ctx.executeCommand('theme.export', { ...(args as Record<string, unknown>), filter: 'color' })
     })
 
     ctx.registerCommand('theme.exportSkeleton', (state, dispatch, args) => {
-      return ctx.executeCommand('theme.export', { ...args as any, filter: 'skeleton' })
+      return ctx.executeCommand('theme.export', { ...(args as Record<string, unknown>), filter: 'skeleton' })
     })
   },
 })

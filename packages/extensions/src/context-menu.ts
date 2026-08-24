@@ -224,6 +224,11 @@ function showContextMenu(
 
 // ==================== 目标节点 ID 提取 ====================
 
+/** LeaferJS 元素上 userData 的最小接口 */
+interface LeaferElementWithUserData {
+  userData?: { nodeId?: string }
+}
+
 function getTargetNodeId(target: EventTarget | null): string | null {
   if (!target) return null
 
@@ -234,7 +239,7 @@ function getTargetNodeId(target: EventTarget | null): string | null {
   }
 
   // 从 LeaferJS 元素提取
-  const leaferElement = target as any
+  const leaferElement = target as unknown as LeaferElementWithUserData
   if (leaferElement.userData?.nodeId) {
     return leaferElement.userData.nodeId
   }

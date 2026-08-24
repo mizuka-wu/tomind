@@ -34,7 +34,7 @@ export const MatrixExtension: Extension<MatrixExtensionOptions> = {
 
   // Tiptap 风格：addNodeView 自动注册
   addNodeView() {
-    return MatrixNodeViewDesc as any
+    return MatrixNodeViewDesc
   },
 
   // Tiptap 风格：addCommands 注册命令

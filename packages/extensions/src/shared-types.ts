@@ -10,5 +10,5 @@ import type { Group } from 'leafer-ui'
 /** view 层最小接口 — extensions 需要的属性 */
 export interface ViewLike {
   layoutEngine?: { getLayoutResult(): LayoutResult } | null
-  leaferView?: { parent?: Group | null } | null
+  leaferView?: { parent?: Group | null; app?: unknown } | null
 }
