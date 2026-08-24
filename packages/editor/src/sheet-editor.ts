@@ -20,7 +20,8 @@ import type { IAppConfig } from 'leafer-ui'
 
 import { SheetState, Transaction, PluginKey } from '@tomind/state'
 import type { Plugin } from '@tomind/state'
-import type { NodeDesc, SelectionState, Viewport } from '@tomind/schema'
+import type { NodeDesc, NodeRole, SelectionState, Viewport } from '@tomind/schema'
+import { isNodeRole } from '@tomind/schema'
 import { ViewDesc } from '@tomind/view'
 import { analyzeSteps, DirtyFlag } from '@tomind/view'
 import {
@@ -59,16 +60,16 @@ interface ScrollbarConfig {
 
 // ==================== 工厂函数 ====================
 
-type ViewDescClass = new (node: NodeDesc, role: string, ctx: ViewContext) => ViewDesc
+type ViewDescClass = new (node: NodeDesc, role: NodeRole, ctx: ViewContext) => ViewDesc
 
 // NodeViewDesc 默认注册表（Tiptap 风格：Extension 注册 NodeView）
 function createDefaultNodeViewDescRegistry(): Map<string, ViewDescClass> {
   const registry = new Map<string, ViewDescClass>()
-  registry.set('root', RootViewDesc as any)
-  registry.set('topic', TopicNodeViewDesc as any)
-  registry.set('relationship', RelationshipNodeViewDesc as any)
-  registry.set('boundary', BoundaryNodeViewDesc as any)
-  registry.set('summary', SummaryNodeViewDesc as any)
+  registry.set('root', RootViewDesc)
+  registry.set('topic', TopicNodeViewDesc)
+  registry.set('relationship', RelationshipNodeViewDesc)
+  registry.set('boundary', BoundaryNodeViewDesc)
+  registry.set('summary', SummaryNodeViewDesc)
   return registry
 }
 
@@ -114,7 +115,7 @@ export function unregisterPartViewDesc(partType: string): void {
 function _createViewDesc(node: NodeDesc, registry: Map<string, ViewDescClass>, ctx: ViewContext): ViewDesc | null {
   const ViewDescClass = registry.get(node.type)
   if (!ViewDescClass) return null
-  return new ViewDescClass(node, node.type, ctx)
+  return isNodeRole(node.type) ? new ViewDescClass(node, node.type, ctx) : null
 }
 
 // ==================== SheetEditor ====================
@@ -694,8 +695,9 @@ export class SheetEditor {
     // 尝试使用 scrollX/scrollY（Leafer 实例的滚动 API）
     // 如果不存在，fallback 到 x/y（容器偏移）
     if ('scrollX' in tree) {
-      (tree as any).scrollX = -viewport.x
-      ;(tree as any).scrollY = -viewport.y
+      const scrollable = tree as { scrollX: number; scrollY: number }
+      scrollable.scrollX = -viewport.x
+      scrollable.scrollY = -viewport.y
     } else {
       tree.x = viewport.x
       tree.y = viewport.y

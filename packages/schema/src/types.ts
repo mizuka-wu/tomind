@@ -218,3 +218,13 @@ export interface CommentData {
   readonly content: string
   readonly time?: number  // creation timestamp
 }
+
+/** NodeRole 所有合法值 */
+export const NODE_ROLE_VALUES: ReadonlySet<string> = new Set<NodeRole>([
+  'root', 'central', 'main', 'sub', 'floating', 'callout', 'summary', 'boundary', 'relationship', 'unknown',
+])
+
+/** 类型守卫：判断字符串是否为合法 NodeRole */
+export function isNodeRole(value: string): value is NodeRole {
+  return NODE_ROLE_VALUES.has(value)
+}
