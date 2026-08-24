@@ -102,6 +102,11 @@ export class Transform {
 
   // ==================== Meta 系统 ====================
 
+  /** 公开 meta 访问（消除 Transaction 中的 transform['_meta'] as Map 访问） */
+  get meta(): ReadonlyMap<string, unknown> {
+    return this._meta
+  }
+
   /**
    * 设置元数据（对标 ProseMirror setMeta）
    */
@@ -149,12 +154,32 @@ export class Transform {
   }
 
   /**
-   * 交换兄弟节点位置（简化实现）
+   * 交换兄弟节点位置
    */
-  exchangeSibling(_nodeId: string, _direction: 'up' | 'down'): Transform {
-    // 需要找到父节点和兄弟节点，然后交换
-    // 这里简化处理，实际应该有专门的 ExchangeSiblingStep
+  exchangeSibling(nodeId: string, direction: 'up' | 'down'): Transform {
+    // 找到父节点
+    const parent = findParentOfNode(this.doc, nodeId)
+    if (!parent) return this
+
+    // 找到节点在父节点 attached 子节点中的索引
+    const attached = parent.children['attached']
+    if (!attached) return this
+    const index = attached.findIndex(child => child.id === nodeId)
+    if (index < 0) return this
+
+    // 计算目标索引
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= attached.length) return this
+
+    // 交换：删除两个节点，按新顺序重新插入
+    const nodeA = attached[index]
+    const nodeB = attached[targetIndex]
+
     return this
+      .append(new RemoveNodeStep(nodeA.id, parent.id, index))
+      .append(new RemoveNodeStep(nodeB.id, parent.id, direction === 'up' ? targetIndex : index))
+      .append(new InsertNodeStep(parent.id, nodeB, direction === 'up' ? index : targetIndex))
+      .append(new InsertNodeStep(parent.id, nodeA, direction === 'up' ? targetIndex : index))
   }
 
   // ==================== 属性操作 ====================
@@ -216,5 +241,19 @@ function findNodeById(root: NodeDesc, targetId: string): NodeDesc | null {
     }
   }
 
+  return null
+}
+
+/**
+ * 查找指定节点的父节点
+ */
+function findParentOfNode(root: NodeDesc, targetId: string): NodeDesc | null {
+  for (const children of Object.values(root.children)) {
+    for (const child of children) {
+      if (child.id === targetId) return root
+      const found = findParentOfNode(child, targetId)
+      if (found) return found
+    }
+  }
   return null
 }

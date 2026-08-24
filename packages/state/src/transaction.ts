@@ -59,7 +59,7 @@ export class Transaction extends Transform {
       transform.doc,
       [...transform.steps],
       [...transform.docs],
-      transform['_meta'] as Map<string, unknown>,
+      new Map(transform.meta),
       this.before,
       this.time,
       this.source
@@ -75,7 +75,7 @@ export class Transaction extends Transform {
       transform.doc,
       [...transform.steps],
       [...transform.docs],
-      transform['_meta'] as Map<string, unknown>,
+      new Map(transform.meta),
       this.before,
       this.time,
       this.source
@@ -91,7 +91,7 @@ export class Transaction extends Transform {
       transform.doc,
       [...transform.steps],
       [...transform.docs],
-      transform['_meta'] as Map<string, unknown>,
+      new Map(transform.meta),
       this.before,
       this.time,
       this.source
@@ -107,7 +107,7 @@ export class Transaction extends Transform {
       transform.doc,
       [...transform.steps],
       [...transform.docs],
-      transform['_meta'] as Map<string, unknown>,
+      new Map(transform.meta),
       this.before,
       this.time,
       this.source
@@ -139,7 +139,7 @@ export class Transaction extends Transform {
       transform.doc,
       [...transform.steps],
       [...transform.docs],
-      transform['_meta'] as Map<string, unknown>,
+      new Map(transform.meta),
       this.before,
       this.time,
       this.source
@@ -170,7 +170,7 @@ export class Transaction extends Transform {
       this.doc,
       [...this.steps],
       [...this.docs],
-      this['_meta'] as Map<string, unknown>,
+      this.meta as Map<string, unknown>,
       this.before,
       this.time,
       source
@@ -185,7 +185,7 @@ export class Transaction extends Transform {
       this.doc,
       [...this.steps],
       [...this.docs],
-      this['_meta'] as Map<string, unknown>,
+      this.meta as Map<string, unknown>,
       this.before,
       time,
       this.source
@@ -200,7 +200,7 @@ export class Transaction extends Transform {
       this.doc,
       [...this.steps],
       [...this.docs],
-      this['_meta'] as Map<string, unknown>,
+      this.meta as Map<string, unknown>,
       before,
       this.time,
       this.source
@@ -224,7 +224,7 @@ export class Transaction extends Transform {
       transform.doc,
       [...transform.steps],
       [...transform.docs],
-      transform['_meta'] as Map<string, unknown>,
+      new Map(transform.meta),
       before
     )
   }

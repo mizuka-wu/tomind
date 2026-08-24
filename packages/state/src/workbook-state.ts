@@ -70,6 +70,13 @@ export class WorkbookState {
     return this.sheets.size
   }
 
+  /**
+   * 获取 Sheet 名称
+   */
+  getSheetName(id: string): string {
+    return this.metadata.sheetNames?.get(id) ?? id
+  }
+
   // ==================== 状态更新 ====================
 
   /**
@@ -84,6 +91,10 @@ export class WorkbookState {
     // 添加 Sheet
     if (tr.addSheet) {
       newSheets.set(tr.addSheet.id, tr.addSheet.state)
+      // 存储 sheet name
+      const newSheetNames = new Map(newMetadata.sheetNames ?? [])
+      newSheetNames.set(tr.addSheet.id, tr.addSheet.name)
+      newMetadata = { ...newMetadata, sheetNames: newSheetNames }
       // 如果是第一个 Sheet，设为活动 Sheet
       if (newSheets.size === 1) {
         newActiveSheetId = tr.addSheet.id
@@ -93,6 +104,12 @@ export class WorkbookState {
     // 删除 Sheet
     if (tr.removeSheet) {
       newSheets.delete(tr.removeSheet.id)
+      // 清理 sheet name
+      if (newMetadata.sheetNames?.has(tr.removeSheet.id)) {
+        const newSheetNames = new Map(newMetadata.sheetNames)
+        newSheetNames.delete(tr.removeSheet.id)
+        newMetadata = { ...newMetadata, sheetNames: newSheetNames }
+      }
       // 如果删除的是活动 Sheet，切换到其他 Sheet
       if (newActiveSheetId === tr.removeSheet.id) {
         const remaining = Array.from(newSheets.keys())
@@ -102,8 +119,10 @@ export class WorkbookState {
 
     // 重命名 Sheet（需要更新 SheetState 的属性）
     if (tr.renameSheet) {
-      // SheetState 没有 name 属性，name 存在 WorkbookState 的 metadata 中
-      // 这里暂时不处理，需要扩展 metadata
+      // Sheet name 存在 metadata.sheetNames 中
+      const newSheetNames = new Map(newMetadata.sheetNames ?? [])
+      newSheetNames.set(tr.renameSheet.id, tr.renameSheet.name)
+      newMetadata = { ...newMetadata, sheetNames: newSheetNames }
     }
 
     // 设置活动 Sheet
@@ -238,4 +257,6 @@ export interface WorkbookMetadata {
   readonly author?: string
   /** 描述 */
   readonly description?: string
+  /** Sheet 名称映射 */
+  readonly sheetNames?: ReadonlyMap<string, string>
 }

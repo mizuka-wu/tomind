@@ -54,6 +54,7 @@ export interface Plugin<T = unknown> {
 export class SheetState {
   readonly doc: NodeDesc
   readonly _nodeMap: ReadonlyMap<string, NodeDesc>
+  readonly _parentMap: ReadonlyMap<string, string>
   readonly selection: SelectionState
   readonly viewport: Viewport
   readonly decorations: DecorationSet
@@ -63,6 +64,7 @@ export class SheetState {
   constructor(
     doc: NodeDesc,
     nodeMap: Map<string, NodeDesc>,
+    parentMap: Map<string, string>,
     selection: SelectionState,
     viewport: Viewport,
     plugins: readonly Plugin[] = [],
@@ -71,6 +73,7 @@ export class SheetState {
   ) {
     this.doc = doc
     this._nodeMap = nodeMap
+    this._parentMap = parentMap
     this.selection = selection
     this.viewport = viewport
     this.plugins = plugins
@@ -132,16 +135,8 @@ export class SheetState {
    * 查找父节点
    */
   findParent(nodeId: string): NodeDesc | null {
-    for (const [, node] of this._nodeMap) {
-      for (const children of Object.values(node.children)) {
-        if (Array.isArray(children)) {
-          for (const child of children) {
-            if (child.id === nodeId) return node
-          }
-        }
-      }
-    }
-    return null
+    const parentId = this._parentMap.get(nodeId)
+    return parentId ? this._nodeMap.get(parentId) ?? null : null
   }
 
   /**
@@ -223,11 +218,12 @@ export class SheetState {
     }
 
     // 构建新的 _nodeMap
-    const newNodeMap = buildNodeMap(tr.doc)
+    const { nodeMap: newNodeMap, parentMap: newParentMap } = buildNodeMapAndParentMap(tr.doc)
 
     return new SheetState(
       tr.doc,
       newNodeMap,
+      newParentMap,
       this.selection, // 选区通过 SetSelectionStep 更新
       this.viewport,  // 视口通过 SetViewportStep 更新
       [...this.plugins],
@@ -243,6 +239,7 @@ export class SheetState {
     return new SheetState(
       this.doc,
       new Map(this._nodeMap),
+      new Map(this._parentMap),
       this.selection,
       this.viewport,
       [...this.plugins],
@@ -263,10 +260,11 @@ export class SheetState {
     plugins?: readonly Plugin[]
     decorations?: DecorationSet
   }): SheetState {
-    const nodeMap = buildNodeMap(options.doc)
+    const { nodeMap, parentMap } = buildNodeMapAndParentMap(options.doc)
     return new SheetState(
       options.doc,
       nodeMap,
+      parentMap,
       options.selection || { elements: [] },
       options.viewport || { x: 0, y: 0, zoom: 1 },
       options.plugins || [],
@@ -280,19 +278,22 @@ export class SheetState {
 
 /**
  * 构建 nodeId → NodeDesc 映射
+ * 同时构建 nodeId → parentId 映射
  */
-function buildNodeMap(doc: NodeDesc): Map<string, NodeDesc> {
+function buildNodeMapAndParentMap(doc: NodeDesc): { nodeMap: Map<string, NodeDesc>; parentMap: Map<string, string> } {
   const map = new Map<string, NodeDesc>()
-  function walk(node: NodeDesc) {
+  const parentMap = new Map<string, string>()
+  function walk(node: NodeDesc, parentId?: string) {
     map.set(node.id, node)
+    if (parentId) parentMap.set(node.id, parentId)
     for (const children of Object.values(node.children)) {
       if (Array.isArray(children)) {
         for (const child of children) {
-          walk(child)
+          walk(child, node.id)
         }
       }
     }
   }
   walk(doc)
-  return map
+  return { nodeMap: map, parentMap }
 }
