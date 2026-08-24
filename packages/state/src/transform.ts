@@ -28,7 +28,7 @@ export class Transform {
     doc: NodeDesc,
     steps: Step[] = [],
     docs: NodeDesc[] = [],
-    meta: Map<string, unknown> = new Map()
+    meta: ReadonlyMap<string, unknown> = new Map()
   ) {
     this.doc = doc
     this.steps = steps
@@ -54,7 +54,7 @@ export class Transform {
       currentDoc,
       [...this.steps, ...steps],
       newDocs,
-      this._meta as Map<string, unknown>
+      this._meta
     )
   }
 
