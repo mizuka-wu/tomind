@@ -7,7 +7,10 @@
  * - 支持 onCreate、addOptions、addStorage 钩子
  */
 
-import type { EventMap } from './event-map'
+import type { EventMap } from "./event-map"
+export type { EventMap }
+
+
 
 /** 如果 T 是 void，则不需要 data 参数 */
 type EmitData<T> = T extends void ? [] : [T]
@@ -22,7 +25,7 @@ export type ExtensionOptions<T = {}> = T & {
 // ==================== 扩展上下文 ====================
 
 /** 扩展上下文 - 提供给扩展的编辑器接口 */
-export interface ExtensionContext<Storage = Record<string, unknown>> {
+export interface ExtensionContext<Storage = Record<string, unknown>, Events extends Record<string, any> = EventMap> {
   /** 当前扩展的存储（由 addStorage 初始化） */
   storage: Storage
   /** 获取 WorkbookEditor 实例 */
@@ -117,7 +120,7 @@ export type KeyboardShortcutHandler = (ctx: ExtensionContext<any>) => boolean
 export type ExtensionType = 'extension' | 'node' | 'part'
 
 /** 扩展定义（Tiptap 风格） */
-export interface Extension<Options = {}, Storage = Record<string, unknown>> {
+export interface Extension<Options = {}, Storage = Record<string, unknown>, Events extends Record<string, any> = EventMap> {
   /** 扩展名称 */
   name: string
   /** 扩展类型 */
@@ -125,9 +128,9 @@ export interface Extension<Options = {}, Storage = Record<string, unknown>> {
   /** 默认选项 */
   defaultOptions: ExtensionOptions<Options>
   /** 配置选项（返回新实例，不可变） */
-  configure: (options: Partial<ExtensionOptions<Options>>) => Extension<Options, Storage>
+  configure: (options: Partial<ExtensionOptions<Options>>) => Extension<Options, Storage, Events>
   /** 生命周期：创建（Tiptap 风格） */
-  onCreate?: (ctx: ExtensionContext<Storage>) => CleanupFn | void
+  onCreate?: (ctx: ExtensionContext<Storage, Events>) => CleanupFn | void
   /** 添加选项 */
   addOptions?: () => Partial<Options> | Record<string, unknown>
   /** 添加存储 */
