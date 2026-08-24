@@ -13,7 +13,34 @@ const ATTACHED = 'attached'
 /** 类型安全获取节点 style 对象 */
 export function getNodeStyle(node: NodeDesc): Record<string, unknown> | undefined {
   const s = node.attrs.style
-  return (s && typeof s === 'object') ? s as Record<string, unknown> : undefined
+  return isRecord(s) ? s : undefined
+}
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === 'object'
+}
+
+/** 类型安全的 attrs 访问器 */
+export function getAttr<T>(node: NodeDesc, key: string): T | undefined {
+  return node.attrs[key] as T | undefined
+}
+
+/** 类型安全的 style 属性访问器 */
+export function getStyleAttr<T>(node: NodeDesc, key: string): T | undefined {
+  const style = getNodeStyle(node)
+  return style ? (style[key] as T) : undefined
+}
+
+export function getFontFamily(node: NodeDesc): string {
+  return getStyleAttr<string>(node, 'fontFamily') || 'NeverMind, Microsoft YaHei, PingFang SC, Microsoft JhengHei'
+}
+
+export function getFontWeight(node: NodeDesc): string | number {
+  return getStyleAttr<string | number>(node, 'fontWeight') || 'normal'
+}
+
+export function getFontStyle(node: NodeDesc): string {
+  return getStyleAttr<string>(node, 'fontStyle') || 'normal'
 }
 
 export function getTitle(node: NodeDesc): string {

@@ -7,6 +7,7 @@
 
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
+import { getAttr } from './layout-utils'
 import {
   ColumnMap,
   Matrix,
@@ -78,7 +79,7 @@ function createColumnMap(children: readonly NodeDesc[]): ColumnMap {
   children.forEach((child, index) => {
     const grandChildren = child.children?.attached || []
     grandChildren.forEach((gChild) => {
-      const key = (gChild.attrs?.label as string) || ''
+      const key = getAttr<string>(gChild, 'label') || ''
       const cell = columnMap.getCell(index, key)
       cell.items.push(gChild)
     })

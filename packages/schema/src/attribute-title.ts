@@ -30,6 +30,11 @@ export interface AttributeTitleUnit extends Partial<AttributeTitleStyle> {
 
 // ==================== 工具函数 ====================
 
+/** 类型安全的 Record<string, unknown> 属性访问 */
+function getAttr<T>(attrs: Record<string, unknown>, key: string): T | undefined {
+  return attrs[key] as T | undefined
+}
+
 export function isAttributeTitleEmpty(title: AttributeTitle | undefined): boolean {
   return !title || title.length === 0
 }
@@ -73,7 +78,7 @@ export function normalizeAttributeTitle(
   }
   return {
     title: getPlainTextFromAttributeTitle(title),
-    attributeTitle: title as AttributeTitle,
+    attributeTitle: title!,  // 已在 isAttributeTitleEmpty 检查后，非空
   }
 }
 
@@ -124,7 +129,8 @@ export function extractGlobalStyle(title: AttributeTitle | undefined): Partial<A
 
     const allSame = title.every(unit => unit[key] === firstValue)
     if (allSame) {
-      globalStyle[key] = firstValue as never
+      // firstValue 类型为 AttributeTitleStyle[key]，但 TS 无法推导
+      ;(globalStyle as Record<string, unknown>)[key] = firstValue
       hasGlobalStyle = true
     }
   }
@@ -144,7 +150,7 @@ export function removeGlobalStyleFromAttributeTitle(
   title: AttributeTitle,
   globalStyle: Partial<AttributeTitleStyle>
 ): AttributeTitle {
-  const styleKeys = Object.keys(globalStyle) as (keyof AttributeTitleStyle)[]
+  const styleKeys = Object.keys(globalStyle) as (keyof AttributeTitleStyle)[]  // Object.keys 返回 string[]
 
   return title.map(unit => {
     const newUnit = { ...unit }
@@ -162,11 +168,11 @@ export function removeGlobalStyleFromAttributeTitle(
  * 优先取 attributeTitle 的纯文本，fallback 到 title
  */
 export function getTitleText(attrs: Record<string, unknown>): string {
-  const attributeTitle = attrs.attributeTitle as AttributeTitle | undefined
+  const attributeTitle = getAttr<AttributeTitle>(attrs, 'attributeTitle')
   if (attributeTitle && attributeTitle.length > 0) {
     return getPlainTextFromAttributeTitle(attributeTitle)
   }
-  return (attrs.title as string) ?? ''
+  return getAttr<string>(attrs, 'title') ?? ''
 }
 
 /**
@@ -175,10 +181,10 @@ export function getTitleText(attrs: Record<string, unknown>): string {
  * 如果没有 attributeTitle，从 title 创建 [{ text: title原文 }]
  */
 export function getAttributeTitle(attrs: Record<string, unknown>): AttributeTitle {
-  const attributeTitle = attrs.attributeTitle as AttributeTitle | undefined
+  const attributeTitle = getAttr<AttributeTitle>(attrs, 'attributeTitle')
   if (attributeTitle && attributeTitle.length > 0) {
     return attributeTitle
   }
-  const plainTitle = (attrs.title as string) ?? ''
+  const plainTitle = getAttr<string>(attrs, 'title') ?? ''
   return createAttributeTitleFromPlainText(plainTitle)
 }

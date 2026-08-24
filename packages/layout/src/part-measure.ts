@@ -8,6 +8,8 @@ import type { NodeDesc } from '@tomind/schema'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
 import { getTitle, getFontSize, getNodeStyle } from './layout-utils'
+import { getAttr, getStyleAttr, getFontFamily, getFontWeight, getFontStyle } from './layout-utils'
+
 
 // ==================== 类型定义 ====================
 
@@ -38,22 +40,6 @@ const MARKER_SIZE = 16
 const INFO_ICON_SIZE = 16
 
 // ==================== 工具函数 ====================
-
-function getFontFamily(node: NodeDesc): string {
-  const style = getNodeStyle(node)
-  return (style?.fontFamily as string) || 'NeverMind, Microsoft YaHei, PingFang SC, Microsoft JhengHei'
-}
-
-function getFontWeight(node: NodeDesc): string | number {
-  const style = getNodeStyle(node)
-  return (style?.fontWeight as string | number) || 'normal'
-}
-
-function getFontStyle(node: NodeDesc): string {
-  const style = getNodeStyle(node)
-  return (style?.fontStyle as string) || 'normal'
-}
-
 interface MarkerData {
   readonly type: string
   readonly value: unknown
@@ -120,7 +106,7 @@ function measureTitle(node: NodeDesc, options: LayoutOptions): { width: number; 
  * 测量 image 尺寸
  */
 function measureImage(node: NodeDesc): { width: number; height: number } {
-  const image = node.attrs.image as ImageData | undefined
+  const image = getAttr<ImageData>(node, 'image')
   if (!image) return { width: 0, height: 0 }
 
   // 从 attrs.image 读取 width/height（有则用，无则默认 100×100）
@@ -134,7 +120,7 @@ function measureImage(node: NodeDesc): { width: number; height: number } {
  * 测量 markers 尺寸
  */
 function measureMarkers(node: NodeDesc): { width: number; height: number } {
-  const markers = node.attrs.markers as MarkerData[] | undefined
+  const markers = getAttr<MarkerData[]>(node, 'markers')
   if (!markers || markers.length === 0) return { width: 0, height: 0 }
 
   // 每个 marker 16×16，水平排列
@@ -164,7 +150,7 @@ const LABEL_SPECIAL_UNIT_PREFER_WIDTH = 46
  * 3. 宽度继承 parentWidth（与父 topic 一致）
  */
 export function measureLabels(node: NodeDesc, options: LayoutOptions, parentWidth?: number): { width: number; height: number } {
-  const labels = node.attrs.labels as LabelData[] | undefined
+  const labels = getAttr<LabelData[]>(node, 'labels')
   if (!labels || labels.length === 0) return { width: 0, height: 0 }
 
   // 去重（对齐 snowbrush：Array.from(new Set(labels.map(l => l.trim())))）
@@ -226,15 +212,15 @@ export function measureLabels(node: NodeDesc, options: LayoutOptions, parentWidt
  * 测量 note 尺寸
  */
 function measureNote(node: NodeDesc): { width: number; height: number } {
-  const note = node.attrs.note as NoteData | undefined
+  const note = getAttr<NoteData>(node, 'note')
   if (!note) return { width: 0, height: 0 }
 
   // 图标 + 内容区域
-  const hasContent = !!(note as NoteData).htmlContent || !!(note as NoteData).content
+  const hasContent = !!note.htmlContent || !!note.content
   if (!hasContent) return { width: INFO_ICON_SIZE, height: INFO_ICON_SIZE }
 
   // 估算内容高度：每行约 20px，每行约 40 字符
-  const content = (note as NoteData).htmlContent || (note as NoteData).content || ''
+  const content = note.htmlContent || note.content || ''
   const maxWidth = 280
   const charsPerLine = 40
   const lineHeight = 20
@@ -251,7 +237,7 @@ function measureNote(node: NodeDesc): { width: number; height: number } {
  * 测量 link 尺寸
  */
 function measureLink(node: NodeDesc): { width: number; height: number } {
-  const link = node.attrs.link as LinkData | undefined
+  const link = getAttr<LinkData>(node, 'link')
   if (!link) return { width: 0, height: 0 }
 
   // 固定 16×16
@@ -262,7 +248,7 @@ function measureLink(node: NodeDesc): { width: number; height: number } {
  * 测量 numbering 尺寸
  */
 function measureNumbering(node: NodeDesc, options: LayoutOptions): { width: number; height: number } {
-  const numbering = node.attrs.numbering as NumberingData | undefined
+  const numbering = getAttr<NumberingData>(node, 'numbering')
   if (!numbering) return { width: 0, height: 0 }
 
   // 从 attrs.numbering 计算文本宽度
@@ -276,7 +262,7 @@ function measureNumbering(node: NodeDesc, options: LayoutOptions): { width: numb
  * 测量 comments 尺寸
  */
 function measureComments(node: NodeDesc): { width: number; height: number } {
-  const comments = node.attrs.comments as CommentData[] | undefined
+  const comments = getAttr<CommentData[]>(node, 'comments')
   if (!comments || comments.length === 0) return { width: 0, height: 0 }
 
   // 图标 16×16 + 角标数字占位
@@ -330,8 +316,8 @@ export function measureNodeParts(
   // 测量 image
   const imageSize = measureImage(node)
   if (imageSize.width > 0 || imageSize.height > 0) {
-    const image = node.attrs.image as ImageData | undefined
-    const rawAlign = image?.align as string | undefined
+    const image = getAttr<ImageData>(node, 'image')
+    const rawAlign = image?.align
     // snowbrush: 'up' 和 undefined 都映射到 'top'
     let position: PartPosition = DEFAULT_PART_CONFIG.image.position
     if (rawAlign === 'up' || rawAlign === 'top') {
@@ -398,14 +384,17 @@ export function measureNodeParts(
  * 检查节点是否有非 title 的 part
  */
 export function hasNonTitleParts(node: NodeDesc): boolean {
+  const markers = getAttr<MarkerData[]>(node, 'markers')
+  const labels = getAttr<LabelData[]>(node, 'labels')
+  const comments = getAttr<CommentData[]>(node, 'comments')
   return !!(
     node.attrs.image ||
-    (node.attrs.markers && (node.attrs.markers as MarkerData[]).length > 0) ||
-    (node.attrs.labels && (node.attrs.labels as LabelData[]).length > 0) ||
+    (markers && markers.length > 0) ||
+    (labels && labels.length > 0) ||
     node.attrs.note ||
     node.attrs.link ||
     node.attrs.numbering ||
-    (node.attrs.comments && (node.attrs.comments as CommentData[]).length > 0)
+    (comments && comments.length > 0)
   )
 }
 

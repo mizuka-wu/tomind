@@ -14,6 +14,7 @@ import type { NodeDesc } from '@tomind/schema'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
 import { getTitle, getFontSize, getNodeStyle } from './layout-utils'
+import { getFontFamily, getFontWeight, getFontStyle } from './layout-utils'
 import { measureNodeParts, measureLabels } from './part-measure'
 import { buildTopicCellTree } from './part-cell-builder'
 import type { CellLayout } from './cell-layout'
@@ -29,22 +30,6 @@ export interface PartAwareNodeSize {
 }
 
 // ==================== 工具函数 ====================
-
-function getFontFamily(node: NodeDesc): string {
-  const style = getNodeStyle(node)
-  return (style?.fontFamily as string) || 'NeverMind, Microsoft YaHei, PingFang SC, Microsoft JhengHei'
-}
-
-function getFontWeight(node: NodeDesc): string | number {
-  const style = getNodeStyle(node)
-  return (style?.fontWeight as string | number) || 'normal'
-}
-
-function getFontStyle(node: NodeDesc): string {
-  const style = getNodeStyle(node)
-  return (style?.fontStyle as string) || 'normal'
-}
-
 /**
  * 从 cell 树中提取 part bounds
  */
