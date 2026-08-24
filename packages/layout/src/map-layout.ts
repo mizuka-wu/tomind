@@ -346,7 +346,7 @@ function layoutSubtreeInner(
   let numRight: number
   if (config && !config.balanced) {
     // unbalanced: 优先读节点属性
-    const attrsNumRight = (node.attrs as Record<string, unknown>).numRight
+    const attrsNumRight = node.attrs.numRight
     if (typeof attrsNumRight === 'number' && attrsNumRight >= 0 && attrsNumRight <= children.length) {
       numRight = attrsNumRight
     } else {

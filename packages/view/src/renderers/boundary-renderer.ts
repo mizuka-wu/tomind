@@ -1,5 +1,6 @@
 import { Group, Path, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
+import { getStringStyle, getNumberStyle, getObjectStyle } from '../style-accessors'
 import type { Renderer } from './renderer'
 
 /** 边界形状类型 */
@@ -117,17 +118,26 @@ export class BoundaryRenderer implements Renderer {
     }
 
     // 应用样式
-    if (style.lineColor) this.shapePath.stroke = style.lineColor as string
-    if (style.stroke) this.shapePath.stroke = style.stroke as string
-    if (style.strokeWidth) this.shapePath.strokeWidth = style.strokeWidth as number
-    if (style.lineWidth) this.shapePath.strokeWidth = style.lineWidth as number
-    if (style.fill) this.shapePath.fill = style.fill as string
-    if (style.fillColor && style.fillColor !== 'none') {
-      this.shapePath.fill = style.fillColor as string
+    const _lineColor = getStringStyle(style, 'lineColor')
+    if (_lineColor) this.shapePath.stroke = _lineColor
+    const _stroke = getStringStyle(style, 'stroke')
+    if (_stroke) this.shapePath.stroke = _stroke
+    const _strokeWidth = getNumberStyle(style, 'strokeWidth')
+    if (_strokeWidth) this.shapePath.strokeWidth = _strokeWidth
+    const _lineWidth = getNumberStyle(style, 'lineWidth')
+    if (_lineWidth) this.shapePath.strokeWidth = _lineWidth
+    const _fill = getStringStyle(style, 'fill')
+    if (_fill) this.shapePath.fill = _fill
+    const _fillColor = getStringStyle(style, 'fillColor')
+    if (_fillColor && _fillColor !== 'none') {
+      this.shapePath.fill = _fillColor
     }
-    if (style.dashPattern) this.shapePath.dashPattern = style.dashPattern as number[]
-    if (style.lineDash) this.shapePath.dashPattern = style.lineDash as number[]
-    if (style.opacity !== undefined) this.shapePath.opacity = style.opacity as number
+    const _dashPattern = getObjectStyle<number[]>(style, 'dashPattern')
+    if (_dashPattern) this.shapePath.dashPattern = _dashPattern
+    const _lineDash = getObjectStyle<number[]>(style, 'lineDash')
+    if (_lineDash) this.shapePath.dashPattern = _lineDash
+    const _opacity = getNumberStyle(style, 'opacity')
+    if (_opacity !== undefined) this.shapePath.opacity = _opacity
 
     // 更新标题
     if (this.title) {

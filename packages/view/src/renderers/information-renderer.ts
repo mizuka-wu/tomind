@@ -1,6 +1,7 @@
 import { Group, Path, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getStringStyle, getBoolStyle, getObjectStyle } from '../style-accessors'
 
 /** 常量 */
 const ICON_FONT_FAMILY = 'information-iconfont'
@@ -40,9 +41,9 @@ export class InformationRenderer implements Renderer {
     this.group.x = nodeLayout.x
     this.group.y = nodeLayout.y
 
-    const textContent = style.textContent as string | undefined
-    const size = style.size as { width: number; height: number } | undefined
-    const visible = style.visible as boolean | undefined
+    const textContent = getStringStyle(style, 'textContent')
+    const size = getObjectStyle<{ width: number; height: number }>(style, 'size')
+    const visible = getBoolStyle(style, 'visible')
 
     if (textContent) {
       this.icon.text = textContent

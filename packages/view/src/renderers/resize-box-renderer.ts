@@ -1,6 +1,7 @@
 import { Group, Rect } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getStringStyle, getBoolStyle } from '../style-accessors'
 
 /** 常量 */
 const ANCHOR_SIZE = 16
@@ -83,9 +84,9 @@ export class ResizeBoxRenderer implements Renderer {
     this.group.x = nodeLayout.x
     this.group.y = nodeLayout.y
 
-    const lockRatio = style.lockRatio as boolean | undefined
-    const displayState = style.displayState as string | undefined
-    const visible = style.visible as boolean | undefined
+    const lockRatio = getBoolStyle(style, 'lockRatio')
+    const displayState = getStringStyle(style, 'displayState')
+    const visible = getBoolStyle(style, 'visible')
 
     // 大小
     const { width, height } = nodeLayout

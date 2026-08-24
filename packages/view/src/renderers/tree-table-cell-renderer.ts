@@ -1,6 +1,7 @@
 import { Group, Rect, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getStringStyle, getNumberStyle, getBoolStyle } from '../style-accessors'
 
 /**
  * TreeTableCellRenderer — 树形表格单元格渲染器
@@ -40,13 +41,13 @@ export class TreeTableCellRenderer implements Renderer {
     const { width, height } = nodeLayout
     this.rect.set({ width, height })
 
-    const fill = style.fill as string | undefined
-    const stroke = style.stroke as string | undefined
-    const strokeWidth = style.strokeWidth as number | undefined
-    const text = style.text as string | undefined
-    const textColor = style.textColor as string | undefined
-    const fontSize = style.fontSize as number | undefined
-    const visible = style.visible as boolean | undefined
+    const fill = getStringStyle(style, 'fill')
+    const stroke = getStringStyle(style, 'stroke')
+    const strokeWidth = getNumberStyle(style, 'strokeWidth')
+    const text = getStringStyle(style, 'text')
+    const textColor = getStringStyle(style, 'textColor')
+    const fontSize = getNumberStyle(style, 'fontSize')
+    const visible = getBoolStyle(style, 'visible')
 
     if (fill) this.rect.fill = fill
     if (stroke) this.rect.stroke = stroke

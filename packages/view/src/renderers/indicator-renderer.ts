@@ -1,6 +1,7 @@
 import { Group, Path, Rect } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getBoolStyle, getObjectStyle } from '../style-accessors'
 
 /** 常量 */
 const BOX_WIDTH = 40
@@ -47,9 +48,9 @@ export class IndicatorRenderer implements Renderer {
     this.group.x = nodeLayout.x
     this.group.y = nodeLayout.y
 
-    const lineAttrs = style.lineAttrs as Record<string, unknown> | undefined
-    const boxAttrs = style.boxAttrs as Record<string, unknown> | undefined
-    const visible = style.visible as boolean | undefined
+    const lineAttrs = getObjectStyle<Record<string, unknown>>(style, 'lineAttrs')
+    const boxAttrs = getObjectStyle<Record<string, unknown>>(style, 'boxAttrs')
+    const visible = getBoolStyle(style, 'visible')
 
     if (lineAttrs) {
       this.line.set(lineAttrs)

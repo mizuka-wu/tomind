@@ -1,6 +1,7 @@
 import { Group, Ellipse, Path, Text, Line } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getStringStyle, getNumberStyle, getBoolStyle, getObjectStyle } from '../style-accessors'
 
 /** 常量 */
 const EXT_RADIUS = 7
@@ -121,16 +122,16 @@ export class CollapseExtendRenderer implements Renderer {
     this.group.y = nodeLayout.y
 
     // 从 style 中提取属性
-    const collapsed = style.collapsed as boolean
-    const lineColor = style.lineColor as string | undefined
+    const collapsed = getBoolStyle(style, 'collapsed')
+    const lineColor = getStringStyle(style, 'lineColor')
     // toLeaferStyle 已将 lineWidth 映射为 lineStrokeWidth（并向后兼容写入 strokeWidth）
-    const lineWidth = (style.strokeWidth as number) ?? (style.lineStrokeWidth as number) ?? undefined
-    const backgroundColor = style.backgroundColor as string | undefined
-    const fillColor = style.fillColor as string | undefined
-    const fillOpacity = style.fillOpacity as number | undefined
-    const visible = style.visible as boolean | undefined
-    const text = style.text as string | undefined
-    const textPosition = style.textPosition as { x: number; y: number } | undefined
+    const lineWidth = getNumberStyle(style, 'strokeWidth') ?? getNumberStyle(style, 'lineStrokeWidth') ?? undefined
+    const backgroundColor = getStringStyle(style, 'backgroundColor')
+    const fillColor = getStringStyle(style, 'fillColor')
+    const fillOpacity = getNumberStyle(style, 'fillOpacity')
+    const visible = getBoolStyle(style, 'visible')
+    const text = getStringStyle(style, 'text')
+    const textPosition = getObjectStyle<{ x: number; y: number }>(style, 'textPosition')
 
     // 折叠状态
     if (collapsed) {

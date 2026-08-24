@@ -1,6 +1,7 @@
 import { Group, Path } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getStringStyle, getNumberStyle, getBoolStyle } from '../style-accessors'
 
 /**
  * FishboneHeadLineRenderer — 鱼骨图头线渲染器
@@ -33,10 +34,10 @@ export class FishboneHeadLineRenderer implements Renderer {
     this.group.x = nodeLayout.x
     this.group.y = nodeLayout.y
 
-    const linePath = style.linePath as string | undefined
-    const stroke = style.stroke as string | undefined
-    const strokeWidth = style.strokeWidth as number | undefined
-    const visible = style.visible as boolean | undefined
+    const linePath = getStringStyle(style, 'linePath')
+    const stroke = getStringStyle(style, 'stroke')
+    const strokeWidth = getNumberStyle(style, 'strokeWidth')
+    const visible = getBoolStyle(style, 'visible')
 
     if (linePath) {
       this.line.path = linePath

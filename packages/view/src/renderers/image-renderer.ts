@@ -1,6 +1,7 @@
 import { Group, Rect, Path, Image } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getStringStyle, getNumberStyle, getBoolStyle } from '../style-accessors'
 
 /**
  * ImageRenderer — 图片渲染器
@@ -54,18 +55,18 @@ export class ImageRenderer implements Renderer {
     if (!nodeLayout) return
 
     // 从 style 中提取图片专属属性（image 前缀）
-    const imageUrl = style.imageUrl as string | undefined
-    const imageWidth = typeof style.imageWidth === 'number' ? (style.imageWidth as number) : undefined
-    const imageHeight = typeof style.imageHeight === 'number' ? (style.imageHeight as number) : undefined
-    const imageBorderWidth = typeof style.imageBorderWidth === 'number' ? (style.imageBorderWidth as number) : 0
-    const imageBorderColor = style.imageBorderColor as string | undefined
-    const imageOpacity = typeof style.imageOpacity === 'number' ? style.imageOpacity as number : undefined
-    const imageShadowVisible = style.imageShadowVisible as boolean | undefined
+    const imageUrl = getStringStyle(style, 'imageUrl')
+    const imageWidth = getNumberStyle(style, 'imageWidth')
+    const imageHeight = getNumberStyle(style, 'imageHeight')
+    const imageBorderWidth = getNumberStyle(style, 'imageBorderWidth') ?? 0
+    const imageBorderColor = getStringStyle(style, 'imageBorderColor')
+    const imageOpacity = getNumberStyle(style, 'imageOpacity')
+    const imageShadowVisible = getBoolStyle(style, 'imageShadowVisible')
 
     // 通用属性
-    const borderPath = style.borderPath as string | undefined
-    const staticBackgroundFillColor = style.staticBackgroundFillColor as string | undefined
-    const visible = style.visible as boolean | undefined
+    const borderPath = getStringStyle(style, 'borderPath')
+    const staticBackgroundFillColor = getStringStyle(style, 'staticBackgroundFillColor')
+    const visible = getBoolStyle(style, 'visible')
 
     // 位置（考虑边框宽度）
     this.group.x = nodeLayout.x + imageBorderWidth / 2

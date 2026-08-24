@@ -1,6 +1,7 @@
 import { Group, Rect, Text, Line, Ellipse, Path } from 'leafer-ui'
 import type { IFontWeight, ITextAlign, ITextDecorationType, IImagePaint } from 'leafer-ui'
 import type { LayoutResult, NodeLayout } from '@tomind/layout'
+import { getStringStyle, getNumberStyle } from '../style-accessors'
 import type { Renderer } from './renderer'
 import { getTitleText } from '@tomind/schema'
 
@@ -1367,8 +1368,8 @@ export class TopicRenderer implements Renderer {
     }
 
     // 文本居中（对齐 getDrawBounds 内缩后的形状区域）
-    const textAlign = (style.textAlign as string) ?? 'center'
-    const fontSize = (style.fontSize as number) ?? 14
+    const textAlign = getStringStyle(style, 'textAlign') ?? 'center'
+    const fontSize = getNumberStyle(style, 'fontSize') ?? 14
     const { x: drawX, y: drawY, w: drawW, h: drawH } = computeDrawBounds(layout, style)
     const textWidth = this.text.width || layout.titleWidth || drawW
     const textHeight = this.text.height || layout.titleHeight || fontSize

@@ -1,6 +1,7 @@
 import { Group, Path } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getBoolStyle, getObjectStyle } from '../style-accessors'
 
 /** 常量 */
 const BOX_STROKE_COLOR = '#2ebdff'
@@ -62,11 +63,11 @@ export class SelectBoxRenderer implements Renderer {
     this.group.x = nodeLayout.x
     this.group.y = nodeLayout.y
 
-    const selectBoxAttrs = style.selectBoxAttrs as Record<string, unknown> | undefined
-    const selectBoxOneAttrs = style.selectBoxOneAttrs as Record<string, unknown> | undefined
-    const selectBoxTwoAttrs = style.selectBoxTwoAttrs as Record<string, unknown> | undefined
-    const transparent = style.transparent as boolean | undefined
-    const visible = style.visible as boolean | undefined
+    const selectBoxAttrs = getObjectStyle<Record<string, unknown>>(style, 'selectBoxAttrs')
+    const selectBoxOneAttrs = getObjectStyle<Record<string, unknown>>(style, 'selectBoxOneAttrs')
+    const selectBoxTwoAttrs = getObjectStyle<Record<string, unknown>>(style, 'selectBoxTwoAttrs')
+    const transparent = getBoolStyle(style, 'transparent')
+    const visible = getBoolStyle(style, 'visible')
 
     if (selectBoxAttrs) {
       this.selectBox.set(selectBoxAttrs)

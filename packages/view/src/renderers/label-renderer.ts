@@ -1,6 +1,7 @@
 import { Group, Rect, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getStringStyle, getBoolStyle, getObjectStyle } from '../style-accessors'
 
 /** 常量 */
 const COMMON_FONT_FAMILY = 'Arial, Helvetica, sans-serif'
@@ -50,9 +51,9 @@ export class LabelRenderer implements Renderer {
     this.group.x = nodeLayout.x
     this.group.y = nodeLayout.y
 
-    const text = style.text as string | undefined
-    const size = style.size as { width: number; height: number } | undefined
-    const visible = style.visible as boolean | undefined
+    const text = getStringStyle(style, 'text')
+    const size = getObjectStyle<{ width: number; height: number }>(style, 'size')
+    const visible = getBoolStyle(style, 'visible')
 
     if (text) {
       this.text.text = text

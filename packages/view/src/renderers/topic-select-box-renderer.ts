@@ -1,6 +1,7 @@
 import { Group, Path, Rect } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getStringStyle, getBoolStyle, getObjectStyle } from '../style-accessors'
 
 /**
  * TopicSelectBoxRenderer — 主题选择框渲染器
@@ -54,10 +55,10 @@ export class TopicSelectBoxRenderer implements Renderer {
     this.group.x = nodeLayout.x
     this.group.y = nodeLayout.y
 
-    const topicSelectBoxPath = style.topicSelectBoxPath as string | undefined
-    const topicSelectBoxAttr = style.topicSelectBoxAttr as Record<string, unknown> | undefined
-    const barDisplayState = style.barDisplayState as boolean | undefined
-    const visible = style.visible as boolean | undefined
+    const topicSelectBoxPath = getStringStyle(style, 'topicSelectBoxPath')
+    const topicSelectBoxAttr = getObjectStyle<Record<string, unknown>>(style, 'topicSelectBoxAttr')
+    const barDisplayState = getBoolStyle(style, 'barDisplayState')
+    const visible = getBoolStyle(style, 'visible')
 
     if (topicSelectBoxPath) {
       this.tsb.path = topicSelectBoxPath

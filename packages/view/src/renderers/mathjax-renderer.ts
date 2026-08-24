@@ -1,6 +1,7 @@
 import { Group, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
+import { getStringStyle, getNumberStyle, getBoolStyle } from '../style-accessors'
 
 /**
  * MathjaxRenderer — MathJax 公式渲染器
@@ -34,10 +35,10 @@ export class MathjaxRenderer implements Renderer {
     this.group.x = nodeLayout.x
     this.group.y = nodeLayout.y
 
-    const text = style.text as string | undefined
-    const textColor = style.textColor as string | undefined
-    const fontSize = style.fontSize as number | undefined
-    const visible = style.visible as boolean | undefined
+    const text = getStringStyle(style, 'text')
+    const textColor = getStringStyle(style, 'textColor')
+    const fontSize = getNumberStyle(style, 'fontSize')
+    const visible = getBoolStyle(style, 'visible')
 
     if (text !== undefined) {
       this.text.text = text || ''

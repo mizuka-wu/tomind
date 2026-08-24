@@ -10,6 +10,12 @@ const ATTACHED = 'attached'
 
 // ─── 节点属性读取 ───
 
+/** 类型安全获取节点 style 对象 */
+export function getNodeStyle(node: NodeDesc): Record<string, unknown> | undefined {
+  const s = node.attrs.style
+  return (s && typeof s === 'object') ? s as Record<string, unknown> : undefined
+}
+
 export function getTitle(node: NodeDesc): string {
   const title = node.attrs.title
   if (typeof title === 'string') return title
@@ -20,7 +26,7 @@ export function getTitle(node: NodeDesc): string {
 }
 
 export function getFontSize(node: NodeDesc): number {
-  const style = node.attrs.style as Record<string, unknown> | undefined
+  const style = getNodeStyle(node)
   const fontSize = style?.fontSize
   if (typeof fontSize === 'string') {
     const parsed = parseInt(fontSize)

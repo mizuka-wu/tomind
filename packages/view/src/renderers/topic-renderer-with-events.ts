@@ -7,6 +7,7 @@
 
 import { Group } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
+import { getStringStyle, getNumberStyle } from '../style-accessors'
 import type { Renderer } from './renderer'
 import { getTitleText } from '@tomind/schema'
 import type { 
@@ -61,13 +62,13 @@ export class TopicRendererWithEvents implements Renderer {
     this.rect.set({
       width: nodeLayout.width,
       height: nodeLayout.height,
-      fill: style.fill as string,
-      stroke: style.stroke as string,
-      cornerRadius: style.cornerRadius as number,
+      fill: getStringStyle(style, 'fill') ?? '',
+      stroke: getStringStyle(style, 'stroke') ?? '',
+      cornerRadius: getNumberStyle(style, 'cornerRadius') ?? 0,
     })
     this.text.set({
       text: getTitleText(nodeAttrs ?? style),
-      fill: style.fontColor as string,
+      fill: getStringStyle(style, 'fontColor') ?? '',
     })
   }
 

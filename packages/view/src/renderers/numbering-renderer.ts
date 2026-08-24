@@ -2,6 +2,7 @@ import { Group, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import { mapTextDecoration, mapTextAlign, mapFontWeight } from '../text-style-helpers'
 import type { Renderer } from './renderer'
+import { getStringStyle, getNumberStyle, getBoolStyle, getObjectStyle } from '../style-accessors'
 /**
  * NumberingRenderer — 编号渲染器
  *
@@ -37,16 +38,16 @@ export class NumberingRenderer implements Renderer {
     this.group.y = nodeLayout.y
 
     // 从 style 中提取属性（优先使用 numberingText，其次 text）
-    const text = (style.numberingText ?? style.text) as string | undefined
-    const textColor = style.textColor as string | undefined
-    const textDecoration = style.textDecoration as string | undefined
-    const textAlign = style.textAlign as string | undefined
-    const fontSize = style.fontSize as number | undefined
-    const fontFamily = style.fontFamily as string | undefined
-    const fontWeight = style.fontWeight as string | undefined
-    const fontStyle = style.fontStyle as string | undefined
-    const textPosition = style.textPosition as { x: number; y: number } | undefined
-    const visible = style.visible as boolean | undefined
+    const text = getStringStyle(style, 'numberingText') ?? getStringStyle(style, 'text')
+    const textColor = getStringStyle(style, 'textColor')
+    const textDecoration = getStringStyle(style, 'textDecoration')
+    const textAlign = getStringStyle(style, 'textAlign')
+    const fontSize = getNumberStyle(style, 'fontSize')
+    const fontFamily = getStringStyle(style, 'fontFamily')
+    const fontWeight = getStringStyle(style, 'fontWeight')
+    const fontStyle = getStringStyle(style, 'fontStyle')
+    const textPosition = getObjectStyle<{ x: number; y: number }>(style, 'textPosition')
+    const visible = getBoolStyle(style, 'visible')
 
     // 更新文本内容
     if (text !== undefined) {
@@ -91,7 +92,7 @@ export class NumberingRenderer implements Renderer {
     }
 
     // 可见性（优先使用 numberingVisible）
-    const numberingVisible = style.numberingVisible as boolean | undefined
+    const numberingVisible = getBoolStyle(style, 'numberingVisible')
     if (numberingVisible !== undefined) {
       this.group.visible = numberingVisible && !!text
     } else if (visible !== undefined) {

@@ -1,5 +1,6 @@
 import { Group } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
+import { getNumberStyle } from '../style-accessors'
 import type { Renderer } from './renderer'
 
 /**
@@ -32,8 +33,9 @@ export class BranchRenderer implements Renderer {
     this.group.y = nodeLayout.y
 
     // 更新透明度
-    if (style.opacity !== undefined) {
-      this.group.opacity = style.opacity as number
+    const opacity = getNumberStyle(style, 'opacity')
+    if (opacity !== undefined) {
+      this.group.opacity = opacity
     }
   }
 

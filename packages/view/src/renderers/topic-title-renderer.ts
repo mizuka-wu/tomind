@@ -2,6 +2,7 @@ import { Group, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import { mapTextDecoration, mapTextAlign, mapFontWeight } from '../text-style-helpers'
 import type { Renderer } from './renderer'
+import { getStringStyle, getNumberStyle, getBoolStyle, getObjectStyle } from '../style-accessors'
 /**
  * TopicTitleRenderer — 主题标题渲染器
  *
@@ -34,16 +35,16 @@ export class TopicTitleRenderer implements Renderer {
     this.group.x = nodeLayout.x
     this.group.y = nodeLayout.y
 
-    const text = style.text as string | undefined
-    const textColor = style.textColor as string | undefined
-    const textDecoration = style.textDecoration as string | undefined
-    const textAlign = style.textAlign as string | undefined
-    const fontSize = style.fontSize as number | undefined
-    const fontFamily = style.fontFamily as string | undefined
-    const fontWeight = style.fontWeight as string | undefined
-    const fontStyle = style.fontStyle as string | undefined
-    const textPosition = style.textPosition as { x: number; y: number } | undefined
-    const visible = style.visible as boolean | undefined
+    const text = getStringStyle(style, 'text')
+    const textColor = getStringStyle(style, 'textColor')
+    const textDecoration = getStringStyle(style, 'textDecoration')
+    const textAlign = getStringStyle(style, 'textAlign')
+    const fontSize = getNumberStyle(style, 'fontSize')
+    const fontFamily = getStringStyle(style, 'fontFamily')
+    const fontWeight = getStringStyle(style, 'fontWeight')
+    const fontStyle = getStringStyle(style, 'fontStyle')
+    const textPosition = getObjectStyle<{ x: number; y: number }>(style, 'textPosition')
+    const visible = getBoolStyle(style, 'visible')
 
     if (text !== undefined) {
       this.text.text = text || ''

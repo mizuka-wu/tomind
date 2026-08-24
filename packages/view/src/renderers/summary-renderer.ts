@@ -1,5 +1,6 @@
 import { Group, Rect, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
+import { getStringStyle, getNumberStyle } from '../style-accessors'
 import type { Renderer } from './renderer'
 
 /**
@@ -77,8 +78,10 @@ export class SummaryRenderer implements Renderer {
     this.bracketRect.height = height
 
     // 应用样式
-    if (style.stroke) this.bracketRect.stroke = style.stroke as string
-    if (style.strokeWidth) this.bracketRect.strokeWidth = style.strokeWidth as number
+    const _stroke = getStringStyle(style, 'stroke')
+    if (_stroke) this.bracketRect.stroke = _stroke
+    const _strokeWidth = getNumberStyle(style, 'strokeWidth')
+    if (_strokeWidth) this.bracketRect.strokeWidth = _strokeWidth
 
     // 更新标题
     if (this.title) {
