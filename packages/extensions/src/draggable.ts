@@ -9,7 +9,7 @@
  * - 拖拽影子（LeaferJS Group）
  */
 
-import { createExtension } from '@tomind/core'
+import { createExtension, parseArgs } from '@tomind/core'
 import type { CommandFn } from '@tomind/core'
 import { onDocEvent, offDocEvent } from '@tomind/core'
 
@@ -512,13 +512,13 @@ export const DraggableExtension = createExtension<DraggableOptions>({
     const registerMap = new WeakMap<object, DraggableRegister>()
     const commands: Record<string, CommandFn> = {
       'draggable.bind': (_state, _dispatch, args) => {
-        const { element, options } = args as { element: object; options?: DraggableOptions }
+        const { element, options } = parseArgs<{ element: object; options?: DraggableOptions }>(args)
         const register = new DraggableRegister(element, options)
         registerMap.set(element, register)
         return true
       },
       'draggable.unbind': (_state, _dispatch, args) => {
-        const { element } = args as { element: object }
+        const { element } = parseArgs<{ element: object }>(args)
         const register = registerMap.get(element)
         if (register) {
           register.destroy()

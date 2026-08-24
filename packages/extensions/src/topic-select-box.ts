@@ -14,6 +14,7 @@
 
 import { Group, Rect } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
+import type { ViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo, type DragPosition } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
 
@@ -138,7 +139,7 @@ function setupBarDrag(
   })
 
   reg.dragEnd((pos: DragPosition, _e: MouseEvent | TouchEvent) => {
-    const currentClientX = (pos as any).x ?? 0
+    const currentClientX = pos.x ?? 0
     const rawDelta = currentClientX - startClientX
     const delta = isLeft ? -rawDelta : rawDelta
     let newWidth = startTopicWidth + delta
@@ -168,7 +169,7 @@ function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   const node = state.nodes?.get(nodeId)
   if (!node || node.type !== 'topic') return
 
-  const view = ctx.getView() as any
+  const view = ctx.getView() as ViewLike | null
   const layoutEngine = view?.layoutEngine
   if (!layoutEngine) return
 
@@ -185,7 +186,7 @@ function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
 
   const width = nodeLayout.width ?? 100
   const height = nodeLayout.height ?? 40
-  const minWidth = (node.attrs as any)?.minimumWidth ?? DEFAULT_MIN_WIDTH
+  const minWidth = node.attrs?.minimumWidth ?? DEFAULT_MIN_WIDTH
 
   // 创建 overlay
   const overlay = createOverlay(nodeId, width, height)

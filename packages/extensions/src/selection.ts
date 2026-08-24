@@ -1,4 +1,4 @@
-import { createExtension, Transaction, LayoutEngine, DEFAULT_LAYOUT_OPTIONS } from '@tomind/core'
+import { createExtension, Transaction, LayoutEngine, DEFAULT_LAYOUT_OPTIONS, parseArgs } from '@tomind/core'
 import type { LayoutAlgorithm } from '@tomind/core'
 import type { LayoutResult, ExtensionContext, CommandFn, SheetState, SelectionElement } from '@tomind/core'
 /**
@@ -440,7 +440,7 @@ function createSelectionCommands(): Record<string, CommandFn<SheetState>> {
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { nodeId: string; addToSelection?: boolean } | undefined
+      const params = parseArgs<{ nodeId: string; addToSelection?: boolean }>(args)
       if (!params) return false
 
       const sheetState = state
@@ -482,7 +482,7 @@ function createSelectionCommands(): Record<string, CommandFn<SheetState>> {
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { nodeId: string } | undefined
+      const params = parseArgs<{ nodeId: string }>(args)
       if (!params) return false
 
       const sheetState = state
@@ -520,7 +520,7 @@ function createSelectionCommands(): Record<string, CommandFn<SheetState>> {
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { nodeId: string } | undefined
+      const params = parseArgs<{ nodeId: string }>(args)
       if (!params) return false
 
       const sheetState = state
@@ -549,7 +549,7 @@ function createSelectionCommands(): Record<string, CommandFn<SheetState>> {
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { nodeId: string } | undefined
+      const params = parseArgs<{ nodeId: string }>(args)
       if (!params) return false
 
       const sheetState = state
@@ -578,7 +578,7 @@ function createSelectionCommands(): Record<string, CommandFn<SheetState>> {
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { nodeId: string } | undefined
+      const params = parseArgs<{ nodeId: string }>(args)
       if (!params) return false
 
       const sheetState = state
@@ -604,7 +604,7 @@ function createSelectionCommands(): Record<string, CommandFn<SheetState>> {
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { enabled: boolean } | undefined
+      const params = parseArgs<{ enabled: boolean }>(args)
       if (!params) return false
 
       // 多选模式是 UI 状态，通过事件通知

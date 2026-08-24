@@ -1,4 +1,4 @@
-import { createExtension, SetViewportStep, Transaction } from '@tomind/core'
+import { createExtension, SetViewportStep, Transaction, parseArgs } from '@tomind/core'
 import type { SheetState, CommandFn, KeyboardShortcutHandler, ExtensionContext } from '@tomind/core'
 /**
  * ViewportExtension — 视口操作扩展
@@ -327,7 +327,7 @@ function createViewportCommands(
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { scale: number } | undefined
+      const params = parseArgs<{ scale: number }>(args)
       if (!params) return false
       const sheetState = state
       const scale = Math.max(minZoom, Math.min(maxZoom, params.scale))
@@ -351,7 +351,7 @@ function createViewportCommands(
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { step?: number } | undefined
+      const params = parseArgs<{ step?: number }>(args)
       const step = params?.step ?? zoomStep
       const sheetState = state
       const newZoom = Math.min(maxZoom, sheetState.viewport.zoom + step)
@@ -375,7 +375,7 @@ function createViewportCommands(
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { step?: number } | undefined
+      const params = parseArgs<{ step?: number }>(args)
       const step = params?.step ?? zoomStep
       const sheetState = state
       const newZoom = Math.max(minZoom, sheetState.viewport.zoom - step)
@@ -399,7 +399,7 @@ function createViewportCommands(
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { x: number; y: number } | undefined
+      const params = parseArgs<{ x: number; y: number }>(args)
       if (!params) return false
       const sheetState = state
 
@@ -422,7 +422,7 @@ function createViewportCommands(
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { deltaX: number; deltaY: number } | undefined
+      const params = parseArgs<{ deltaX: number; deltaY: number }>(args)
       if (!params) return false
       const sheetState = state
 
@@ -468,7 +468,7 @@ function createViewportCommands(
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { bounds: { x: number; y: number; width: number; height: number } } | undefined
+      const params = parseArgs<{ bounds: { x: number; y: number; width: number; height: number } }>(args)
       if (!params) return false
       const sheetState = state
 

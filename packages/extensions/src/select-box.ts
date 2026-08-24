@@ -14,6 +14,7 @@
 
 import { Group, Path } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
+import type { ViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo, type DragPosition } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
 
@@ -193,7 +194,7 @@ function getSelectBoxSize(
   const node = state.nodes?.get(nodeId)
   if (!node) return { x: 0, y: 0, width: 100, height: 60, rangeStart: 0, rangeEnd: 0 }
 
-  const layoutResult = (state as any)._layoutResult
+  const layoutResult = state._layoutResult
   const nodeLayout = layoutResult?.nodes?.get(nodeId)
 
   // Boundary: 直接用节点尺寸
@@ -359,7 +360,7 @@ function computeRangeFromDragResult(
   const children = getChildBranches(state, nodeId)
   if (children.length === 0) return { rangeStart: 0, rangeEnd: 0 }
 
-  const layoutResult = (state as any)._layoutResult
+  const layoutResult = state._layoutResult
   const isUD = direction === 'UD' || direction === 'up' || direction === 'down'
 
   // 根据方向收集子节点的轴向位置
@@ -541,7 +542,7 @@ function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   const node = state.nodes?.get(nodeId)
   if (!node || (node.type !== 'summary' && node.type !== 'boundary')) return
 
-  const view = ctx.getView() as any
+  const view = ctx.getView() as ViewLike | null
   const layoutEngine = view?.layoutEngine
   if (!layoutEngine) return
 

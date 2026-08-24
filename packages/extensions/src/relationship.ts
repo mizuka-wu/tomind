@@ -14,6 +14,7 @@
 
 import { Group, Path, Ellipse } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
+import type { ViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
 
@@ -108,7 +109,7 @@ function pointToSegmentDist(px: number, py: number, ax: number, ay: number, bx: 
 
 /** 获取所有节点的感应区多边形 */
 function getAllSnapPolygons(state: any): { nodeId: string; outer: { x: number; y: number }[]; inner: { x: number; y: number }[]; cx: number; cy: number }[] {
-  const layoutResult = (state as any)._layoutResult
+  const layoutResult = state._layoutResult
   if (!layoutResult) return []
 
   const result: { nodeId: string; outer: { x: number; y: number }[]; inner: { x: number; y: number }[]; cx: number; cy: number }[] = []
@@ -166,7 +167,7 @@ function findSnapTarget(
     const isInner = isPointInPolygon(x, y, poly.inner)
 
     // 计算到节点边界最近点的距离
-    const nodeLayout = (state as any)._layoutResult?.nodes?.get(poly.nodeId)
+    const nodeLayout = state._layoutResult?.nodes?.get(poly.nodeId)
     if (!nodeLayout) continue
     const nx = nodeLayout.x ?? 0
     const ny = nodeLayout.y ?? 0
@@ -435,7 +436,7 @@ function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   const node = state.nodes?.get(nodeId)
   if (!node || node.type !== 'relationship') return
 
-  const view = ctx.getView() as any
+  const view = ctx.getView() as ViewLike | null
   const layoutEngine = view?.layoutEngine
   if (!layoutEngine) return
 

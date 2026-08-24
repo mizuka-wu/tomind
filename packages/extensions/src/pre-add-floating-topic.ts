@@ -14,7 +14,7 @@
  * startProcess → 监听事件 → finish/reset
  */
 
-import { createExtension } from '@tomind/core'
+import { createExtension, parseArgs } from '@tomind/core'
 import type { ExtensionContext, CommandFn } from '@tomind/core'
 import { Group, Rect, Text } from 'leafer-ui'
 
@@ -82,7 +82,7 @@ function createCommands(ctx: ExtensionContext): Record<string, CommandFn> {
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { x: number; y: number } | undefined
+      const params = parseArgs<{ x: number; y: number }>(args)
       if (!params) return false
 
       // 开始预添加流程

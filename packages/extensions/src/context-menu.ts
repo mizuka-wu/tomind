@@ -8,7 +8,7 @@
  * 4. 菜单事件分发
  */
 
-import { createExtension } from '@tomind/core'
+import { createExtension, parseArgs } from '@tomind/core'
 import type { ExtensionContext, CommandFn, EventHandler } from '@tomind/core'
 
 // ==================== 类型安全辅助 ====================
@@ -257,7 +257,7 @@ function createContextMenuCommands(
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { item: ContextMenuItem } | undefined
+      const params = parseArgs<{ item: ContextMenuItem }>(args)
       if (!params?.item) return false
 
       menuItems.set(params.item.id, params.item)
@@ -272,7 +272,7 @@ function createContextMenuCommands(
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { itemId: string } | undefined
+      const params = parseArgs<{ itemId: string }>(args)
       if (!params?.itemId) return false
 
       menuItems.delete(params.itemId)
@@ -298,7 +298,7 @@ function createContextMenuCommands(
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
-      const params = args as { itemId: string; event: Event; targetId?: string } | undefined
+      const params = parseArgs<{ itemId: string; event: Event; targetId?: string }>(args)
       if (!params?.itemId) return false
 
       const item = menuItems.get(params.itemId)

@@ -10,7 +10,7 @@
  * - MathJax 拖拽
  */
 
-import { createExtension } from '@tomind/core'
+import { createExtension, parseArgs } from '@tomind/core'
 import type { CommandFn } from '@tomind/core'
 import { onDocEvent, offDocEvent } from '@tomind/core'
 
@@ -705,7 +705,7 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
     // 注册命令
     const commands: Record<string, CommandFn> = {
       'dragHandler.bind': (_state, _dispatch, args) => {
-        const payload = args as { element: any }
+        const payload = parseArgs<{ element: { on?: (event: string, handler: Function) => void } }>(args)
         if (!payload?.element) return false
         const onPointerDown = (e: PointerEvent) => {
           manager.prepareStartDrag(e, payload.element)
