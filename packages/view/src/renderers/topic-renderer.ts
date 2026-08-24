@@ -338,7 +338,8 @@ type ShapeClass =
   | 'hexagon' | 'diamond' | 'cutdiamond' | 'parallelogram'
   | 'cloud' | 'simpleCloud' | 'waterdrop' | 'star' | 'shield'
   | 'fatLeftArrow' | 'fatRightArrow' | 'noBorder' | 'label' | 'bookmark'
-  | 'heart' | 'leaf' | 'handDrawnEllipse' | (string & {})
+  | 'heart' | 'leaf' | 'handDrawnEllipse' | 'curlyBracket' | 'squareQuote' | 'singleBookQuote' | 'doubleBookQuote'
+  | 'doubleQuote' | 'roundBracket' | 'matrixMainTopicShape' | (string & {})
 
 // ─── TopicRenderer ────────────────────────────────────────────────────────────
 
@@ -493,6 +494,27 @@ export class TopicRenderer implements Renderer {
         break
       case 'handDrawnEllipse':
         this.renderHandDrawnEllipse(layout, style)
+        break
+      case 'squareQuote':
+        this.renderSquareQuote(layout, style)
+        break
+      case 'singleBookQuote':
+        this.renderSingleBookQuote(layout, style)
+        break
+      case 'doubleBookQuote':
+        this.renderDoubleBookQuote(layout, style)
+        break
+      case 'doubleQuote':
+        this.renderDoubleQuote(layout, style)
+        break
+      case 'roundBracket':
+        this.renderRoundBracket(layout, style)
+        break
+      case 'curlyBracket':
+        this.renderCurlyBracket(layout, style)
+        break
+      case 'matrixMainTopicShape':
+        this.renderMatrixMainTopicShape(layout, style)
         break
       default:
         this.renderRoundedRect(layout, style)
@@ -974,6 +996,208 @@ export class TopicRenderer implements Renderer {
     this.ensurePath(pathData)
     applyPathInset(this.shape as Path, style)
     this.applyPathFillAndStroke(style)
+  }
+
+  /** squareQuote：方引号形（左上和右下角的 L 形括号） */
+  private renderSquareQuote(layout: NodeLayout, style: Record<string, unknown>): void {
+    const w = layout.width
+    const h = layout.height
+    const VERTICAL_LENGTH = 28.85
+    const HORIZONTAL_LENGTH = 15.11
+
+    const pathData = [
+      `M ${HORIZONTAL_LENGTH} 0 L 0 0 L 0 ${VERTICAL_LENGTH}`,
+      `M ${w - HORIZONTAL_LENGTH} ${h} L ${w} ${h} L ${w} ${h - VERTICAL_LENGTH}`,
+    ].join(' ')
+
+    this.ensurePath(pathData)
+    applyPathInset(this.shape as Path, style)
+    this.applyPathStroke(style)
+  }
+
+  /** singleBookQuote：单书名号形（尖角 < > 形装饰） */
+  private renderSingleBookQuote(layout: NodeLayout, style: Record<string, unknown>): void {
+    const w = layout.width
+    const h = layout.height
+    const OFFSET_X = 19.04
+    const MIN_HEIGHT = 30
+    const MAX_HEIGHT = 90
+
+    const drawHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, h))
+    const midY = h * 0.5
+    const topY = midY - drawHeight * 0.5
+    const botY = midY + drawHeight * 0.5
+
+    const pathData = [
+      `M ${OFFSET_X} ${topY} L 0 ${midY} L ${OFFSET_X} ${botY}`,
+      `M ${w - OFFSET_X} ${topY} L ${w} ${midY} L ${w - OFFSET_X} ${botY}`,
+    ].join(' ')
+
+    this.ensurePath(pathData)
+    applyPathInset(this.shape as Path, style)
+    this.applyPathStroke(style)
+  }
+
+  /** doubleBookQuote：双书名号形（双尖角 << >> 形装饰） */
+  private renderDoubleBookQuote(layout: NodeLayout, style: Record<string, unknown>): void {
+    const w = layout.width
+    const h = layout.height
+    const OFFSET_X = 9.04
+    const GAP = 10
+    const MIN_HEIGHT = 50
+    const MAX_HEIGHT = 95
+
+    const drawHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, h))
+    const midY = h * 0.5
+    const topY = midY - drawHeight * 0.5
+    const botY = midY + drawHeight * 0.5
+
+    const pathData = [
+      // 左侧双书名号
+      `M ${OFFSET_X} ${topY} L 0 ${midY} L ${OFFSET_X} ${botY}`,
+      `M ${OFFSET_X + GAP} ${topY} L ${GAP} ${midY} L ${OFFSET_X + GAP} ${botY}`,
+      // 右侧双书名号
+      `M ${w - OFFSET_X} ${topY} L ${w} ${midY} L ${w - OFFSET_X} ${botY}`,
+      `M ${w - OFFSET_X - GAP} ${topY} L ${w - GAP} ${midY} L ${w - OFFSET_X - GAP} ${botY}`,
+    ].join(' ')
+
+    this.ensurePath(pathData)
+    applyPathInset(this.shape as Path, style)
+    this.applyPathStroke(style)
+  }
+
+  /** doubleQuote：双引号形（装饰性花式引号） */
+  private renderDoubleQuote(layout: NodeLayout, style: Record<string, unknown>): void {
+    const w = layout.width
+    const h = layout.height
+    const sw = typeof style.strokeWidth === 'number' ? style.strokeWidth : 2
+    const bw = Math.max(sw, 2)
+    const VERTICAL_OFFSET_SCALE = 1
+
+    const genQuotePath = (outterX: number, outterY: number, isOpen: boolean): string => {
+      const circleScale = 0.8
+      const innerX = outterX + (1 - circleScale) * (isOpen ? bw : -bw)
+      const outterRadius = circleScale * bw
+      const innerRadius = bw / 2
+      const tailEndX = outterX + (isOpen ? bw : -bw) * 2
+      const tailEndY = outterY + (isOpen ? -bw : bw) * 3.4
+      const tailCtrlX = outterX + (isOpen ? -bw : bw) * 0.2
+      const tailCtrlY = tailEndY + (isOpen ? bw : -bw)
+
+      const outterCircle = `M ${outterX} ${outterY} a ${outterRadius} ${outterRadius} 0 1 1 0 ${isOpen ? '0.001' : '-0.001'} Z`
+      const innerCircle = `M ${innerX} ${outterY} a ${innerRadius} ${innerRadius} 0 1 1 0 ${isOpen ? '0.001' : '-0.001'} Z`
+      const tail = `M ${outterX} ${outterY} Q ${tailCtrlX} ${tailCtrlY} ${tailEndX} ${tailEndY}`
+
+      return `${outterCircle} ${innerCircle} ${tail}`
+    }
+
+    const gap = bw
+    const midY = h * 0.5
+
+    // 左侧双引号
+    const l1x = 0
+    const l1y = midY + VERTICAL_OFFSET_SCALE * bw
+    const l2x = bw * 2 + gap
+    const l2y = l1y
+
+    // 右侧双引号
+    const r1x = w
+    const r1y = midY - VERTICAL_OFFSET_SCALE * bw
+    const r2x = w - bw * 2 - gap
+    const r2y = r1y
+
+    const pathData = [
+      genQuotePath(l1x, l1y, true),
+      genQuotePath(l2x, l2y, true),
+      genQuotePath(r1x, r1y, false),
+      genQuotePath(r2x, r2y, false),
+    ].join(' ')
+
+    this.ensurePath(pathData)
+    applyPathInset(this.shape as Path, style)
+    this.applyPathStroke(style)
+  }
+
+  /** roundBracket：圆括号形（弧形括号） */
+  private renderRoundBracket(layout: NodeLayout, style: Record<string, unknown>): void {
+    const w = layout.width
+    const h = layout.height
+    const MIN_HEIGHT = 50
+    const MAX_HEIGHT = 150
+    const indentX = 8
+    const outdentY = 12
+    const xRadius = indentX * 9
+
+    const drawHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, h))
+    const midY = h * 0.5
+    const topY = midY - drawHeight * 0.5
+    const botY = midY + drawHeight * 0.5
+
+    const pathData = [
+      `M ${indentX} ${topY} A ${xRadius} ${drawHeight + outdentY} 0 0 0 ${indentX} ${botY}`,
+      `M ${w - indentX} ${topY} A ${xRadius} ${drawHeight + outdentY} 0 0 1 ${w - indentX} ${botY}`,
+    ].join(' ')
+
+    this.ensurePath(pathData)
+    applyPathInset(this.shape as Path, style)
+    this.applyPathStroke(style)
+  }
+
+  /** curlyBracket：花括号形（波浪括号） */
+  private renderCurlyBracket(layout: NodeLayout, style: Record<string, unknown>): void {
+    const w = layout.width
+    const h = layout.height
+    const ARC_RADIUS = 4
+    const EXTEND_WIDTH = 2.4
+    const keyPointOffsetX = ARC_RADIUS + EXTEND_WIDTH
+
+    const genHalfBracket = (
+      startX: number, startY: number,
+      endX: number, endY: number,
+      reverseX: boolean, reverseY: boolean,
+    ): string => {
+      const arcPoint1X = startX + (reverseX ? keyPointOffsetX : -keyPointOffsetX)
+      const arcPoint1Y = startY + (reverseY ? -ARC_RADIUS : ARC_RADIUS)
+      const arcPoint2X = endX + (reverseX ? -keyPointOffsetX : keyPointOffsetX)
+      const arcPoint2Y = endY + (reverseY ? ARC_RADIUS : -ARC_RADIUS)
+
+      return [
+        `M ${startX} ${startY}`,
+        `L ${startX + (reverseX ? EXTEND_WIDTH : -EXTEND_WIDTH)} ${startY}`,
+        `A ${ARC_RADIUS} ${ARC_RADIUS} 0 0 ${reverseX === reverseY ? '0' : '1'} ${arcPoint1X} ${arcPoint1Y}`,
+        `L ${arcPoint2X} ${arcPoint2Y}`,
+        `A ${ARC_RADIUS} ${ARC_RADIUS} 0 0 ${reverseX !== reverseY ? '0' : '1'} ${endX + (reverseX ? -EXTEND_WIDTH : EXTEND_WIDTH)} ${endY}`,
+        `L ${endX + (reverseX ? -EXTEND_WIDTH : EXTEND_WIDTH) * 0.7} ${endY}`,
+      ].join(' ')
+    }
+
+    const leftInset = keyPointOffsetX * 2
+    const rightInset = w - keyPointOffsetX * 2
+    const midY = h * 0.5
+
+    const leftBracket = [
+      genHalfBracket(leftInset, 0, 0, midY, false, false),
+      genHalfBracket(leftInset, h, 0, midY, false, true),
+    ].join(' ')
+
+    const rightBracket = [
+      genHalfBracket(rightInset, 0, w, midY, true, false),
+      genHalfBracket(rightInset, h, w, midY, true, true),
+    ].join(' ')
+
+    const pathData = `${leftBracket} ${rightBracket}`
+
+    this.ensurePath(pathData)
+    applyPathInset(this.shape as Path, style)
+    this.applyPathStroke(style)
+  }
+
+  /** matrixMainTopicShape：矩阵主节点专用形状（无边框） */
+  private renderMatrixMainTopicShape(layout: NodeLayout, style: Record<string, unknown>): void {
+    // matrixMainTopicShape 在 snowbrush 中继承 NoBorderTopicShape，
+    // 不添加自己的渲染路径，仅调整锚点位置。
+    // 在 tomind 中简化为无边框渲染。
+    this.renderNoBorder(layout, style)
   }
 
   // ─── 通用工具方法 ─────────────────────────────────────────────────────────
