@@ -144,7 +144,7 @@ function handleEditEnd(ctx: ExtensionContext, nodeId: string, finalText: string)
   }
 
   // 通过事务写入 model（同时更新 title 和 attributeTitle）
-  const state = ctx.getState() as any
+  const state = ctx.getState<any>()
   if (state) {
     const tr = new Transaction(state.doc)
     tr.setAttrs(nodeId, {

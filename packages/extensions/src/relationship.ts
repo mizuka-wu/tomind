@@ -330,7 +330,7 @@ function setupEndpointDrag(
     const newY = (dot.y ?? 0) + info.deltaY
 
     // 吸附检测
-    const state = ctx.getState() as any
+    const state = ctx.getState<any>()
     const snap = findSnapTarget(state, newX, newY, nodeId)
     const finalX = snap ? snap.x : newX
     const finalY = snap ? snap.y : newY
@@ -429,7 +429,7 @@ function updateMainPath(overlay: Group): void {
 
 function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   const storage = ctx.storage as RelationshipStorage
-  const state = ctx.getState() as any
+  const state = ctx.getState<any>()
   if (!state) return
 
   const node = state.nodes?.get(nodeId)

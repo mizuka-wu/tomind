@@ -266,7 +266,7 @@ function setupAnchorDrag(
 
 function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   const storage = typedStorage<ResizeBoxStorage>(ctx)
-  const state = ctx.getState() as any
+  const state = ctx.getState<any>()
   if (!state) return
 
   const node = state.nodes?.get(nodeId)

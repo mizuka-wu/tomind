@@ -484,7 +484,7 @@ function setupBarDrag(
 
     // 从拖拽结果反算 rangeStart/rangeEnd
     const storage = ctx.storage as SelectBoxStorage
-    const state = ctx.getState() as any
+    const state = ctx.getState<any>()
     if (state && storage.lastSize) {
       const rangeResult = computeRangeFromDragResult(state, nodeId, storage.lastSize, direction)
       ctx.emit('selectBox:rangeChanged', {
@@ -535,7 +535,7 @@ function transitionState(storage: SelectBoxStorage, event: string): void {
 
 function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   const storage = ctx.storage as SelectBoxStorage
-  const state = ctx.getState() as any
+  const state = ctx.getState<any>()
   if (!state) return
 
   const node = state.nodes?.get(nodeId)

@@ -432,7 +432,7 @@ export class SheetEditor {
     return {
       storage: {},
       getWorkbook: () => editor._workbookEditor!,
-      getState: () => editor._state,
+      getState: <T = unknown>(): T | null => editor._state as T | null,
       dispatch: (tr: unknown) => editor.dispatch(tr as Transaction),
       getView: () => editor._docView,
       executeCommand: (name: string, args?: unknown) => {

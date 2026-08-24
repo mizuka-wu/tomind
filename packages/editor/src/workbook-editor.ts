@@ -387,9 +387,9 @@ export class WorkbookEditor implements WorkbookEditorInterface {
     return {
       storage: {},
       getWorkbook: () => workbook,
-      getState: () => {
+      getState: <T = unknown>(): T | null => {
         const activeSheet = workbook._requireActiveSheet('getState')
-        return activeSheet?.state ?? null
+        return (activeSheet?.state ?? null) as T | null
       },
       dispatch: (tr: unknown) => {
         const activeSheet = workbook._requireActiveSheet('dispatch')

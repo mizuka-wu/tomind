@@ -162,7 +162,7 @@ function setupBarDrag(
 
 function handleHoverEnter(ctx: ExtensionContext, nodeId: string): void {
   const storage = ctx.storage as TopicSelectBoxStorage
-  const state = ctx.getState() as any
+  const state = ctx.getState<any>()
   if (!state) return
 
   const node = state.nodes?.get(nodeId)

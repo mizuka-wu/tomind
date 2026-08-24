@@ -40,6 +40,8 @@ export interface LayoutOptions {
   maxTitleWidth: number
   canvasWidth: number
   canvasHeight: number
+  fontFamily?: string
+  fontWeight?: string | number
 }
 
 export const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
@@ -107,8 +109,8 @@ export function measureTextSize(
   text: string,
   fontSize: number,
   options: LayoutOptions,
-  fontFamily: string = SNOWBRUSH_FONT_FAMILY,
-  fontWeight: string | number = 'normal',
+  fontFamily: string = options.fontFamily ?? SNOWBRUSH_FONT_FAMILY,
+  fontWeight: string | number = options.fontWeight ?? 'normal',
   fontStyle: string = 'normal',
 ): { width: number; height: number } {
   if (!text) return { width: 0, height: 0 }

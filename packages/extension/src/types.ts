@@ -23,7 +23,7 @@ export interface ExtensionContext {
   /** 获取 WorkbookEditor 实例 */
   getWorkbook: () => WorkbookEditorInterface
   /** 获取当前状态 */
-  getState: () => unknown
+  getState: <T = unknown>() => T | null
   /** 分发事务 */
   dispatch: (tr: unknown) => void
   /** 获取视图（如果可用） */

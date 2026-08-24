@@ -32,7 +32,7 @@ export { ExtensionManager } from './extension-manager'
  */
 export function createExtensionContext(editor: {
   getWorkbook: () => import('./types').WorkbookEditorInterface
-  getState: () => unknown
+  getState: <T = unknown>() => T | null
   dispatch: (tr: unknown) => void
   getView: () => unknown | null
   executeCommand: (name: string, args?: unknown) => boolean

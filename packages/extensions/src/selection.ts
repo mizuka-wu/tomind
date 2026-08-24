@@ -217,7 +217,7 @@ function setupEventHandlers(
     const nodeId = args[0] as string | undefined
     if (!nodeId) return
 
-    const state = ctx.getState() as SheetState
+    const state = ctx.getState<SheetState>()
     if (!state) return
 
     // 已选中的节点不显示 hover
@@ -260,7 +260,7 @@ function setupEventHandlers(
     const isSegmentMultiSelect = args[1] as boolean | undefined
     if (!bounds) return
 
-    const state = ctx.getState() as SheetState
+    const state = ctx.getState<SheetState>()
     if (!state) return
 
     // 获取布局结果并查找节点
@@ -279,7 +279,7 @@ function setupEventHandlers(
   const handleBoxSelectEnd = (...args: unknown[]) => {
     if (!boxSelect) return
 
-    const state = ctx.getState() as SheetState
+    const state = ctx.getState<SheetState>()
     if (!state) return
 
     // 找到最后一次 selecting 事件缓存的预选节点
@@ -313,7 +313,7 @@ function setupEventHandlers(
     }))
 
     // 设置选择（通过事务）
-    const state = ctx.getState() as SheetState
+    const state = ctx.getState<SheetState>()
     if (state) {
       const tr = new Transaction(state.doc)
       tr.setSelection({ elements })
