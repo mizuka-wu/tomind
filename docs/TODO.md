@@ -27,6 +27,22 @@
 - [x] **公共模块提取** — layout-utils.ts（7 个共享函数 + measureSimpleNode/Subtree）
 - [x] **布局工具函数抽取** — 消除 12 个文件中的重复代码（净减 ~600 行）
 
+### 架构改善（2026-08-24）
+- [x] `exchangeSibling()` 完全空实现 — 已实现兄弟节点交换逻辑
+- [x] `WorkbookState.renameSheet()` 空操作 — 已实现重命名逻辑
+- [x] SheetState.findParent() O(n²) 性能 — 已维护 parentMap 缓存
+- [x] NodeViewDesc 静态依赖注入反模式 — 已改为构造函数注入
+- [x] Renderer 封装被破坏 — 已暴露公共 API
+- [x] `matrix.ts` 类型系统完全缺失 — 已重建类型系统
+- [x] `RelationshipRenderer.render()` 未实际渲染曲线 — 已实现曲线渲染
+- [x] `ViewDesc.emit()` 事件冒泡无终止机制 — 已实现 stopPropagation
+- [x] `PartViewDesc.update()` 浅比较不可靠 — 已改为深比较
+- [x] `WorkbookEditor.createExtensionContext()` 命令注册委托不稳定 — 已修复
+- [x] `ExtensionManager.setup()` 与 `setupExtension()` 快捷键处理不一致 — 已统一
+- [x] `collapse.ts` 通过 `(tr2 as any).doc = newDoc` 绕过事务变更追踪 — 已修复
+- [x] NodeViewDesc 静态注入 → 构造函数注入 — 已完成
+- [x] Renderer 公共 API — 已暴露 `getPathRect()`/`getCircleFill()` 等方法
+
 ### 功能实现（2026-08-01 ~ 08-23）
 - [x] 25+ topic shapes + 16 link styles + 13 boundary shapes + 10 arrow types
 - [x] Numbering 功能（NumberingPlugin + NumberingExtension）
@@ -52,19 +68,12 @@
 ## 🟡 P1 — 中等问题
 
 ### State 层
-- [ ] **`exchangeSibling()` 完全空实现** — `transform.ts:138-142`，交换兄弟节点位置无任何逻辑
-- [ ] **`WorkbookState.renameSheet()` 空操作** — `workbook-state.ts:104-107`，调用不产生效果
 - [ ] **Transaction.docChanged 遗漏 viewport/selection 变更** — 只检查 insertNode/removeNode/updateNode，`SetSelectionStep`/`SetViewportStep` 不触发 docChanged
-- [ ] **SheetState.findParent() O(n²) 性能** — 每次遍历整个 `_nodeMap`，应维护 parentMap 缓存
-- [ ] **Transaction 继承 Transform** — "是一个"关系但语义不同，导致 9 处 `transform['_meta']` 重复访问。建议改为组合（has-a）
+- [ ] **Transaction 继承 Transform** — "是一个"关系但语义不同，导致 9 处 `transform['_meta']` 重复访问。建议改为组合（has-a）。✅ meta getter 已添加，组合重构待完成
 
 ### View 层
-- [ ] **NodeViewDesc 静态依赖注入反模式** — 4 个 static 可变全局状态（styleEngine/layoutEngine/state/_eventEmitter），多实例互相干扰
-- [ ] **Renderer 封装被破坏** — 多处 `as unknown as { pathRect: Rect | null }` 双断言访问 Renderer 私有字段
-- [ ] **`matrix.ts` 类型系统完全缺失** — 所有字段都是 `any`，`MatrixCell.getMinSize()` 不安全属性访问
-- [ ] **`RelationshipRenderer.render()` 未实际渲染曲线** — style.stroke 分支为空实现
-- [ ] **`ViewDesc.emit()` 事件冒泡无终止机制** — `stopPropagation` 是空函数
-- [ ] **`PartViewDesc.update()` 浅比较不可靠** — 对象引用相同但属性变化会被跳过
+
+无（全部已完成）
 
 ### Layout 层
 - [ ] **部分布局忽略 StyleEngine 间距覆盖** — fishbone/logic/org-chart/timeline 硬编码使用 `DEFAULT_LAYOUT_OPTIONS`，未接入 styleEngine
@@ -72,10 +81,9 @@
 - [ ] **measureTextSize 可配置** — 支持中英文混合宽度计算、CSS white-space 等行为
 
 ### Extension 层
-- [ ] **`WorkbookEditor.createExtensionContext()` 命令注册委托不稳定** — 委托给活动 Sheet，但活动 Sheet 可能为 null
-- [ ] **`ExtensionManager.setup()` 与 `setupExtension()` 快捷键处理不一致** — 后注册扩展的旧式快捷键被忽略
 - [x] **`selection.ts` 模块级缓存变量** — `cachedLayoutResult`/`cachedLayoutState` 多 Sheet 场景下共享缓存（已修复：改为每次重新计算）
-- [ ] **`collapse.ts` 通过 `(tr2 as any).doc = newDoc` 绕过事务变更追踪** — 直接修改 Transaction 私有属性
+
+无（除 selection.ts 已标记外，其余已完成）
 
 ---
 
@@ -120,9 +128,7 @@
 
 ## 🟢 P4 — 架构改善
 
-- [ ] **NodeViewDesc 静态注入 → 构造函数注入** — 支持多编辑器实例共存
 - [ ] **Transaction 继承 Transform → 组合** — 消除 `_meta` 私有字段访问问题
-- [ ] **Renderer 公共 API** — 暴露 `getPathRect()`/`getCircleFill()` 等方法，替代双断言
 - [ ] **ExtensionContext 泛型化 state** — `getState<T>()` 替代 `getState(): unknown`
 - [ ] **`TopicData` 旧类型清理** — `types.ts:194-253` 标记为迁移用，设 deadline 删除
 
