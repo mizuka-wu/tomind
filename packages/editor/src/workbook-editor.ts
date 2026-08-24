@@ -366,6 +366,20 @@ export class WorkbookEditor implements WorkbookEditorInterface {
   }
 
   /**
+   * 获取活动 Sheet，若为 null 则输出警告
+   *
+   * 扩展上下文的方法大多委托给活动 Sheet，如果在没有活动 Sheet
+   * 的情况下调用会静默失败。统一在此处检查并报警，方便排查。
+   */
+  private _requireActiveSheet(method: string): SheetEditor | null {
+    const sheet = this.getActiveSheet()
+    if (!sheet) {
+      console.warn(`[WorkbookEditor] ${method}: 没有活动 Sheet，操作被忽略`)
+    }
+    return sheet
+  }
+
+  /**
    * 创建扩展上下文
    */
   private createExtensionContext(): ExtensionContext {
@@ -374,15 +388,16 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       storage: {},
       getWorkbook: () => workbook,
       getState: () => {
-        const activeSheet = workbook.getActiveSheet()
+        const activeSheet = workbook._requireActiveSheet('getState')
         return activeSheet?.state ?? null
       },
       dispatch: (tr: unknown) => {
-        const activeSheet = workbook.getActiveSheet()
-        activeSheet?.dispatch(tr as import('@tomind/state').Transaction)
+        const activeSheet = workbook._requireActiveSheet('dispatch')
+        if (!activeSheet) return
+        activeSheet.dispatch(tr as import('@tomind/state').Transaction)
       },
       getView: () => {
-        const activeSheet = workbook.getActiveSheet()
+        const activeSheet = workbook._requireActiveSheet('getView')
         return activeSheet?.docView ?? null
       },
       executeCommand: (name: string, args?: unknown) => {

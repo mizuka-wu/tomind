@@ -45,19 +45,28 @@ function cloneAndMutate(doc: NodeDesc, nodeId: string, fn: (node: NodeDesc) => v
   return clone
 }
 
-/** 批量设置所有节点的 collapsed */
-function setAllCollapsed(node: NodeDesc, collapsed: boolean): NodeDesc {
-  const clone = { ...node, attrs: { ...node.attrs, collapsed } }
-  if (node.children) {
-    const newChildren: Record<string, readonly NodeDesc[]> = {}
-    for (const [role, children] of Object.entries(node.children)) {
-      if (Array.isArray(children)) {
-        newChildren[role] = children.map((c) => setAllCollapsed(c, collapsed))
+/** 收集所有需要更新 collapsed 属性的节点信息 */
+function collectCollapsedUpdates(node: NodeDesc, collapsed: boolean): Array<{ nodeId: string; oldCollapsed: unknown }> {
+  const updates: Array<{ nodeId: string; oldCollapsed: unknown }> = []
+  
+  function walk(n: NodeDesc) {
+    // 只收集需要变更的节点（当前值与目标值不同）
+    if (n.attrs?.collapsed !== collapsed) {
+      updates.push({ nodeId: n.id, oldCollapsed: n.attrs?.collapsed })
+    }
+    if (n.children) {
+      for (const children of Object.values(n.children)) {
+        if (Array.isArray(children)) {
+          for (const child of children) {
+            walk(child)
+          }
+        }
       }
     }
-    clone.children = newChildren
   }
-  return clone
+  
+  walk(node)
+  return updates
 }
 
 // ==================== Extension ====================
@@ -129,14 +138,19 @@ export const CollapseExtension = createExtension<CollapseOptions>({
     ctx.registerCommand('collapse.expandAll', (state: unknown, dispatch: ((tr: unknown) => void) | null) => {
       if (!dispatch) return true
       const sheetState = state as SheetState
-      const newDoc = setAllCollapsed(sheetState.doc, false)
-
-      const tr = Transaction.empty(sheetState.doc)
-      // replaceDoc 不存在，用 UpdateNodeStep 递归不行（太深）
-      // 直接构造 tr
-      const tr2 = new Transaction(sheetState.doc, [], [sheetState.doc], new Map())
-      ;(tr2 as any).doc = newDoc
-      dispatch(tr2)
+      
+      // 收集所有需要展开的节点
+      const updates = collectCollapsedUpdates(sheetState.doc, false)
+      if (updates.length === 0) return true
+      
+      // 为每个节点创建 UpdateNodeStep
+      const steps = updates.map(({ nodeId, oldCollapsed }) => 
+        new UpdateNodeStep(nodeId, { collapsed: false }, { collapsed: oldCollapsed })
+      )
+      
+      // 通过 append 正确追踪变更
+      const tr = Transaction.empty(sheetState.doc).append(...steps)
+      dispatch(tr)
       return true
     })
 
@@ -144,10 +158,18 @@ export const CollapseExtension = createExtension<CollapseOptions>({
     ctx.registerCommand('collapse.collapseAll', (state: unknown, dispatch: ((tr: unknown) => void) | null) => {
       if (!dispatch) return true
       const sheetState = state as SheetState
-      const newDoc = setAllCollapsed(sheetState.doc, true)
-
-      const tr = new Transaction(sheetState.doc, [], [sheetState.doc], new Map())
-      ;(tr as any).doc = newDoc
+      
+      // 收集所有需要折叠的节点
+      const updates = collectCollapsedUpdates(sheetState.doc, true)
+      if (updates.length === 0) return true
+      
+      // 为每个节点创建 UpdateNodeStep
+      const steps = updates.map(({ nodeId, oldCollapsed }) => 
+        new UpdateNodeStep(nodeId, { collapsed: true }, { collapsed: oldCollapsed })
+      )
+      
+      // 通过 append 正确追踪变更
+      const tr = Transaction.empty(sheetState.doc).append(...steps)
       dispatch(tr)
       return true
     })

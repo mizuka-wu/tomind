@@ -74,7 +74,7 @@
 ### Extension 层
 - [ ] **`WorkbookEditor.createExtensionContext()` 命令注册委托不稳定** — 委托给活动 Sheet，但活动 Sheet 可能为 null
 - [ ] **`ExtensionManager.setup()` 与 `setupExtension()` 快捷键处理不一致** — 后注册扩展的旧式快捷键被忽略
-- [ ] **`selection.ts` 模块级缓存变量** — `cachedLayoutResult`/`cachedLayoutState` 多 Sheet 场景下共享缓存
+- [x] **`selection.ts` 模块级缓存变量** — `cachedLayoutResult`/`cachedLayoutState` 多 Sheet 场景下共享缓存（已修复：改为每次重新计算）
 - [ ] **`collapse.ts` 通过 `(tr2 as any).doc = newDoc` 绕过事务变更追踪** — 直接修改 Transaction 私有属性
 
 ---
