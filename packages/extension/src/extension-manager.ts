@@ -127,23 +127,8 @@ export class ExtensionManager implements IExtensionManager {
       ctx.registerLayout(layoutAlgorithm)
     }
 
-    // 调用 addKeyboardShortcuts 注册快捷键（Tiptap 风格）
-    if (extension.addKeyboardShortcuts) {
-      const shortcuts = extension.addKeyboardShortcuts()
-      for (const [key, handler] of Object.entries(shortcuts)) {
-        this._keyboardShortcuts.set(key, handler)
-      }
-    }
-
-    // 旧方式：shortcuts（string → command name 映射）
-    if (extension.shortcuts) {
-      for (const [shortcut, commandName] of Object.entries(extension.shortcuts)) {
-        this._keyboardShortcuts.set(shortcut, () => {
-          this.executeCommand(commandName)
-          return true
-        })
-      }
-    }
+    // 重建所有快捷键（包含新注册的扩展，保持与 setup() 一致）
+    this.setupKeyboardShortcuts(ctx)
 
     // 调用 onCreate 钩子
     if (extension.onCreate) {
