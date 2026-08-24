@@ -35,6 +35,7 @@ export {
   LegendNodeViewDesc,
   MarkerNodeViewDesc
 } from './node-view-desc'
+export type { ViewContext } from './node-view-desc'
 
 export { MatrixNodeViewDesc } from './matrix-node-view'
 

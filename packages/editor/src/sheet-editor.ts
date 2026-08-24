@@ -31,6 +31,7 @@ import {
   BoundaryNodeViewDesc,
   SummaryNodeViewDesc,
 } from '@tomind/view'
+import type { ViewContext } from '@tomind/view'
 import type { StyleEngine } from '@tomind/style'
 import type { LayoutEngine } from '@tomind/layout'
 import { CommandManager } from '@tomind/commands'
@@ -58,7 +59,7 @@ interface ScrollbarConfig {
 
 // ==================== 工厂函数 ====================
 
-type ViewDescClass = new (node: NodeDesc, role: string) => ViewDesc
+type ViewDescClass = new (node: NodeDesc, role: string, ctx: ViewContext) => ViewDesc
 
 // NodeViewDesc 默认注册表（Tiptap 风格：Extension 注册 NodeView）
 function createDefaultNodeViewDescRegistry(): Map<string, ViewDescClass> {
@@ -91,7 +92,7 @@ export function createPartViewDescRegistry(): Map<string, ViewDescClass> {
 }
 
 /** 注册 NodeViewDesc（供 Extension 调用） */
-export function registerNodeViewDesc(nodeType: string, viewDescClass: new (node: NodeDesc, role: string) => ViewDesc): void {
+export function registerNodeViewDesc(nodeType: string, viewDescClass: ViewDescClass): void {
   nodeViewDescRegistry.set(nodeType, viewDescClass)
 }
 
@@ -101,7 +102,7 @@ export function unregisterNodeViewDesc(nodeType: string): void {
 }
 
 /** 注册 PartViewDesc（供 Extension 调用） */
-export function registerPartViewDesc(partType: string, viewDescClass: new (node: NodeDesc, role: string) => ViewDesc): void {
+export function registerPartViewDesc(partType: string, viewDescClass: ViewDescClass): void {
   partViewDescRegistry.set(partType, viewDescClass)
 }
 
@@ -110,10 +111,10 @@ export function unregisterPartViewDesc(partType: string): void {
   partViewDescRegistry.delete(partType)
 }
 
-function _createViewDesc(node: NodeDesc, registry: Map<string, new (node: NodeDesc, role: string) => ViewDesc>): ViewDesc | null {
+function _createViewDesc(node: NodeDesc, registry: Map<string, ViewDescClass>, ctx: ViewContext): ViewDesc | null {
   const ViewDescClass = registry.get(node.type)
   if (!ViewDescClass) return null
-  return new ViewDescClass(node, node.type)
+  return new ViewDescClass(node, node.type, ctx)
 }
 
 // ==================== SheetEditor ====================
@@ -133,8 +134,9 @@ export class SheetEditor {
   private _emitter = new EventTarget()
   private _handlerMap = new Map<Function, EventListener>()
   private _commandManager: CommandManager
-  private _nodeViewDescRegistry: Map<string, new (node: NodeDesc, role: string) => ViewDesc>
-  private _partViewDescRegistry: Map<string, new (node: NodeDesc, role: string) => ViewDesc>
+  private _nodeViewDescRegistry: Map<string, ViewDescClass>
+  private _partViewDescRegistry: Map<string, ViewDescClass>
+  private _ctx: ViewContext
   _workbookEditor: WorkbookEditor | null = null
 
   constructor(options: {
@@ -145,8 +147,8 @@ export class SheetEditor {
     styleEngine: StyleEngine
     layoutEngine: LayoutEngine
     commandManager?: CommandManager
-    nodeViewDescRegistry?: Map<string, new (node: NodeDesc, role: string) => ViewDesc>
-    partViewDescRegistry?: Map<string, new (node: NodeDesc, role: string) => ViewDesc>
+    nodeViewDescRegistry?: Map<string, ViewDescClass>
+    partViewDescRegistry?: Map<string, ViewDescClass>
     appConfig?: IAppConfig
     scrollbarConfig?: ScrollbarConfig
   }) {
@@ -167,12 +169,13 @@ export class SheetEditor {
       ? new ScrollBar(this.app.tree, options.scrollbarConfig)
       : null
 
-    // 注入静态引用到 NodeViewDesc（父类，updateStyle 从这里读取）
-    NodeViewDesc.styleEngine = this.styleEngine
-    NodeViewDesc.layoutEngine = this.layoutEngine
-    NodeViewDesc.state = this._state
-    // 注入事件发射器，让 NodeView 能向扩展系统发事件
-    NodeViewDesc._eventEmitter = { emit: (event: string, ...args: unknown[]) => this.emitAny(event, ...args) }
+    // 创建 ViewContext 对象（可变引用，state 会随事务更新）
+    this._ctx = {
+      styleEngine: this.styleEngine,
+      layoutEngine: this.layoutEngine,
+      state: this._state,
+      eventEmitter: { emit: (event: string, ...args: unknown[]) => this.emitAny(event, ...args) },
+    }
 
     // 创建 commands 代理
     this.commands = this.createCommandsProxy()
@@ -267,9 +270,8 @@ export class SheetEditor {
 
   updateState(newState: SheetState, tr?: Transaction): void {
     this._state = newState
-    // 更新静态引用
-    TopicNodeViewDesc.state = newState
-    TopicNodeViewDesc.layoutEngine = this.layoutEngine
+    // 更新 ViewContext 的 state 引用
+    this._ctx.state = newState
     // 布局结果只算一次：统一 compute 后缓存到 LayoutEngine
     // 后续节点通过 getLayoutResult() 读取，不再重复算
     this.layoutEngine.compute(newState)
@@ -454,8 +456,8 @@ export class SheetEditor {
       },
       registerNodeView: (nodeType: string, viewDesc: unknown) => {
         // Extension 注册 NodeViewDesc
-        if (typeof viewDesc === 'function' && viewDesc.length <= 2) {
-          editor.registerNodeView(nodeType, viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
+        if (typeof viewDesc === 'function' && viewDesc.length <= 3) {
+          editor.registerNodeView(nodeType, viewDesc as ViewDescClass)
         }
       },
       unregisterNodeView: (nodeType: string) => {
@@ -468,8 +470,8 @@ export class SheetEditor {
         editor.layoutEngine.unregister?.(name)
       },
       registerPartView: (partType: string, viewDesc: unknown) => {
-        if (typeof viewDesc === 'function' && viewDesc.length <= 2) {
-          editor.registerPartView(partType, viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
+        if (typeof viewDesc === 'function' && viewDesc.length <= 3) {
+          editor.registerPartView(partType, viewDesc as ViewDescClass)
         }
       },
       unregisterPartView: (partType: string) => {
@@ -487,7 +489,7 @@ export class SheetEditor {
   // ==================== ViewDesc 管理 ====================
 
   private createViewDesc(node: NodeDesc): ViewDesc | null {
-    const vd = _createViewDesc(node, this._nodeViewDescRegistry)
+    const vd = _createViewDesc(node, this._nodeViewDescRegistry, this._ctx)
     if (!vd) console.warn(`[createViewDesc] no ViewDesc for type="${node.type}" id="${node.id}"`)
     return vd
   }
@@ -676,7 +678,7 @@ export class SheetEditor {
       const tr = Transaction.empty(this._state.doc).setViewport(viewport)
       const newState = this._state.apply(tr)
       this._state = newState
-      TopicNodeViewDesc.state = newState
+      this._ctx.state = newState
       this.emit('viewportChange', viewport)
     })
   }
@@ -833,7 +835,7 @@ export class SheetEditor {
   /**
    * 注册 NodeViewDesc
    */
-  registerNodeView(nodeType: string, viewDescClass: new (node: NodeDesc, role: string) => ViewDesc): void {
+  registerNodeView(nodeType: string, viewDescClass: ViewDescClass): void {
     this._nodeViewDescRegistry.set(nodeType, viewDescClass)
   }
 
@@ -847,7 +849,7 @@ export class SheetEditor {
   /**
    * 注册 PartViewDesc
    */
-  registerPartView(partType: string, viewDescClass: new (node: NodeDesc, role: string) => ViewDesc): void {
+  registerPartView(partType: string, viewDescClass: ViewDescClass): void {
     this._partViewDescRegistry.set(partType, viewDescClass)
   }
 

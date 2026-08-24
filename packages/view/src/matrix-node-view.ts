@@ -42,15 +42,15 @@ export class MatrixNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this._renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
+    if (!this._renderer || !this.ctx.styleEngine || !this.ctx.state) return
 
     // 获取 LeaferJS 格式样式
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
 
     // 读取缓存的布局结果（由 SheetEditor.updateState 统一 compute）
     let layoutResult: import('@tomind/layout').LayoutResult
-    if (NodeViewDesc.layoutEngine) {
-      layoutResult = NodeViewDesc.layoutEngine.getLayoutResult()
+    if (this.ctx.layoutEngine) {
+      layoutResult = this.ctx.layoutEngine.getLayoutResult()
     } else {
       layoutResult = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     }
@@ -60,7 +60,7 @@ export class MatrixNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateContent(): void {
-    if (!this._renderer || !NodeViewDesc.state) return
+    if (!this._renderer || !this.ctx.state) return
 
     // 获取子节点
     const children = this.node.children?.TOPIC || []
@@ -68,7 +68,7 @@ export class MatrixNodeViewDesc extends NodeViewDesc {
     // 更新矩阵
     this._renderer.updateMatrix(
       children,
-      (id: string) => NodeViewDesc.state?.getNode(id),
+      (id: string) => this.ctx.state?.getNode(id),
     )
   }
 
@@ -113,7 +113,7 @@ export class MatrixNodeViewDesc extends NodeViewDesc {
     if (!nodeId) return
 
     // 通过事件系统通知编辑器更新选择状态
-    NodeViewDesc._eventEmitter?.emit('selection:select', nodeId)
+    this.ctx.eventEmitter?.emit('selection:select', nodeId)
   }
 
   /**

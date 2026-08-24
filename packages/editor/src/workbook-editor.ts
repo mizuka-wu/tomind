@@ -406,8 +406,8 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       },
       registerNodeView: (nodeType: string, viewDesc: unknown) => {
         // 注册到 workbook 级注册表（所有 sheet 共享同一引用）
-        if (typeof viewDesc === 'function' && viewDesc.length <= 2) {
-          workbook._nodeViewDescRegistry.set(nodeType, viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
+        if (typeof viewDesc === 'function' && viewDesc.length <= 3) {
+          workbook._nodeViewDescRegistry.set(nodeType, viewDesc as new (node: NodeDesc, role: string, ctx: import('@tomind/view').ViewContext) => ViewDesc)
         }
       },
       unregisterNodeView: (nodeType: string) => {

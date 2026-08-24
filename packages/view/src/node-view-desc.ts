@@ -47,27 +47,31 @@ import { ConnectionRenderer } from './renderers/connection-renderer'
 import { LegendRenderer } from './renderers/legend-renderer'
 import type { Renderer } from './renderers/renderer'
 
+// ==================== ViewContext ====================
+
+export interface ViewContext {
+  styleEngine: StyleEngine | null
+  layoutEngine: LayoutEngine | null
+  state: SheetState | null
+  eventEmitter: { emit: (event: string, ...args: unknown[]) => void } | null
+}
+
 // ==================== NodeViewDesc ====================
 
 export abstract class NodeViewDesc extends ViewDesc {
-  /** 样式引擎引用（由 SheetEditor 注入） */
-  static styleEngine: StyleEngine | null = null
-  /** 布局引擎引用（由 SheetEditor 注入） */
-  static layoutEngine: LayoutEngine | null = null
-  /** 状态引用（由 SheetEditor 注入） */
-  static state: SheetState | null = null
-  /** 事件发射器引用（由 SheetEditor 注入，用于扩展间通信） */
-  static _eventEmitter: { emit: (event: string, ...args: unknown[]) => void } | null = null
+  /** 视图上下文（由 SheetEditor 注入） */
+  protected readonly ctx: ViewContext
 
-  constructor(node: NodeDesc, role: NodeRole) {
+  constructor(node: NodeDesc, role: NodeRole, ctx: ViewContext) {
     super(node, role)
+    this.ctx = ctx
   }
 
   // ==================== 样式计算 ====================
 
   protected getNodeStyle(): Record<string, unknown> {
-    if (NodeViewDesc.styleEngine && NodeViewDesc.state) {
-      return NodeViewDesc.styleEngine.computeStyle(NodeViewDesc.state, this.node.id) as Record<string, unknown>
+    if (this.ctx.styleEngine && this.ctx.state) {
+      return this.ctx.styleEngine.computeStyle(this.ctx.state, this.node.id) as Record<string, unknown>
     }
     return {}
   }
@@ -119,8 +123,8 @@ export abstract class NodeViewDesc extends ViewDesc {
     if (this.isDirty(DirtyFlag.CONTENT)) this.updateContent()
 
     // 应用 Node Decoration
-    if (NodeViewDesc.state) {
-      const nodeDecs = NodeViewDesc.state.decorations.getNodeDecorations(this.node.id)
+    if (this.ctx.state) {
+      const nodeDecs = this.ctx.state.decorations.getNodeDecorations(this.node.id)
       this.applyNodeDecorations(nodeDecs)
     }
 
@@ -173,7 +177,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     // 双击 - 进入编辑模式
     group.on_('doubletap', (e: any) => {
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('edit:start', {
+      this.ctx.eventEmitter?.emit('edit:start', {
         nodeId: this.node.id,
         node: this.node,
       })
@@ -183,21 +187,21 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     group.on_('pointerenter', () => {
       if (this._isHovering) return
       this._isHovering = true
-      NodeViewDesc._eventEmitter?.emit('selection:hoverEnter', this.node.id)
+      this.ctx.eventEmitter?.emit('selection:hoverEnter', this.node.id)
     })
     
     // 鼠标离开 - 通知选区扩展
     group.on_('pointerleave', () => {
       if (!this._isHovering) return
       this._isHovering = false
-      NodeViewDesc._eventEmitter?.emit('selection:hoverLeave', this.node.id)
+      this.ctx.eventEmitter?.emit('selection:hoverLeave', this.node.id)
     })
     
     // 右键菜单
     group.on_('righttap', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -208,7 +212,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     group.on_('longpress', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -222,18 +226,18 @@ export class TopicNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) {
-      console.warn(`[updateStyle] SKIP ${this.node.type}#${this.node.id} — renderer=${!!this.renderer} styleEngine=${!!NodeViewDesc.styleEngine} state=${!!NodeViewDesc.state}`)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) {
+      console.warn(`[updateStyle] SKIP ${this.node.type}#${this.node.id} — renderer=${!!this.renderer} styleEngine=${!!this.ctx.styleEngine} state=${!!this.ctx.state}`)
       return
     }
     
     // 获取 LeaferJS 格式样式
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     
     // 读取缓存的布局结果（由 SheetEditor.updateState 统一 compute）
     let layout: LayoutResult
-    if (NodeViewDesc.layoutEngine) {
-      layout = NodeViewDesc.layoutEngine.getLayoutResult()
+    if (this.ctx.layoutEngine) {
+      layout = this.ctx.layoutEngine.getLayoutResult()
     } else {
       layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     }
@@ -293,8 +297,8 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 
     console.log(`[renderConnections] ${this.node.type}#${this.node.id} — ${children.length} children: [${children.map(c => c.id).join(',')}]`)
 
-    const leaferStyle = NodeViewDesc.styleEngine && NodeViewDesc.state
-      ? NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    const leaferStyle = this.ctx.styleEngine && this.ctx.state
+      ? this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
       : {}
 
     const color = (leaferStyle.lineColor as string) ?? '#999999'
@@ -780,14 +784,14 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
     // 双击 - 选中关联关系
     group.on_('doubletap', (e: any) => {
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('selection:select', this.node.id)
+      this.ctx.eventEmitter?.emit('selection:select', this.node.id)
     })
 
     // 右键菜单
     group.on_('righttap', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -798,7 +802,7 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
     group.on_('longpress', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -821,20 +825,20 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
 
   protected updateContent(): void {
-    if (!this.renderer || !NodeViewDesc.state) return
+    if (!this.renderer || !this.ctx.state) return
     
     const node = this.node as RelationshipNodeDesc
     const { sourceId, targetId, title, controlPoints } = node.attrs
 
-    const sourceNode = NodeViewDesc.state.getNode(sourceId)
-    const targetNode = NodeViewDesc.state.getNode(targetId)
+    const sourceNode = this.ctx.state.getNode(sourceId)
+    const targetNode = this.ctx.state.getNode(targetId)
     if (!sourceNode || !targetNode) return
 
     const sourcePos = sourceNode.attrs.position as { x: number; y: number } | undefined
@@ -961,21 +965,21 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
 
   protected updateContent(): void {
-    if (!this.renderer || !NodeViewDesc.state) return
+    if (!this.renderer || !this.ctx.state) return
     
     const node = this.node as BoundaryNodeDesc
     const { topicIds, title } = node.attrs
 
     const positions: { x: number; y: number; width: number; height: number }[] = []
     for (const topicId of topicIds) {
-      const topicNode = NodeViewDesc.state.getNode(topicId)
+      const topicNode = this.ctx.state.getNode(topicId)
       if (topicNode) {
         const pos = topicNode.attrs.position as { x: number; y: number } | undefined
         const size = topicNode.attrs.size as { width: number; height: number } | undefined
@@ -1061,22 +1065,22 @@ export class SummaryNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.topicRenderer || !this.summaryRenderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.topicRenderer || !this.summaryRenderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.topicRenderer.render(layout, style)
     this.summaryRenderer.render(layout, style)
   }
 
   protected updateContent(): void {
-    if (!this.summaryRenderer || !NodeViewDesc.state) return
+    if (!this.summaryRenderer || !this.ctx.state) return
     
     const node = this.node as SummaryNodeDesc
     const { topicIds } = node.attrs
 
     const positions: { x: number; y: number; height: number }[] = []
     for (const topicId of topicIds) {
-      const topicNode = NodeViewDesc.state.getNode(topicId)
+      const topicNode = this.ctx.state.getNode(topicId)
       if (topicNode) {
         const pos = topicNode.attrs.position as { x: number; y: number } | undefined
         const size = topicNode.attrs.size as { width: number; height: number } | undefined
@@ -1127,9 +1131,9 @@ export class CollapseExtendNodeViewDesc extends NodeViewDesc {
       const nodeId = this.node.id
       if (e.altKey) {
         // Alt+click: 全部折叠/展开
-        NodeViewDesc._eventEmitter?.emit('collapse:toggleAll', nodeId)
+        this.ctx.eventEmitter?.emit('collapse:toggleAll', nodeId)
       } else {
-        NodeViewDesc._eventEmitter?.emit('collapse:toggle', nodeId)
+        this.ctx.eventEmitter?.emit('collapse:toggle', nodeId)
       }
     })
 
@@ -1142,11 +1146,11 @@ export class CollapseExtendNodeViewDesc extends NodeViewDesc {
     group.on_('pointerenter', () => {
       if (this._isHovering) return
       this._isHovering = true
-      if (this.renderer && NodeViewDesc.styleEngine && NodeViewDesc.state) {
+      if (this.renderer && this.ctx.styleEngine && this.ctx.state) {
         // 获取父节点的 lineColor
         const parentId = this._parent?.node.id
         if (parentId) {
-          const parentStyle = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, parentId)
+          const parentStyle = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, parentId)
           const lineColor = parentStyle.lineColor as string | undefined
           if (lineColor) {
             const circleFill = this.renderer.getCircleFill()
@@ -1175,8 +1179,8 @@ export class CollapseExtendNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1203,8 +1207,8 @@ export class NumberingNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1232,8 +1236,8 @@ export class TopicTitleNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1267,7 +1271,7 @@ export class InformationNodeViewDesc extends NodeViewDesc {
     group.on_('righttap', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -1278,7 +1282,7 @@ export class InformationNodeViewDesc extends NodeViewDesc {
     group.on_('longpress', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -1289,14 +1293,14 @@ export class InformationNodeViewDesc extends NodeViewDesc {
     group.on_('pointerenter', () => {
       if (this._isHovering) return
       this._isHovering = true
-      NodeViewDesc._eventEmitter?.emit('selection:hoverEnter', this.node.id)
+      this.ctx.eventEmitter?.emit('selection:hoverEnter', this.node.id)
     })
 
     // 鼠标离开 - 通知选区扩展
     group.on_('pointerleave', () => {
       if (!this._isHovering) return
       this._isHovering = false
-      NodeViewDesc._eventEmitter?.emit('selection:hoverLeave', this.node.id)
+      this.ctx.eventEmitter?.emit('selection:hoverLeave', this.node.id)
     })
   }
 
@@ -1305,8 +1309,8 @@ export class InformationNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1340,7 +1344,7 @@ export class LabelNodeViewDesc extends NodeViewDesc {
     group.on_('righttap', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -1351,7 +1355,7 @@ export class LabelNodeViewDesc extends NodeViewDesc {
     group.on_('longpress', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -1362,14 +1366,14 @@ export class LabelNodeViewDesc extends NodeViewDesc {
     group.on_('pointerenter', () => {
       if (this._isHovering) return
       this._isHovering = true
-      NodeViewDesc._eventEmitter?.emit('selection:hoverEnter', this.node.id)
+      this.ctx.eventEmitter?.emit('selection:hoverEnter', this.node.id)
     })
 
     // 鼠标离开 - 通知选区扩展
     group.on_('pointerleave', () => {
       if (!this._isHovering) return
       this._isHovering = false
-      NodeViewDesc._eventEmitter?.emit('selection:hoverLeave', this.node.id)
+      this.ctx.eventEmitter?.emit('selection:hoverLeave', this.node.id)
     })
   }
 
@@ -1378,8 +1382,8 @@ export class LabelNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1406,8 +1410,8 @@ export class PlaceholderTopicNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1440,7 +1444,7 @@ export class ImageNodeViewDesc extends NodeViewDesc {
     group.on_('righttap', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -1451,7 +1455,7 @@ export class ImageNodeViewDesc extends NodeViewDesc {
     group.on_('longpress', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -1460,10 +1464,10 @@ export class ImageNodeViewDesc extends NodeViewDesc {
 
     // hover → 通知 ResizeBoxExtension 显示/隐藏调整大小框
     group.on_('pointerenter', () => {
-      NodeViewDesc._eventEmitter?.emit('selection:hoverEnter', { nodeId: this.node.id })
+      this.ctx.eventEmitter?.emit('selection:hoverEnter', { nodeId: this.node.id })
     })
     group.on_('pointerleave', () => {
-      NodeViewDesc._eventEmitter?.emit('selection:hoverLeave', { nodeId: this.node.id })
+      this.ctx.eventEmitter?.emit('selection:hoverLeave', { nodeId: this.node.id })
     })
   }
 
@@ -1472,13 +1476,13 @@ export class ImageNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
 
     // 从布局引擎获取 layout，查找父 topic 的 partBounds 来定位 image
     let layout: LayoutResult
-    if (NodeViewDesc.layoutEngine) {
-      layout = NodeViewDesc.layoutEngine.getLayoutResult()
+    if (this.ctx.layoutEngine) {
+      layout = this.ctx.layoutEngine.getLayoutResult()
     } else {
       layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     }
@@ -1532,8 +1536,8 @@ export class IndicatorNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1560,8 +1564,8 @@ export class BoundaryTitleNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1595,7 +1599,7 @@ export class MathjaxNodeViewDesc extends NodeViewDesc {
     group.on_('righttap', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -1606,7 +1610,7 @@ export class MathjaxNodeViewDesc extends NodeViewDesc {
     group.on_('longpress', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id,
         x: e.x,
         y: e.y,
@@ -1617,14 +1621,14 @@ export class MathjaxNodeViewDesc extends NodeViewDesc {
     group.on_('pointerenter', () => {
       if (this._isHovering) return
       this._isHovering = true
-      NodeViewDesc._eventEmitter?.emit('selection:hoverEnter', this.node.id)
+      this.ctx.eventEmitter?.emit('selection:hoverEnter', this.node.id)
     })
 
     // 鼠标离开 - 通知选区扩展
     group.on_('pointerleave', () => {
       if (!this._isHovering) return
       this._isHovering = false
-      NodeViewDesc._eventEmitter?.emit('selection:hoverLeave', this.node.id)
+      this.ctx.eventEmitter?.emit('selection:hoverLeave', this.node.id)
     })
   }
 
@@ -1633,8 +1637,8 @@ export class MathjaxNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1661,8 +1665,8 @@ export class SelectBoxNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1689,8 +1693,8 @@ export class TopicSelectBoxNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1717,8 +1721,8 @@ export class ResizeBoxNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1745,8 +1749,8 @@ export class FishboneMainLineNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1773,8 +1777,8 @@ export class FishboneHeadLineNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1801,8 +1805,8 @@ export class MatrixCellNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1829,8 +1833,8 @@ export class TreeTableCellNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
     const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
@@ -1856,7 +1860,7 @@ export class ConnectionNodeViewDesc extends NodeViewDesc {
   private setupEvents(group: Group): void {
     group.on_('tap', (e: any) => {
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('selection:select', this.node.id)
+      this.ctx.eventEmitter?.emit('selection:select', this.node.id)
     })
     group.on_('doubletap', (e: any) => {
       e.stopPropagation?.()
@@ -1864,14 +1868,14 @@ export class ConnectionNodeViewDesc extends NodeViewDesc {
     group.on_('righttap', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id, x: e.x, y: e.y,
       })
     })
     group.on_('longpress', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id, x: e.x, y: e.y,
       })
     })
@@ -1880,13 +1884,13 @@ export class ConnectionNodeViewDesc extends NodeViewDesc {
   protected createContentGroup(): null { return null }
 
   protected updateStyle(): void {
-    if (!this.renderer || !NodeViewDesc.styleEngine || !NodeViewDesc.state) return
-    const style = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, this.node.id)
+    if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
+    const style = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, this.node.id)
 
     // 读取缓存的布局结果（由 SheetEditor.updateState 统一 compute）
     let layout: LayoutResult
-    if (NodeViewDesc.layoutEngine) {
-      layout = NodeViewDesc.layoutEngine.getLayoutResult()
+    if (this.ctx.layoutEngine) {
+      layout = this.ctx.layoutEngine.getLayoutResult()
     } else {
       layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     }
@@ -1931,7 +1935,7 @@ export class LegendNodeViewDesc extends NodeViewDesc {
   private setupEvents(group: Group): void {
     // 拖拽结束 → 保存图例位置
     group.on_('dragend', () => {
-      NodeViewDesc._eventEmitter?.emit('legend:positionChanged', this.node.id, {
+      this.ctx.eventEmitter?.emit('legend:positionChanged', this.node.id, {
         x: group.x,
         y: group.y,
       })
@@ -1942,7 +1946,7 @@ export class LegendNodeViewDesc extends NodeViewDesc {
     group.on_('righttap', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id, x: e.x, y: e.y,
       })
     })
@@ -1965,13 +1969,13 @@ export class LegendNodeViewDesc extends NodeViewDesc {
   }
 
   protected updateContent(): void {
-    if (!this.renderer || !NodeViewDesc.state) return
+    if (!this.renderer || !this.ctx.state) return
 
     // 从 state 中收集所有 topic 的 markers
     const markerSet = new Map<string, string>()
-    const topicIds = NodeViewDesc.state.getTopicIds()
+    const topicIds = this.ctx.state.getTopicIds()
     for (const topicId of topicIds) {
-      const nodeInfo = NodeViewDesc.state.getNode(topicId)
+      const nodeInfo = this.ctx.state.getNode(topicId)
       if (!nodeInfo) continue
       const markers = nodeInfo.attrs.markers as string[] | undefined
       if (!markers) continue
@@ -2010,14 +2014,14 @@ export class MarkerNodeViewDesc extends NodeViewDesc {
     group.on_('righttap', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id, x: e.x, y: e.y,
       })
     })
     group.on_('longpress', (e: any) => {
       e.preventDefault?.()
       e.stopPropagation?.()
-      NodeViewDesc._eventEmitter?.emit('contextmenu:show', {
+      this.ctx.eventEmitter?.emit('contextmenu:show', {
         nodeId: this.node.id, x: e.x, y: e.y,
       })
     })
