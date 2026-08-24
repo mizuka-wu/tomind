@@ -277,6 +277,32 @@ function calcNumRight(children: readonly NodeDesc[], options: LayoutOptions, siz
   return Math.ceil(children.length / 2)
 }
 
+/**
+ * 计算扇形外扩距离（对齐 snowbrush calcOutwardDistanceByAttachedChildren）
+ * 子节点多时自动撑开，避免拥挤
+ */
+function calcOutwardDistance(
+  children: readonly NodeDesc[],
+  sizeMap: Map<string, NodeSize>,
+): number {
+  const CHILDREN_COUNT_LIMIT = 8
+  const K = 0.15
+  const MIN = 400
+  const MAX = 800
+
+  if (children.length < CHILDREN_COUNT_LIMIT) return 0
+
+  // 计算子节点总高度
+  const totalHeight = children.reduce((sum, child) => {
+    const size = sizeMap.get(child.id)
+    return sum + (size?.height ?? 0)
+  }, 0)
+
+  if (totalHeight <= MIN) return 0
+
+  return K * (Math.min(totalHeight, MAX) - MIN)
+}
+
 function layoutSideChildren(
   children: readonly NodeDesc[],
   startX: number,
@@ -360,8 +386,12 @@ function layoutSubtree(
 
   nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: Math.max(rightTotalH, leftTotalH), partBounds: size.partBounds })
 
+  // 计算扇形外扩距离
+  const outwardOffsetRight = calcOutwardDistance(rightChildren, sizeMap)
+  const outwardOffsetLeft = calcOutwardDistance(leftChildren, sizeMap)
+
   if (rightChildren.length > 0) {
-    const childX = x + size.width + spacingMajor
+    const childX = x + size.width + spacingMajor + outwardOffsetRight
     const childY = y + size.height / 2
     layoutSideChildren(rightChildren, childX, childY, size.height, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
   }
@@ -371,7 +401,7 @@ function layoutSubtree(
       const childSize = sizeMap.get(child.id)!
       return Math.max(max, childSize.width)
     }, 0)
-    const childX = x - maxLeftWidth - spacingMajor
+    const childX = x - maxLeftWidth - spacingMajor - outwardOffsetLeft
     const childY = y + size.height / 2
     layoutSideChildren(leftChildren, childX, childY, size.height, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
   }
