@@ -16,86 +16,86 @@ describe('StyleEngine', () => {
   describe('toLeaferStyle', () => {
     it('should map fillColor to fill', () => {
       const style: ResolvedStyle = { fillColor: '#ff0000' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.fill).toBe('#ff0000')
     })
 
     it('should map borderColor to stroke', () => {
       const style: ResolvedStyle = { borderColor: '#00ff00' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.stroke).toBe('#00ff00')
     })
 
     it('should map lineColor to lineColor', () => {
       const style: ResolvedStyle = { lineColor: '#0000ff' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.lineColor).toBe('#0000ff')
     })
 
     it('should map lineWidth to lineStrokeWidth (new key)', () => {
       const style: ResolvedStyle = { lineWidth: '2pt' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.lineStrokeWidth).toBeDefined()
     })
 
     it('should map borderWidth to strokeWidth', () => {
       const style: ResolvedStyle = { borderWidth: '1pt' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.strokeWidth).toBeDefined()
     })
 
     it('should map lineCorner to lineCornerRadius (new key)', () => {
       const style: ResolvedStyle = { lineCorner: '8pt' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.lineCornerRadius).toBeDefined()
     })
 
     it('should map shapeCorner to cornerRadius', () => {
       const style: ResolvedStyle = { shapeCorner: '5pt' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.cornerRadius).toBeDefined()
     })
 
     it('should map linePattern to strokeDash', () => {
       const style: ResolvedStyle = { linePattern: 'dash' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.strokeDash).toEqual([5, 3])
     })
 
     it('should map linePattern solid to null', () => {
       const style: ResolvedStyle = { linePattern: 'solid' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.strokeDash).toBeNull()
     })
 
     it('should map borderPattern to dashPattern', () => {
       const style: ResolvedStyle = { borderPattern: 'dash' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.dashPattern).toEqual([5, 3])
     })
 
     it('should map fontColor to fontColor', () => {
       const style: ResolvedStyle = { fontColor: '#333333' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.fontColor).toBe('#333333')
     })
 
     it('should map opacity correctly', () => {
       const style: ResolvedStyle = { opacity: 0.5 }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.opacity).toBe(0.5)
     })
 
     it('should handle none values', () => {
       const style: ResolvedStyle = { fillColor: 'none' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       // fillColor 'none' should be converted to null and skipped
       expect(result.fill).toBeUndefined()
     })
 
     it('should parse linear gradient', () => {
       const style: ResolvedStyle = { fillGradient: 'linear(45deg, #ff0000, #00ff00)' }
-      const result = (engine as any).toLeaferStyle(style)
+      const result = engine.toLeaferStyle(style)
       expect(result.fill).toBeDefined()
       expect(typeof result.fill).toBe('object')
     })

@@ -369,7 +369,8 @@ export class StyleEngine {
    * - fontColor 和 fillColor 都映射到 fill，但作用于不同元素：
    *   Rect.fill = 背景色，Text.fill = 字体色
    */
-  private toLeaferStyle(style: ResolvedStyle): Record<string, unknown> {
+  /** @internal — 测试可直接调用，生产代码请用 getLeaferStyle */
+  toLeaferStyle(style: ResolvedStyle): Record<string, unknown> {
     // ── LeaferJS 属性映射规则 ──
     // 旧映射（存在冲突，后者覆盖前者）：
     //   lineWidth   → strokeWidth    borderWidth  → strokeWidth

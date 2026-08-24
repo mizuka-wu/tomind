@@ -17,7 +17,7 @@ import type { Transaction } from '@tomind/state'
 // ==================== 类型定义 ====================
 
 /** 命令集合类型 */
-export type CommandRecord = Record<string, CommandDef>
+export type CommandRecord = Record<string, CommandDef<any, any>>
 
 /** 命令工厂函数 */
 export type CommandFactory = () => CommandRecord
@@ -37,7 +37,7 @@ export type CommandFactory = () => CommandRecord
  * ```
  */
 export class CommandManager {
-  private commands = new Map<string, CommandDef>()
+  private commands = new Map<string, CommandDef<any, any>>()
 
   private constructor() {}
 
@@ -58,7 +58,7 @@ export class CommandManager {
   /**
    * 注册单个命令
    */
-  add(def: CommandDef): this {
+  add(def: CommandDef<any, any>): this {
     if (this.commands.has(def.name)) {
       console.warn(`Command already registered: ${def.name}, overwriting`)
     }
@@ -69,7 +69,7 @@ export class CommandManager {
   /**
    * 批量注册命令
    */
-  addCommands(commands: CommandRecord | CommandDef[]): this {
+  addCommands(commands: CommandRecord | CommandDef<any, any>[]): this {
     if (Array.isArray(commands)) {
       for (const cmd of commands) {
         this.add(cmd)
@@ -87,28 +87,28 @@ export class CommandManager {
   /**
    * 获取命令
    */
-  get(name: string): CommandDef | undefined {
+  get(name: string): CommandDef<any, any> | undefined {
     return this.commands.get(name)
   }
 
   /**
    * 获取所有命令
    */
-  getAll(): CommandDef[] {
+  getAll(): CommandDef<any, any>[] {
     return Array.from(this.commands.values())
   }
 
   /**
    * 按分类获取
    */
-  getByCategory(category: CommandCategory): CommandDef[] {
+  getByCategory(category: CommandCategory): CommandDef<any, any>[] {
     return this.getAll().filter(cmd => cmd.category === category)
   }
 
   /**
    * 按标签获取
    */
-  getByTag(tag: string): CommandDef[] {
+  getByTag(tag: string): CommandDef<any, any>[] {
     return this.getAll().filter(cmd => cmd.tags?.includes(tag))
   }
 
@@ -198,12 +198,12 @@ export class CommandManager {
 export class CommandManagerBuilder {
   private manager = CommandManager.empty()
 
-  addCommands(commands: CommandRecord | CommandDef[]): this {
+  addCommands(commands: CommandRecord | CommandDef<any, any>[]): this {
     this.manager.addCommands(commands)
     return this
   }
 
-  add(def: CommandDef): this {
+  add(def: CommandDef<any, any>): this {
     this.manager.add(def)
     return this
   }

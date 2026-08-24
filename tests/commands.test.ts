@@ -8,6 +8,7 @@ import {
   defineCommand,
 } from '@tomind/commands'
 import { createNodeDesc } from '@tomind/schema'
+import type { SheetState } from '@tomind/state'
 
 // ==================== 测试命令 ====================
 
@@ -48,6 +49,14 @@ const testFailCommand = defineCommand<{ shouldFail: boolean }, void>({
   canExecute: (params) => !params.shouldFail,
 })
 
+/** 创建最小 SheetState mock（测试用） */
+function mockState(): SheetState {
+  return {
+    doc: createNodeDesc('root', 'root'),
+    getNode: () => null,
+  } as unknown as SheetState
+}
+
 // ==================== 测试 ====================
 
 describe('CommandManager', () => {
@@ -59,7 +68,7 @@ describe('CommandManager', () => {
 
   it('should add commands', () => {
     const manager = CommandManager.empty()
-    manager.add(testCommand as any)
+    manager.add(testCommand)
 
     expect(manager.size).toBe(1)
     expect(manager.has('test_double')).toBe(true)
@@ -68,8 +77,8 @@ describe('CommandManager', () => {
 
   it('should add commands via builder', () => {
     const manager = CommandManager.create()
-      .add(testCommand as any)
-      .add(testFailCommand as any)
+      .add(testCommand)
+      .add(testFailCommand)
       .build()
 
     expect(manager.size).toBe(2)
@@ -79,8 +88,8 @@ describe('CommandManager', () => {
 
   it('should remove commands', () => {
     const manager = CommandManager.empty()
-    manager.add(testCommand as any)
-    manager.add(testFailCommand as any)
+    manager.add(testCommand)
+    manager.add(testFailCommand)
 
     expect(manager.size).toBe(2)
 
@@ -97,58 +106,49 @@ describe('CommandManager', () => {
 
   it('should add commands via addCommands', () => {
     const manager = CommandManager.empty()
-    manager.addCommands([testCommand, testFailCommand] as any)
+    manager.addCommands([testCommand, testFailCommand])
 
     expect(manager.size).toBe(2)
   })
 
   it('should execute command', () => {
     const manager = CommandManager.empty()
-    manager.add(testCommand as any)
+    manager.add(testCommand)
 
-    // 创建一个简单的 state mock
-    const state = {
-      doc: createNodeDesc('root', 'root'),
-      getNode: () => null,
-    } as any
-
-    const result = manager.execute('test_double', { value: 5 }, state)
+    const result = manager.execute('test_double', { value: 5 }, mockState())
     expect(result.success).toBe(true)
     expect(result.data).toEqual({ doubled: 10 })
   })
 
   it('should handle command not found', () => {
     const manager = CommandManager.empty()
-    const state = {} as any
 
-    const result = manager.execute('nonexistent', {}, state)
+    const result = manager.execute('nonexistent', {}, mockState())
     expect(result.success).toBe(false)
     expect(result.error).toContain('Command not found')
   })
 
   it('should handle command failure', () => {
     const manager = CommandManager.empty()
-    manager.add(testFailCommand as any)
-    const state = {} as any
+    manager.add(testFailCommand)
 
-    const result = manager.execute('test_fail', { shouldFail: true }, state)
+    const result = manager.execute('test_fail', { shouldFail: true }, mockState())
     expect(result.success).toBe(false)
     expect(result.error).toContain('cannot be executed')
   })
 
   it('should check canExecute', () => {
     const manager = CommandManager.empty()
-    manager.add(testFailCommand as any)
-    const state = {} as any
+    manager.add(testFailCommand)
 
-    expect(manager.canExecute('test_fail', { shouldFail: false }, state)).toBe(true)
-    expect(manager.canExecute('test_fail', { shouldFail: true }, state)).toBe(false)
-    expect(manager.canExecute('nonexistent', {}, state)).toBe(false)
+    expect(manager.canExecute('test_fail', { shouldFail: false }, mockState())).toBe(true)
+    expect(manager.canExecute('test_fail', { shouldFail: true }, mockState())).toBe(false)
+    expect(manager.canExecute('nonexistent', {}, mockState())).toBe(false)
   })
 
   it('should get commands by category', () => {
     const manager = CommandManager.empty()
-    manager.addCommands([testCommand, testFailCommand] as any)
+    manager.addCommands([testCommand, testFailCommand])
 
     const nodeCommands = manager.getByCategory('node')
     expect(nodeCommands.length).toBe(2)
@@ -156,7 +156,7 @@ describe('CommandManager', () => {
 
   it('should get commands by tag', () => {
     const manager = CommandManager.empty()
-    manager.addCommands([testCommand, testFailCommand] as any)
+    manager.addCommands([testCommand, testFailCommand])
 
     const testCommands = manager.getByTag('test')
     expect(testCommands.length).toBe(1)
@@ -165,7 +165,7 @@ describe('CommandManager', () => {
 
   it('should convert to MCP tools', () => {
     const manager = CommandManager.empty()
-    manager.add(testCommand as any)
+    manager.add(testCommand)
 
     const tools = manager.toMCPTools()
     expect(tools.length).toBe(1)
