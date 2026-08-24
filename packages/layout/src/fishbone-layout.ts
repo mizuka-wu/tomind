@@ -11,9 +11,53 @@ import type { NodeDesc } from '@tomind/schema'
 import type { StyleEngine } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
-import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
-import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleSubtree } from './layout-utils'
-type NodeSize = import('./layout-utils').SimpleNodeSize
+import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
+import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
+import { hasNonTitleParts } from './part-measure'
+import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
+
+interface NodeSize {
+  width: number
+  height: number
+  titleWidth: number
+  titleHeight: number
+  partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
+}
+
+function measureNodeSize(
+  node: NodeDesc,
+  padding: { top: number; right: number; bottom: number; left: number },
+  options: LayoutOptions,
+): NodeSize {
+  if (hasNonTitleParts(node)) {
+    const result = measurePartAwareNode(node, options)
+    return {
+      width: result.width,
+      height: result.height,
+      titleWidth: result.titleWidth,
+      titleHeight: result.titleHeight,
+      partBounds: result.partBounds,
+    }
+  }
+
+  const result = measureTitleOnlyNode(node, padding, options)
+  return {
+    width: result.width,
+    height: result.height,
+    titleWidth: result.titleWidth,
+    titleHeight: result.titleHeight,
+    partBounds: result.partBounds,
+  }
+}
+
+function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): void {
+  sizeMap.set(node.id, measureNodeSize(node, options.nodePadding, options))
+  if (!isCollapsed(node)) {
+    for (const child of getAttachedChildren(node)) {
+      measureSubtree(child, options, sizeMap)
+    }
+  }
+}
 
 function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
   if (styleEngine && state) {
@@ -66,12 +110,11 @@ function layoutFishbone(
   headLeft: boolean,
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
-  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
-  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
 
   // 分支高度 = 主脊上下两侧子节点的垂直总跨度
   let branchHeight = size.height
@@ -86,7 +129,7 @@ function layoutFishbone(
     branchHeight = topH + size.height + bottomH + getSpacingMinor(node, options, styleEngine, state) * 4
   }
 
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight, partBounds: size.partBounds })
 
   if (isCollapsed(node)) return
   if (children.length === 0) return
@@ -119,12 +162,12 @@ function layoutFishbone(
 export const fishboneLeftHeadedLayoutAlgorithm: LayoutAlgorithm = {
   name: 'fishbone-leftHeaded',
   layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
-    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
+    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSimpleSubtree(root, options, sizeMap)
+    measureSubtree(root, options, sizeMap)
 
     // 鱼头在左侧
     layoutFishbone(root, options.rootOffsetX, 200, true, options, sizeMap, nodes, styleEngine, state)
@@ -153,12 +196,12 @@ export const fishboneLeftHeadedLayoutAlgorithm: LayoutAlgorithm = {
 export const fishboneRightHeadedLayoutAlgorithm: LayoutAlgorithm = {
   name: 'fishbone-rightHeaded',
   layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
-    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
+    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSimpleSubtree(root, options, sizeMap)
+    measureSubtree(root, options, sizeMap)
 
     // 鱼头在右侧
     const totalW = (() => {

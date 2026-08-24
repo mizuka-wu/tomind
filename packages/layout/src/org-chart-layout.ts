@@ -9,9 +9,53 @@ import type { NodeDesc } from '@tomind/schema'
 import type { StyleEngine } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
-import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
-import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleSubtree } from './layout-utils'
-type NodeSize = import('./layout-utils').SimpleNodeSize
+import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
+import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
+import { hasNonTitleParts } from './part-measure'
+import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
+
+interface NodeSize {
+  width: number
+  height: number
+  titleWidth: number
+  titleHeight: number
+  partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
+}
+
+function measureNodeSize(
+  node: NodeDesc,
+  padding: { top: number; right: number; bottom: number; left: number },
+  options: LayoutOptions,
+): NodeSize {
+  if (hasNonTitleParts(node)) {
+    const result = measurePartAwareNode(node, options)
+    return {
+      width: result.width,
+      height: result.height,
+      titleWidth: result.titleWidth,
+      titleHeight: result.titleHeight,
+      partBounds: result.partBounds,
+    }
+  }
+
+  const result = measureTitleOnlyNode(node, padding, options)
+  return {
+    width: result.width,
+    height: result.height,
+    titleWidth: result.titleWidth,
+    titleHeight: result.titleHeight,
+    partBounds: result.partBounds,
+  }
+}
+
+function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): void {
+  sizeMap.set(node.id, measureNodeSize(node, options.nodePadding, options))
+  if (!isCollapsed(node)) {
+    for (const child of getAttachedChildren(node)) {
+      measureSubtree(child, options, sizeMap)
+    }
+  }
+}
 
 /** spacingMajor: 父→子方向间距（垂直），spacingMinor: 兄弟间间距（水平） */
 function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
@@ -62,12 +106,11 @@ function layoutSubtreeDown(
   y: number,
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
-  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
-  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
 
   // 分支高度 = 子节点子树的最大垂直延伸（子节点同层水平排列）
   let branchHeight = size.height
@@ -78,7 +121,7 @@ function layoutSubtreeDown(
     }
   }
 
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight, partBounds: size.partBounds })
 
   if (isCollapsed(node)) return
   if (children.length === 0) return
@@ -109,12 +152,11 @@ function layoutSubtreeUp(
   y: number,
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
-  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
-  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
 
   let branchHeight = size.height
   const children = getAttachedChildren(node)
@@ -124,7 +166,7 @@ function layoutSubtreeUp(
     }
   }
 
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight, partBounds: size.partBounds })
 
   if (isCollapsed(node)) return
   if (children.length === 0) return
@@ -152,12 +194,12 @@ function layoutSubtreeUp(
 export const orgChartDownLayoutAlgorithm: LayoutAlgorithm = {
   name: 'org-chart-down',
   layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
-    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
+    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSimpleSubtree(root, options, sizeMap)
+    measureSubtree(root, options, sizeMap)
 
     const totalW = childrenTotalWidth(root, options, sizeMap, styleEngine, state)
     const rootX = (totalW - sizeMap.get(root.id)!.width) / 2 + options.rootOffsetX
@@ -188,12 +230,12 @@ export const orgChartDownLayoutAlgorithm: LayoutAlgorithm = {
 export const orgChartUpLayoutAlgorithm: LayoutAlgorithm = {
   name: 'org-chart-up',
   layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
-    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
+    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSimpleSubtree(root, options, sizeMap)
+    measureSubtree(root, options, sizeMap)
 
     const totalW = childrenTotalWidth(root, options, sizeMap, styleEngine, state)
     const totalH = subtreeHeight(root, options, sizeMap, styleEngine, state)
