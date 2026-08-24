@@ -69,7 +69,7 @@
 
 ### State 层
 - [x] **Transaction.docChanged** — 正确行为：selection/viewport 变更不算 doc 变更（对齐 ProseMirror）
-- [ ] **Transaction 继承 Transform** — "是一个"关系但语义不同，导致 9 处 `transform['_meta']` 重复访问。建议改为组合（has-a）。✅ meta getter 已添加，组合重构待完成
+- [x] **Transaction 组合重构** — 从 extends Transform 改为持有 Transform 实例（组合优于继承），消除 `_meta` 私有字段访问
 
 ### View 层
 
@@ -128,9 +128,9 @@
 
 ## 🟢 P4 — 架构改善
 
-- [ ] **Transaction 继承 Transform → 组合** — 消除 `_meta` 私有字段访问问题
+- [x] **Transaction 继承 Transform → 组合** — 已改为持有 Transform 实例，`_meta` 私有字段问题消除
 - [x] **ExtensionContext 泛型化 state** — `getState<T>()` 已实现，消除 10 处 `as` 断言
-- [ ] **`TopicData` 旧类型清理** — `types.ts:194-253` 标记为迁移用，设 deadline 删除
+- [x] **`TopicData` 旧类型清理** — 已删除 TopicData 及 6 个关联迁移用类型（MarkerData/LabelData/ImageData/MathJaxData/NoteData/LinkData）
 
 ---
 
