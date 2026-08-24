@@ -159,20 +159,78 @@ function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine?: a
 }
 
 function getSpacingMinor(node: NodeDesc, options: LayoutOptions, styleEngine?: any, state?: any): number {
+  // 如果有显式样式值，使用它
   if (styleEngine && state) {
     const resolved = styleEngine.computeStyle(state, node.id)
     if (resolved?.spacingMinor != null) {
       const value = resolved.spacingMinor
       if (typeof value === 'string') {
         const parsed = parseInt(value)
-        return isNaN(parsed) ? options.verticalGap : parsed
+        if (!isNaN(parsed)) return parsed
       }
       if (typeof value === 'number') {
         return value
       }
     }
   }
-  return options.verticalGap
+
+  // 自适应逻辑（对齐 snowbrush getMinSumTopicSpacing）
+  // 基础值：默认 verticalGap（通常为 0，需要给一个合理默认）
+  const baseSpacing = options.verticalGap || 20
+
+  // snowbrush 的自适应范围
+  const MIN_TOP_BOTTOM_SPACING = 80
+  const MAX_TOP_BOTTOM_SPACING = 180
+  const PARENT_TOPIC_THRESHOLD = 230
+
+  // 如果父节点高度超过阈值，增加最小间距
+  // 注意：这里无法直接获取父节点高度，所以用基础值
+  // 实际的自适应在 layoutSideChildren 中根据父节点高度调整
+  return Math.max(baseSpacing, MIN_TOP_BOTTOM_SPACING / 4)
+}
+
+/**
+ * 自适应垂直间距（根据父节点高度）
+ * 对齐 snowbrush 的 getMinSumTopicSpacing
+ */
+function getAdaptiveSpacingMinor(
+  parentHeight: number,
+  node: NodeDesc,
+  options: LayoutOptions,
+  styleEngine?: any,
+  state?: any,
+): number {
+  // 如果有显式样式值，使用它
+  if (styleEngine && state) {
+    const resolved = styleEngine.computeStyle(state, node.id)
+    if (resolved?.spacingMinor != null) {
+      const value = resolved.spacingMinor
+      if (typeof value === 'string') {
+        const parsed = parseInt(value)
+        if (!isNaN(parsed)) return parsed
+      }
+      if (typeof value === 'number') {
+        return value
+      }
+    }
+  }
+
+  // snowbrush 自适应逻辑
+  const MIN_TOP_BOTTOM_SPACING = 80
+  const MAX_TOP_BOTTOM_SPACING = 180
+  const PARENT_TOPIC_THRESHOLD = 230
+
+  // 基础间距
+  let spacing = options.verticalGap || 20
+
+  // 如果父节点高度超过阈值，增加最小间距
+  if (parentHeight > PARENT_TOPIC_THRESHOLD) {
+    const extra = (parentHeight - PARENT_TOPIC_THRESHOLD) * 0.15
+    spacing = Math.max(spacing, MIN_TOP_BOTTOM_SPACING + extra)
+  }
+
+  // 限制范围
+  return Math.min(Math.max(spacing, MIN_TOP_BOTTOM_SPACING / 2), MAX_TOP_BOTTOM_SPACING)
 }
 
 function subtreeHeight(node: NodeDesc, _options: LayoutOptions, sizeMap: Map<string, NodeSize>, _styleEngine?: any, _state?: any): number {
@@ -180,8 +238,42 @@ function subtreeHeight(node: NodeDesc, _options: LayoutOptions, sizeMap: Map<str
   return size.height
 }
 
-function calcNumRight(children: readonly NodeDesc[], _options: LayoutOptions, _sizeMap: Map<string, NodeSize>, _styleEngine?: any, _state?: any): number {
-  // 默认右半放置 50% 的子节点
+/**
+ * 计算子节点权重（对齐 snowbrush getWeight）
+ * weight = subtreeHeight + (spacingMinor/2) * 3
+ */
+function getWeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: any, state?: any): number {
+  const height = subtreeHeight(node, options, sizeMap, styleEngine, state)
+  const spacingMinor = getSpacingMinor(node, options, styleEngine, state)
+  return height + (spacingMinor / 2) * 3
+}
+
+/**
+ * 权重平衡的左右分配（对齐 snowbrush）
+ * 累加权重到 halfWeight 找最佳分割点
+ */
+function calcNumRight(children: readonly NodeDesc[], options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: any, state?: any): number {
+  if (children.length <= 1) return children.length
+
+  // 计算总权重
+  let totalWeight = 0
+  for (const child of children) {
+    totalWeight += getWeight(child, options, sizeMap, styleEngine, state)
+  }
+
+  const halfWeight = totalWeight / 2
+  let accWeight = 0
+
+  for (let i = 0; i < children.length; i++) {
+    accWeight += getWeight(children[i], options, sizeMap, styleEngine, state)
+    if (accWeight >= halfWeight) {
+      // 选择更接近一半的位置
+      const diffAt = Math.abs(accWeight - halfWeight)
+      const diffBefore = Math.abs((accWeight - getWeight(children[i], options, sizeMap, styleEngine, state)) - halfWeight)
+      return diffAt < diffBefore ? i + 1 : i
+    }
+  }
+
   return Math.ceil(children.length / 2)
 }
 
@@ -189,7 +281,7 @@ function layoutSideChildren(
   children: readonly NodeDesc[],
   startX: number,
   startY: number,
-  _parentHeight: number,
+  parentHeight: number,
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>,
@@ -200,6 +292,9 @@ function layoutSideChildren(
   const n = children.length
   if (n === 0) return
 
+  // 使用自适应间距
+  const spacingMinor = getAdaptiveSpacingMinor(parentHeight, children[0], options, styleEngine, state)
+
   // 计算子节点总高度
   let totalHeight = 0
   const yPosRelativeToFirstChild: number[] = []
@@ -209,7 +304,7 @@ function layoutSideChildren(
     yPosRelativeToFirstChild.push(totalHeight)
     totalHeight += size.height
     if (i < n - 1) {
-      totalHeight += getSpacingMinor(child, options, styleEngine, state)
+      totalHeight += spacingMinor
     }
   }
 
