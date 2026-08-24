@@ -1,14 +1,7 @@
 import { Group, Path, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
+import { mapTextDecoration, mapTextAlign, mapFontWeight } from '../text-style-helpers'
 import type { Renderer } from './renderer'
-
-/** 文本对齐映射 */
-const ANCHOR_MAP: Record<string, string> = {
-  left: 'left',
-  center: 'center',
-  right: 'right',
-}
-
 /** 边界标题布局常量 */
 const BOUNDARY_TITLE_LAYOUT = {
   TOP_LEFT_RADIUS: 8,
@@ -84,11 +77,11 @@ export class BoundaryTitleRenderer implements Renderer {
     }
 
     if (textColor) this.text.fill = textColor
-    if (textDecoration) this.text.textDecoration = textDecoration as any
-    if (textAlign) this.text.textAlign = ANCHOR_MAP[textAlign] as any
+    if (textDecoration) this.text.textDecoration = mapTextDecoration(textDecoration)
+    if (textAlign) this.text.textAlign = mapTextAlign(textAlign)
     if (fontSize) this.text.fontSize = fontSize
     if (fontFamily) this.text.fontFamily = fontFamily
-    if (fontWeight) this.text.fontWeight = fontWeight as any
+    if (fontWeight) this.text.fontWeight = mapFontWeight(fontWeight)
     if (fontStyle) this.text.italic = fontStyle === 'italic'
 
     if (textPosition) {

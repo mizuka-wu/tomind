@@ -127,6 +127,8 @@ export interface Extension<Options = {}> {
   addOptions?: () => Partial<Options> | Record<string, unknown>
   /** 添加存储 */
   addStorage?: () => Record<string, unknown>
+  /** 运行时存储（由 ExtensionManager 在初始化时注入） */
+  storage?: Record<string, unknown>
   /** 生命周期：销毁 */
   destroy?: () => void
   /** 命令定义 */

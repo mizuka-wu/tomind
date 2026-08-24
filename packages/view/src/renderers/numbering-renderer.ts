@@ -1,14 +1,7 @@
 import { Group, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
+import { mapTextDecoration, mapTextAlign, mapFontWeight } from '../text-style-helpers'
 import type { Renderer } from './renderer'
-
-/** 文本对齐映射 */
-const ANCHOR_MAP: Record<string, string> = {
-  left: 'left',
-  center: 'center',
-  right: 'right',
-}
-
 /**
  * NumberingRenderer — 编号渲染器
  *
@@ -66,11 +59,11 @@ export class NumberingRenderer implements Renderer {
     }
 
     if (textDecoration) {
-      this.text.textDecoration = textDecoration as any
+      this.text.textDecoration = mapTextDecoration(textDecoration)
     }
 
     if (textAlign) {
-      this.text.textAlign = ANCHOR_MAP[textAlign] as any
+      this.text.textAlign = mapTextAlign(textAlign)
     }
 
     if (fontSize) {
@@ -82,7 +75,7 @@ export class NumberingRenderer implements Renderer {
     }
 
     if (fontWeight) {
-      this.text.fontWeight = fontWeight as any
+      this.text.fontWeight = mapFontWeight(fontWeight)
     }
 
     if (fontStyle) {

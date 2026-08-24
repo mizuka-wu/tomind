@@ -43,7 +43,7 @@ interface SelectBoxStorage extends Record<string, unknown> {
 // ==================== 工具函数 ====================
 
 function findNodeGroup(group: Group, nodeId: string): Group | null {
-  const children = (group as any).children
+  const children: Group[] = group.children as Group[]
   if (!children) return null
   for (const child of children) {
     if (child.name === nodeId) return child

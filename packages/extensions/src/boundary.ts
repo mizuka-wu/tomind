@@ -49,8 +49,7 @@ function findParent(doc: NodeDesc, childId: string): NodeDesc | null {
 
 /** 获取选中节点 ID */
 function getSelectedNodeId(state: SheetState): string | null {
-  const sel = state.selection as any
-  return sel?.nodeId ?? sel?.elements?.[0]?.id ?? null
+  return state.selection.elements[0]?.id ?? null
 }
 
 // ==================== Extension ====================

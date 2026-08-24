@@ -127,8 +127,7 @@ export class ExtensionManager implements IExtensionManager {
     // 2. addStorage
     if (extension.addStorage) {
       const storage = extension.addStorage()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(extension as any).storage = storage
+      extension.storage = storage
     }
 
     // 3. addNodeView
@@ -154,8 +153,7 @@ export class ExtensionManager implements IExtensionManager {
 
     // 6. onCreate
     if (extension.onCreate) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const storage = (extension as any).storage ?? {}
+      const storage = extension.storage ?? {}
       const extensionCtx: ExtensionContext = { ...ctx, storage }
       const cleanup = extension.onCreate(extensionCtx)
       if (cleanup) {

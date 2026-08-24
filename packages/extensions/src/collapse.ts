@@ -24,8 +24,7 @@ export interface CollapseOptions extends Record<string, unknown> {
 // ==================== 工具函数 ====================
 
 function getSelectedNodeId(state: SheetState): string | null {
-  const sel = state.selection as any
-  return sel?.nodeId ?? sel?.elements?.[0]?.id ?? null
+  return state.selection.elements[0]?.id ?? null
 }
 
 /** 深拷贝 doc 并对指定节点执行 mutation */
