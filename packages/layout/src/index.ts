@@ -13,7 +13,7 @@ export { Matrix, MatrixContainer, MatrixCell, ColumnMap, LEFT, MIDDLE, RIGHT } f
 
 // Map 布局
 export { mapClockwiseLayoutAlgorithm } from './map-layout'
-export { mapAnticlockwiseLayoutAlgorithm } from './map-anticlockwise-layout'
+export { mapAnticlockwiseLayoutAlgorithm, mapUnbalancedLayoutAlgorithm } from './map-layout'
 
 // Logic 布局
 export { logicRightLayoutAlgorithm, logicLeftLayoutAlgorithm } from './logic-layout'
