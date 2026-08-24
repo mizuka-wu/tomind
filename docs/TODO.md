@@ -1,20 +1,51 @@
 # TODO — 已知问题与待办事项
 
-> 基于 2026-07-29 全面 Code Review 生成。按优先级排列。
+> 基于 2026-07-29 全面 Code Review 生成，2026-08-24 更新。按优先级排列。
 
 ---
 
-## 🔴 P0 — 严重 Bug（已修复）
+## ✅ 已完成
 
-- [x] **CopyPasteExtension 快捷键死代码** — `Mod-c/v/x` 快捷键定义在 `onCreate` 中但未注册到 `addKeyboardShortcuts()`，用户无法通过快捷键复制粘贴。已修复：添加 `addKeyboardShortcuts()` 返回快捷键映射。
-- [x] **topic.edit 命令签名错误** — `edit-bridge.ts` 中 `topic.edit` 命令注册为 `(_params) => ...` 而非 `(state, dispatch, args) => ...`，`dispatch` 丢失导致命令无法分发事务。已修复：改为正确的三参数签名。
-- [x] **selection.selectAll 子节点遍历 Bug** — `getAllVisibleNodes()` 中 `typeof child === 'string'` 永远为 false（children 是 `NodeDesc[]`），导致只选中根节点。已修复：改为 `walk(child.id)`。
-- [x] **RemoveNodeStep.invert() 生成损坏节点** — `invert()` 返回 `{ id: this.nodeId } as NodeDesc` 缺少 type/attrs/children，undo 会插入损坏节点。已修复：`apply()` 中保存被删节点快照，`invert()` 用快照恢复。
-- [x] **dirty-analysis removeNode 步骤不标脏** — 删除节点时父节点不标脏，导致 UI 残留。已修复：标记被删节点 ID 为 `DirtyFlag.ALL`。
-- [x] **viewport setupViewportInteractions() 空桩** — 滚轮缩放和拖拽移动从未绑定。已修复：通过 `getContainer` 事件获取 DOM 容器并调用 `setupWheelZoom`/`setupDragMove`。
-- [x] **context-menu 事件绑定未注册** — `setupEventHandlers()` 定义处理器但从未注册。已修复：通过 `ctx.on`/`ctx.off` 注册 `contextmenu`/`pointerdown`/`pointerup`/`pointermove` 事件。
-- [x] **Transform.filter/map 不重新计算 doc** — 过滤/映射 step 后 doc 和 docs 未重新应用，状态不一致。已修复：从原始 doc 重新应用 filtered/mapped steps。
-- [x] **SheetEditor._workbookEditor: any** — 缺乏类型约束。已修复：改为 `WorkbookEditor | null`，添加 `import type`。
+### P0 — 严重 Bug（已修复）
+- [x] CopyPasteExtension 快捷键死代码
+- [x] topic.edit 命令签名错误
+- [x] selection.selectAll 子节点遍历 Bug
+- [x] RemoveNodeStep.invert() 生成损坏节点
+- [x] dirty-analysis removeNode 步骤不标脏
+- [x] viewport setupViewportInteractions() 空桩
+- [x] context-menu 事件绑定未注册
+- [x] Transform.filter/map 不重新计算 doc
+- [x] SheetEditor._workbookEditor: any
+
+### 布局系统重写（2026-08-24）
+- [x] **P0: 自适应 spacingMinor** — 对齐 snowbrush getMinSumTopicSpacing
+- [x] **P0: 权重平衡左右分配** — 对齐 snowbrush calcNumRight
+- [x] **P1: 扇形外扩** — 子节点≥8个时自动撑开（calcOutwardDistance）
+- [x] **P1: X offset 子树对齐** — 对齐 snowbrush getMapOfXOffSetByBranchIndex
+- [x] **P2: mapAnticlockwise 变体** — 前 N 个子节点在左侧
+- [x] **P2: mapUnbalanced 变体** — 支持 attrs.numRight 手动分割点
+- [x] **公共模块提取** — layout-utils.ts（7 个共享函数 + measureSimpleNode/Subtree）
+- [x] **布局工具函数抽取** — 消除 12 个文件中的重复代码（净减 ~600 行）
+
+### 功能实现（2026-08-01 ~ 08-23）
+- [x] 25+ topic shapes + 16 link styles + 13 boundary shapes + 10 arrow types
+- [x] Numbering 功能（NumberingPlugin + NumberingExtension）
+- [x] colord 替代 tinycolor2
+- [x] Part-Aware Layout 系统（cell-layout + part-measure + part-cell-builder + part-node-size）
+- [x] ImageData 扩展对齐 snowbrush（7 个新属性）
+- [x] Note 富文本渲染（realHTML 格式）
+- [x] Comments 功能（CommentData + CommentsExtension）
+- [x] Labels 流式布局 + tooltip + 去重 + 溢出 "N+"
+- [x] Legend 图例渲染器
+- [x] handDrawnEllipse 形状
+- [x] 括号/引号形状（8 个）
+- [x] 所有 PartView 通过 Extension 注册（5 个 Extension）
+
+---
+
+## 🔴 P0 — 当前阻塞
+
+无
 
 ---
 
@@ -36,9 +67,9 @@
 - [ ] **`PartViewDesc.update()` 浅比较不可靠** — 对象引用相同但属性变化会被跳过
 
 ### Layout 层
-- [ ] **布局算法间工具函数大量重复** — `getTitle()`/`getFontSize()`/`isCollapsed()` 等 7 个函数在 6 个文件中重复定义
-- [ ] **`measureTextSize()` 简化过度** — `charWidthFactor: 0.6` 对中文粗暴近似（实际 ≈ 1.0），`maxWidth: 200` 硬编码
-- [ ] **部分布局忽略 StyleEngine 间距覆盖** — fishbone/logic/org-chart/timeline/map 硬编码使用 `DEFAULT_LAYOUT_OPTIONS`
+- [ ] **部分布局忽略 StyleEngine 间距覆盖** — fishbone/logic/org-chart/timeline 硬编码使用 `DEFAULT_LAYOUT_OPTIONS`，未接入 styleEngine
+- [ ] **其他布局的 part-aware 测量** — tree/logic/org-chart 等布局未使用 part-aware 测量，Labels/Markers 等 Part 在这些布局中不生效
+- [ ] **measureTextSize 可配置** — 支持中英文混合宽度计算、CSS white-space 等行为
 
 ### Extension 层
 - [ ] **`WorkbookEditor.createExtensionContext()` 命令注册委托不稳定** — 委托给活动 Sheet，但活动 Sheet 可能为 null
@@ -82,7 +113,7 @@
 | `logic-layout.ts` | 2 | 间距对齐；子分支垂直堆叠间距验证 |
 | `org-chart-layout.ts` | 2 | down/up 对齐；多层嵌套水平居中验证 |
 | `timeline-layout.ts` | 2 | 交替排列验证；时间线轴线偏移量 |
-| `map-layout.ts` | 3 | 分支均匀分布验证；unbalanced 偏移量对齐；多层嵌套平衡性 |
+| `map-layout.ts` | 0 | ✅ 全部完成 |
 | `matrix-layout.ts` | 1 | 行列对齐验证 |
 
 ---
@@ -92,8 +123,6 @@
 - [ ] **NodeViewDesc 静态注入 → 构造函数注入** — 支持多编辑器实例共存
 - [ ] **Transaction 继承 Transform → 组合** — 消除 `_meta` 私有字段访问问题
 - [ ] **Renderer 公共 API** — 暴露 `getPathRect()`/`getCircleFill()` 等方法，替代双断言
-- [ ] **布局工具函数抽取** — 7 个重复函数提取到 `@tomind/layout/src/utils.ts`
-- [ ] **measureTextSize 可配置** — 支持中英文混合宽度计算、CSS white-space 等行为
 - [ ] **ExtensionContext 泛型化 state** — `getState<T>()` 替代 `getState(): unknown`
 - [ ] **`TopicData` 旧类型清理** — `types.ts:194-253` 标记为迁移用，设 deadline 删除
 
@@ -112,3 +141,5 @@
 | 2026-07-29 | viewport setupViewportInteractions 接入事件 | `viewport.ts` |
 | 2026-07-29 | context-menu 事件注册 | `context-menu.ts` |
 | 2026-07-29 | SheetEditor._workbookEditor 类型修复 + getContainer 事件 | `sheet-editor.ts` |
+| 2026-08-24 | Map 布局系统重写（P0/P1/P2） | `map-layout.ts` |
+| 2026-08-24 | 公共模块 layout-utils.ts 提取 | `layout-utils.ts` + 14 files |
