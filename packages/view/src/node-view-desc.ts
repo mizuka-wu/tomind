@@ -7,7 +7,7 @@
  * 3. 处理样式和布局
  * 4. 应用 Node Decoration（样式装饰）
  */
-import { Group, Ellipse, Line, Path } from 'leafer-ui'
+import { Group, Line, Path } from 'leafer-ui'
 
 import { ViewDesc, DirtyFlag } from './view-desc'
 import type {
@@ -940,7 +940,7 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
 
   private updateSelectBoxVisibility(visible: boolean): void {
     if (!this.renderer) return
-    const shape = (this.renderer as unknown as { shapePath: Path | null }).shapePath
+    const shape = this.renderer.getShapePath()
     if (!shape) return
 
     if (visible) {
@@ -1149,7 +1149,7 @@ export class CollapseExtendNodeViewDesc extends NodeViewDesc {
           const parentStyle = NodeViewDesc.styleEngine.getLeaferStyle(NodeViewDesc.state, parentId)
           const lineColor = parentStyle.lineColor as string | undefined
           if (lineColor) {
-            const circleFill = (this.renderer as unknown as { circleFill: Ellipse | null }).circleFill
+            const circleFill = this.renderer.getCircleFill()
             if (circleFill) {
               this._savedFill = circleFill.fill as string
               circleFill.fill = lineColor
@@ -1162,7 +1162,7 @@ export class CollapseExtendNodeViewDesc extends NodeViewDesc {
       if (!this._isHovering) return
       this._isHovering = false
       if (this.renderer) {
-        const circleFill = (this.renderer as unknown as { circleFill: Ellipse | null }).circleFill
+        const circleFill = this.renderer.getCircleFill()
         if (circleFill) {
           circleFill.fill = this._savedFill ?? 'none'
         }

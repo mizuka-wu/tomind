@@ -41,6 +41,9 @@ export class BoundaryRenderer implements Renderer {
   private shapePath: Path | null = null
   private titleText: Text | null = null
 
+  /** 获取形状路径（供外部读取样式状态） */
+  getShapePath(): Path | null { return this.shapePath }
+
   /** 边界范围（由 setBounds 设置） */
   private bounds = { x: 0, y: 0, width: 0, height: 0 }
   private title = ''

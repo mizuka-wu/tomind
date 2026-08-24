@@ -26,6 +26,9 @@ export class CollapseExtendRenderer implements Renderer {
   private ecCircle: Ellipse | null = null
   private path: Path | null = null
 
+  /** 获取折叠圆圈填充元素（供外部读取/设置样式状态） */
+  getCircleFill(): Ellipse | null { return this.circleFill }
+
   /** ext 状态元素 */
   private extG: Group | null = null
   private connectPath: Line | null = null

@@ -63,11 +63,11 @@ export class MatrixNodeViewDesc extends NodeViewDesc {
     if (!this._renderer || !NodeViewDesc.state) return
 
     // 获取子节点
-    const children = (this.node.children as Record<string, unknown[]>)?.TOPIC || []
+    const children = this.node.children?.TOPIC || []
 
     // 更新矩阵
     this._renderer.updateMatrix(
-      children as any[],
+      children,
       (id: string) => NodeViewDesc.state?.getNode(id),
     )
   }

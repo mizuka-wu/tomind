@@ -10,6 +10,7 @@
 import { Group, Rect, Text, Path } from 'leafer-ui'
 import type { Renderer } from './renderer'
 import type { LayoutResult } from '@tomind/layout'
+import type { NodeDesc } from '@tomind/schema'
 import {
   ColumnMap,
   Matrix,
@@ -18,6 +19,19 @@ import {
   LEFT,
   MIDDLE,
 } from '@tomind/layout'
+
+// ============== 类型定义 ==============
+interface MatrixEvents {
+  click?: (...args: unknown[]) => void
+  dblclick?: (...args: unknown[]) => void
+  tap?: (...args: unknown[]) => void
+  doubletap?: (...args: unknown[]) => void
+}
+
+/** 带 model 扩展的节点（用于需要 changeLabel 的场景） */
+interface NodeWithModel extends NodeDesc {
+  readonly model?: { readonly changeLabel?: (label: string) => void }
+}
 
 // ============== 常量 ==============
 const PLUS_VIEW_RADIUS = 8
@@ -36,7 +50,7 @@ class MatrixCellView {
 
   constructor(
     bounds: { x: number; y: number; width: number; height: number },
-    events: Record<string, (...args: any[]) => void> = {},
+    events: MatrixEvents = {},
   ) {
     this._bounds = bounds
 
@@ -79,7 +93,7 @@ class MatrixCellView {
   get group() { return this._group }
   get bounds() { return this._bounds }
 
-  private _bindEvents(events: Record<string, (...args: any[]) => void>) {
+  private _bindEvents(events: MatrixEvents) {
     if (events.dblclick) {
       this._group.on('dblclick', events.dblclick)
     }
@@ -199,12 +213,12 @@ class MatrixLabelView {
   private _text: Text
   private _bounds: { x: number; y: number; width: number; height: number }
   private _textStr: string
-  private _cells: { items: any[] }[]
+  private _cells: Array<{ items: NodeDesc[] }>
 
   constructor(
     text: string,
-    cells: { items: any[] }[],
-    fontInfo: Record<string, any>,
+    cells: Array<{ items: NodeDesc[] }>,
+    fontInfo: Record<string, unknown>,
   ) {
     this._textStr = text
     this._cells = cells
@@ -255,9 +269,10 @@ class MatrixLabelView {
     this.setText(newText)
     // 通知关联的单元格更新
     this._cells?.forEach((cell) => {
-      cell.items?.forEach((view: any) => {
-        if (view.model?.changeLabel) {
-          view.model.changeLabel(newText)
+      cell.items?.forEach((item: NodeDesc) => {
+        const node = item as NodeWithModel
+        if (node.model?.changeLabel) {
+          node.model.changeLabel(newText)
         }
       })
     })
@@ -313,8 +328,8 @@ export class MatrixRenderer implements Renderer {
    * 更新矩阵布局
    */
   updateMatrix(
-    children: any[],
-    _getNode: (id: string) => any,
+    children: readonly NodeDesc[],
+    _getNode: (id: string) => unknown,
   ): void {
     if (!this._parent) return
 
@@ -341,12 +356,12 @@ export class MatrixRenderer implements Renderer {
     this._addToParent()
   }
 
-  private _createColumnMap(children: any[]): ColumnMap {
+  private _createColumnMap(children: readonly NodeDesc[]): ColumnMap {
     const columnMap = new ColumnMap(children.length)
-    children.forEach((child: any, index: number) => {
+    children.forEach((child: NodeDesc, index) => {
       const grandChildren = child.children?.TOPIC || []
-      grandChildren.forEach((gChild: any) => {
-        const key = gChild.attrs?.label || ''
+      grandChildren.forEach((gChild: NodeDesc) => {
+        const key = String(gChild.attrs['label'] ?? '')
         const cell = columnMap.getCell(index, key)
         cell.items.push(gChild)
       })
@@ -354,7 +369,7 @@ export class MatrixRenderer implements Renderer {
     return columnMap
   }
 
-  private _createMatrixGrid(children: any[], columnMap: ColumnMap, isTranspose: boolean): MatrixContainer {
+  private _createMatrixGrid(children: readonly NodeDesc[], columnMap: ColumnMap, isTranspose: boolean): MatrixContainer {
     // 主单元格
     const mainCell = new MatrixCell(children[0], { align: LEFT })
 
@@ -384,8 +399,8 @@ export class MatrixRenderer implements Renderer {
     return [firstCell, ...otherCells]
   }
 
-  private _createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: any[]): (MatrixCell | MatrixContainer)[][] {
-    return branches.map((branch: any, i: number) => {
+  private _createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: readonly NodeDesc[]): (MatrixCell | MatrixContainer)[][] {
+    return branches.map((branch, i) => {
       const headCell = new MatrixCell(branch, { align: LEFT })
       headCell._parentCell = mainCell
 
@@ -394,7 +409,7 @@ export class MatrixRenderer implements Renderer {
         .filter((column): column is NonNullable<typeof column> => Boolean(column))
         .map((column) => {
           const { items } = column.cells[i]
-          const cells = items.map((item: any) => {
+          const cells = items.map((item) => {
             const cell = new MatrixCell(item, { align: LEFT })
             cell._parentCell = headCell
             return cell
@@ -437,7 +452,7 @@ export class MatrixRenderer implements Renderer {
       }
       
       // 创建事件处理函数
-      const events: Record<string, (...args: any[]) => void> = {
+      const events: MatrixEvents = {
         ...cell._events,
         // 点击选择
         click: () => {
