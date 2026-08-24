@@ -39,9 +39,9 @@ export function createExtensionContext(editor: {
   executeCommand: (name: string, args?: unknown) => boolean
   registerCommand: (name: string, command: import('./types').CommandFn) => void
   unregisterCommand: (name: string) => void
-  on: (event: string, handler: import('./types').EventHandler) => void
-  off: (event: string, handler: import('./types').EventHandler) => void
-  emit: (event: string, ...args: unknown[]) => void
+  on: (event: string, handler: (data: unknown) => void) => void
+  off: (event: string, handler: (data: unknown) => void) => void
+  emit: (event: string, ...args: unknown[]) => void,
   registerNodeView: (nodeType: string, viewDesc: unknown) => void
   unregisterNodeView: (nodeType: string) => void
   registerPartView: (partType: string, viewDesc: unknown) => void
@@ -50,7 +50,7 @@ export function createExtensionContext(editor: {
   unregisterLayout?: (name: string) => void
   registerPlugin?: (plugin: unknown) => void
   unregisterPlugin?: (plugin: unknown) => void
-}): import('./types').ExtensionContext {
+}): import('./types').ExtensionContext {  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return {
     storage: {},
     getWorkbook: editor.getWorkbook,
@@ -60,9 +60,9 @@ export function createExtensionContext(editor: {
     executeCommand: editor.executeCommand,
     registerCommand: editor.registerCommand as unknown as import('./types').ExtensionContext['registerCommand'],
     unregisterCommand: editor.unregisterCommand,
-    on: editor.on,
-    off: editor.off,
-    emit: editor.emit,
+    on: editor.on as import('./types').ExtensionContext['on'],
+    off: editor.off as import('./types').ExtensionContext['off'],
+    emit: editor.emit as unknown as import('./types').ExtensionContext['emit'],
     registerNodeView: editor.registerNodeView,
     unregisterNodeView: editor.unregisterNodeView,
     registerPartView: editor.registerPartView,
@@ -74,3 +74,4 @@ export function createExtensionContext(editor: {
   }
 }
 export { onDocEvent, offDocEvent } from './event-listener-utils'
+export type { EventMap } from './event-map'

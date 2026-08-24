@@ -28,10 +28,10 @@ export const SelectionExtension = createExtension<{
       if (e.targetId) {
         if (e.ctrlKey) {
           // 多选模式
-          ctx.emit('selection:toggle', e.targetId)
+          ctx.emit('selection:toggle', { nodeId: e.targetId! })
         } else {
           // 单选模式
-          ctx.emit('selection:select', e.targetId)
+          ctx.emit('selection:select', { nodeId: e.targetId! })
         }
       }
     }

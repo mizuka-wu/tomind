@@ -17,7 +17,7 @@ import type {
   CommandFn
 } from './types'
 
-export class ExtensionManager implements IExtensionManager {
+export class ExtensionManager {
   private _extensions = new Map<string, Extension<any, any>>
   private _initialized = new Set<string>()
   private _cleanupFns = new Map<string, () => void>()
@@ -215,23 +215,23 @@ export class ExtensionManager implements IExtensionManager {
 
   // ==================== 事件系统 ====================
 
-  emit(event: string, ...args: unknown[]): void {
+  emit(event: string, data?: unknown): void {
     const handlers = this._eventHandlers.get(event)
     if (handlers) {
       for (const handler of handlers) {
-        try { handler(...args) } catch (e) { console.error(`Event error "${event}":`, e) }
+        try { handler(data) } catch (e) { console.error(`Event error "${event}":`, e) }
       }
     }
   }
 
-  on(event: string, handler: EventHandler): void {
+  on(event: string, handler: (data: unknown) => void): void {
     if (!this._eventHandlers.has(event)) {
       this._eventHandlers.set(event, new Set())
     }
     this._eventHandlers.get(event)!.add(handler)
   }
 
-  off(event: string, handler: EventHandler): void {
+  off(event: string, handler: (data: unknown) => void): void {
     this._eventHandlers.get(event)?.delete(handler)
   }
 

@@ -7,6 +7,11 @@
  * - 支持 onCreate、addOptions、addStorage 钩子
  */
 
+import type { EventMap } from './event-map'
+
+/** 如果 T 是 void，则不需要 data 参数 */
+type EmitData<T> = T extends void ? [] : [T]
+
 // ==================== 扩展选项 ====================
 
 /** 扩展选项（包含 enabled 标志） */
@@ -39,11 +44,11 @@ export interface ExtensionContext<Storage = Record<string, unknown>> {
   /** 注销布局算法 */
   unregisterLayout: (name: string) => void
   /** 监听事件 */
-  on: (event: string, handler: EventHandler) => void
+  on: <K extends keyof EventMap>(event: K, handler: (data: EventMap[K]) => void) => void
   /** 注销事件监听 */
-  off: (event: string, handler: EventHandler) => void
+  off: <K extends keyof EventMap>(event: K, handler: (data: EventMap[K]) => void) => void
   /** 触发事件 */
-  emit: (event: string, ...args: unknown[]) => void
+  emit: <K extends keyof EventMap>(event: K, ...args: EmitData<EventMap[K]>) => void
   /** 注册 NodeViewDesc */
   registerNodeView: (nodeType: string, viewDesc: unknown) => void
   /** 注销 NodeViewDesc */
@@ -86,11 +91,11 @@ export interface WorkbookEditorInterface {
   /** 执行命令 */
   executeCommand: (name: string, args?: unknown) => boolean
   /** 监听事件 */
-  on: (event: string, handler: EventHandler) => void
+  on: <K extends keyof EventMap>(event: K, handler: (data: EventMap[K]) => void) => void
   /** 注销事件监听 */
-  off: (event: string, handler: EventHandler) => void
+  off: <K extends keyof EventMap>(event: K, handler: (data: EventMap[K]) => void) => void
   /** 触发事件 */
-  emit: (event: string, ...args: unknown[]) => void
+  emit: <K extends keyof EventMap>(event: K, ...args: EmitData<EventMap[K]>) => void
   /** 处理快捷键 */
   handleKeyboardShortcut?: (shortcut: string) => boolean
   /** XAP 资源管理器 */
@@ -100,8 +105,8 @@ export interface WorkbookEditorInterface {
 /** 命令函数 */
 export type CommandFn<S = unknown> = (state: S, dispatch: ((tr: unknown) => void) | null, args?: unknown) => boolean
 
-/** 事件处理器 */
-export type EventHandler = (...args: unknown[]) => void
+/** 事件处理器（基于 EventMap 类型推导） */
+export type EventHandler<K extends keyof EventMap = keyof EventMap> = (data: EventMap[K]) => void
 
 /** 快捷键处理器 */
 export type KeyboardShortcutHandler = (ctx: ExtensionContext<any>) => boolean
@@ -179,11 +184,11 @@ export interface ExtensionManager {
   /** 更新状态 */
   updateState(state: unknown): void
   /** 触发事件 */
-  emit(event: string, ...args: unknown[]): void
+  emit<K extends keyof EventMap>(event: K, ...args: EmitData<EventMap[K]>): void
   /** 监听事件 */
-  on(event: string, handler: EventHandler): void
+  on<K extends keyof EventMap>(event: K, handler: (data: EventMap[K]) => void): void
   /** 注销事件监听 */
-  off(event: string, handler: EventHandler): void
+  off<K extends keyof EventMap>(event: K, handler: (data: EventMap[K]) => void): void
 }
 
 /**
