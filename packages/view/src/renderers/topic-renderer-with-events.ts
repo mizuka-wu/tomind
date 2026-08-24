@@ -14,9 +14,7 @@ import type {
   ViewEventType, 
   ViewEventHandler, 
   ViewEvent,
-  DragEventType,
   KeyboardEventType,
-  GestureEventType
 } from '../view-event'
 import { EventManager } from '../event-manager'
 import { KeyboardEventManager } from '../keyboard-event-manager'

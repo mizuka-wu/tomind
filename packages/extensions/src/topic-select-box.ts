@@ -242,13 +242,11 @@ export const TopicSelectBoxExtension = createExtension<Record<string, unknown>, 
   },
 
   onCreate(ctx) {
-    ctx.on('selection:hoverEnter', (data: unknown) => {
-      const { nodeId } = data as { nodeId: string }
+    ctx.on('selection:hoverEnter', ({ nodeId }) => {
       handleHoverEnter(ctx, nodeId)
     })
 
-    ctx.on('selection:hoverLeave', (data: unknown) => {
-      const { nodeId } = data as { nodeId: string }
+    ctx.on('selection:hoverLeave', ({ nodeId }) => {
       handleHoverLeave(ctx, nodeId)
     })
 

@@ -43,9 +43,8 @@ export const EditBridgeExtension = createExtension<Record<string, unknown>, Edit
      * 监听 edit:start 事件
      * 由 TopicNodeViewDesc 的 doubletap 触发
      */
-    ctx.on('edit:start', (data: unknown) => {
-      const { nodeId, node } = data as { nodeId: string; node: any }
-      handleEditStart(ctx, nodeId, node)
+    ctx.on('edit:start', ({ nodeId, node }) => {
+      handleEditStart(ctx, nodeId, node as any)
     })
 
     // 注册 topic.edit 命令（F2 / Space 触发）

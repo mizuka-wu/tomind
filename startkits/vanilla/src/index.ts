@@ -49,7 +49,7 @@ import {
 
 // ==================== 内置扩展列表 ====================
 
-const builtInExtensions: Extension<any>[] = [
+const builtInExtensions: Extension<any, any, any>[] = [
   // 结构元素（节点类型）
   TopicExtension,
 
@@ -106,7 +106,7 @@ const builtInExtensions: Extension<any>[] = [
 function createStarterKit(options: StarterKitOptions = {}) {
   const { extensions: extraExtensions = [], ...extensionConfigs } = options
 
-  const allExtensions: Extension<any>[] = []
+  const allExtensions: Extension<any, any, any>[] = []
 
   for (const ext of builtInExtensions) {
     const config = extensionConfigs[ext.name]

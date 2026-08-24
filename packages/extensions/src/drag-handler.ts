@@ -11,7 +11,7 @@
  */
 
 import { createExtension, parseArgs } from '@tomind/core'
-import type { CommandFn } from '@tomind/core'
+import type { CommandFn, EventMap } from '@tomind/core'
 import { onDocEvent, offDocEvent } from '@tomind/core'
 
 // ==================== 类型定义 ====================
@@ -57,7 +57,7 @@ interface DragHandlerContext {
   getSheetEditor: () => SheetEditorLike | null | undefined
   getCentralBranch: () => unknown
   getSelectionManager: () => SelectionManagerLike | null | undefined
-  emit: (event: string, ...args: unknown[]) => void
+  emit: <K extends keyof EventMap>(event: K, data?: EventMap[K]) => void
 }
 
 // ==================== 工具函数 ====================
@@ -480,7 +480,7 @@ class DragHandlerManager {
   private _context: DragHandlerContext
   private _options: Required<DragHandlerOptions>
   private _handler: IDragHandler | null = null
-  private _transferData: Partial<DragTransferData> = {}
+  private _transferData: DragTransferData | null = null
   private _prePosition = { x: 0, y: 0 }
   private _keyPress = { shiftKey: false, altKey: false }
   private _dragSelections: any[] = []
@@ -535,13 +535,13 @@ class DragHandlerManager {
           document.removeEventListener('keyup', onKeyUp)
         }
         this._keyPress = { shiftKey: e.shiftKey, altKey: e.altKey }
-        this._transferData.keyPress = { ...this._keyPress }
+        if (this._transferData) this._transferData.keyPress = { ...this._keyPress }
         this._triggerDragMoving()
       }
 
       const onKeyUp = (e: KeyboardEvent) => {
         this._keyPress = { shiftKey: e.shiftKey, altKey: e.altKey }
-        this._transferData.keyPress = { ...this._keyPress }
+        if (this._transferData) this._transferData.keyPress = { ...this._keyPress }
         this._triggerDragMoving()
       }
 
@@ -625,11 +625,12 @@ class DragHandlerManager {
       keyPress: { ...this._keyPress },
     }
 
-    const startData = this._handler.dragStart(this._transferData as DragTransferData)
+    const startData = this._handler.dragStart(this._transferData!)
     if (startData) Object.assign(this._transferData, startData)
   }
 
   private _onDragViewMoving(mouseRealPosition: { x: number; y: number }): void {
+    if (!this._transferData) return
     if (
       Math.abs(this._prePosition.x - mouseRealPosition.x) < this._options.moveStep &&
       Math.abs(this._prePosition.y - mouseRealPosition.y) < this._options.moveStep
@@ -637,24 +638,25 @@ class DragHandlerManager {
 
     this._prePosition = { ...mouseRealPosition }
     this._transferData.position = { ...mouseRealPosition }
-    this._transferData.dropView = this._handler?.getDragOverView(this._transferData as DragTransferData)
+    this._transferData.dropView = this._handler?.getDragOverView(this._transferData)
     this._transferData.keyPress = { ...this._keyPress }
     this._triggerDragMoving()
   }
 
   private _onDragViewFinish(mouseRealPosition: { x: number; y: number }): void {
+    if (!this._transferData) return
     this._transferData.position = mouseRealPosition
-    this._handler?.dragFinish(this._transferData as DragTransferData)
+    this._handler?.dragFinish(this._transferData)
     this._reset()
   }
 
   private _triggerDragMoving(): void {
-    this._handler?.dragMoving(this._transferData as DragTransferData)
+    this._handler?.dragMoving(this._transferData!)
   }
 
   private _reset(): void {
     this._handler = null
-    this._transferData = {}
+    this._transferData = null
     this._keyPress = { shiftKey: false, altKey: false }
     this._originalDragSelections = []
     this._dragSelections = []
@@ -696,7 +698,7 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
       getSheetEditor: () => ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null,
       getCentralBranch: () => null,
       getSelectionManager: () => null,
-      emit: (event, ...args) => ctx.emit(event, ...args),
+      emit: ((event, data?) => ctx.emit(event, data)) as DragHandlerContext['emit'],
     }
 
     // 创建管理器
@@ -726,17 +728,16 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
     // 监听事件
     const handlePlaceholderUpdate = (data: unknown) => ctx.emit('indicator:update', data)
 
-    const handleMountDetached = (data: unknown) => {
-      const payload = data as { views: any[]; position: { x: number; y: number } }
+    const handleMountDetached = ({ views, position }: { views: unknown[]; position: { x: number; y: number } }) => {
       const sheetEditor = ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
       if (!sheetEditor) return
-      for (const view of payload.views) {
+      for (const view of views as any[]) {
         sheetEditor.dispatch({
           type: 'insertNode',
           payload: {
             node: {
               type: 'topic',
-              attrs: { ...view.node.attrs, position: payload.position },
+              attrs: { ...view.node.attrs, position },
               children: view.node.children,
             },
           },
@@ -744,35 +745,35 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
       }
     }
 
-    const handleMountAttach = (data: unknown) => {
-      const payload = data as { views: any[]; parentView: any; at: number }
+    const handleMountAttach = ({ views, parentView, at }: { views: unknown[]; parentView: unknown; at: number }) => {
       const sheetEditor = ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
-      if (!sheetEditor || !payload.parentView?.node) return
-      for (const view of payload.views) {
+      const pv = parentView as any
+      if (!sheetEditor || !pv?.node) return
+      for (const view of views as any[]) {
         sheetEditor.dispatch({
           type: 'insertNode',
           payload: {
-            parentId: payload.parentView.node.id,
-            at: payload.at,
+            parentId: pv.node.id,
+            at,
             node: { type: 'topic', attrs: view.node.attrs, children: view.node.children },
           },
         })
       }
     }
 
-    const handleMountFree = (data: unknown) => {
-      const payload = data as { views: any[]; parentView: any; at: number; position: { x: number; y: number } }
+    const handleMountFree = ({ views, parentView, at, position }: { views: unknown[]; parentView: unknown; at: number; position: { x: number; y: number } }) => {
       const sheetEditor = ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
-      if (!sheetEditor || !payload.parentView?.node) return
-      for (const view of payload.views) {
+      const pv = parentView as any
+      if (!sheetEditor || !pv?.node) return
+      for (const view of views as any[]) {
         sheetEditor.dispatch({
           type: 'insertNode',
           payload: {
-            parentId: payload.parentView.node.id,
-            at: payload.at,
+            parentId: pv.node.id,
+            at,
             node: {
               type: 'topic',
-              attrs: { ...view.node.attrs, position: payload.position },
+              attrs: { ...view.node.attrs, position },
               children: view.node.children,
             },
           },

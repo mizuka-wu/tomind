@@ -1,5 +1,5 @@
 import { createExtension, getTitleText, Transaction } from '@tomind/core'
-import type { NodeDesc, ExtensionContext, CommandFn, KeyboardShortcutHandler, SheetState, SelectionElement } from '@tomind/core'
+import type { NodeDesc, ExtensionContext, CommandFn, SheetState, SelectionElement } from '@tomind/core'
 /**
  * CopyPasteExtension — 复制粘贴扩展
  *

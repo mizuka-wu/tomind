@@ -15,7 +15,7 @@
  */
 
 import { createExtension } from '@tomind/core'
-import type { ExtensionContext, CommandFn } from '@tomind/core'
+import type { CommandFn } from '@tomind/core'
 
 // ==================== 类型定义 ====================
 
@@ -133,7 +133,8 @@ export const DropExtension = createExtension<DropOptions>({
     // 坐标转换
     const viewportToMindMap = (clientPos: Position): Position => {
       let result = clientPos
-      ctx.emit('coordinate:viewportToMindMap', clientPos, (pos: Position) => {
+      // @ts-expect-error callback-based emit needs refactor
+      ctx.emit('coordinate:viewportToMindMap' as any, clientPos, (pos: Position) => {
         result = pos
       })
       return result
@@ -175,7 +176,8 @@ export const DropExtension = createExtension<DropOptions>({
 
         // 获取拖拽经过的视图
         let dropView: any = null
-        ctx.emit('drop:getDropView', realPosition, (view: any) => {
+        // @ts-expect-error callback-based emit needs refactor
+        ctx.emit('drop:getDropView' as any, realPosition, (view: any) => {
           dropView = view
         })
 
@@ -183,7 +185,8 @@ export const DropExtension = createExtension<DropOptions>({
 
         // 获取传输选项
         let transferOptions: any = null
-        ctx.emit('drop:onDragMoving', dropView, realPosition, (options: any) => {
+        // @ts-expect-error callback-based emit needs refactor
+        ctx.emit('drop:onDragMoving' as any, dropView, realPosition, (options: any) => {
           transferOptions = options
         })
 

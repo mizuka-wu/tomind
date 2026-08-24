@@ -269,7 +269,7 @@ function setupEventHandlers(
     const nodeIds = findNodesInBounds(layoutResult, bounds, isSegmentMultiSelect || false, currentSelection)
 
     // 实时预览：发出预选事件（不直接修改 selection）
-    ctx.emit('selection:boxSelectPreview', nodeIds, bounds)
+    ctx.emit('selection:boxSelectPreview', { nodeIds, bounds })
   }
 
   /**

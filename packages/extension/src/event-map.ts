@@ -1,8 +1,8 @@
 /**
- * Event Map — 通过模块声明合并收集所有扩展的事件类型
+ * Event Map — 所有扩展间事件的类型定义
  *
- * 每个 extension 在自己的文件中通过 declare module 扩展此接口。
- * TypeScript 自动合并所有声明，ctx.on/emit 自动获得类型推导。
+ * 新增事件必须先在此处定义。
+ * 各 extension 通过泛型参数声明自己 emit 的事件。
  */
 export interface EventMap {
   // ─── View 事件透传 ───
@@ -28,6 +28,9 @@ export interface EventMap {
   'selection:boxSelectPreview': { nodeIds: string[]; bounds: unknown }
   'selection:boxSelectComplete': void
 
+  // ─── Edit ───
+  'edit:start': { nodeId: string; node: unknown }
+
   // ─── Navigation ───
   'navigation:up': void
   'navigation:down': void
@@ -51,51 +54,65 @@ export interface EventMap {
   // ─── Select Box ───
   'selectBox:rangeChanged': { nodeId: string; rangeStart: number; rangeEnd: number; direction: string }
 
+  // ─── Select Drag ───
+  'selectDrag:start': unknown
+  'selectDrag:addBranch': unknown
+  'selectDrag:removeBranch': unknown
+  'selectDrag:move': unknown
+  'selectDrag:end': void
+  'selectDrag:branchMouseout': unknown
+
   // ─── Mouse Box Select ───
   'mouseBoxSelect:start': unknown
   'mouseBoxSelect:started': unknown
-  'mouseBoxSelect:selecting': { bounds: unknown; isSegmentMultiSelect: boolean }
+  'mouseBoxSelect:selecting': unknown
   'mouseBoxSelect:ended': void
 
   // ─── Resize ───
   'resize:changed': { nodeId: string; width: number; height: number }
 
   // ─── Context Menu ───
-  'contextMenu:show': { event: unknown; nodeId: string }
-  'contextMenu:action': { itemId: string; nodeId: string }
+  'contextMenu:show': Record<string, unknown>
+  'contextMenu:action': Record<string, unknown>
 
   // ─── Relationship ───
-  'relationship:create': { sourceId: string; targetId: string }
-  'relationship:createMoving': { sourceId: string; position: unknown }
-  'relationship:updateMoving': { position: unknown }
-  'relationship:endpointMoved': { relationshipId: string; endpoint: string; nodeId: string }
-  'relationship:controlPointMoved': { relationshipId: string; controlPoint: unknown }
-  'relationship:removeMoving': { id: string }
-  'relationship:setStyle': { style: unknown }
-  'relationship:setControlPoints': { points: unknown }
-  'relationship:updateStyle': { style: unknown }
+  'relationship:create': Record<string, unknown>
+  'relationship:createMoving': Record<string, unknown>
+  'relationship:updateMoving': Record<string, unknown>
+  'relationship:endpointMoved': Record<string, unknown>
+  'relationship:controlPointMoved': Record<string, unknown>
+  'relationship:removeMoving': Record<string, unknown>
+  'relationship:setStyle': Record<string, unknown>
+  'relationship:setControlPoints': Record<string, unknown>
+  'relationship:updateStyle': Record<string, unknown>
 
   // ─── Topic ───
-  'topic:addChild': { parentId?: string; attrs?: unknown }
-  'topic:addFloating': { position: unknown; attrs?: unknown }
-  'topic:createFloating': { position: unknown }
-  'topic:customWidthChanged': { nodeId: string; width: number }
+  'topic:addChild': Record<string, unknown>
+  'topic:addFloating': Record<string, unknown>
+  'topic:createFloating': Record<string, unknown>
+  'topic:customWidthChanged': Record<string, unknown>
+
+  // ─── Drag Branch ───
+  'drag:branch:placeholder:update': unknown
+  'drag:branch:mount:detached': { views: unknown[]; position: { x: number; y: number }; isDuplicate?: boolean }
+  'drag:branch:mount:attach': { views: unknown[]; parentView: unknown; at: number; isDuplicate?: boolean }
+  'drag:branch:mount:free': { views: unknown[]; parentView: unknown; at: number; position: { x: number; y: number }; isDuplicate?: boolean }
 
   // ─── MiniMap ───
   'miniMap:created': { container: unknown }
   'miniMap:navigate': { ratioX: number; ratioY: number }
   'miniMap:drag': { ratioDx: number; ratioDy: number }
-  'miniMap:requestViewport': (viewport: unknown) => void
-  'miniMap:requestBounds': (bounds: unknown) => void
+  'miniMap:requestViewport': unknown
+  'miniMap:requestBounds': unknown
   'miniMap:requestRender': unknown
-  'miniMap:requestScale': (scale: number | null) => void
+  'miniMap:requestScale': unknown
 
   // ─── Coordinate ───
   'coordinate:viewportToMindMap': unknown
 
   // ─── Drop ───
-  'drop:image': { src: string; position: unknown }
-  'drop:folder': { name: string; position: unknown }
+  'drop:image': Record<string, unknown>
+  'drop:folder': Record<string, unknown>
   'drop:attachment': unknown
   'drop:onDragMoving': unknown
   'drop:getDropView': unknown
@@ -111,8 +128,8 @@ export interface EventMap {
   'contentChange': void
 
   // ─── Callback-based ───
-  getLeaferView: (view: unknown) => void
-  getViewPortCover: (el: HTMLElement) => void
-  getContainer: (dom: HTMLElement) => void
-  getConfig: (config: unknown) => void
+  getLeaferView: unknown
+  getViewPortCover: unknown
+  getContainer: unknown
+  getConfig: unknown
 }

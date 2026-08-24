@@ -13,12 +13,11 @@ import { ViewDesc, DirtyFlag } from './view-desc'
 import type {
   NodeDesc,
   NodeRole,
-  RelationshipNodeDesc,
-  BoundaryNodeDesc,
-  SummaryNodeDesc,
 } from '@tomind/schema'
+import { isRelationshipNode, isBoundaryNode, isSummaryNode } from '@tomind/schema'
 import type { StyleEngine, LeaferStyle } from '@tomind/style'
 import type { LayoutEngine, LayoutResult } from '@tomind/layout'
+import { getAttr } from '@tomind/layout'
 import { getTitleText } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { NodeDecoration } from '@tomind/state'
@@ -843,18 +842,17 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
 
   protected updateContent(): void {
     if (!this.renderer || !this.ctx.state) return
-    
-    const node = this.node as RelationshipNodeDesc
-    const { sourceId, targetId, title, controlPoints } = node.attrs
+    if (!isRelationshipNode(this.node)) return
+    const { sourceId, targetId, title, controlPoints } = this.node.attrs
 
     const sourceNode = this.ctx.state.getNode(sourceId)
     const targetNode = this.ctx.state.getNode(targetId)
     if (!sourceNode || !targetNode) return
 
-    const sourcePos = sourceNode.attrs.position as { x: number; y: number } | undefined
-    const sourceSize = sourceNode.attrs.size as { width: number; height: number } | undefined
-    const targetPos = targetNode.attrs.position as { x: number; y: number } | undefined
-    const targetSize = targetNode.attrs.size as { width: number; height: number } | undefined
+    const sourcePos = getAttr<{ x: number; y: number }>(sourceNode, 'position')
+    const sourceSize = getAttr<{ width: number; height: number }>(sourceNode, 'size')
+    const targetPos = getAttr<{ x: number; y: number }>(targetNode, 'position')
+    const targetSize = getAttr<{ width: number; height: number }>(targetNode, 'size')
     if (!sourcePos || !sourceSize || !targetPos || !targetSize) return
 
     const from = {
@@ -983,16 +981,15 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
 
   protected updateContent(): void {
     if (!this.renderer || !this.ctx.state) return
-    
-    const node = this.node as BoundaryNodeDesc
-    const { topicIds, title } = node.attrs
+    if (!isBoundaryNode(this.node)) return
+    const { topicIds, title } = this.node.attrs
 
     const positions: { x: number; y: number; width: number; height: number }[] = []
     for (const topicId of topicIds) {
       const topicNode = this.ctx.state.getNode(topicId)
       if (topicNode) {
-        const pos = topicNode.attrs.position as { x: number; y: number } | undefined
-        const size = topicNode.attrs.size as { width: number; height: number } | undefined
+        const pos = getAttr<{ x: number; y: number }>(topicNode, 'position')
+        const size = getAttr<{ width: number; height: number }>(topicNode, 'size')
         if (pos && size) {
           positions.push({ ...pos, ...size })
         }
@@ -1084,16 +1081,15 @@ export class SummaryNodeViewDesc extends NodeViewDesc {
 
   protected updateContent(): void {
     if (!this.summaryRenderer || !this.ctx.state) return
-    
-    const node = this.node as SummaryNodeDesc
-    const { topicIds } = node.attrs
+    if (!isSummaryNode(this.node)) return
+    const { topicIds } = this.node.attrs
 
     const positions: { x: number; y: number; height: number }[] = []
     for (const topicId of topicIds) {
       const topicNode = this.ctx.state.getNode(topicId)
       if (topicNode) {
-        const pos = topicNode.attrs.position as { x: number; y: number } | undefined
-        const size = topicNode.attrs.size as { width: number; height: number } | undefined
+        const pos = getAttr<{ x: number; y: number }>(topicNode, 'position')
+        const size = getAttr<{ width: number; height: number }>(topicNode, 'size')
         if (pos && size) {
           positions.push({ x: pos.x, y: pos.y, height: size.height })
         }
@@ -1905,8 +1901,8 @@ export class ConnectionNodeViewDesc extends NodeViewDesc {
       layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     }
 
-    const node = this.node as RelationshipNodeDesc
-    const { sourceId, targetId } = node.attrs
+    if (!isRelationshipNode(this.node)) return
+    const { sourceId, targetId } = this.node.attrs
     const sourceLayout = layout.nodes.get(sourceId)
     const targetLayout = layout.nodes.get(targetId)
     if (sourceLayout && targetLayout) {
@@ -1968,11 +1964,11 @@ export class LegendNodeViewDesc extends NodeViewDesc {
     if (!this.renderer) return
 
     // 可见性
-    const visibility = this.node.attrs.visibility as string | undefined
+    const visibility = getAttr<string>(this.node, 'visibility')
     this.renderer.setVisible(visibility !== 'hidden')
 
     // 位置
-    const position = this.node.attrs.position as { x: number; y: number } | undefined
+    const position = getAttr<{ x: number; y: number }>(this.node, 'position')
     if (position) {
       this.renderer.setPosition(position.x, position.y)
     }
@@ -1987,7 +1983,7 @@ export class LegendNodeViewDesc extends NodeViewDesc {
     for (const topicId of topicIds) {
       const nodeInfo = this.ctx.state.getNode(topicId)
       if (!nodeInfo) continue
-      const markers = nodeInfo.attrs.markers as string[] | undefined
+      const markers = getAttr<string[]>(nodeInfo, 'markers')
       if (!markers) continue
       for (const markerId of markers) {
         if (!markerSet.has(markerId)) {

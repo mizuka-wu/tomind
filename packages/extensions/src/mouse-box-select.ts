@@ -190,7 +190,7 @@ export const MouseBoxSelectExtension = createPartExtension({
       // 触发框选事件
       if (multiSelectRect.parent) {
         const bounds = multiSelectRect.getBounds('box')
-        ctx.emit('mouseBoxSelect:selecting', bounds, isSegmentMultiSelect)
+        ctx.emit('mouseBoxSelect:selecting', { bounds, isSegmentMultiSelect })
       }
     }
 

@@ -410,12 +410,12 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       unregisterCommand: (name: string) => {
         workbook.extensionManager.unregisterCommand?.(name)
       },
-      on: (event: string, handler: EventHandler) => {
+      on: ((event: string, handler: EventHandler) => {
         workbook.on(event, handler)
-      },
-      off: (event: string, handler: EventHandler) => {
+      }) as ExtensionContext['on'],
+      off: ((event: string, handler: EventHandler) => {
         workbook.off(event, handler)
-      },
+      }) as ExtensionContext['off'],
       emit: (event: string, ...args: unknown[]) => {
         workbook.emit(event, ...args)
       },

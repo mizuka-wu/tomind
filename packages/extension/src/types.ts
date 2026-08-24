@@ -94,11 +94,11 @@ export interface WorkbookEditorInterface {
   /** 执行命令 */
   executeCommand: (name: string, args?: unknown) => boolean
   /** 监听事件 */
-  on: <K extends keyof EventMap>(event: K, handler: (data: EventMap[K]) => void) => void
+  on: (event: string, handler: (data: unknown) => void) => void
   /** 注销事件监听 */
-  off: <K extends keyof EventMap>(event: K, handler: (data: EventMap[K]) => void) => void
+  off: (event: string, handler: (data: unknown) => void) => void
   /** 触发事件 */
-  emit: <K extends keyof EventMap>(event: K, ...args: EmitData<EventMap[K]>) => void
+  emit: (event: string, data?: unknown) => void
   /** 处理快捷键 */
   handleKeyboardShortcut?: (shortcut: string) => boolean
   /** XAP 资源管理器 */

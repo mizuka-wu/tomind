@@ -442,15 +442,15 @@ export class SheetEditor {
       unregisterCommand: (name: string) => {
         editor.unregisterCommand(name)
       },
-      on: (event: string, handler: EventHandler) => {
+      on: ((event: string, handler: EventHandler) => {
         editor.onAny(event, handler)
-      },
-      off: (event: string, handler: EventHandler) => {
+      }) as ExtensionContext['on'],
+      off: ((event: string, handler: EventHandler) => {
         editor.offAny(event, handler)
-      },
-      emit: (event: string, ...args: unknown[]) => {
-        editor.emitAny(event, ...args)
-      },
+      }) as ExtensionContext['off'],
+      emit: ((event: string, data?: unknown) => {
+        editor.emitAny(event, data)
+      }) as ExtensionContext['emit'],
       registerNodeView: (nodeType: string, viewDesc: unknown) => {
         // Extension 注册 NodeViewDesc
         if (typeof viewDesc === 'function' && viewDesc.length <= 3) {

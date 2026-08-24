@@ -11,7 +11,7 @@
 import type {
   Extension,
   ExtensionContext,
-  ExtensionManager as IExtensionManager,
+
   EventHandler,
   KeyboardShortcutHandler,
   CommandFn

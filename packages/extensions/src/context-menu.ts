@@ -9,7 +9,7 @@
  */
 
 import { createExtension, parseArgs } from '@tomind/core'
-import type { ExtensionContext, CommandFn, EventHandler } from '@tomind/core'
+import type { ExtensionContext, CommandFn } from '@tomind/core'
 // ==================== 类型定义 ====================
 
 interface ContextMenuOptions {
@@ -71,7 +71,12 @@ interface ContextMenuStorage extends Record<string, unknown> {
 
 // ==================== ContextMenuExtension ====================
 
-export const ContextMenuExtension = createExtension<ContextMenuOptions, ContextMenuStorage>({
+interface ContextMenuEvents {
+  'contextMenu:show': { event: unknown; nodeId: string }
+  'contextMenu:action': { itemId: string; nodeId: string }
+}
+
+export const ContextMenuExtension = createExtension<ContextMenuOptions, ContextMenuStorage, ContextMenuEvents>({
   name: 'contextMenu',
   type: 'extension',
   defaultOptions: {

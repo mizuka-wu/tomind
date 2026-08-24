@@ -37,11 +37,6 @@ interface MiniMapOptions {
   padding?: number
 }
 
-/** 位置 */
-interface Position {
-  x: number
-  y: number
-}
 
 /** 小地图视图 */
 interface MiniMapView {

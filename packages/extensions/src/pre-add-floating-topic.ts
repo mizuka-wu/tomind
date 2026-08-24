@@ -31,13 +31,6 @@ interface Position {
   y: number
 }
 
-/** 流程状态 */
-interface ProcessState {
-  active: boolean
-  fakeView: Group | null
-  cleanup: (() => void) | null
-}
-
 // ==================== 常量 ====================
 
 const FAKE_VIEW_WIDTH = 104

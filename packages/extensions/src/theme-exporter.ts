@@ -1,5 +1,5 @@
 import { createExtension } from '@tomind/core'
-import type { ExtensionContext, CommandFn, ThemeData, NodeType, ResolvedStyle, StyleValue } from '@tomind/core'
+import type { ExtensionContext, ThemeData, ResolvedStyle, StyleValue } from '@tomind/core'
 import { COLOR_KEYS, SKELETON_KEYS } from '@tomind/style'
 
 // ==================== 类型安全辅助 ====================
