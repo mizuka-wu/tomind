@@ -57,7 +57,7 @@ export function createExtensionContext(editor: {
     dispatch: editor.dispatch,
     getView: editor.getView,
     executeCommand: editor.executeCommand,
-    registerCommand: editor.registerCommand,
+    registerCommand: editor.registerCommand as unknown as import('./types').ExtensionContext['registerCommand'],
     unregisterCommand: editor.unregisterCommand,
     on: editor.on,
     off: editor.off,

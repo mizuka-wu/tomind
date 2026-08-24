@@ -109,12 +109,13 @@ export const TopicExtension = createExtension<TopicOptions>({
 
   onCreate(ctx: ExtensionContext) {
     // ==================== topic.addChild ====================
-    ctx.registerCommand('topic.addChild', (
-      state: unknown,
+    ctx.registerCommand<SheetState>('topic.addChild', (
+
+      state,
       dispatch: ((tr: unknown) => void) | null,
       params?: unknown,
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId, title } = (params ?? {}) as { nodeId?: string; title?: string }
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
@@ -143,12 +144,13 @@ export const TopicExtension = createExtension<TopicOptions>({
     })
 
     // ==================== topic.addSibling ====================
-    ctx.registerCommand('topic.addSibling', (
-      state: unknown,
+    ctx.registerCommand<SheetState>('topic.addSibling', (
+
+      state,
       dispatch: ((tr: unknown) => void) | null,
       params?: unknown,
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId, title } = (params ?? {}) as { nodeId?: string; title?: string }
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
@@ -181,12 +183,13 @@ export const TopicExtension = createExtension<TopicOptions>({
     })
 
     // ==================== topic.addSiblingBefore ====================
-    ctx.registerCommand('topic.addSiblingBefore', (
-      state: unknown,
+    ctx.registerCommand<SheetState>('topic.addSiblingBefore', (
+
+      state,
       dispatch: ((tr: unknown) => void) | null,
       params?: unknown,
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId, title } = (params ?? {}) as { nodeId?: string; title?: string }
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
@@ -217,12 +220,13 @@ export const TopicExtension = createExtension<TopicOptions>({
     })
 
     // ==================== topic.delete ====================
-    ctx.registerCommand('topic.delete', (
-      state: unknown,
+    ctx.registerCommand<SheetState>('topic.delete', (
+
+      state,
       dispatch: ((tr: unknown) => void) | null,
       params?: unknown,
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId } = (params ?? {}) as { nodeId?: string }
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
@@ -248,11 +252,12 @@ export const TopicExtension = createExtension<TopicOptions>({
     })
 
     // ==================== navigation.up ====================
-    ctx.registerCommand('navigation.up', (
-      state: unknown,
+    ctx.registerCommand<SheetState>('navigation.up', (
+
+      state,
       dispatch: ((tr: unknown) => void) | null,
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       const targetId = getSelectedNodeId(sheetState)
       if (!targetId) return false
 
@@ -281,11 +286,12 @@ export const TopicExtension = createExtension<TopicOptions>({
     })
 
     // ==================== navigation.down ====================
-    ctx.registerCommand('navigation.down', (
-      state: unknown,
+    ctx.registerCommand<SheetState>('navigation.down', (
+
+      state,
       dispatch: ((tr: unknown) => void) | null,
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       const targetId = getSelectedNodeId(sheetState)
       if (!targetId) return false
 
@@ -314,11 +320,12 @@ export const TopicExtension = createExtension<TopicOptions>({
     })
 
     // ==================== navigation.left ====================
-    ctx.registerCommand('navigation.left', (
-      state: unknown,
+    ctx.registerCommand<SheetState>('navigation.left', (
+
+      state,
       dispatch: ((tr: unknown) => void) | null,
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       const targetId = getSelectedNodeId(sheetState)
       if (!targetId) return false
 
@@ -346,11 +353,12 @@ export const TopicExtension = createExtension<TopicOptions>({
     })
 
     // ==================== navigation.right ====================
-    ctx.registerCommand('navigation.right', (
-      state: unknown,
+    ctx.registerCommand<SheetState>('navigation.right', (
+
+      state,
       dispatch: ((tr: unknown) => void) | null,
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       const targetId = getSelectedNodeId(sheetState)
       if (!targetId) return false
 
@@ -373,11 +381,12 @@ export const TopicExtension = createExtension<TopicOptions>({
     })
 
     // ==================== selection.extendUp ====================
-    ctx.registerCommand('selection.extendUp', (
-      state: unknown,
+    ctx.registerCommand<SheetState>('selection.extendUp', (
+
+      state,
       dispatch: ((tr: unknown) => void) | null,
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       const currentIds = getSelectedNodeIds(sheetState)
       if (currentIds.length === 0) return false
 
@@ -402,11 +411,12 @@ export const TopicExtension = createExtension<TopicOptions>({
     })
 
     // ==================== selection.extendDown ====================
-    ctx.registerCommand('selection.extendDown', (
-      state: unknown,
+    ctx.registerCommand<SheetState>('selection.extendDown', (
+
+      state,
       dispatch: ((tr: unknown) => void) | null,
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       const currentIds = getSelectedNodeIds(sheetState)
       if (currentIds.length === 0) return false
 
@@ -431,9 +441,9 @@ export const TopicExtension = createExtension<TopicOptions>({
     })
 
     // ==================== file.save ====================
-    ctx.registerCommand('file.save', (
-      _state: unknown,
-      _dispatch: ((tr: unknown) => void) | null,
+    ctx.registerCommand<SheetState>('file.save', (
+      _state,
+      _dispatch,
     ): boolean => {
       // 发出保存事件（由应用层处理）
       ctx.emit('file:save')

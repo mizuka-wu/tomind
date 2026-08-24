@@ -312,7 +312,7 @@ function isPointInBounds(point: Point, bounds: Bounds): boolean {
 
 function createViewportCommands(
   options: ViewportOptions
-): Record<string, CommandFn> {
+): Record<string, CommandFn<SheetState>> {
   const defaultZoom = options.defaultZoom ?? 1.0
   const minZoom = options.minZoom ?? 0.1
   const maxZoom = options.maxZoom ?? 5.0
@@ -323,13 +323,13 @@ function createViewportCommands(
      * 缩放到指定比例
      */
     'viewport.zoom': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { scale: number } | undefined
       if (!params) return false
-      const sheetState = state as SheetState
+      const sheetState = state
       const scale = Math.max(minZoom, Math.min(maxZoom, params.scale))
 
       if (!dispatch) return true
@@ -347,13 +347,13 @@ function createViewportCommands(
      * 放大
      */
     'viewport.zoomIn': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { step?: number } | undefined
       const step = params?.step ?? zoomStep
-      const sheetState = state as SheetState
+      const sheetState = state
       const newZoom = Math.min(maxZoom, sheetState.viewport.zoom + step)
 
       if (!dispatch) return true
@@ -371,13 +371,13 @@ function createViewportCommands(
      * 缩小
      */
     'viewport.zoomOut': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { step?: number } | undefined
       const step = params?.step ?? zoomStep
-      const sheetState = state as SheetState
+      const sheetState = state
       const newZoom = Math.max(minZoom, sheetState.viewport.zoom - step)
 
       if (!dispatch) return true
@@ -395,13 +395,13 @@ function createViewportCommands(
      * 移动到指定位置
      */
     'viewport.move': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { x: number; y: number } | undefined
       if (!params) return false
-      const sheetState = state as SheetState
+      const sheetState = state
 
       if (!dispatch) return true
 
@@ -418,13 +418,13 @@ function createViewportCommands(
      * 移动增量
      */
     'viewport.moveDelta': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { deltaX: number; deltaY: number } | undefined
       if (!params) return false
-      const sheetState = state as SheetState
+      const sheetState = state
 
       if (!dispatch) return true
 
@@ -445,12 +445,12 @@ function createViewportCommands(
      * 适应整个地图
      */
     'viewport.fitMap': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
       if (!dispatch) return true
 
-      const sheetState = state as SheetState
+      const sheetState = state
       const tr = new Transaction(sheetState.doc)
       tr.append(new SetViewportStep(
         { x: 0, y: 0, zoom: defaultZoom },
@@ -464,13 +464,13 @@ function createViewportCommands(
      * 缩放适应指定区域
      */
     'viewport.zoomToFit': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { bounds: { x: number; y: number; width: number; height: number } } | undefined
       if (!params) return false
-      const sheetState = state as SheetState
+      const sheetState = state
 
       if (!dispatch) return true
 
@@ -490,12 +490,12 @@ function createViewportCommands(
      * 聚焦到中心
      */
     'viewport.focusCenter': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
       if (!dispatch) return true
 
-      const sheetState = state as SheetState
+      const sheetState = state
       const tr = new Transaction(sheetState.doc)
       tr.append(new SetViewportStep(
         { x: 0, y: 0, zoom: sheetState.viewport.zoom },
@@ -509,12 +509,12 @@ function createViewportCommands(
      * 重置视口
      */
     'viewport.reset': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
       if (!dispatch) return true
 
-      const sheetState = state as SheetState
+      const sheetState = state
       const tr = new Transaction(sheetState.doc)
       tr.append(new SetViewportStep(
         { x: 0, y: 0, zoom: defaultZoom },

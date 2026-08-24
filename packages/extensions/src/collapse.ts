@@ -78,9 +78,9 @@ export const CollapseExtension = createExtension<CollapseOptions>({
 
   onCreate(ctx: ExtensionContext) {
     // collapse.toggle — 切换折叠状态
-    ctx.registerCommand('collapse.toggle', (state: unknown, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
+    ctx.registerCommand<SheetState>('collapse.toggle', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId } = (params ?? {}) as { nodeId?: string }
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
@@ -101,9 +101,9 @@ export const CollapseExtension = createExtension<CollapseOptions>({
     })
 
     // collapse.expand — 展开节点
-    ctx.registerCommand('collapse.expand', (state: unknown, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
+    ctx.registerCommand<SheetState>('collapse.expand', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId } = (params ?? {}) as { nodeId?: string }
       if (!nodeId) return false
 
@@ -118,9 +118,9 @@ export const CollapseExtension = createExtension<CollapseOptions>({
     })
 
     // collapse.collapse — 折叠节点
-    ctx.registerCommand('collapse.collapse', (state: unknown, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
+    ctx.registerCommand<SheetState>('collapse.collapse', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId } = (params ?? {}) as { nodeId?: string }
       if (!nodeId) return false
 
@@ -135,9 +135,9 @@ export const CollapseExtension = createExtension<CollapseOptions>({
     })
 
     // collapse.expandAll — 展开所有
-    ctx.registerCommand('collapse.expandAll', (state: unknown, dispatch: ((tr: unknown) => void) | null) => {
+    ctx.registerCommand<SheetState>('collapse.expandAll', (state, dispatch: ((tr: unknown) => void) | null) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       
       // 收集所有需要展开的节点
       const updates = collectCollapsedUpdates(sheetState.doc, false)
@@ -155,9 +155,9 @@ export const CollapseExtension = createExtension<CollapseOptions>({
     })
 
     // collapse.collapseAll — 折叠所有
-    ctx.registerCommand('collapse.collapseAll', (state: unknown, dispatch: ((tr: unknown) => void) | null) => {
+    ctx.registerCommand<SheetState>('collapse.collapseAll', (state, dispatch: ((tr: unknown) => void) | null) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       
       // 收集所有需要折叠的节点
       const updates = collectCollapsedUpdates(sheetState.doc, true)

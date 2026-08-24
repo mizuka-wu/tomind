@@ -353,16 +353,16 @@ function setupEventHandlers(
 
 // ==================== 命令工厂 ====================
 
-function createSelectionCommands(): Record<string, CommandFn> {
+function createSelectionCommands(): Record<string, CommandFn<SheetState>> {
   return {
     /**
      * 全选
      */
     'selection.selectAll': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.doc) return false
 
       // 获取所有可见节点
@@ -387,10 +387,10 @@ function createSelectionCommands(): Record<string, CommandFn> {
      * 清除选择
      */
     'selection.clear': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.doc) return false
 
       if (dispatch) {
@@ -406,10 +406,10 @@ function createSelectionCommands(): Record<string, CommandFn> {
      * 删除选中节点
      */
     'selection.deleteSelected': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.doc || !sheetState.selection) return false
 
       const { elements } = sheetState.selection
@@ -436,14 +436,14 @@ function createSelectionCommands(): Record<string, CommandFn> {
      * 选择指定节点
      */
     'selection.select': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { nodeId: string; addToSelection?: boolean } | undefined
       if (!params) return false
 
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.doc) return false
 
       const newElement: SelectionElement = {
@@ -478,14 +478,14 @@ function createSelectionCommands(): Record<string, CommandFn> {
      * 切换选择
      */
     'selection.toggle': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { nodeId: string } | undefined
       if (!params) return false
 
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.doc) return false
 
       const current = sheetState.selection?.elements || []
@@ -516,14 +516,14 @@ function createSelectionCommands(): Record<string, CommandFn> {
      * 添加到选择
      */
     'selection.add': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { nodeId: string } | undefined
       if (!params) return false
 
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.doc) return false
 
       const current = sheetState.selection?.elements || []
@@ -545,14 +545,14 @@ function createSelectionCommands(): Record<string, CommandFn> {
      * 从选择中移除
      */
     'selection.remove': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { nodeId: string } | undefined
       if (!params) return false
 
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.doc || !sheetState.selection) return false
 
       const { elements } = sheetState.selection
@@ -574,14 +574,14 @@ function createSelectionCommands(): Record<string, CommandFn> {
      * 聚焦到指定节点
      */
     'selection.focus': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
       const params = args as { nodeId: string } | undefined
       if (!params) return false
 
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.doc) return false
 
       // 聚焦节点同时选中它
@@ -600,7 +600,7 @@ function createSelectionCommands(): Record<string, CommandFn> {
      * 设置多选模式
      */
     'selection.setMultiSelectMode': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null,
       args?: unknown
     ): boolean => {
@@ -616,10 +616,10 @@ function createSelectionCommands(): Record<string, CommandFn> {
      * 获取所有选中节点
      */
     'selection.getSelections': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.selection) return false
 
       // 返回当前选择（通过返回值）
@@ -630,10 +630,10 @@ function createSelectionCommands(): Record<string, CommandFn> {
      * 获取最后选中的节点
      */
     'selection.getLastSelected': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.selection) return false
 
       const { elements } = sheetState.selection

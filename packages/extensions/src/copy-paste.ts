@@ -160,16 +160,16 @@ export const CopyPasteExtension = createExtension<CopyPasteOptions>({
 
 // ==================== 命令工厂 ====================
 
-function createCopyPasteCommands(ctx: ExtensionContext): Record<string, CommandFn> {
+function createCopyPasteCommands(ctx: ExtensionContext): Record<string, CommandFn<SheetState>> {
   return {
     /**
      * 复制
      */
     'clipboard.copy': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.selection) return false
 
       const { elements } = sheetState.selection
@@ -195,10 +195,10 @@ function createCopyPasteCommands(ctx: ExtensionContext): Record<string, CommandF
      * 粘贴
      */
     'clipboard.paste': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
-      const sheetState = state as SheetState
+      const sheetState = state
       if (!sheetState?.doc || !dispatch) return false
 
       // 异步读取剪贴板
@@ -238,7 +238,7 @@ function createCopyPasteCommands(ctx: ExtensionContext): Record<string, CommandF
      * 剪切
      */
     'clipboard.cut': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
       // 复制

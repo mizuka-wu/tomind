@@ -403,10 +403,10 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       executeCommand: (name: string, args?: unknown) => {
         return workbook.executeCommand(name, args)
       },
-      registerCommand: (name: string, command: CommandFn) => {
+      registerCommand: ((name: string, command: CommandFn) => {
         // 注册到 Workbook 级别的 ExtensionManager（所有 sheet 共享）
         workbook.extensionManager.registerCommand?.(name, command)
-      },
+      }) as ExtensionContext['registerCommand'],
       unregisterCommand: (name: string) => {
         workbook.extensionManager.unregisterCommand?.(name)
       },

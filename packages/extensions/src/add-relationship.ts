@@ -128,13 +128,13 @@ function createCommands(
     getEventHandlers: () => { handleClick: ((e: unknown) => void) | null; handleMouseMove: ((e: unknown) => void) | null; handleKeyDown: ((e: unknown) => void) | null; handleKeyUp: ((e: unknown) => void) | null }
     setEventHandlers: (handlers: { handleClick: ((e: unknown) => void) | null; handleMouseMove: ((e: unknown) => void) | null; handleKeyDown: ((e: unknown) => void) | null; handleKeyUp: ((e: unknown) => void) | null }) => void
   }
-): Record<string, CommandFn> {
+): Record<string, CommandFn<SheetState>> {
   return {
     /**
      * 开始添加关系线
      */
     'relationship.add': (
-      state: unknown,
+      state,
       dispatch: ((tr: unknown) => void) | null
     ): boolean => {
       // 检查状态
@@ -143,7 +143,7 @@ function createCommands(
       }
 
       // 获取当前选择
-      const sheetState = state as SheetState
+      const sheetState = state
       const selections = sheetState?.selection?.elements || []
 
       if (selections.length > 2) {
@@ -168,7 +168,7 @@ function createCommands(
      * 取消添加
      */
     'relationship.cancel': (
-      _state: unknown,
+      _state,
       _dispatch: ((tr: unknown) => void) | null
     ): boolean => {
       cancel(ctx, stateManager)

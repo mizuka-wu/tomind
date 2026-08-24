@@ -62,9 +62,9 @@ export const BoundaryExtension = createExtension<BoundaryOptions>({
 
   onCreate(ctx: ExtensionContext) {
     // boundary.add — 在选中节点的父节点下添加 boundary
-    ctx.registerCommand('boundary.add', (state: unknown, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
+    ctx.registerCommand<SheetState>('boundary.add', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId, label, style } = (params ?? {}) as {
         nodeId?: string; label?: string; style?: Record<string, unknown>
       }
@@ -93,9 +93,9 @@ export const BoundaryExtension = createExtension<BoundaryOptions>({
     })
 
     // boundary.remove — 移除 boundary 节点
-    ctx.registerCommand('boundary.remove', (state: unknown, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
+    ctx.registerCommand<SheetState>('boundary.remove', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId } = (params ?? {}) as { nodeId?: string }
       if (!nodeId) return false
 
@@ -111,9 +111,9 @@ export const BoundaryExtension = createExtension<BoundaryOptions>({
     })
 
     // boundary.updateLabel — 更新 boundary 标签
-    ctx.registerCommand('boundary.updateLabel', (state: unknown, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
+    ctx.registerCommand<SheetState>('boundary.updateLabel', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId, label } = (params ?? {}) as { nodeId?: string; label?: string }
       if (!nodeId || label === undefined) return false
 

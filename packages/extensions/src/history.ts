@@ -42,9 +42,9 @@ export const HistoryExtension = createExtension<HistoryOptions>({
 
   onCreate(ctx: ExtensionContext) {
     // 注册 undo 命令
-    ctx.registerCommand('history.undo', (state: unknown, dispatch: ((tr: unknown) => void) | null) => {
+    ctx.registerCommand<SheetState>('history.undo', (state, dispatch: ((tr: unknown) => void) | null) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const history = sheetState.field(historyPluginKey) as HistoryState | undefined
       if (!history || !history.canUndo) return false
 
@@ -57,9 +57,9 @@ export const HistoryExtension = createExtension<HistoryOptions>({
     })
 
     // 注册 redo 命令
-    ctx.registerCommand('history.redo', (state: unknown, dispatch: ((tr: unknown) => void) | null) => {
+    ctx.registerCommand<SheetState>('history.redo', (state, dispatch: ((tr: unknown) => void) | null) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const history = sheetState.field(historyPluginKey) as HistoryState | undefined
       if (!history || !history.canRedo) return false
 
@@ -71,15 +71,15 @@ export const HistoryExtension = createExtension<HistoryOptions>({
     })
 
     // 注册 canUndo 检查命令
-    ctx.registerCommand('history.canUndo', (state: unknown) => {
-      const sheetState = state as SheetState
+    ctx.registerCommand<SheetState>('history.canUndo', (state) => {
+      const sheetState = state
       const history = sheetState.field(historyPluginKey) as HistoryState | undefined
       return history?.canUndo ?? false
     })
 
     // 注册 canRedo 检查命令
-    ctx.registerCommand('history.canRedo', (state: unknown) => {
-      const sheetState = state as SheetState
+    ctx.registerCommand<SheetState>('history.canRedo', (state) => {
+      const sheetState = state
       const history = sheetState.field(historyPluginKey) as HistoryState | undefined
       return history?.canRedo ?? false
     })

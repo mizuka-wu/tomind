@@ -59,9 +59,9 @@ export const SummaryExtension = createExtension<SummaryOptions>({
 
   onCreate(ctx: ExtensionContext) {
     // summary.add — 在父节点下添加 summary
-    ctx.registerCommand('summary.add', (state: unknown, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
+    ctx.registerCommand<SheetState>('summary.add', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId, rangeStart, rangeEnd, label } = (params ?? {}) as {
         nodeId?: string; rangeStart?: number; rangeEnd?: number; label?: string
       }
@@ -92,9 +92,9 @@ export const SummaryExtension = createExtension<SummaryOptions>({
     })
 
     // summary.remove — 移除 summary 节点
-    ctx.registerCommand('summary.remove', (state: unknown, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
+    ctx.registerCommand<SheetState>('summary.remove', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId } = (params ?? {}) as { nodeId?: string }
       if (!nodeId) return false
 
@@ -110,9 +110,9 @@ export const SummaryExtension = createExtension<SummaryOptions>({
     })
 
     // summary.updateRange — 更新摘要覆盖范围
-    ctx.registerCommand('summary.updateRange', (state: unknown, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
+    ctx.registerCommand<SheetState>('summary.updateRange', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
-      const sheetState = state as SheetState
+      const sheetState = state
       const { nodeId, rangeStart, rangeEnd } = (params ?? {}) as {
         nodeId?: string; rangeStart?: number; rangeEnd?: number
       }

@@ -435,9 +435,9 @@ export class SheetEditor {
         const result = editor.executeCommand(name, args)
         return result.success
       },
-      registerCommand: (name: string, command: CommandFn) => {
+      registerCommand: ((name: string, command: CommandFn) => {
         editor.registerCommand(name, command)
-      },
+      }) as ExtensionContext['registerCommand'],
       unregisterCommand: (name: string) => {
         editor.unregisterCommand(name)
       },
@@ -808,14 +808,14 @@ export class SheetEditor {
   /**
    * 注册命令到 CommandManager
    */
-  registerCommand(name: string, command: CommandFn): void {
+  registerCommand<S = unknown>(name: string, command: CommandFn<S>): void {
     this._commandManager.add({
       name,
       description: `Extension command: ${name}`,
       inputSchema: { type: 'object' },
       execute: (params: unknown, state: SheetState, dispatch?: (tr: Transaction) => void) => {
         const wrappedDispatch = dispatch ? (tr: unknown) => dispatch(tr as Transaction) : null
-        const success = command(state, wrappedDispatch, params)
+        const success = (command as CommandFn<SheetState>)(state, wrappedDispatch, params)
         return { success }
       },
     })

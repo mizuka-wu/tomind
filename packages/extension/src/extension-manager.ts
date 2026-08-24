@@ -253,8 +253,8 @@ export class ExtensionManager implements IExtensionManager {
     return command(state, dispatch, args)
   }
 
-  registerCommand(name: string, command: CommandFn): void {
-    this._commands.set(name, command)
+  registerCommand<S = unknown>(name: string, command: CommandFn<S>): void {
+    this._commands.set(name, command as CommandFn<unknown>)
   }
 
   unregisterCommand(name: string): void {

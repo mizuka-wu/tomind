@@ -31,7 +31,7 @@ export interface ExtensionContext {
   /** 执行命令 */
   executeCommand: (name: string, args?: unknown) => boolean
   /** 注册命令 */
-  registerCommand: (name: string, command: CommandFn) => void
+  registerCommand: <S = unknown>(name: string, command: CommandFn<S>) => void
   /** 注销命令 */
   unregisterCommand: (name: string) => void
   /** 注册布局算法 */
@@ -98,7 +98,7 @@ export interface WorkbookEditorInterface {
 }
 
 /** 命令函数 */
-export type CommandFn = (state: unknown, dispatch: ((tr: unknown) => void) | null, args?: unknown) => boolean
+export type CommandFn<S = unknown> = (state: S, dispatch: ((tr: unknown) => void) | null, args?: unknown) => boolean
 
 /** 事件处理器 */
 export type EventHandler = (...args: unknown[]) => void
