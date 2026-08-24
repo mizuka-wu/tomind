@@ -135,11 +135,11 @@ const MIN_TOP_BOTTOM_SPACING = 80
 const MAX_TOP_BOTTOM_SPACING = 180
 const PARENT_TOPIC_THRESHOLD = 230
 
-function getSpacingMajor(node: NodeDesc, options: LayoutOptions): number {
+function getSpacingMajor(_node: NodeDesc, options: LayoutOptions): number {
   return options.horizontalGap
 }
 
-function getSpacingMinor(node: NodeDesc, options: LayoutOptions): number {
+function getSpacingMinor(_node: NodeDesc, options: LayoutOptions): number {
   return options.verticalGap || 20
 }
 
@@ -150,7 +150,7 @@ function getSpacingMinor(node: NodeDesc, options: LayoutOptions): number {
 function getAdaptiveSpacingMinor(
   parentHeight: number,
   children: readonly NodeDesc[],
-  options: LayoutOptions,
+  _options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
 ): number {
   let topBottomSpacing = MIN_TOP_BOTTOM_SPACING
