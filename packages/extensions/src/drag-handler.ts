@@ -12,6 +12,7 @@
 
 import { createExtension } from '@tomind/core'
 import type { CommandFn } from '@tomind/core'
+import { onDocEvent, offDocEvent } from '@tomind/core'
 
 // ==================== 类型定义 ====================
 
@@ -42,12 +43,21 @@ interface IDragHandler {
 
 type DragHandlerConstructor = new (context: DragHandlerContext) => IDragHandler
 
+interface SheetEditorLike {
+  dispatch(command: { type: string; payload?: Record<string, unknown> }): void
+  isReadOnly?: () => boolean
+}
+
+interface SelectionManagerLike {
+  getSelections?: () => unknown[]
+}
+
 interface DragHandlerContext {
-  getWorkbookEditor: () => any
-  getSheetEditor: () => any
-  getCentralBranch: () => any
-  getSelectionManager: () => any
-  emit: (event: string, ...args: any[]) => void
+  getWorkbookEditor: () => unknown
+  getSheetEditor: () => SheetEditorLike | null | undefined
+  getCentralBranch: () => unknown
+  getSelectionManager: () => SelectionManagerLike | null | undefined
+  emit: (event: string, ...args: unknown[]) => void
 }
 
 // ==================== 工具函数 ====================
@@ -511,12 +521,12 @@ class DragHandlerManager {
 
       const onEnd = (e: MouseEvent | TouchEvent) => {
         this._onDragViewFinish(this._getClientPosition(e))
-        document.removeEventListener(moveEvent, onMove as any)
-        document.removeEventListener(endEvent, onEnd as any)
+        offDocEvent(moveEvent, onMove)
+        offDocEvent(endEvent, onEnd)
       }
 
-      document.addEventListener(moveEvent, onMove as any, { passive: false })
-      document.addEventListener(endEvent, onEnd as any)
+      onDocEvent(moveEvent, onMove, { passive: false })
+      onDocEvent(endEvent, onEnd)
 
       const onKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -586,19 +596,19 @@ class DragHandlerManager {
       const deltaX = currentPos.x - clientPos.x
       const deltaY = currentPos.y - clientPos.y
       if (Math.sqrt(deltaX * deltaX + deltaY * deltaY) >= threshold) {
-        document.removeEventListener(moveEvent, onMove as any)
-        document.removeEventListener(endEvent, onEnd as any)
+        offDocEvent(moveEvent, onMove)
+        offDocEvent(endEvent, onEnd)
         callback(clientPos)
       }
     }
 
     const onEnd = () => {
-      document.removeEventListener(moveEvent, onMove as any)
-      document.removeEventListener(endEvent, onEnd as any)
+      offDocEvent(moveEvent, onMove)
+      offDocEvent(endEvent, onEnd)
     }
 
-    document.addEventListener(moveEvent, onMove as any, { passive: false })
-    document.addEventListener(endEvent, onEnd as any)
+    onDocEvent(moveEvent, onMove, { passive: false })
+    onDocEvent(endEvent, onEnd)
   }
 
   private _startDrag(view: any, mouseRealPosition: { x: number; y: number }, event: MouseEvent | TouchEvent): void {
@@ -683,7 +693,7 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
     // 创建拖拽处理器上下文
     const handlerContext: DragHandlerContext = {
       getWorkbookEditor: () => ctx.getWorkbook(),
-      getSheetEditor: () => (ctx.getWorkbook() as any).currentSheetEditor,
+      getSheetEditor: () => ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null,
       getCentralBranch: () => null,
       getSelectionManager: () => null,
       emit: (event, ...args) => ctx.emit(event, ...args),
@@ -718,7 +728,7 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
 
     const handleMountDetached = (data: unknown) => {
       const payload = data as { views: any[]; position: { x: number; y: number } }
-      const sheetEditor = (ctx.getWorkbook() as any).currentSheetEditor
+      const sheetEditor = ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
       if (!sheetEditor) return
       for (const view of payload.views) {
         sheetEditor.dispatch({
@@ -736,7 +746,7 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
 
     const handleMountAttach = (data: unknown) => {
       const payload = data as { views: any[]; parentView: any; at: number }
-      const sheetEditor = (ctx.getWorkbook() as any).currentSheetEditor
+      const sheetEditor = ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
       if (!sheetEditor || !payload.parentView?.node) return
       for (const view of payload.views) {
         sheetEditor.dispatch({
@@ -752,7 +762,7 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
 
     const handleMountFree = (data: unknown) => {
       const payload = data as { views: any[]; parentView: any; at: number; position: { x: number; y: number } }
-      const sheetEditor = (ctx.getWorkbook() as any).currentSheetEditor
+      const sheetEditor = ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
       if (!sheetEditor || !payload.parentView?.node) return
       for (const view of payload.views) {
         sheetEditor.dispatch({

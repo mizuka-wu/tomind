@@ -22,6 +22,7 @@ export type {
 } from './types'
 
 // 实现导出
+export { parseArgs } from './types'
 export { createExtension, createNodeExtension, createPartExtension, isExtension } from './create-extension'
 export { ExtensionManager } from './extension-manager'
 
@@ -72,3 +73,4 @@ export function createExtensionContext(editor: {
     unregisterPlugin: editor.unregisterPlugin ?? (() => {}),
   }
 }
+export { onDocEvent, offDocEvent } from './event-listener-utils'

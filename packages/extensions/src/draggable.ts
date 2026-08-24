@@ -11,6 +11,7 @@
 
 import { createExtension } from '@tomind/core'
 import type { CommandFn } from '@tomind/core'
+import { onDocEvent, offDocEvent } from '@tomind/core'
 
 // ==================== 类型定义 ====================
 
@@ -91,9 +92,16 @@ function getClientPosition(e: MouseEvent | TouchEvent): { x: number; y: number }
   return { x: e.clientX, y: e.clientY }
 }
 
+interface InputCapabilities {
+  firesTouchEvents?: boolean
+}
+interface InputEventWithCapabilities extends MouseEvent {
+  sourceCapabilities?: InputCapabilities
+}
+
 function isMouseEventFiredByTouch(e: MouseEvent): boolean {
   // 检查是否由触摸事件触发的鼠标事件
-  return (e as any).sourceCapabilities?.firesTouchEvents === true
+  return (e as InputEventWithCapabilities).sourceCapabilities?.firesTouchEvents === true
 }
 
 // ==================== DraggableRegister ====================
@@ -272,19 +280,19 @@ export class DraggableRegister {
 
       if (distance >= threshold) {
         // 达到阈值，开始拖拽
-        document.removeEventListener(moveEvent, thresholdHandler as any)
-        document.removeEventListener(endEvent, thresholdEndHandler as any)
+        offDocEvent(moveEvent, thresholdHandler)
+        offDocEvent(endEvent, thresholdEndHandler)
         this._startDrag(e, clientPos)
       }
     }
 
     const thresholdEndHandler = () => {
-      document.removeEventListener(moveEvent, thresholdHandler as any)
-      document.removeEventListener(endEvent, thresholdEndHandler as any)
+      offDocEvent(moveEvent, thresholdHandler)
+      offDocEvent(endEvent, thresholdEndHandler)
     }
 
-    document.addEventListener(moveEvent, thresholdHandler as any, { passive: false })
-    document.addEventListener(endEvent, thresholdEndHandler as any)
+    onDocEvent(moveEvent, thresholdHandler, { passive: false })
+    onDocEvent(endEvent, thresholdEndHandler)
   }
 
   private _startDrag(e: MouseEvent | TouchEvent, clientPos: { x: number; y: number }): void {
@@ -313,18 +321,13 @@ export class DraggableRegister {
     }
 
     // 添加文档级事件监听
-    const moveEvent = this._isUseTouch ? 'touchmove' : 'mousemove'
-    const endEvent = this._isUseTouch ? 'touchend' : 'mouseup'
-
-    document.addEventListener(moveEvent, this._isUseTouch
-      ? this._boundHandlers.onTouchMove as any
-      : this._boundHandlers.onMouseMove as any,
-      { passive: false }
-    )
-    document.addEventListener(endEvent, this._isUseTouch
-      ? this._boundHandlers.onTouchEnd as any
-      : this._boundHandlers.onMouseUp as any
-    )
+    if (this._isUseTouch) {
+      onDocEvent('touchmove', this._boundHandlers.onTouchMove, { passive: false })
+      onDocEvent('touchend', this._boundHandlers.onTouchEnd)
+    } else {
+      onDocEvent('mousemove', this._boundHandlers.onMouseMove, { passive: false })
+      onDocEvent('mouseup', this._boundHandlers.onMouseUp)
+    }
 
     // 调用 dragStart 回调
     if (this._callbacks.dragStart) {
@@ -388,10 +391,10 @@ export class DraggableRegister {
     this._removeShadow()
 
     // 移除文档级事件监听
-    document.removeEventListener('mousemove', this._boundHandlers.onMouseMove as any)
-    document.removeEventListener('touchmove', this._boundHandlers.onTouchMove as any)
-    document.removeEventListener('mouseup', this._boundHandlers.onMouseUp as any)
-    document.removeEventListener('touchend', this._boundHandlers.onTouchEnd as any)
+    offDocEvent('mousemove', this._boundHandlers.onMouseMove)
+    offDocEvent('touchmove', this._boundHandlers.onTouchMove)
+    offDocEvent('mouseup', this._boundHandlers.onMouseUp)
+    offDocEvent('touchend', this._boundHandlers.onTouchEnd)
 
     // 调用 dragEnd 回调
     if (this._callbacks.dragEnd) {
@@ -506,12 +509,22 @@ export const DraggableExtension = createExtension<DraggableOptions>({
 
   onCreate(ctx) {
     // 注册命令
+    const registerMap = new WeakMap<object, DraggableRegister>()
     const commands: Record<string, CommandFn> = {
       'draggable.bind': (_state, _dispatch, args) => {
-        const { element, options } = args as { element: any; options?: DraggableOptions }
+        const { element, options } = args as { element: object; options?: DraggableOptions }
         const register = new DraggableRegister(element, options)
-        // 返回 register 实例供调用者使用
-        return register as any
+        registerMap.set(element, register)
+        return true
+      },
+      'draggable.unbind': (_state, _dispatch, args) => {
+        const { element } = args as { element: object }
+        const register = registerMap.get(element)
+        if (register) {
+          register.destroy()
+          registerMap.delete(element)
+        }
+        return true
       },
     }
 

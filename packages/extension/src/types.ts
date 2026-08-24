@@ -183,3 +183,18 @@ export interface ExtensionManager {
   /** 注销事件监听 */
   off(event: string, handler: EventHandler): void
 }
+
+/**
+ * 命令参数类型断言辅助
+ *
+ * CommandFn 的 args 参数类型为 unknown，
+ * 调用方必须确认参数结构。parseArgs 集中这一断言。
+ *
+ * @example
+ * const { nodeId } = parseArgs<{ nodeId: string }>(args)
+ * const { x, y } = parseArgs<{ x: number; y: number }>(args, { x: 0, y: 0 })
+ */
+export function parseArgs<T>(args: unknown, fallback?: T): T {
+  if (args != null && typeof args === 'object') return args as T
+  return (fallback ?? {}) as T
+}
