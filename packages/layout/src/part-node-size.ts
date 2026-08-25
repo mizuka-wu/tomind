@@ -13,7 +13,7 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
-import { getTitle, getFontSize, getNodeStyle } from './layout-utils'
+import { getTitle, getFontSize } from './layout-utils'
 import { getFontFamily, getFontWeight, getFontStyle } from './layout-utils'
 import { measureNodeParts, measureLabels } from './part-measure'
 import { buildTopicCellTree } from './part-cell-builder'

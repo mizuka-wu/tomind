@@ -7,8 +7,8 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
-import { getTitle, getFontSize, getNodeStyle } from './layout-utils'
-import { getAttr, getStyleAttr, getFontFamily, getFontWeight, getFontStyle } from './layout-utils'
+import { getTitle, getFontSize } from './layout-utils'
+import { getAttr, getFontFamily, getFontWeight, getFontStyle } from './layout-utils'
 
 
 // ==================== 类型定义 ====================
