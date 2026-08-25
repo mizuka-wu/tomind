@@ -5,6 +5,7 @@
  * 避免在业务代码中散落 `as` 断言。
  */
 import type { UI, Group } from 'leafer-ui'
+import type { ExtensionContext } from '@tomind/core'
 
 /** 类型安全的 findOne — 从 Group 中查找指定名称的元素 */
 export function findOne<T extends UI = UI>(group: Group, name: string): T | null {
@@ -14,4 +15,14 @@ export function findOne<T extends UI = UI>(group: Group, name: string): T | null
 /** 获取 Group 的子元素（LeaferJS children 的类型安全包装） */
 export function getGroupChildren(group: Group): Group[] {
   return (group.children ?? []) as Group[]
+}
+
+/** 类型安全的 emit 包装 — 允许未注册在 EventMap 中的事件名 */
+export function emitUnsafe(
+  ctx: ExtensionContext,
+  event: string,
+  ...args: unknown[]
+): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(ctx.emit as any)(event, ...args)
 }

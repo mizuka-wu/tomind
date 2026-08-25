@@ -26,9 +26,14 @@ export interface HistoryOptions extends Record<string, unknown> {
 }
 
 // ==================== PluginKey ====================
-
 /** History 插件键（全局唯一） */
 export const historyPluginKey = new PluginKey<HistoryState>('history')
+// ==================== 工具函数 ====================
+
+/** 从 SheetState 中获取 HistoryState（boundary cast 集中于此） */
+function getHistory(state: SheetState): HistoryState | undefined {
+  return state.field(historyPluginKey) as HistoryState | undefined
+}
 
 // ==================== Extension ====================
 
@@ -45,7 +50,7 @@ export const HistoryExtension = createExtension<HistoryOptions>({
     ctx.registerCommand<SheetState>('history.undo', (state, dispatch: ((tr: unknown) => void) | null) => {
       if (!dispatch) return true
       const sheetState = state
-      const history = sheetState.field(historyPluginKey) as HistoryState | undefined
+      const history = getHistory(sheetState)
       if (!history || !history.canUndo) return false
 
       const doc = sheetState.doc
@@ -60,7 +65,7 @@ export const HistoryExtension = createExtension<HistoryOptions>({
     ctx.registerCommand<SheetState>('history.redo', (state, dispatch: ((tr: unknown) => void) | null) => {
       if (!dispatch) return true
       const sheetState = state
-      const history = sheetState.field(historyPluginKey) as HistoryState | undefined
+      const history = getHistory(sheetState)
       if (!history || !history.canRedo) return false
 
       const redoTr = createRedoTransaction(history)
@@ -73,14 +78,14 @@ export const HistoryExtension = createExtension<HistoryOptions>({
     // 注册 canUndo 检查命令
     ctx.registerCommand<SheetState>('history.canUndo', (state) => {
       const sheetState = state
-      const history = sheetState.field(historyPluginKey) as HistoryState | undefined
+      const history = getHistory(sheetState)
       return history?.canUndo ?? false
     })
 
     // 注册 canRedo 检查命令
     ctx.registerCommand<SheetState>('history.canRedo', (state) => {
       const sheetState = state
-      const history = sheetState.field(historyPluginKey) as HistoryState | undefined
+      const history = getHistory(sheetState)
       return history?.canRedo ?? false
     })
   },
@@ -106,3 +111,4 @@ export const HistoryExtension = createExtension<HistoryOptions>({
 export function createHistoryPluginWithKey(maxDepth = 100): Plugin {
   return createHistoryPlugin(historyPluginKey, { maxDepth }) as Plugin
 }
+

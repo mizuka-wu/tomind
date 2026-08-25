@@ -16,7 +16,7 @@ import { createExtension } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
 import type { SelectionEvents } from './selection'
 import { type ViewLike, getViewLike } from './shared-types'
-import { findOne } from './shared-utils'
+import { findOne, getGroupChildren } from './shared-utils'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
 
 
@@ -83,7 +83,7 @@ function getCornerPosition(
 
 /** 递归查找命名的 Group */
 function findNodeGroup(group: Group, nodeId: string): Group | null {
-  const children: Group[] = group.children as Group[]
+  const children = getGroupChildren(group)
   if (!children) return null
 
   for (const child of children) {
@@ -112,7 +112,7 @@ function createOverlay(nodeId: string, width: number, height: number): Group {
   group.add(box)
 
   // 8 方向锚点
-  const pos = { l: 0, m: height / 2, r: width, t: 0, c: width / 2, b: height }
+  const pos: Record<string, number> = { l: 0, m: height / 2, r: width, t: 0, c: width / 2, b: height }
   const anchorKeys: Direction[] = ['lt', 'lm', 'lb', 'ct', 'cb', 'rt', 'rm', 'rb']
 
   for (const key of anchorKeys) {
@@ -142,8 +142,8 @@ function createOverlay(nodeId: string, width: number, height: number): Group {
 
     // 位置
     anchorGroup.set({
-      x: -ANCHOR_SIZE / 2 + pos[key[0] as keyof typeof pos],
-      y: -ANCHOR_SIZE / 2 + pos[key[1] as keyof typeof pos],
+      x: -ANCHOR_SIZE / 2 + pos[key[0]],
+      y: -ANCHOR_SIZE / 2 + pos[key[1]],
     })
   }
 
@@ -229,13 +229,13 @@ function setupAnchorDrag(
       }
 
       // 更新锚点位置
-      const newPos = { l: 0, m: newHeight / 2, r: newWidth, t: 0, c: newWidth / 2, b: newHeight }
+      const newPos: Record<string, number> = { l: 0, m: newHeight / 2, r: newWidth, t: 0, c: newWidth / 2, b: newHeight }
       for (const k of anchorKeys) {
         const ag = findOne<Group>(overlay, `anchor-${k}`)
         if (ag) {
           ag.set({
-            x: -ANCHOR_SIZE / 2 + newPos[k[0] as keyof typeof newPos],
-            y: -ANCHOR_SIZE / 2 + newPos[k[1] as keyof typeof newPos],
+            x: -ANCHOR_SIZE / 2 + newPos[k[0]],
+            y: -ANCHOR_SIZE / 2 + newPos[k[1]],
           })
         }
       }

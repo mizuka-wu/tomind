@@ -65,8 +65,9 @@ function generateId(): string {
 /** 从样式中提取指定键 */
 function extractStyleKeys(style: ResolvedStyle, keys: readonly string[]): Record<string, StyleValue> {
   const result: Record<string, StyleValue> = {}
+  const styleRecord = style as Record<string, StyleValue>
   for (const key of keys) {
-    const value = style[key as keyof ResolvedStyle]
+    const value = styleRecord[key]
     if (value !== undefined && value !== null) {
       result[key] = value
     }

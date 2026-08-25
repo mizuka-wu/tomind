@@ -16,6 +16,7 @@
 
 import { createExtension } from '@tomind/core'
 import { getCanvasElement } from './shared-types'
+import { emitUnsafe } from './shared-utils'
 import type { CommandFn } from '@tomind/core'
 import type { TopicEvents } from './topic'
 
@@ -145,8 +146,7 @@ export const DropExtension = createExtension<DropOptions, Record<string, unknown
     // 坐标转换
     const viewportToMindMap = (clientPos: Position): Position => {
       let result = clientPos
-      // @ts-expect-error callback-based emit needs refactor
-      ctx.emit('coordinate:viewportToMindMap' as any, clientPos, (pos: Position) => {
+      emitUnsafe(ctx, 'coordinate:viewportToMindMap', clientPos, (pos: Position) => {
         result = pos
       })
       return result
@@ -189,8 +189,7 @@ export const DropExtension = createExtension<DropOptions, Record<string, unknown
 
         // 获取拖拽经过的视图
         let dropView: any = null
-        // @ts-expect-error callback-based emit needs refactor
-        ctx.emit('drop:getDropView' as any, realPosition, (view: any) => {
+        emitUnsafe(ctx, 'drop:getDropView', realPosition, (view: any) => {
           dropView = view
         })
 
@@ -198,8 +197,7 @@ export const DropExtension = createExtension<DropOptions, Record<string, unknown
 
         // 获取传输选项
         let transferOptions: any = null
-        // @ts-expect-error callback-based emit needs refactor
-        ctx.emit('drop:onDragMoving' as any, dropView, realPosition, (options: any) => {
+        emitUnsafe(ctx, 'drop:onDragMoving', dropView, realPosition, (options: any) => {
           transferOptions = options
         })
 
@@ -330,7 +328,9 @@ export const DropExtension = createExtension<DropOptions, Record<string, unknown
       // 读取图片
       const reader = new FileReader()
       reader.onload = (e) => {
-        const dataUrl = e.target?.result as string
+        const result = e.target?.result
+        if (typeof result !== 'string') return
+        const dataUrl = result
 
         if (state.dropView) {
           // 添加为子主题
@@ -368,7 +368,9 @@ export const DropExtension = createExtension<DropOptions, Record<string, unknown
       // 读取附件
       const reader = new FileReader()
       reader.onload = (e) => {
-        const dataUrl = e.target?.result as string
+        const result = e.target?.result
+        if (typeof result !== 'string') return
+        const dataUrl = result
 
         if (state.dropView) {
           // 添加为子主题
