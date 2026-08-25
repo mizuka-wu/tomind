@@ -148,7 +148,7 @@ export interface Extension<Options = {}, Storage = Record<string, unknown>, Even
   /** 生命周期：销毁 */
   destroy?: () => void
   /** 命令定义 */
-  commands?: Record<string, (...args: unknown[]) => CommandFn>
+  commands?: Record<string, CommandFn>
   /** 快捷键映射（旧方式） */
   shortcuts?: Record<string, string>
   /** 添加快捷键（Tiptap 风格） */

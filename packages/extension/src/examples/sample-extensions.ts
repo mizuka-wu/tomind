@@ -67,12 +67,12 @@ export const SelectionExtension = createExtension<{
     }
   },
   commands: {
-    select: (...args: unknown[]) => (_state, _dispatch) => {
-      const targetId = args[0] as string
+    select: (_state, _dispatch, args) => {
+      const targetId = args as string
       console.log('Select command:', targetId)
       return true
     },
-    clearSelection: () => (_state, _dispatch) => {
+    clearSelection: (_state, _dispatch) => {
       console.log('Clear selection command')
       return true
     },
@@ -134,9 +134,8 @@ export const DragDropExtension = createExtension<{
     }
   },
   commands: {
-    moveNode: (...args: unknown[]) => (_state, _dispatch) => {
-      const sourceId = args[0] as string
-      const targetId = args[1] as string
+    moveNode: (_state, _dispatch, args) => {
+      const [sourceId, targetId] = args as string[]
       console.log('Move node command:', sourceId, '->', targetId)
       return true
     },
@@ -197,19 +196,19 @@ export const KeyboardNavigationExtension = createExtension<{
     }
   },
   commands: {
-    navigateUp: () => (_state, _dispatch) => {
+    navigateUp: (_state, _dispatch) => {
       console.log('Navigate up command')
       return true
     },
-    navigateDown: () => (_state, _dispatch) => {
+    navigateDown: (_state, _dispatch) => {
       console.log('Navigate down command')
       return true
     },
-    navigateLeft: () => (_state, _dispatch) => {
+    navigateLeft: (_state, _dispatch) => {
       console.log('Navigate left command')
       return true
     },
-    navigateRight: () => (_state, _dispatch) => {
+    navigateRight: (_state, _dispatch) => {
       console.log('Navigate right command')
       return true
     },

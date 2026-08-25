@@ -6,6 +6,8 @@
  * - .configure() 配置
  */
 
+import { buildExtensionContext } from './types'
+
 // 类型导出
 export type {
   Extension,
@@ -50,30 +52,30 @@ export function createExtensionContext(editor: {
   unregisterPartView: (partType: string) => void
   registerLayout?: (algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => void
   unregisterLayout?: (name: string) => void
-  registerPlugin?: (plugin: unknown) => void
-  unregisterPlugin?: (plugin: unknown) => void
-}): import('./types').ExtensionContext {  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return {
+  registerPlugin?: (plugin: import('./types').PluginLike) => void
+  unregisterPlugin?: (plugin: import('./types').PluginLike) => void
+}): import('./types').ExtensionContext {
+  return buildExtensionContext({
     storage: {},
     getWorkbook: editor.getWorkbook,
     getState: editor.getState,
     dispatch: editor.dispatch,
     getView: editor.getView,
     executeCommand: editor.executeCommand,
-    registerCommand: editor.registerCommand as unknown as import('./types').ExtensionContext['registerCommand'],
+    registerCommand: editor.registerCommand,
     unregisterCommand: editor.unregisterCommand,
-    on: editor.on as import('./types').ExtensionContext['on'],
-    off: editor.off as import('./types').ExtensionContext['off'],
-    emit: editor.emit as unknown as import('./types').ExtensionContext['emit'],
-    registerNodeView: editor.registerNodeView,
+    on: editor.on,
+    off: editor.off,
+    emit: editor.emit,
+    registerNodeView: editor.registerNodeView as (nodeType: string, viewDesc: import('./types').ViewDescConstructor) => void,
     unregisterNodeView: editor.unregisterNodeView,
-    registerPartView: editor.registerPartView,
+    registerPartView: editor.registerPartView as (partType: string, viewDesc: import('./types').ViewDescConstructor) => void,
     unregisterPartView: editor.unregisterPartView,
     registerLayout: editor.registerLayout ?? (() => {}),
     unregisterLayout: editor.unregisterLayout ?? (() => {}),
     registerPlugin: editor.registerPlugin ?? (() => {}),
     unregisterPlugin: editor.unregisterPlugin ?? (() => {}),
-  }
+  })
 }
 export { onDocEvent, offDocEvent } from './event-listener-utils'
 export type { BaseEventMap, DragViewDesc } from './event-map'

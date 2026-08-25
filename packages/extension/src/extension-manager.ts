@@ -44,7 +44,7 @@ export class ExtensionManager {
     if (extension.commands) {
       for (const [cmdName, cmdFactory] of Object.entries(extension.commands)) {
         const fullName = `${extension.name}.${cmdName}`
-        this._commands.set(fullName, cmdFactory as unknown as CommandFn)
+        this._commands.set(fullName, cmdFactory)
       }
     }
 
@@ -250,8 +250,8 @@ export class ExtensionManager {
     return command(state, dispatch, args)
   }
 
-  registerCommand<S = unknown>(name: string, command: CommandFn<S>): void {
-    this._commands.set(name, command as CommandFn<unknown>)
+  registerCommand(name: string, command: CommandFn): void {
+    this._commands.set(name, command)
   }
 
   unregisterCommand(name: string): void {

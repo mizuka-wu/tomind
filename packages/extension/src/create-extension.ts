@@ -28,7 +28,7 @@ export function createExtension<Options extends Record<string, unknown> = {}, St
   addOptions?: () => Partial<Options> | Record<string, unknown>
   addStorage?: () => Storage
   destroy?: () => void
-  commands?: Record<string, (...args: unknown[]) => CommandFn>
+  commands?: Record<string, CommandFn>
   shortcuts?: Record<string, string>
   addKeyboardShortcuts?: () => Record<string, KeyboardShortcutHandler>
   addLayout?: () => { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }
@@ -36,7 +36,7 @@ export function createExtension<Options extends Record<string, unknown> = {}, St
 }): Extension<Options, Storage, Events> {
   // 合并默认选项
   const defaultOptions: ExtensionOptions<Options> = {
-    ...(definition.defaultOptions || {} as ExtensionOptions<Options>),
+    ...(definition.defaultOptions ?? {} as ExtensionOptions<Options>),
     enabled: true,
   }
 
@@ -97,7 +97,7 @@ export function createNodeExtension<Options extends Record<string, unknown> = {}
   addOptions?: () => Partial<Options> | Record<string, unknown>
   addStorage?: () => Storage
   destroy?: () => void
-  commands?: Record<string, (...args: unknown[]) => CommandFn>
+  commands?: Record<string, CommandFn>
   addKeyboardShortcuts?: () => Record<string, KeyboardShortcutHandler>
   addLayout?: () => { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }
 }): Extension<Options, Storage, Events> {
@@ -117,7 +117,7 @@ export function createPartExtension<Options extends Record<string, unknown> = {}
   addOptions?: () => Partial<Options> | Record<string, unknown>
   addStorage?: () => Storage
   destroy?: () => void
-  commands?: Record<string, (...args: unknown[]) => CommandFn>
+  commands?: Record<string, CommandFn>
   addKeyboardShortcuts?: () => Record<string, KeyboardShortcutHandler>
 }): Extension<Options, Storage, Events> {
   return createExtension({
