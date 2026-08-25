@@ -19,7 +19,7 @@ import type { NodeDesc } from '@tomind/schema'
 import { ViewDesc } from '@tomind/view'
 import { SheetEditor, createNodeViewDescRegistry, createPartViewDescRegistry } from './sheet-editor'
 import { ExtensionManager } from '@tomind/extension'
-import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEditorInterface } from '@tomind/extension'
+import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEditorInterface, ViewDescConstructor } from '@tomind/extension'
 import type { StyleEngine } from '@tomind/style'
 import type { ResolvedStyle, NodeType } from '@tomind/style'
 import type { LayoutEngine } from '@tomind/layout'
@@ -419,19 +419,14 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       emit: (event: string, ...args: unknown[]) => {
         workbook.emit(event, ...args)
       },
-      registerNodeView: (nodeType: string, viewDesc: unknown) => {
-        // 注册到 workbook 级注册表（所有 sheet 共享同一引用）
-        if (typeof viewDesc === 'function' && viewDesc.length <= 3) {
-          workbook._nodeViewDescRegistry.set(nodeType, viewDesc as new (node: NodeDesc, role: string, ctx: import('@tomind/view').ViewContext) => ViewDesc)
-        }
+      registerNodeView: (nodeType: string, viewDesc: ViewDescConstructor) => {
+        workbook._nodeViewDescRegistry.set(nodeType, viewDesc as new (node: NodeDesc, role: string, ctx: import('@tomind/view').ViewContext) => ViewDesc)
       },
       unregisterNodeView: (nodeType: string) => {
         workbook._nodeViewDescRegistry.delete(nodeType)
       },
-      registerPartView: (partType: string, viewDesc: unknown) => {
-        if (typeof viewDesc === 'function' && viewDesc.length <= 2) {
-          workbook._partViewDescRegistry.set(partType, viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
-        }
+      registerPartView: (partType: string, viewDesc: ViewDescConstructor) => {
+        workbook._partViewDescRegistry.set(partType, viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
       },
       unregisterPartView: (partType: string) => {
         workbook._partViewDescRegistry.delete(partType)

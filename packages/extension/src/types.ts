@@ -53,11 +53,11 @@ export interface ExtensionContext<Storage = Record<string, unknown>, Events exte
   /** 触发事件 */
   emit: <K extends keyof (BaseEventMap & Events)>(event: K, ...args: EmitData<(BaseEventMap & Events)[K]>) => void
   /** 注册 NodeViewDesc */
-  registerNodeView: (nodeType: string, viewDesc: unknown) => void
+  registerNodeView: (nodeType: string, viewDesc: ViewDescConstructor) => void
   /** 注销 NodeViewDesc */
   unregisterNodeView: (nodeType: string) => void
   /** 注册 PartViewDesc */
-  registerPartView: (partType: string, viewDesc: unknown) => void
+  registerPartView: (partType: string, viewDesc: ViewDescConstructor) => void
   /** 注销 PartViewDesc */
   unregisterPartView: (partType: string) => void
   /** 注册 Plugin */
@@ -65,6 +65,9 @@ export interface ExtensionContext<Storage = Record<string, unknown>, Events exte
   /** 注销 Plugin */
   unregisterPlugin: (plugin: unknown) => void
 }
+
+/** ViewDesc 构造函数类型（跨包使用，避免依赖 @tomind/view） */
+export type ViewDescConstructor = new (...args: any[]) => any
 
 /** 主题数据结构（内联定义，避免循环依赖） */
 type ThemeDataInline = Record<string, { id?: string; properties: Record<string, string | number | boolean | null | undefined> } | Record<string, string> | undefined>

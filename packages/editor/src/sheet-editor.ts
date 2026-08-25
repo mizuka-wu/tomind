@@ -38,7 +38,7 @@ import type { LayoutEngine } from '@tomind/layout'
 import { CommandManager } from '@tomind/commands'
 import type { CommandResult } from '@tomind/commands'
 import { ExtensionManager } from '@tomind/extension'
-import type { Extension, ExtensionContext, CommandFn, EventHandler } from '@tomind/extension'
+import type { Extension, ExtensionContext, CommandFn, EventHandler, ViewDescConstructor } from '@tomind/extension'
 import type { WorkbookEditor } from './workbook-editor'
 
 // ==================== 事件类型 ====================
@@ -62,6 +62,7 @@ interface ScrollbarConfig {
 
 type ViewDescClass = new (node: NodeDesc, role: NodeRole, ctx: ViewContext) => ViewDesc
 
+/** 从 CustomEvent 安全提取 detail */
 /** 从 CustomEvent 安全提取 detail */
 function getEventDetail<T>(e: Event): T {
   return (e as CustomEvent<T>).detail
@@ -456,11 +457,8 @@ export class SheetEditor {
       emit: ((event: string, data?: unknown) => {
         editor.emitAny(event, data)
       }) as ExtensionContext['emit'],
-      registerNodeView: (nodeType: string, viewDesc: unknown) => {
-        // Extension 注册 NodeViewDesc
-        if (typeof viewDesc === 'function' && viewDesc.length <= 3) {
-          editor.registerNodeView(nodeType, viewDesc as ViewDescClass)
-        }
+      registerNodeView: (nodeType: string, viewDesc: ViewDescConstructor) => {
+        editor.registerNodeView(nodeType, viewDesc)
       },
       unregisterNodeView: (nodeType: string) => {
         editor.unregisterNodeView(nodeType)
@@ -471,10 +469,8 @@ export class SheetEditor {
       unregisterLayout: (name: string) => {
         editor.layoutEngine.unregister?.(name)
       },
-      registerPartView: (partType: string, viewDesc: unknown) => {
-        if (typeof viewDesc === 'function' && viewDesc.length <= 3) {
-          editor.registerPartView(partType, viewDesc as ViewDescClass)
-        }
+      registerPartView: (partType: string, viewDesc: ViewDescConstructor) => {
+        editor.registerPartView(partType, viewDesc)
       },
       unregisterPartView: (partType: string) => {
         editor.unregisterPartView(partType)
@@ -838,8 +834,8 @@ export class SheetEditor {
   /**
    * 注册 NodeViewDesc
    */
-  registerNodeView(nodeType: string, viewDescClass: ViewDescClass): void {
-    this._nodeViewDescRegistry.set(nodeType, viewDescClass)
+  registerNodeView(nodeType: string, viewDescClass: ViewDescConstructor): void {
+    this._nodeViewDescRegistry.set(nodeType, viewDescClass as ViewDescClass)
   }
 
   /**
@@ -852,8 +848,8 @@ export class SheetEditor {
   /**
    * 注册 PartViewDesc
    */
-  registerPartView(partType: string, viewDescClass: ViewDescClass): void {
-    this._partViewDescRegistry.set(partType, viewDescClass)
+  registerPartView(partType: string, viewDescClass: ViewDescConstructor): void {
+    this._partViewDescRegistry.set(partType, viewDescClass as ViewDescClass)
   }
 
   /**

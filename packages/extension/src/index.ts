@@ -19,6 +19,7 @@ export type {
   WorkbookEditorInterface,
   CleanupFn,
   StarterKitOptions,
+  ViewDescConstructor,
 } from './types'
 
 // 实现导出
