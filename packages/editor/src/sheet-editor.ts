@@ -38,8 +38,10 @@ import type { LayoutEngine } from '@tomind/layout'
 import { CommandManager } from '@tomind/commands'
 import type { CommandResult } from '@tomind/commands'
 import { ExtensionManager } from '@tomind/extension'
-import type { Extension, ExtensionContext, CommandFn, ViewDescConstructor, PluginLike } from '@tomind/extension'
+import type { Extension, ExtensionContext, CommandFn, ViewDescConstructor, PluginLike, ViewPluginLike } from '@tomind/extension'
 import { buildExtensionContext } from '@tomind/extension'
+import { ViewPluginManager } from '@tomind/plugins'
+import type { ViewPlugin, WidgetViewFactory } from '@tomind/plugins'
 import type { WorkbookEditor } from './workbook-editor'
 
 // ==================== 事件类型 ====================
@@ -136,7 +138,12 @@ export class SheetEditor {
   readonly layoutEngine: LayoutEngine
   readonly commands: EditorCommands
   readonly extensionManager: ExtensionManager
+  private _viewPluginManager: ViewPluginManager
 
+  /** ViewPluginManager（只读访问） */
+  get viewPluginManager(): ViewPluginManager {
+    return this._viewPluginManager
+  }
   private _state: SheetState
   private _docView: ViewDesc | null = null
   private _emitter = new EventTarget()
@@ -183,6 +190,9 @@ export class SheetEditor {
       layoutEngine: this.layoutEngine,
       state: this._state,
       eventEmitter: { emit: (event: string, ...args: unknown[]) => this.emitAny(event, ...args) },
+      widgetViewFactory: (widgetType: string, widgetId: string, node: NodeDesc) => {
+        return this.createWidgetView(widgetType, widgetId, node)
+      },
     }
 
     // 创建 commands 代理
@@ -190,6 +200,9 @@ export class SheetEditor {
 
     // 初始化 ExtensionManager
     this.extensionManager = new ExtensionManager()
+
+    // 初始化 ViewPluginManager
+    this._viewPluginManager = new ViewPluginManager()
 
     // 注册扩展
     if (options.extensions) {
@@ -283,6 +296,15 @@ export class SheetEditor {
     // 布局结果只算一次：统一 compute 后缓存到 LayoutEngine
     // 后续节点通过 getLayoutResult() 读取，不再重复算
     this.layoutEngine.compute(newState)
+    
+    // 收集 ViewPlugin 的 Widget Decorations
+    const widgetDecorations = this.viewPluginManager.collectDecorations(newState)
+    if (widgetDecorations.length > 0) {
+      newState = newState.setDecorations(newState.decorations.addAll(widgetDecorations))
+      this._state = newState
+      this._ctx.state = newState
+    }
+    
     this.updateDocView(newState.doc, tr)
     // 将 viewport 状态同步到 LeaferJS 画布
     // setupViewportSync 只做了 LeaferJS → state 的单向同步
@@ -377,6 +399,39 @@ export class SheetEditor {
     const emptyTr = Transaction.empty(this._state.doc)
     const initializedState = newState.apply(emptyTr)
     this.updateState(initializedState)
+  }
+
+  // ==================== ViewPlugin 管理 ====================
+
+  /**
+   * 注册 ViewPlugin（供 Extension 使用）
+   *
+   * 用于 Widget Decoration 系统
+   */
+  registerViewPlugin(plugin: ViewPlugin): void {
+    if (this._viewPluginManager.has(plugin.name)) return
+    this._viewPluginManager = this._viewPluginManager.add(plugin)
+  }
+
+  /**
+   * 注销 ViewPlugin
+   */
+  unregisterViewPlugin(name: string): void {
+    this._viewPluginManager = this._viewPluginManager.remove(name)
+  }
+
+  /**
+   * 创建 Widget ViewDesc
+   *
+   * 查询所有 ViewPlugin 的 widgetViewFactory，返回第一个匹配的 ViewDesc
+   */
+  private createWidgetView(widgetType: string, widgetId: string, node: NodeDesc): ViewDesc | null {
+    const factories = this._viewPluginManager.getWidgetViewFactories()
+    for (const factory of factories.values()) {
+      const result = factory(widgetType, widgetId, node)
+      if (result) return result as ViewDesc
+    }
+    return null
   }
 
   /**
@@ -482,6 +537,12 @@ export class SheetEditor {
       },
       unregisterPlugin: (plugin: PluginLike) => {
         editor.unregisterPlugin(plugin as Plugin)
+      },
+      registerViewPlugin: (plugin: ViewPluginLike) => {
+        editor.registerViewPlugin(plugin as ViewPlugin)
+      },
+      unregisterViewPlugin: (name: string) => {
+        editor.unregisterViewPlugin(name)
       },
       getContainer: () => editor.dom,
     })

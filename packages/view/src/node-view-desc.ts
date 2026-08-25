@@ -53,6 +53,7 @@ export interface ViewContext {
   layoutEngine: LayoutEngine | null
   state: SheetState | null
   eventEmitter: { emit: (event: string, ...args: unknown[]) => void } | null
+  widgetViewFactory?: (widgetType: string, widgetId: string, node: NodeDesc) => ViewDesc | null
 }
 
 // ==================== 工具函数 ====================
@@ -133,6 +134,12 @@ export abstract class NodeViewDesc extends ViewDesc {
     if (this.ctx.state) {
       const nodeDecs = this.ctx.state.decorations.getNodeDecorations(this.node.id)
       this.applyNodeDecorations(nodeDecs)
+      
+      // 应用 Widget Decoration
+      if (this.ctx.widgetViewFactory) {
+        const widgetDecs = this.ctx.state.decorations.getWidgets(this.node.id)
+        this.updateWidgets(widgetDecs, this.ctx.widgetViewFactory)
+      }
     }
 
     this.clearDirty()
