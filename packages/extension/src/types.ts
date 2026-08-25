@@ -50,8 +50,8 @@ export interface ExtensionContext<Storage = Record<string, unknown>, Events exte
   on: <K extends keyof (BaseEventMap & Events)>(event: K, handler: (data: (BaseEventMap & Events)[K]) => void) => void
   /** 注销事件监听 */
   off: <K extends keyof (BaseEventMap & Events)>(event: K, handler: (data: (BaseEventMap & Events)[K]) => void) => void
-  /** 触发事件 */
-  emit: <K extends keyof (BaseEventMap & Events)>(event: K, ...args: EmitData<(BaseEventMap & Events)[K]>) => void
+  /** 触发事件（已注册事件有完整类型，未注册事件用 string fallback） */
+  emit: (<K extends keyof (BaseEventMap & Events)>(event: K, ...args: EmitData<(BaseEventMap & Events)[K]>) => void) & ((event: string, ...args: unknown[]) => void)
   /** 注册 NodeViewDesc */
   registerNodeView: (nodeType: string, viewDesc: ViewDescConstructor) => void
   /** 注销 NodeViewDesc */

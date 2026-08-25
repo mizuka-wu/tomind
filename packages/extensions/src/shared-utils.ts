@@ -23,6 +23,5 @@ export function emitUnsafe(
   event: string,
   ...args: unknown[]
 ): void {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(ctx.emit as any)(event, ...args)
+  ctx.emit(event, ...args)
 }
