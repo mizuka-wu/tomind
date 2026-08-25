@@ -23,7 +23,7 @@ export type {
   StarterKitOptions,
   ViewDescConstructor,
   PluginLike,
-  ViewPluginLike,
+  WidgetPluginLike,
 } from './types'
 
 // 实现导出
@@ -55,8 +55,8 @@ export function createExtensionContext(editor: {
   unregisterLayout?: (name: string) => void
   registerPlugin?: (plugin: import('./types').PluginLike) => void
   unregisterPlugin?: (plugin: import('./types').PluginLike) => void
-  registerViewPlugin?: (plugin: import('./types').ViewPluginLike) => void
-  unregisterViewPlugin?: (name: string) => void
+  registerWidgetPlugin?: (plugin: import('./types').WidgetPluginLike) => void
+  unregisterWidgetPlugin?: (name: string) => void
   getContainer?: () => HTMLElement
 }): import('./types').ExtensionContext {
   return buildExtensionContext({
@@ -79,8 +79,8 @@ export function createExtensionContext(editor: {
     unregisterLayout: editor.unregisterLayout ?? (() => {}),
     registerPlugin: editor.registerPlugin ?? (() => {}),
     unregisterPlugin: editor.unregisterPlugin ?? (() => {}),
-    registerViewPlugin: editor.registerViewPlugin ?? (() => {}),
-    unregisterViewPlugin: editor.unregisterViewPlugin ?? (() => {}),
+    registerWidgetPlugin: editor.registerWidgetPlugin ?? (() => {}),
+    unregisterWidgetPlugin: editor.unregisterWidgetPlugin ?? (() => {}),
     getContainer: editor.getContainer ?? (() => document.body),
   })
 }

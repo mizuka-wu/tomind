@@ -443,10 +443,10 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       unregisterPlugin: (_plugin: unknown) => {
         // Plugin unregistration is handled at SheetEditor level
       },
-      registerViewPlugin: (_plugin: unknown) => {
+      registerWidgetPlugin: (_plugin: unknown) => {
         // ViewPlugin registration is handled at SheetEditor level
       },
-      unregisterViewPlugin: (_name: string) => {
+      unregisterWidgetPlugin: (_name: string) => {
         // ViewPlugin unregistration is handled at SheetEditor level
       },
       getContainer: () => document.body, // Workbook 级无 DOM 容器，实际由 SheetEditor 提供

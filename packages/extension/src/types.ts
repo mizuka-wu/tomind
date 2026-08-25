@@ -65,9 +65,9 @@ export interface ExtensionContext<Storage = Record<string, unknown>, Events exte
   /** 注销 Plugin */
   unregisterPlugin: (plugin: PluginLike) => void
   /** 注册 ViewPlugin（用于 Widget Decoration） */
-  registerViewPlugin: (plugin: ViewPluginLike) => void
+  registerWidgetPlugin: (plugin: WidgetPluginLike) => void
   /** 注销 ViewPlugin */
-  unregisterViewPlugin: (name: string) => void
+  unregisterWidgetPlugin: (name: string) => void
   /** 获取 sheet DOM 容器 */
   getContainer: () => HTMLElement
 }
@@ -116,7 +116,7 @@ export interface WorkbookEditorInterface {
 
 /** Plugin 最小接口（避免依赖 @tomind/state） */
 /** ViewPlugin 最小接口（避免依赖 @tomind/plugins） */
-export interface ViewPluginLike {
+export interface WidgetPluginLike {
   readonly name: string
   decorations(state: unknown): unknown[]
   widgetViewFactory?: (widgetType: string, widgetId: string, node: unknown) => { element: unknown } | null
@@ -258,8 +258,8 @@ export function buildExtensionContext(impl: {
   unregisterPartView: (partType: string) => void
   registerPlugin: (plugin: PluginLike) => void
   unregisterPlugin: (plugin: PluginLike) => void
-  registerViewPlugin: (plugin: ViewPluginLike) => void
-  unregisterViewPlugin: (name: string) => void
+  registerWidgetPlugin: (plugin: WidgetPluginLike) => void
+  unregisterWidgetPlugin: (name: string) => void
   getContainer: () => HTMLElement
 }): ExtensionContext {
   return impl as ExtensionContext

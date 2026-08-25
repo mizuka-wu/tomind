@@ -10,7 +10,7 @@ import { createExtension } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
 import { widgetDecoration } from '@tomind/state'
 import type { Decoration } from '@tomind/state'
-import type { ViewPluginLike } from '@tomind/core'
+import type { WidgetPluginLike } from '@tomind/core'
 
 // ==================== 状态管理 ====================
 
@@ -27,7 +27,7 @@ function updateIndicatorState(nodeId: string | null, visible: boolean): void {
 
 // ==================== ViewPlugin ====================
 
-function createIndicatorViewPlugin(): ViewPluginLike {
+function createIndicatorViewPlugin(): WidgetPluginLike {
   return {
     name: 'indicator',
     decorations: (state: unknown) => {
@@ -69,7 +69,7 @@ export const IndicatorExtension = createExtension({
 
   onCreate(ctx: ExtensionContext) {
     const viewPlugin = createIndicatorViewPlugin()
-    ctx.registerViewPlugin(viewPlugin)
+    ctx.registerWidgetPlugin(viewPlugin)
 
     const handleUpdate = (data: unknown) => {
       const { nodeId, visible } = data as { nodeId: string | null; visible: boolean }
@@ -86,7 +86,7 @@ export const IndicatorExtension = createExtension({
     return () => {
       ctx.off('indicator:update' as any, handleUpdate as any)
       ctx.off('indicator:clear' as any, handleClear as any)
-      ctx.unregisterViewPlugin('indicator')
+      ctx.unregisterWidgetPlugin('indicator')
       updateIndicatorState(null, false)
     }
   },

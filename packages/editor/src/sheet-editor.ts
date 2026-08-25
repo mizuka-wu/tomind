@@ -38,7 +38,7 @@ import type { LayoutEngine } from '@tomind/layout'
 import { CommandManager } from '@tomind/commands'
 import type { CommandResult } from '@tomind/commands'
 import { ExtensionManager } from '@tomind/extension'
-import type { Extension, ExtensionContext, CommandFn, ViewDescConstructor, PluginLike, ViewPluginLike } from '@tomind/extension'
+import type { Extension, ExtensionContext, CommandFn, ViewDescConstructor, PluginLike, WidgetPluginLike } from '@tomind/extension'
 import { buildExtensionContext } from '@tomind/extension'
 import { ViewPluginManager } from '@tomind/plugins'
 import type { ViewPlugin } from '@tomind/plugins'
@@ -408,7 +408,7 @@ export class SheetEditor {
    *
    * 用于 Widget Decoration 系统
    */
-  registerViewPlugin(plugin: ViewPlugin): void {
+  registerWidgetPlugin(plugin: ViewPlugin): void {
     if (this._viewPluginManager.has(plugin.name)) return
     this._viewPluginManager = this._viewPluginManager.add(plugin)
   }
@@ -416,7 +416,7 @@ export class SheetEditor {
   /**
    * 注销 ViewPlugin
    */
-  unregisterViewPlugin(name: string): void {
+  unregisterWidgetPlugin(name: string): void {
     this._viewPluginManager = this._viewPluginManager.remove(name)
   }
 
@@ -558,11 +558,11 @@ export class SheetEditor {
       unregisterPlugin: (plugin: PluginLike) => {
         editor.unregisterPlugin(plugin as Plugin)
       },
-      registerViewPlugin: (plugin: ViewPluginLike) => {
-        editor.registerViewPlugin(plugin as ViewPlugin)
+      registerWidgetPlugin: (plugin: WidgetPluginLike) => {
+        editor.registerWidgetPlugin(plugin as ViewPlugin)
       },
-      unregisterViewPlugin: (name: string) => {
-        editor.unregisterViewPlugin(name)
+      unregisterWidgetPlugin: (name: string) => {
+        editor.unregisterWidgetPlugin(name)
       },
       getContainer: () => editor.dom,
     })
