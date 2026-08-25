@@ -62,6 +62,11 @@ interface ScrollbarConfig {
 
 type ViewDescClass = new (node: NodeDesc, role: NodeRole, ctx: ViewContext) => ViewDesc
 
+/** 从 CustomEvent 安全提取 detail */
+function getEventDetail<T>(e: Event): T {
+  return (e as CustomEvent<T>).detail
+}
+
 // NodeViewDesc 默认注册表（Tiptap 风格：Extension 注册 NodeView）
 function createDefaultNodeViewDescRegistry(): Map<string, ViewDescClass> {
   const registry = new Map<string, ViewDescClass>()
@@ -194,7 +199,7 @@ export class SheetEditor {
     // 响应扩展的 'getContainer' 事件，回调传入 DOM 容器
     // 必须在 setupExtensions 之前注册，否则扩展的 ctx.emit('getContainer') 无人接收
     this._emitter.addEventListener('getContainer', ((e: Event) => {
-      const callback = (e as CustomEvent).detail
+      const callback = getEventDetail(e)
       if (typeof callback === 'function') {
         callback(this.dom)
       }
@@ -216,7 +221,7 @@ export class SheetEditor {
   // ==================== 事件 ====================
 
   on<K extends keyof SheetEditorEvents>(event: K, callback: (data: SheetEditorEvents[K]) => void): void {
-    const handler = (e: Event) => callback((e as CustomEvent<SheetEditorEvents[K]>).detail)
+    const handler = (e: Event) => callback(getEventDetail<SheetEditorEvents[K]>(e))
     this._emitter.addEventListener(event, handler)
     this._handlerMap.set(callback, handler)
   }
@@ -236,7 +241,7 @@ export class SheetEditor {
   /** 弱类型事件注册（供 ExtensionContext 桥接用） */
   onAny(event: string, handler: (...args: unknown[]) => void): void {
     const wrapped = (e: Event) => {
-      const detail = (e as CustomEvent).detail
+      const detail = getEventDetail(e)
       handler(detail)
     }
     this._emitter.addEventListener(event, wrapped)
