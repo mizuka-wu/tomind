@@ -20,6 +20,7 @@ import { ViewDesc } from '@tomind/view'
 import { SheetEditor, createNodeViewDescRegistry, createPartViewDescRegistry } from './sheet-editor'
 import { ExtensionManager } from '@tomind/extension'
 import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEditorInterface, ViewDescConstructor } from '@tomind/extension'
+import { buildExtensionContext } from '@tomind/extension'
 import type { StyleEngine } from '@tomind/style'
 import type { ResolvedStyle, NodeType } from '@tomind/style'
 import type { LayoutEngine } from '@tomind/layout'
@@ -384,7 +385,7 @@ export class WorkbookEditor implements WorkbookEditorInterface {
    */
   private createExtensionContext(): ExtensionContext {
     const workbook = this
-    return {
+    return buildExtensionContext({
       storage: {},
       getWorkbook: () => workbook,
       getState: <T = unknown>(): T | null => {
@@ -403,21 +404,20 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       executeCommand: (name: string, args?: unknown) => {
         return workbook.executeCommand(name, args)
       },
-      registerCommand: ((name: string, command: CommandFn) => {
-        // 注册到 Workbook 级别的 ExtensionManager（所有 sheet 共享）
+      registerCommand: (name: string, command: CommandFn) => {
         workbook.extensionManager.registerCommand?.(name, command)
-      }) as ExtensionContext['registerCommand'],
+      },
       unregisterCommand: (name: string) => {
         workbook.extensionManager.unregisterCommand?.(name)
       },
-      on: ((event: string, handler: EventHandler) => {
+      on: (event: string, handler: EventHandler) => {
         workbook.on(event, handler)
-      }) as ExtensionContext['on'],
-      off: ((event: string, handler: EventHandler) => {
+      },
+      off: (event: string, handler: EventHandler) => {
         workbook.off(event, handler)
-      }) as ExtensionContext['off'],
-      emit: (event: string, ...args: unknown[]) => {
-        workbook.emit(event, ...args)
+      },
+      emit: (event: string, data?: unknown) => {
+        workbook.emit(event, data)
       },
       registerNodeView: (nodeType: string, viewDesc: ViewDescConstructor) => {
         workbook._nodeViewDescRegistry.set(nodeType, viewDesc as new (node: NodeDesc, role: string, ctx: import('@tomind/view').ViewContext) => ViewDesc)
@@ -443,7 +443,7 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       unregisterPlugin: (_plugin: unknown) => {
         // Plugin unregistration is handled at SheetEditor level
       },
-    }
+    })
   }
 
   /**

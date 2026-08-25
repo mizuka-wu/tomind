@@ -61,9 +61,9 @@ export interface ExtensionContext<Storage = Record<string, unknown>, Events exte
   /** 注销 PartViewDesc */
   unregisterPartView: (partType: string) => void
   /** 注册 Plugin */
-  registerPlugin: (plugin: unknown) => void
+  registerPlugin: (plugin: PluginLike) => void
   /** 注销 Plugin */
-  unregisterPlugin: (plugin: unknown) => void
+  unregisterPlugin: (plugin: PluginLike) => void
 }
 
 /** ViewDesc 构造函数类型（跨包使用，避免依赖 @tomind/view） */
@@ -106,6 +106,11 @@ export interface WorkbookEditorInterface {
   handleKeyboardShortcut?: (shortcut: string) => boolean
   /** XAP 资源管理器 */
   xap?: import('@tomind/xap').XAPSystem
+}
+
+/** Plugin 最小接口（避免依赖 @tomind/state） */
+export interface PluginLike {
+  readonly key: { readonly name: string }
 }
 
 /** 命令函数 */
@@ -210,4 +215,34 @@ export interface ExtensionManager {
 export function parseArgs<T>(args: unknown, fallback?: T): T {
   if (args != null && typeof args === 'object') return args as T
   return (fallback ?? {}) as T
+}
+
+/**
+ * ExtensionContext 桥接构建器
+ *
+ * 接受松散签名的实现对象，返回类型安全的 ExtensionContext。
+ * 桥接层只需调用此函数，无需 as 断言。
+ */
+export function buildExtensionContext(impl: {
+  storage: Record<string, unknown>
+  getWorkbook: () => WorkbookEditorInterface
+  getState: <T = unknown>() => T | null
+  dispatch: (tr: unknown) => void
+  getView: () => unknown | null
+  executeCommand: (name: string, args?: unknown) => boolean
+  registerCommand: (name: string, command: CommandFn) => void
+  unregisterCommand: (name: string) => void
+  registerLayout: (algorithm: { name: string; layout: (node: any, options: any, styleEngine: any, state: any) => any }) => void
+  unregisterLayout: (name: string) => void
+  on: (event: string, handler: EventHandler) => void
+  off: (event: string, handler: EventHandler) => void
+  emit: (event: string, data?: unknown) => void
+  registerNodeView: (nodeType: string, viewDesc: ViewDescConstructor) => void
+  unregisterNodeView: (nodeType: string) => void
+  registerPartView: (partType: string, viewDesc: ViewDescConstructor) => void
+  unregisterPartView: (partType: string) => void
+  registerPlugin: (plugin: PluginLike) => void
+  unregisterPlugin: (plugin: PluginLike) => void
+}): ExtensionContext {
+  return impl as ExtensionContext
 }

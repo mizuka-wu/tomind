@@ -38,7 +38,8 @@ import type { LayoutEngine } from '@tomind/layout'
 import { CommandManager } from '@tomind/commands'
 import type { CommandResult } from '@tomind/commands'
 import { ExtensionManager } from '@tomind/extension'
-import type { Extension, ExtensionContext, CommandFn, EventHandler, ViewDescConstructor } from '@tomind/extension'
+import type { Extension, ExtensionContext, CommandFn, ViewDescConstructor, PluginLike } from '@tomind/extension'
+import { buildExtensionContext } from '@tomind/extension'
 import type { WorkbookEditor } from './workbook-editor'
 
 // ==================== 事件类型 ====================
@@ -204,7 +205,7 @@ export class SheetEditor {
       if (typeof callback === 'function') {
         callback(this.dom)
       }
-    }) as EventListener)
+    }))
 
     // 初始化扩展（必须在 createDocView 之前，扩展注册的 NodeView 才能生效）
     this.setupExtensions()
@@ -335,11 +336,10 @@ export class SheetEditor {
    *
    * 将 Plugin 添加到 state 中，并触发一次空事务以初始化 plugin state。
    */
-  registerPlugin(plugin: unknown): void {
-    const p = plugin as Plugin
+  registerPlugin(plugin: Plugin): void {
     // 避免重复注册
-    if (this._dynamicPlugins.some((dp) => dp.key.name === p.key.name)) return
-    this._dynamicPlugins.push(p)
+    if (this._dynamicPlugins.some((dp) => dp.key.name === plugin.key.name)) return
+    this._dynamicPlugins.push(plugin)
 
     // 重建 state，包含新 plugin
     const newPlugins = [...this.plugins, ...this._dynamicPlugins]
@@ -432,7 +432,7 @@ export class SheetEditor {
    */
   private createExtensionContext(): ExtensionContext {
     const editor = this
-    return {
+    return buildExtensionContext({
       storage: {},
       getWorkbook: () => editor._workbookEditor!,
       getState: <T = unknown>(): T | null => editor._state as T | null,
@@ -442,21 +442,21 @@ export class SheetEditor {
         const result = editor.executeCommand(name, args)
         return result.success
       },
-      registerCommand: ((name: string, command: CommandFn) => {
+      registerCommand: (name: string, command: CommandFn) => {
         editor.registerCommand(name, command)
-      }) as ExtensionContext['registerCommand'],
+      },
       unregisterCommand: (name: string) => {
         editor.unregisterCommand(name)
       },
-      on: ((event: string, handler: EventHandler) => {
+      on: (event: string, handler: (...args: unknown[]) => void) => {
         editor.onAny(event, handler)
-      }) as ExtensionContext['on'],
-      off: ((event: string, handler: EventHandler) => {
+      },
+      off: (event: string, handler: (...args: unknown[]) => void) => {
         editor.offAny(event, handler)
-      }) as ExtensionContext['off'],
-      emit: ((event: string, data?: unknown) => {
+      },
+      emit: (event: string, data?: unknown) => {
         editor.emitAny(event, data)
-      }) as ExtensionContext['emit'],
+      },
       registerNodeView: (nodeType: string, viewDesc: ViewDescConstructor) => {
         editor.registerNodeView(nodeType, viewDesc)
       },
@@ -475,13 +475,13 @@ export class SheetEditor {
       unregisterPartView: (partType: string) => {
         editor.unregisterPartView(partType)
       },
-      registerPlugin: (plugin: unknown) => {
-        editor.registerPlugin(plugin)
+      registerPlugin: (plugin: PluginLike) => {
+        editor.registerPlugin(plugin as Plugin)
       },
-      unregisterPlugin: (plugin: unknown) => {
-        editor.unregisterPlugin(plugin)
+      unregisterPlugin: (plugin: PluginLike) => {
+        editor.unregisterPlugin(plugin as Plugin)
       },
-    }
+    })
   }
 
   // ==================== ViewDesc 管理 ====================
@@ -811,14 +811,14 @@ export class SheetEditor {
   /**
    * 注册命令到 CommandManager
    */
-  registerCommand<S = unknown>(name: string, command: CommandFn<S>): void {
+  registerCommand(name: string, command: CommandFn): void {
     this._commandManager.add({
       name,
       description: `Extension command: ${name}`,
       inputSchema: { type: 'object' },
       execute: (params: unknown, state: SheetState, dispatch?: (tr: Transaction) => void) => {
         const wrappedDispatch = dispatch ? (tr: unknown) => dispatch(tr as Transaction) : null
-        const success = (command as CommandFn<SheetState>)(state, wrappedDispatch, params)
+        const success = command(state, wrappedDispatch, params)
         return { success }
       },
     })

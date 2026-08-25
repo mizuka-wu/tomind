@@ -20,10 +20,11 @@ export type {
   CleanupFn,
   StarterKitOptions,
   ViewDescConstructor,
+  PluginLike,
 } from './types'
 
 // 实现导出
-export { parseArgs } from './types'
+export { parseArgs, buildExtensionContext } from './types'
 export { createExtension, createNodeExtension, createPartExtension, isExtension } from './create-extension'
 export { ExtensionManager } from './extension-manager'
 
