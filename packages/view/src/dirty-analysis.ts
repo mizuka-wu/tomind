@@ -7,6 +7,10 @@
 import type { Step } from '@tomind/state'
 import { DirtyFlag } from './view-desc'
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object'
+}
+
 // ==================== 属性 → 标脏映射 ====================
 
 /** style 子属性 → 额外标脏 */
@@ -111,10 +115,7 @@ function analyzeAttrsChange(
 
     switch (key) {
       case 'style':
-        flag |= analyzeStyleChange(
-          newValue as Record<string, unknown> | undefined,
-          oldValue as Record<string, unknown> | undefined,
-        )
+        flag |= analyzeStyleChange(newValue, oldValue)
         break
 
       case 'title':
@@ -148,12 +149,18 @@ function analyzeAttrsChange(
  * 分析 style 子属性变化，返回标脏标记
  */
 function analyzeStyleChange(
-  newStyle: Record<string, unknown> | undefined,
-  oldStyle: Record<string, unknown> | undefined,
+  newStyle: unknown,
+  oldStyle: unknown,
 ): DirtyFlag {
-  if (!newStyle && !oldStyle) return DirtyFlag.CLEAN
-  if (!newStyle || !oldStyle) return DirtyFlag.STYLE | DirtyFlag.SIZE | DirtyFlag.LAYOUT
+  if (!isRecord(newStyle) && !isRecord(oldStyle)) return DirtyFlag.CLEAN
+  if (!isRecord(newStyle) || !isRecord(oldStyle)) return DirtyFlag.STYLE | DirtyFlag.SIZE | DirtyFlag.LAYOUT
+  return analyzeStyleChangeRecords(newStyle, oldStyle)
+}
 
+function analyzeStyleChangeRecords(
+  newStyle: Record<string, unknown>,
+  oldStyle: Record<string, unknown>,
+): DirtyFlag {
   let flag = DirtyFlag.STYLE
 
   // 检查影响布局的属性

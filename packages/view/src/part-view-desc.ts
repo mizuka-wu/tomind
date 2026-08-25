@@ -18,6 +18,14 @@ import { getTitleText } from '@tomind/schema'
 import { MarkersRenderer } from './renderers/markers-renderer'
 import { LabelsRenderer } from './renderers/labels-renderer'
 
+// ==================== 工具函数 ====================
+
+/** 类型安全的 attrs 访问器（与 style-engine 相同模式） */
+function getAttr<T>(attrs: Readonly<Record<string, unknown>>, key: string): T | undefined {
+  const val = attrs[key]
+  return val !== undefined ? (val as T) : undefined
+}
+
 // ==================== PartViewDesc ====================
 
 export abstract class PartViewDesc extends ViewDesc {
@@ -107,7 +115,7 @@ export class ImagePartViewDesc extends PartViewDesc {
 
   protected createElement(): Group {
     const group = new Group()
-    const imageData = this.node.attrs.image as { url?: string } | undefined
+    const imageData = getAttr<{ url?: string }>(this.node.attrs, 'image')
     if (imageData?.url) {
       this._image = new LeaferImage({ url: imageData.url, width: 100, height: 100 })
       group.add(this._image)
@@ -155,7 +163,7 @@ export class MarkersPartViewDesc extends PartViewDesc {
   private syncMarkerIcons(): void {
     if (!this.renderer) return
 
-    const markers = (this.node.attrs.markers as { id: string; icon?: string; color?: string }[]) ?? []
+    const markers = getAttr<{ id: string; icon?: string; color?: string }[]>(this.node.attrs, 'markers') ?? []
     this.renderer.updateMarkers(markers)
   }
 }
@@ -188,7 +196,7 @@ export class LabelsPartViewDesc extends PartViewDesc {
   private syncLabelTexts(): void {
     if (!this.renderer) return
 
-    const labels = (this.node.attrs.labels as { id: string; text: string; color?: string }[]) ?? []
+    const labels = getAttr<{ id: string; text: string; color?: string }[]>(this.node.attrs, 'labels') ?? []
     this.renderer.updateLabels(labels)
   }
 }
@@ -229,7 +237,7 @@ export class NotePartViewDesc extends PartViewDesc {
 
   protected updatePart(data: unknown): void {
     const note = data as NoteData | undefined
-    const hasNote = !!note && (!!(note as NoteData).content || !!(note as NoteData).htmlContent)
+    const hasNote = !!note && (!!note.content || !!note.htmlContent)
 
     // 图标可见性
     if (this._noteIcon) {

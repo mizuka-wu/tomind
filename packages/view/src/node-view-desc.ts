@@ -1993,7 +1993,7 @@ export class LegendNodeViewDesc extends NodeViewDesc {
     }
 
     // 用户自定义的 marker 描述（attrs.markers 为 Record<markerId, {name?: string}> 时）
-    const userMarkerDescMap = (this.node.attrs.markers ?? {}) as Record<string, { name?: string }>
+    const userMarkerDescMap = getAttr<Record<string, { name?: string }>>(this.node, 'markers') ?? {}
 
     const markerItems = Array.from(markerSet.entries()).map(([id]) => ({
       id,

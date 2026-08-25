@@ -5,7 +5,7 @@
  * 将 LeaferJS/DOM 事件转换为 ViewEvent
  */
 
-import type { Group } from 'leafer-ui'
+import { Group } from 'leafer-ui'
 import type {
   ViewEventType,
   ViewEventHandler,
@@ -22,6 +22,14 @@ import {
   isKeyboardEventType,
   isGestureEventType
 } from './view-event'
+
+/** 安全地将原生事件转换为 LeaferNativeEvent 结构 */
+function toLeaferNativeEvent(nativeEvent: unknown): LeaferNativeEvent {
+  if (nativeEvent && typeof nativeEvent === 'object') {
+    return nativeEvent as LeaferNativeEvent
+  }
+  return {} as LeaferNativeEvent
+}
 
 // ==================== 类型安全辅助函数 ====================
 
@@ -81,11 +89,12 @@ export class EventManager {
    * 注册指针/拖拽/手势事件处理器
    */
   onPointerEvent(
-    type: PointerEventType | DragEventType | GestureEventType,
+    type: ViewEventType,
     handler: ViewEventHandler,
     element: Group,
     leaferType?: string
   ): void {
+    if (isKeyboardEventType(type)) return
     const bindingKey = `${type}:${element.id || 'root'}`
     const actualLeaferType = leaferType ?? this.getLeaferType(type)
 
@@ -123,7 +132,8 @@ export class EventManager {
 
     // 创建包装处理器
     const wrappedHandler: EventListener = (nativeEvent: Event) => {
-      const event = this.createKeyboardEvent(type, nativeEvent as KeyboardEvent)
+      if (!(nativeEvent instanceof KeyboardEvent)) return
+      const event = this.createKeyboardEvent(type, nativeEvent)
       handler(event)
     }
 
@@ -158,12 +168,8 @@ export class EventManager {
       }
     } else {
       // 指针/拖拽/手势事件需要 Group
-      if ('on' in element && typeof element.on === 'function') {
-        this.onPointerEvent(
-          type as PointerEventType | DragEventType | GestureEventType, 
-          handler, 
-          element as Group
-        )
+      if (element instanceof Group && typeof element.on === 'function') {
+        this.onPointerEvent(type, handler, element)
       }
     }
   }
@@ -172,10 +178,11 @@ export class EventManager {
    * 注销指针/拖拽/手势事件处理器
    */
   offPointerEvent(
-    type: PointerEventType | DragEventType | GestureEventType,
+    type: ViewEventType,
     _handler: ViewEventHandler,
     element: Group
   ): void {
+    if (isKeyboardEventType(type)) return
     const bindingKey = `${type}:${element.id || 'root'}`
     const bindings = this._pointerBindings.get(bindingKey)
 
@@ -235,12 +242,8 @@ export class EventManager {
         this.offKeyboardEvent(type, handler, element)
       }
     } else {
-      if ('on' in element && typeof element.on === 'function') {
-        this.offPointerEvent(
-          type as PointerEventType | DragEventType | GestureEventType, 
-          handler, 
-          element as Group
-        )
+      if (element instanceof Group && typeof element.on === 'function') {
+        this.offPointerEvent(type, handler, element)
       }
     }
   }
@@ -273,7 +276,7 @@ export class EventManager {
     type: PointerEventType | DragEventType | GestureEventType,
     nativeEvent: unknown
   ): ViewEvent {
-    const ne = nativeEvent as LeaferNativeEvent
+    const ne = toLeaferNativeEvent(nativeEvent)
     const position = {
       x: safeNum(ne, 'x', safeNum(ne, 'clientX', 0)),
       y: safeNum(ne, 'y', safeNum(ne, 'clientY', 0)),
