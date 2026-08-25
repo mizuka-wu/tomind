@@ -1,7 +1,7 @@
-import { markers } from "./markers";
+import { markers as _markers } from "./markers";
 import { GROUP_ORDER } from "./constant";
 import { getDefaultOptions } from "../common/utils";
-import { groupName, markerName } from "./i18n";
+import { groupName as _groupName, markerName as _markerName } from "./i18n";
 
 interface MarkerInfo {
   markerId: string;
@@ -15,8 +15,12 @@ interface MarkerInfo {
 type MarkerMap = Record<string, { id: string; name?: string; markers: MarkerInfo[]; hidden: boolean; isUserMarker?: boolean }>;
 type I18nMap = Record<string, Record<string, string>>;
 
+const markers: MarkerMap = _markers;
+const groupName: I18nMap = _groupName;
+const markerName: I18nMap = _markerName;
+
 const allMarkerInfoList: MarkerInfo[] = GROUP_ORDER.map(
-  (groupId: string) => (markers as MarkerMap)[groupId].markers,
+  (groupId: string) => markers[groupId].markers,
 ).reduce<MarkerInfo[]>((pre: MarkerInfo[], cur: MarkerInfo[]) => {
   return pre.concat(cur);
 }, []);
@@ -35,13 +39,13 @@ export function getMarkerInfoById(markerId: string, options?: Record<string, unk
     ...markerInfo,
     name: markerInfo.isUserMarker
       ? (markerInfo.name ?? "")
-      : (markerName as I18nMap)[markerId]?.[lang] ?? markerId,
+      : markerName[markerId]?.[lang] ?? markerId,
   };
 }
 
 export function getGroupInfoById(groupId: string, options?: Record<string, unknown>): MarkerMap[string] | null {
   const resolvedOptions = getDefaultOptions(options);
-  const allGroups: MarkerMap = { ...userMarkerMap, ...markers } as MarkerMap;
+  const allGroups: MarkerMap = { ...userMarkerMap, ...markers };
   const groupInfo = allGroups[groupId];
   if (!groupInfo) {
     return null;
@@ -50,21 +54,21 @@ export function getGroupInfoById(groupId: string, options?: Record<string, unkno
     ...groupInfo,
     name: groupInfo.isUserMarker
       ? (groupInfo.name ?? "")
-      : (groupName as I18nMap)[groupId]?.[resolvedOptions.lang] ?? groupId,
-    markers: groupInfo.markers.map((info: MarkerInfo) =>
-      getMarkerInfoById(info.markerId, resolvedOptions),
-    ) as MarkerInfo[],
+      : groupName[groupId]?.[resolvedOptions.lang] ?? groupId,
+    markers: groupInfo.markers
+      .map((info: MarkerInfo) => getMarkerInfoById(info.markerId, resolvedOptions))
+      .filter((x): x is MarkerInfo => x !== null),
   };
 }
 
 export function getGroupInfoList(options?: Record<string, unknown>): MarkerMap[string][] {
   const resolvedOptions = getDefaultOptions(options);
-  return GROUP_ORDER.map((groupId: string) => (markers as MarkerMap)[groupId])
+  return GROUP_ORDER.map((groupId: string) => markers[groupId])
     .filter((groupInfo: MarkerMap[string]) => !groupInfo.hidden)
     .map((groupInfo: MarkerMap[string]) => {
       return {
         ...groupInfo,
-        name: (groupName as I18nMap)[groupInfo.id]?.[resolvedOptions.lang] ?? groupInfo.id,
+        name: groupName[groupInfo.id]?.[resolvedOptions.lang] ?? groupInfo.id,
         markers: groupInfo.markers
           .filter((info: MarkerInfo) => !info.hidden)
           .map((info: MarkerInfo) => getMarkerInfoById(info.markerId, resolvedOptions))
@@ -109,7 +113,7 @@ export function addUserMarkerInfoList(
           name,
           markers: groupMarkers
             .map((mid: string) => getMarkerInfoById(mid))
-            .filter(Boolean) as MarkerInfo[],
+            .filter((x): x is MarkerInfo => x !== null),
           hidden: false,
           isUserMarker: true,
         },

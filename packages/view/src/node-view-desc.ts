@@ -955,8 +955,8 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
 
     if (visible) {
       // 高亮：蓝色边框 + 加粗
-      this._savedStroke = shape.stroke as string
-      this._savedStrokeWidth = shape.strokeWidth as number
+      this._savedStroke = typeof shape.stroke === 'string' ? shape.stroke : undefined
+      this._savedStrokeWidth = typeof shape.strokeWidth === 'number' ? shape.strokeWidth : undefined
       shape.stroke = '#2563eb'
       shape.strokeWidth = 2
     } else {
@@ -1159,7 +1159,7 @@ export class CollapseExtendNodeViewDesc extends NodeViewDesc {
           if (lineColor) {
             const circleFill = this.renderer.getCircleFill()
             if (circleFill) {
-              this._savedFill = circleFill.fill as string
+              this._savedFill = typeof circleFill.fill === 'string' ? circleFill.fill : undefined
               circleFill.fill = lineColor
             }
           }
