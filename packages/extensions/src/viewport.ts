@@ -29,6 +29,11 @@ import type { SheetState, CommandFn, KeyboardShortcutHandler, ExtensionContext }
  */
 
 
+export interface ViewportEvents {
+  'viewport:setAutoMove': boolean
+  'viewport:showMouseInViewPort': { x: number; y: number }
+}
+
 // ==================== 类型定义 ====================
 
 interface ViewportOptions {
@@ -66,7 +71,7 @@ interface Bounds {
 
 // ==================== ViewportExtension ====================
 
-export const ViewportExtension = createExtension<ViewportOptions>({
+export const ViewportExtension = createExtension<ViewportOptions, Record<string, unknown>, ViewportEvents>({
   name: 'viewport',
   type: 'extension',
   defaultOptions: {
@@ -154,7 +159,7 @@ function createViewportShortcuts(): Record<string, KeyboardShortcutHandler> {
 
 // ==================== 视口交互设置 ====================
 
-function setupViewportInteractions(ctx: ExtensionContext, opts: Required<ViewportOptions>): () => void {
+function setupViewportInteractions(ctx: ExtensionContext<any, any>, opts: Required<ViewportOptions>): () => void {
   const cleanupFns: (() => void)[] = []
 
   // 通过事件系统获取 DOM 容器
@@ -188,7 +193,7 @@ function setupViewportInteractions(ctx: ExtensionContext, opts: Required<Viewpor
  */
 export function setupWheelZoom(
   dom: HTMLElement,
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   opts: Required<ViewportOptions>
 ): () => void {
   const handleWheel = (e: WheelEvent) => {
@@ -221,7 +226,7 @@ export function setupWheelZoom(
  */
 export function setupDragMove(
   dom: HTMLElement,
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   opts: Required<ViewportOptions>
 ): () => void {
   let isDragging = false
@@ -281,7 +286,7 @@ export function setupDragMove(
  */
 export function setupAutoMove(
   dom: HTMLElement,
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   opts: Required<ViewportOptions>
 ): () => void {
   // 自动移动逻辑需要集成视口边界检测

@@ -12,3 +12,20 @@ export interface ViewLike {
   layoutEngine?: { getLayoutResult(): LayoutResult } | null
   leaferView?: { parent?: Group | null; app?: unknown } | null
 }
+
+/** LeaferJS 视图最小接口 */
+export interface LeaferViewLike {
+  $el?: unknown
+  parent?: Group | null
+  app?: unknown
+}
+
+/** 类型安全的 getView 包装 */
+export function getViewLike(ctx: { getView(): unknown | null }): ViewLike | null {
+  return (ctx.getView() ?? null) as ViewLike | null
+}
+
+/** 获取 LeaferJS canvas 的 DOM 元素 */
+export function getCanvasElement(leaferView: { $el?: unknown }): HTMLElement | null {
+  return (leaferView.$el ?? null) as HTMLElement | null
+}

@@ -1,6 +1,17 @@
 import { createPartExtension } from '@tomind/core'
+import { getCanvasElement } from './shared-types'
 import type { ExtensionContext } from '@tomind/core'
+import type { SelectionEvents } from './selection'
+import type { ViewportEvents } from './viewport'
+
 import { Group, Rect } from 'leafer-ui'
+
+export interface MouseBoxSelectEvents {
+  'mouseBoxSelect:start': unknown
+  'mouseBoxSelect:started': unknown
+  'mouseBoxSelect:selecting': unknown
+  'mouseBoxSelect:ended': void
+}
 
 interface Position {
   x: number
@@ -17,10 +28,10 @@ interface Position {
  * - 触发框选事件通知 Selection 模块
  * - 支持视口自动平移
  */
-export const MouseBoxSelectExtension = createPartExtension({
+export const MouseBoxSelectExtension = createPartExtension<Record<string, unknown>, Record<string, unknown>, MouseBoxSelectEvents & ViewportEvents & SelectionEvents>({
   name: 'mouseBoxSelect',
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     // 状态
     let isProcessing = false
     let startPosition: Position | null = null
@@ -88,7 +99,8 @@ export const MouseBoxSelectExtension = createPartExtension({
       const leaferView = getLeaferView()
       if (!leaferView) return
 
-      const el = leaferView.$el as HTMLElement
+      const el = getCanvasElement(leaferView)
+      if (!el) return
       if (onMouseMoveBound) {
         el.removeEventListener('mousemove', onMouseMoveBound)
         onMouseMoveBound = null
@@ -128,7 +140,7 @@ export const MouseBoxSelectExtension = createPartExtension({
         }
 
         // 设置选择框位置
-        const containerRect = (leaferView.$el as HTMLElement).getBoundingClientRect()
+        const containerRect = getCanvasElement(leaferView)!.getBoundingClientRect()
         if (multiSelectG) {
           multiSelectG.set({
             x: startPosition.x - containerRect.left,
@@ -161,7 +173,7 @@ export const MouseBoxSelectExtension = createPartExtension({
       const leaferView = getLeaferView()
       if (!leaferView) return
 
-      const containerRect = (leaferView.$el as HTMLElement).getBoundingClientRect()
+      const containerRect = getCanvasElement(leaferView)!.getBoundingClientRect()
 
       // 计算方向（支持任意方向拖拽）
       const scaleX = e.clientX - startPosition.x >= 0 ? 1 : -1
@@ -252,7 +264,7 @@ export const MouseBoxSelectExtension = createPartExtension({
 
       const leaferView = getLeaferView()
       if (leaferView) {
-        registerEvents(leaferView.$el as HTMLElement)
+        registerEvents(getCanvasElement(leaferView)!)
       }
     }
 

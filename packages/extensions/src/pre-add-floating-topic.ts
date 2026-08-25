@@ -65,7 +65,7 @@ export const PreAddFloatingTopicExtension = createExtension<PreAddFloatingTopicO
 
 // ==================== 命令工厂 ====================
 
-function createCommands(ctx: ExtensionContext): Record<string, CommandFn> {
+function createCommands(ctx: ExtensionContext<any, any>): Record<string, CommandFn> {
   return {
     /**
      * 添加浮动主题
@@ -91,24 +91,21 @@ function createCommands(ctx: ExtensionContext): Record<string, CommandFn> {
 /**
  * 开始预添加流程
  */
-function startProcess(ctx: ExtensionContext, position: Position): void {
+function startProcess(ctx: ExtensionContext<any, any>, position: Position): void {
   // 创建假视图
   const fakeView = createFakeView(ctx, position)
 
   // 监听事件
-  const onPointerMove = (e: unknown) => {
-    const event = e as MouseEvent
-    updateFakeViewPosition(fakeView, { x: event.clientX, y: event.clientY })
+  const onPointerMove = (e: MouseEvent) => {
+    updateFakeViewPosition(fakeView, { x: e.clientX, y: e.clientY })
   }
 
-  const onPointerDown = (e: unknown) => {
-    const event = e as MouseEvent
-    finish(ctx, event, fakeView)
+  const onPointerDown = (e: MouseEvent) => {
+    finish(ctx, e, fakeView)
   }
 
-  const onKeyDown = (e: unknown) => {
-    const event = e as KeyboardEvent
-    if (event.key === 'Escape') {
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
       reset(fakeView, cleanup)
     }
   }
@@ -130,7 +127,7 @@ function startProcess(ctx: ExtensionContext, position: Position): void {
 /**
  * 完成添加
  */
-function finish(ctx: ExtensionContext, e: MouseEvent, fakeView: Group): void {
+function finish(ctx: ExtensionContext<any, any>, e: MouseEvent, fakeView: Group): void {
   // 获取鼠标位置
   const position = getPositionFromEvent(e)
 
@@ -157,7 +154,7 @@ function reset(fakeView: Group, cleanup: () => void): void {
 /**
  * 创建假视图
  */
-function createFakeView(ctx: ExtensionContext, position: Position): Group {
+function createFakeView(ctx: ExtensionContext<any, any>, position: Position): Group {
   // 创建 Group
   const group = new Group()
   group.set({

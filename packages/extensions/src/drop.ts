@@ -15,7 +15,19 @@
  */
 
 import { createExtension } from '@tomind/core'
+import { getCanvasElement } from './shared-types'
 import type { CommandFn } from '@tomind/core'
+import type { TopicEvents } from './topic'
+
+
+export interface DropEvents {
+  'drop:image': Record<string, unknown>
+  'drop:folder': Record<string, unknown>
+  'drop:attachment': unknown
+  'drop:onDragMoving': unknown
+  'drop:getDropView': unknown
+  'drop:finish': void
+}
 
 // ==================== 类型定义 ====================
 
@@ -96,7 +108,7 @@ const FileTypeTools = {
 
 // ==================== DropExtension ====================
 
-export const DropExtension = createExtension<DropOptions>({
+export const DropExtension = createExtension<DropOptions, Record<string, unknown>, TopicEvents & DropEvents>({
   name: 'drop',
   type: 'extension',
   defaultOptions: {
@@ -151,7 +163,8 @@ export const DropExtension = createExtension<DropOptions>({
       const leaferView = getLeaferView()
       if (!leaferView) return
 
-      const el = leaferView.$el as HTMLElement
+      const el = getCanvasElement(leaferView)
+      if (!el) return
 
       onDragEnter = (e: DragEvent) => {
         e.preventDefault()
@@ -229,7 +242,8 @@ export const DropExtension = createExtension<DropOptions>({
       const leaferView = getLeaferView()
       if (!leaferView) return
 
-      const el = leaferView.$el as HTMLElement
+      const el = getCanvasElement(leaferView)
+      if (!el) return
 
       if (onDragEnter) el.removeEventListener('dragenter', onDragEnter)
       if (onDragOver) el.removeEventListener('dragover', onDragOver)

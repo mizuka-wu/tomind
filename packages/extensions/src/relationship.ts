@@ -14,10 +14,17 @@
 
 import { Group, Path, Ellipse } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
-import type { ViewLike } from './shared-types'
+import { type ViewLike, getViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
+import type { SelectionEvents } from './selection'
 import { findOne } from './shared-utils'
+
+
+export interface RelationshipEvents {
+  'relationship:endpointMoved': Record<string, unknown>
+  'relationship:controlPointMoved': Record<string, unknown>
+}
 
 // ==================== 常量 ====================
 
@@ -311,7 +318,7 @@ function createRelationshipOverlay(
 
 /** 端点拖拽 */
 function setupEndpointDrag(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   overlay: Group,
   dotName: 'start-point' | 'end-point',
   cpName: 'control-point-1' | 'control-point-2',
@@ -364,7 +371,7 @@ function setupEndpointDrag(
 
 /** 控制点拖拽 */
 function setupControlPointDrag(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   overlay: Group,
   cpName: 'control-point-1' | 'control-point-2',
   cpLineName: 'cp-line-1' | 'cp-line-2',
@@ -437,7 +444,7 @@ function handleHoverEnter(ctx: ExtensionContext<RelationshipStorage>, nodeId: st
   const node = state.nodes?.get(nodeId)
   if (!node || node.type !== 'relationship') return
 
-  const view = ctx.getView() as ViewLike | null
+  const view = getViewLike(ctx)
   const layoutEngine = view?.layoutEngine
   if (!layoutEngine) return
 
@@ -536,7 +543,7 @@ function destroyOverlay(ctx: ExtensionContext<RelationshipStorage>): void {
 
 // ==================== 扩展定义 ====================
 
-export const RelationshipExtension = createExtension<Record<string, unknown>, RelationshipStorage>({
+export const RelationshipExtension = createExtension<Record<string, unknown>, RelationshipStorage, SelectionEvents & RelationshipEvents>({
   name: 'relationship',
   type: 'extension',
 

@@ -14,9 +14,10 @@
 
 import { Group, Rect } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
-import type { ViewLike } from './shared-types'
+import { type ViewLike, getViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo, type DragPosition } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
+import type { SelectionEvents } from './selection'
 import { findOne } from './shared-utils'
 
 // ==================== 常量 ====================
@@ -94,7 +95,7 @@ function createOverlay(nodeId: string, width: number, height: number): Group {
 // ==================== 拖拽逻辑 ====================
 
 function setupBarDrag(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   nodeId: string,
   overlay: Group,
   barName: 'left-bar' | 'right-bar',
@@ -116,7 +117,7 @@ function setupBarDrag(
 
   reg.dragStart((_pos, e) => {
     startTopicWidth = startWidth
-    startClientX = (e as MouseEvent).clientX ?? 0
+    startClientX = e instanceof MouseEvent ? e.clientX : e.touches[0]?.clientX ?? 0
   })
 
   reg.dragMove((info: DragMoveInfo, _e: MouseEvent | TouchEvent) => {
@@ -170,7 +171,7 @@ function handleHoverEnter(ctx: ExtensionContext<TopicSelectBoxStorage>, nodeId: 
   const node = state.nodes?.get(nodeId)
   if (!node || node.type !== 'topic') return
 
-  const view = ctx.getView() as ViewLike | null
+  const view = getViewLike(ctx)
   const layoutEngine = view?.layoutEngine
   if (!layoutEngine) return
 
@@ -228,7 +229,7 @@ function destroyOverlay(ctx: ExtensionContext<TopicSelectBoxStorage>): void {
 
 // ==================== 扩展定义 ====================
 
-export const TopicSelectBoxExtension = createExtension<Record<string, unknown>, TopicSelectBoxStorage>({
+export const TopicSelectBoxExtension = createExtension<Record<string, unknown>, TopicSelectBoxStorage, SelectionEvents>({
   name: 'topic-select-box',
   type: 'extension',
 

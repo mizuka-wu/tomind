@@ -10,7 +10,7 @@
  * - boundary.updateLabel: 更新 boundary 标签
  */
 
-import { createExtension, InsertNodeStep, RemoveNodeStep, Transaction } from '@tomind/core'
+import { createExtension, parseArgs, InsertNodeStep, RemoveNodeStep, Transaction } from '@tomind/core'
 import type { SheetState, NodeDesc, ExtensionContext } from '@tomind/core'
 
 // ==================== Options ====================
@@ -59,14 +59,14 @@ export const BoundaryExtension = createExtension<BoundaryOptions>({
   type: 'extension',
   defaultOptions: { enabled: true },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     // boundary.add — 在选中节点的父节点下添加 boundary
     ctx.registerCommand<SheetState>('boundary.add', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
       const sheetState = state
-      const { nodeId, label, style } = (params ?? {}) as {
+      const { nodeId, label, style } = parseArgs<{
         nodeId?: string; label?: string; style?: Record<string, unknown>
-      }
+      }>(params)
 
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
@@ -95,7 +95,7 @@ export const BoundaryExtension = createExtension<BoundaryOptions>({
     ctx.registerCommand<SheetState>('boundary.remove', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
       const sheetState = state
-      const { nodeId } = (params ?? {}) as { nodeId?: string }
+      const { nodeId } = parseArgs<{ nodeId?: string }>(params)
       if (!nodeId) return false
 
       const node = findInTree(sheetState.doc, nodeId)
@@ -113,7 +113,7 @@ export const BoundaryExtension = createExtension<BoundaryOptions>({
     ctx.registerCommand<SheetState>('boundary.updateLabel', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
       const sheetState = state
-      const { nodeId, label } = (params ?? {}) as { nodeId?: string; label?: string }
+      const { nodeId, label } = parseArgs<{ nodeId?: string; label?: string }>(params)
       if (!nodeId || label === undefined) return false
 
       const node = findInTree(sheetState.doc, nodeId)

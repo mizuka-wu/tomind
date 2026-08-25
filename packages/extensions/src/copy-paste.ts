@@ -160,7 +160,7 @@ export const CopyPasteExtension = createExtension<CopyPasteOptions>({
 
 // ==================== 命令工厂 ====================
 
-function createCopyPasteCommands(ctx: ExtensionContext): Record<string, CommandFn<SheetState>> {
+function createCopyPasteCommands(ctx: ExtensionContext<any, any>): Record<string, CommandFn<SheetState>> {
   return {
     /**
      * 复制

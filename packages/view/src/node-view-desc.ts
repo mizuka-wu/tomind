@@ -15,7 +15,7 @@ import type {
   NodeRole,
 } from '@tomind/schema'
 import { isRelationshipNode, isBoundaryNode, isSummaryNode } from '@tomind/schema'
-import type { StyleEngine, LeaferStyle } from '@tomind/style'
+import type { StyleEngine, LeaferStyle, ResolvedStyle } from '@tomind/style'
 import type { LayoutEngine, LayoutResult } from '@tomind/layout'
 import { getAttr } from '@tomind/layout'
 import { getTitleText } from '@tomind/schema'
@@ -76,9 +76,9 @@ export abstract class NodeViewDesc extends ViewDesc {
 
   // ==================== 样式计算 ====================
 
-  protected getNodeStyle(): Record<string, unknown> {
+  protected getNodeStyle(): ResolvedStyle {
     if (this.ctx.styleEngine && this.ctx.state) {
-      return this.ctx.styleEngine.computeStyle(this.ctx.state, this.node.id) as Record<string, unknown>
+      return this.ctx.styleEngine.computeStyle(this.ctx.state, this.node.id)
     }
     return {}
   }

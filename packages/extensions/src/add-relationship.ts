@@ -1,6 +1,7 @@
 import { createExtension, Transaction } from '@tomind/core'
 import type { ExtensionContext, CommandFn, SheetState } from '@tomind/core'
-import type { ViewLike } from './shared-types'
+import type { TopicEvents } from './topic'
+import { type ViewLike, getViewLike } from './shared-types'
 /**
  * AddRelationshipExtension — 添加关系线扩展
  *
@@ -18,6 +19,17 @@ import type { ViewLike } from './shared-types'
  * READY → SELECT_ONE → SELECT_ANOTHER → FINISH → READY
  */
 
+
+
+export interface AddRelationshipEvents {
+  'relationship:create': Record<string, unknown>
+  'relationship:createMoving': Record<string, unknown>
+  'relationship:updateMoving': Record<string, unknown>
+  'relationship:removeMoving': Record<string, unknown>
+  'relationship:setControlPoints': Record<string, unknown>
+  'relationship:setStyle': Record<string, unknown>
+  'relationship:updateStyle': Record<string, unknown>
+}
 
 // ==================== 类型定义 ====================
 
@@ -42,7 +54,7 @@ const LINE_STYLE_CURVE = 'curve'
 
 // ==================== AddRelationshipExtension ====================
 
-export const AddRelationshipExtension = createExtension<AddRelationshipOptions>({
+export const AddRelationshipExtension = createExtension<AddRelationshipOptions, Record<string, unknown>, AddRelationshipEvents & TopicEvents>({
   name: 'addRelationship',
   type: 'extension',
   defaultOptions: {
@@ -110,7 +122,7 @@ export const AddRelationshipExtension = createExtension<AddRelationshipOptions>(
 // ==================== 命令工厂 ====================
 
 function createCommands(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   stateManager: {
     getState: () => State
     setState: (s: State) => void
@@ -184,7 +196,7 @@ function createCommands(
  * 选择节点
  */
 function selectNode(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   stateManager: any,
   nodeId: string
 ): void {
@@ -217,7 +229,7 @@ function selectNode(
 /**
  * 完成
  */
-function finish(ctx: ExtensionContext, stateManager: any): void {
+function finish(ctx: ExtensionContext<any, any>, stateManager: any): void {
   const end1Id = stateManager.getEnd1Id()
   const end2Id = stateManager.getEnd2Id()
   const movingRelId = stateManager.getMovingRelationshipId()
@@ -232,7 +244,7 @@ function finish(ctx: ExtensionContext, stateManager: any): void {
   const relationshipId = createRelationship(ctx, end1Id, end2Id)
 
   // 从 layout 获取端点位置
-  const view = ctx.getView() as ViewLike
+  const view = getViewLike(ctx)
   const layoutEngine = view?.layoutEngine
   const layoutResult = layoutEngine?.getLayoutResult()
   const end1Layout = layoutResult?.nodes?.get(end1Id)
@@ -272,7 +284,7 @@ function finish(ctx: ExtensionContext, stateManager: any): void {
 /**
  * 取消
  */
-function cancel(ctx: ExtensionContext, stateManager: any): void {
+function cancel(ctx: ExtensionContext<any, any>, stateManager: any): void {
   const movingRelId = stateManager.getMovingRelationshipId()
 
   // 移除移动中的关系线
@@ -288,7 +300,7 @@ function cancel(ctx: ExtensionContext, stateManager: any): void {
 /**
  * 重置
  */
-function reset(ctx: ExtensionContext, stateManager: any): void {
+function reset(ctx: ExtensionContext<any, any>, stateManager: any): void {
   stateManager.setState('READY')
   stateManager.setEnd1Id(null)
   stateManager.setEnd2Id(null)
@@ -306,7 +318,7 @@ function reset(ctx: ExtensionContext, stateManager: any): void {
 /**
  * 绑定事件
  */
-function bindEvents(ctx: ExtensionContext, stateManager: any): void {
+function bindEvents(ctx: ExtensionContext<any, any>, stateManager: any): void {
   const handleClick = (e: unknown) => {
     const event = e as { targetId?: string; x?: number; y?: number }
     if (event.targetId) {
@@ -377,7 +389,7 @@ function bindEvents(ctx: ExtensionContext, stateManager: any): void {
 /**
  * 解绑事件
  */
-function unbindEvents(ctx: ExtensionContext, stateManager: any): void {
+function unbindEvents(ctx: ExtensionContext<any, any>, stateManager: any): void {
   const handlers = stateManager.getEventHandlers()
   if (handlers.handleClick) ctx.off('click', handlers.handleClick)
   if (handlers.handleMouseMove) ctx.off('pointermove', handlers.handleMouseMove)
@@ -392,7 +404,7 @@ function unbindEvents(ctx: ExtensionContext, stateManager: any): void {
  * 创建移动中的关系线
  */
 function createMovingRelationship(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   startNodeId: string
 ): string {
   // 生成临时 ID
@@ -411,7 +423,7 @@ function createMovingRelationship(
  * 更新移动中的关系线
  */
 function updateMovingRelationship(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   relationshipId: string,
   startNodeId: string,
   endPosition: Position,
@@ -429,7 +441,7 @@ function updateMovingRelationship(
 /**
  * 移除移动中的关系线
  */
-function removeMovingRelationship(ctx: ExtensionContext, relationshipId: string): void {
+function removeMovingRelationship(ctx: ExtensionContext<any, any>, relationshipId: string): void {
   // 通过事件通知视图层移除临时关系线
   ctx.emit('relationship:removeMoving', { id: relationshipId })
 }
@@ -438,7 +450,7 @@ function removeMovingRelationship(ctx: ExtensionContext, relationshipId: string)
  * 创建真正的关系线
  */
 function createRelationship(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   end1Id: string,
   end2Id: string
 ): string {
@@ -459,7 +471,7 @@ function createRelationship(
  * 设置关系线控制点
  */
 function setRelationshipControlPoints(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   relationshipId: string,
   controlPoints: unknown
 ): void {
@@ -473,7 +485,7 @@ function setRelationshipControlPoints(
  * 设置关系线样式
  */
 function setRelationshipStyle(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   relationshipId: string,
   lineStyle: string | null
 ): void {
@@ -487,7 +499,7 @@ function setRelationshipStyle(
  * 更新关系线样式
  */
 function updateRelationshipStyle(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   relationshipId: string,
   lineStyle: string
 ): void {
@@ -539,7 +551,7 @@ function calculateControlPoints(
 /**
  * 创建浮动主题
  */
-function createFloatingTopic(ctx: ExtensionContext, x: number, y: number): string {
+function createFloatingTopic(ctx: ExtensionContext<any, any>, x: number, y: number): string {
   // 生成 ID
   const topicId = `floating-topic-${Date.now()}`
 

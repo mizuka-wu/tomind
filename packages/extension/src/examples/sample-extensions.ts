@@ -5,6 +5,29 @@
 import { createExtension, createNodeExtension, createPartExtension } from '../create-extension'
 import type { ExtensionContext } from '../types'
 
+// ─── 示例 Events 接口 ───
+
+interface SampleSelectionEvents {
+  'selection:toggle': { nodeId: string }
+  'selection:select': { nodeId: string }
+}
+
+interface SampleDragEvents {
+  'drag:start': { sourceId: string | null }
+  'drag:end': { sourceId: string | null }
+  'drag:drop': { sourceId: string; targetId: string; data?: unknown }
+}
+
+interface SampleNavigationEvents {
+  'navigation:up': void
+  'navigation:down': void
+  'navigation:left': void
+  'navigation:right': void
+  'navigation:enter': void
+  'navigation:tab:child': void
+  'navigation:tab:sibling': void
+}
+
 /**
  * 选择扩展（纯行为）
  *
@@ -12,14 +35,14 @@ import type { ExtensionContext } from '../types'
  */
 export const SelectionExtension = createExtension<{
   multiSelect: boolean
-}>({
+}, Record<string, unknown>, SampleSelectionEvents>({
   name: 'selection',
   type: 'extension',
   defaultOptions: {
     multiSelect: true,
     enabled: true,
   },
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx) {
     console.log('Selection extension setup')
 
     // 监听点击事件
@@ -63,14 +86,14 @@ export const SelectionExtension = createExtension<{
  */
 export const DragDropExtension = createExtension<{
   threshold: number
-}>({
+}, Record<string, unknown>, SampleDragEvents>({
   name: 'dragDrop',
   type: 'extension',
   defaultOptions: {
     enabled: true,
     threshold: 5,
   },
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx) {
     console.log('DragDrop extension setup')
 
     let dragSource: string | null = null
@@ -127,14 +150,14 @@ export const DragDropExtension = createExtension<{
  */
 export const KeyboardNavigationExtension = createExtension<{
   wrapAround: boolean
-}>({
+}, Record<string, unknown>, SampleNavigationEvents>({
   name: 'keyboardNavigation',
   type: 'extension',
   defaultOptions: {
     enabled: true,
     wrapAround: true,
   },
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx) {
     console.log('KeyboardNavigation extension setup')
 
     const handleKeyDown = (event: unknown) => {
@@ -209,7 +232,7 @@ export const TopicNodeExtension = createNodeExtension({
   defaultOptions: {
     enabled: true,
   },
-  onCreate(_ctx: ExtensionContext) {
+  onCreate(_ctx) {
     console.log('Topic node extension setup')
 
     // 注册 NodeViewDesc
@@ -231,7 +254,7 @@ export const MarkersPartExtension = createPartExtension({
   defaultOptions: {
     enabled: true,
   },
-  onCreate(_ctx: ExtensionContext) {
+  onCreate(_ctx) {
     console.log('Markers part extension setup')
 
     // 注册 PartViewDesc

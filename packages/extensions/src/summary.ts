@@ -10,7 +10,7 @@
  * - summary.updateRange: 更新摘要覆盖的兄弟节点范围
  */
 
-import { createExtension, InsertNodeStep, RemoveNodeStep, Transaction } from '@tomind/core'
+import { createExtension, parseArgs, InsertNodeStep, RemoveNodeStep, Transaction } from '@tomind/core'
 import type { SheetState, NodeDesc, ExtensionContext } from '@tomind/core'
 
 // ==================== Options ====================
@@ -56,14 +56,14 @@ export const SummaryExtension = createExtension<SummaryOptions>({
   type: 'extension',
   defaultOptions: { enabled: true },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     // summary.add — 在父节点下添加 summary
     ctx.registerCommand<SheetState>('summary.add', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
       const sheetState = state
-      const { nodeId, rangeStart, rangeEnd, label } = (params ?? {}) as {
+      const { nodeId, rangeStart, rangeEnd, label } = parseArgs<{
         nodeId?: string; rangeStart?: number; rangeEnd?: number; label?: string
-      }
+      }>(params)
 
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
@@ -94,7 +94,7 @@ export const SummaryExtension = createExtension<SummaryOptions>({
     ctx.registerCommand<SheetState>('summary.remove', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
       const sheetState = state
-      const { nodeId } = (params ?? {}) as { nodeId?: string }
+      const { nodeId } = parseArgs<{ nodeId?: string }>(params)
       if (!nodeId) return false
 
       const node = findInTree(sheetState.doc, nodeId)
@@ -112,9 +112,9 @@ export const SummaryExtension = createExtension<SummaryOptions>({
     ctx.registerCommand<SheetState>('summary.updateRange', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
       const sheetState = state
-      const { nodeId, rangeStart, rangeEnd } = (params ?? {}) as {
+      const { nodeId, rangeStart, rangeEnd } = parseArgs<{
         nodeId?: string; rangeStart?: number; rangeEnd?: number
-      }
+      }>(params)
       if (!nodeId) return false
 
       const node = findInTree(sheetState.doc, nodeId)

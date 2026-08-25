@@ -27,10 +27,11 @@
  */
 
 import type { Group } from 'leafer-ui'
-import type { 
-  ViewEventType, 
-  ViewEventHandler, 
-  ViewEvent
+import type {
+  ViewEventType,
+  ViewEventHandler,
+  ViewEvent,
+  LeaferNativeEvent
 } from './view-event'
 import { createViewEvent, isKeyboardEventType } from './view-event'
 
@@ -247,9 +248,8 @@ export class EventDelegator {
    * 处理事件
    */
   private handleEvent(type: ViewEventType, nativeEvent: unknown): void {
-    const ne = nativeEvent as Record<string, unknown>
-    const target = ne.target as Record<string, unknown> | undefined
-    const targetId = target?.id as string | undefined
+    const ne = nativeEvent as LeaferNativeEvent
+    const targetId = ne.target?.id
 
     if (!targetId) return
 
@@ -277,10 +277,10 @@ export class EventDelegator {
     targetId: string,
     nativeEvent: unknown
   ): ViewEvent {
-    const ne = nativeEvent as Record<string, unknown>
+    const ne = nativeEvent as LeaferNativeEvent
     const position = {
-      x: (ne.x as number) ?? 0,
-      y: (ne.y as number) ?? 0,
+      x: ne.x ?? ne.clientX ?? 0,
+      y: ne.y ?? ne.clientY ?? 0,
     }
 
     return createViewEvent(
@@ -290,9 +290,9 @@ export class EventDelegator {
       nativeEvent,
       position,
       {
-        ctrlKey: (ne.ctrlKey as boolean) ?? false,
-        shiftKey: (ne.shiftKey as boolean) ?? false,
-        altKey: (ne.altKey as boolean) ?? false,
+        ctrlKey: ne.ctrlKey ?? false,
+        shiftKey: ne.shiftKey ?? false,
+        altKey: ne.altKey ?? false,
       }
     )
   }

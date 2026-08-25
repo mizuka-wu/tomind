@@ -74,4 +74,4 @@ export function createExtensionContext(editor: {
   }
 }
 export { onDocEvent, offDocEvent } from './event-listener-utils'
-export type { EventMap } from './event-map'
+export type { BaseEventMap, DragViewDesc } from './event-map'

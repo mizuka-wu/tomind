@@ -47,6 +47,16 @@ interface MiniMapView {
   mindMapScaleValue: number
 }
 
+export interface MiniMapEvents {
+  'miniMap:created': { container: unknown }
+  'miniMap:navigate': { ratioX: number; ratioY: number }
+  'miniMap:drag': { ratioDx: number; ratioDy: number }
+  'miniMap:requestViewport': unknown
+  'miniMap:requestBounds': unknown
+  'miniMap:requestRender': unknown
+  'miniMap:requestScale': unknown
+}
+
 // ==================== 常量 ====================
 
 const DEFAULT_OPTIONS: Required<MiniMapOptions> = {
@@ -59,7 +69,7 @@ const DEFAULT_OPTIONS: Required<MiniMapOptions> = {
 
 // ==================== MiniMapExtension ====================
 
-export const MiniMapExtension = createExtension<MiniMapOptions>({
+export const MiniMapExtension = createExtension<MiniMapOptions, Record<string, unknown>, MiniMapEvents>({
   name: 'miniMap',
   type: 'extension',
   defaultOptions: {
@@ -99,7 +109,7 @@ export const MiniMapExtension = createExtension<MiniMapOptions>({
 // ==================== 命令工厂 ====================
 
 function createCommands(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   options: Required<MiniMapOptions>
 ): Record<string, CommandFn> {
   let visible = false
@@ -156,7 +166,7 @@ function createCommands(
  * 创建小地图视图
  */
 function createMiniMapView(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   options: Required<MiniMapOptions>
 ): MiniMapView {
   // 创建 DOM 容器
@@ -261,7 +271,7 @@ function removeMiniMapView(miniMapView: MiniMapView | null): void {
  * 绑定事件
  */
 function bindEvents(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   miniMapView: MiniMapView
 ): () => void {
   const handleViewportChange = () => {
@@ -352,7 +362,7 @@ function bindEvents(
  * 更新视口框
  */
 function updateViewBox(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   miniMapView: MiniMapView
 ): void {
   if (!miniMapView.viewBox) return
@@ -388,7 +398,7 @@ function updateViewBox(
  * 更新缩略图
  */
 function updateThumbnail(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   miniMapView: MiniMapView
 ): void {
   const canvas = miniMapView.canvas
@@ -406,7 +416,7 @@ function updateThumbnail(
  * 更新缩放
  */
 function updateScale(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   miniMapView: MiniMapView
 ): void {
   // 请求缩放信息

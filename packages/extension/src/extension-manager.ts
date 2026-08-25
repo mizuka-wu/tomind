@@ -11,7 +11,6 @@
 import type {
   Extension,
   ExtensionContext,
-
   EventHandler,
   KeyboardShortcutHandler,
   CommandFn

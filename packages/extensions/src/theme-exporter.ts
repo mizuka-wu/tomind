@@ -219,7 +219,7 @@ export const ThemeExporterExtension = createExtension<ThemeExporterOptions>({
     enabled: true,
   },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     // 注册导出命令
     ctx.registerCommand('theme.export', (state, dispatch, args) => {
       const workbook = ctx.getWorkbook()

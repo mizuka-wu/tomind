@@ -40,7 +40,7 @@ export const HistoryExtension = createExtension<HistoryOptions>({
     maxDepth: 100,
   },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     // 注册 undo 命令
     ctx.registerCommand<SheetState>('history.undo', (state, dispatch: ((tr: unknown) => void) | null) => {
       if (!dispatch) return true

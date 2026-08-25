@@ -6,14 +6,15 @@
  */
 
 import type { Group } from 'leafer-ui'
-import type { 
-  ViewEventType, 
-  ViewEventHandler, 
+import type {
+  ViewEventType,
+  ViewEventHandler,
   ViewEvent,
   PointerEventType,
   DragEventType,
   KeyboardEventType,
-  GestureEventType
+  GestureEventType,
+  LeaferNativeEvent
 } from './view-event'
 import { 
   createViewEvent, 
@@ -272,7 +273,7 @@ export class EventManager {
     type: PointerEventType | DragEventType | GestureEventType,
     nativeEvent: unknown
   ): ViewEvent {
-    const ne = nativeEvent as Record<string, unknown>
+    const ne = nativeEvent as LeaferNativeEvent
     const position = {
       x: safeNum(ne, 'x', safeNum(ne, 'clientX', 0)),
       y: safeNum(ne, 'y', safeNum(ne, 'clientY', 0)),

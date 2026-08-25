@@ -23,14 +23,23 @@ interface LeaferDragContext {
   [key: string]: unknown
 }
 
+export interface SelectDragEvents {
+  'selectDrag:start': unknown
+  'selectDrag:addBranch': unknown
+  'selectDrag:removeBranch': unknown
+  'selectDrag:move': unknown
+  'selectDrag:end': void
+  'selectDrag:branchMouseout': unknown
+}
+
 // ==================== Extension ====================
 
-export const SelectDragExtension = createExtension({
+export const SelectDragExtension = createExtension<Record<string, unknown>, Record<string, unknown>, SelectDragEvents>({
   name: 'selectDrag',
   type: 'extension',
   defaultOptions: { enabled: true },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     let context: NodeViewDesc | null = null
     let selectedBranches: NodeViewDesc[] = []
     let direction = 'after'

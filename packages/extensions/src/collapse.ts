@@ -12,7 +12,7 @@
  * - collapse.collapseAll: 折叠所有
  */
 
-import { createExtension, UpdateNodeStep, Transaction } from '@tomind/core'
+import { createExtension, parseArgs, UpdateNodeStep, Transaction } from '@tomind/core'
 import type { SheetState, NodeDesc, ExtensionContext } from '@tomind/core'
 
 // ==================== Options ====================
@@ -75,12 +75,12 @@ export const CollapseExtension = createExtension<CollapseOptions>({
   type: 'extension',
   defaultOptions: { enabled: true },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     // collapse.toggle — 切换折叠状态
     ctx.registerCommand<SheetState>('collapse.toggle', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
       const sheetState = state
-      const { nodeId } = (params ?? {}) as { nodeId?: string }
+      const { nodeId } = parseArgs<{ nodeId?: string }>(params)
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
 
@@ -103,7 +103,7 @@ export const CollapseExtension = createExtension<CollapseOptions>({
     ctx.registerCommand<SheetState>('collapse.expand', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
       const sheetState = state
-      const { nodeId } = (params ?? {}) as { nodeId?: string }
+      const { nodeId } = parseArgs<{ nodeId?: string }>(params)
       if (!nodeId) return false
 
       const node = findInTree(sheetState.doc, nodeId)
@@ -120,7 +120,7 @@ export const CollapseExtension = createExtension<CollapseOptions>({
     ctx.registerCommand<SheetState>('collapse.collapse', (state, dispatch: ((tr: unknown) => void) | null, params?: unknown) => {
       if (!dispatch) return true
       const sheetState = state
-      const { nodeId } = (params ?? {}) as { nodeId?: string }
+      const { nodeId } = parseArgs<{ nodeId?: string }>(params)
       if (!nodeId) return false
 
       const collapseNode = findInTree(sheetState.doc, nodeId)

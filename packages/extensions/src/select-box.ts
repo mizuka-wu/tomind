@@ -14,10 +14,16 @@
 
 import { Group, Path } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
-import type { ViewLike } from './shared-types'
+import { type ViewLike, getViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo, type DragPosition } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
+import type { SelectionEvents } from './selection'
 import { findOne } from './shared-utils'
+
+
+export interface SelectBoxEvents {
+  'selectBox:rangeChanged': { nodeId: string; rangeStart: number; rangeEnd: number; direction: string }
+}
 
 // ==================== 常量 ====================
 
@@ -409,7 +415,7 @@ function computeRangeFromDragResult(
 }
 
 function setupBarDrag(
-  ctx: ExtensionContext<SelectBoxStorage>,
+  ctx: ExtensionContext<any, any>,
   nodeId: string,
   overlay: Group,
   barName: 'bar-one' | 'bar-two',
@@ -535,7 +541,7 @@ function transitionState(storage: SelectBoxStorage, event: string): void {
 
 // ==================== Hover 处理 ====================
 
-function handleHoverEnter(ctx: ExtensionContext<SelectBoxStorage>, nodeId: string): void {
+function handleHoverEnter(ctx: ExtensionContext<any, any>, nodeId: string): void {
   const storage = ctx.storage
   const state = ctx.getState<any>()
   if (!state) return
@@ -543,7 +549,7 @@ function handleHoverEnter(ctx: ExtensionContext<SelectBoxStorage>, nodeId: strin
   const node = state.nodes?.get(nodeId)
   if (!node || (node.type !== 'summary' && node.type !== 'boundary')) return
 
-  const view = ctx.getView() as ViewLike | null
+  const view = getViewLike(ctx)
   const layoutEngine = view?.layoutEngine
   if (!layoutEngine) return
 
@@ -582,13 +588,13 @@ function handleHoverEnter(ctx: ExtensionContext<SelectBoxStorage>, nodeId: strin
   transitionState(storage, 'select')
 }
 
-function handleHoverLeave(ctx: ExtensionContext<SelectBoxStorage>, _nodeId: string): void {
+function handleHoverLeave(ctx: ExtensionContext<any, any>, _nodeId: string): void {
   const storage = ctx.storage
   transitionState(storage, 'deselect')
   destroyOverlay(ctx)
 }
 
-function destroyOverlay(ctx: ExtensionContext<SelectBoxStorage>): void {
+function destroyOverlay(ctx: ExtensionContext<any, any>): void {
   const storage = ctx.storage
 
   for (const reg of storage.registers) {
@@ -607,7 +613,7 @@ function destroyOverlay(ctx: ExtensionContext<SelectBoxStorage>): void {
 
 // ==================== 扩展定义 ====================
 
-export const SelectBoxExtension = createExtension<Record<string, unknown>, SelectBoxStorage>({
+export const SelectBoxExtension = createExtension<Record<string, unknown>, SelectBoxStorage, SelectionEvents & SelectBoxEvents>({
   name: 'select-box',
   type: 'extension',
 

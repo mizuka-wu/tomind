@@ -14,9 +14,15 @@
 import { Group, Rect } from 'leafer-ui'
 import { createExtension } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
-import type { ViewLike } from './shared-types'
+import type { SelectionEvents } from './selection'
+import { type ViewLike, getViewLike } from './shared-types'
 import { findOne } from './shared-utils'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
+
+
+export interface ResizeBoxEvents {
+  'resize:changed': { nodeId: string; width: number; height: number }
+}
 
 // ==================== 常量 ====================
 
@@ -147,7 +153,7 @@ function createOverlay(nodeId: string, width: number, height: number): Group {
 // ==================== 拖拽逻辑 ====================
 
 function setupAnchorDrag(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   nodeId: string,
   overlay: Group,
   startWidth: number,
@@ -267,7 +273,7 @@ function handleHoverEnter(ctx: ExtensionContext<ResizeBoxStorage>, nodeId: strin
   const node = state.nodes?.get(nodeId)
   if (!node || node.type !== 'image') return
 
-  const view = ctx.getView() as ViewLike
+  const view = getViewLike(ctx)
   const layoutEngine = view?.layoutEngine
   if (!layoutEngine) return
 
@@ -319,7 +325,7 @@ function destroyOverlay(ctx: ExtensionContext<ResizeBoxStorage>): void {
 
 // ==================== 扩展定义 ====================
 
-export const ResizeBoxExtension = createExtension<Record<string, unknown>, ResizeBoxStorage>({
+export const ResizeBoxExtension = createExtension<Record<string, unknown>, ResizeBoxStorage, SelectionEvents & ResizeBoxEvents>({
   name: 'resize-box',
   type: 'extension',
 

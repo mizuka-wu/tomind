@@ -276,3 +276,23 @@ export function isKeyboardEventType(type: ViewEventType): type is KeyboardEventT
 export function isGestureEventType(type: ViewEventType): type is GestureEventType {
   return ['pinchstart', 'pinch', 'pinchend', 'rotatestart', 'rotate', 'rotateend'].includes(type as GestureEventType)
 }
+
+/**
+ * LeaferJS 原生事件的最小类型
+ * 替代 `nativeEvent as Record<string, unknown>` 模式
+ */
+export interface LeaferNativeEvent {
+  target?: { id?: string; [key: string]: unknown }
+  x?: number
+  y?: number
+  clientX?: number
+  clientY?: number
+  startX?: number
+  startY?: number
+  ctrlKey?: boolean
+  shiftKey?: boolean
+  altKey?: boolean
+  metaKey?: boolean
+  key?: string
+  [key: string]: unknown
+}

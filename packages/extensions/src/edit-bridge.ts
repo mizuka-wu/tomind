@@ -11,7 +11,7 @@
 
 import { createExtension, Transaction, getAttributeTitle, getPlainTextFromAttributeTitle, createAttributeTitleFromPlainText } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
-import type { ViewLike } from './shared-types'
+import { type ViewLike, getViewLike } from './shared-types'
 
 // ==================== Storage ====================
 
@@ -44,7 +44,7 @@ export const EditBridgeExtension = createExtension<Record<string, unknown>, Edit
      * 由 TopicNodeViewDesc 的 doubletap 触发
      */
     ctx.on('edit:start', ({ nodeId, node }) => {
-      handleEditStart(ctx, nodeId, node as any)
+      handleEditStart(ctx, nodeId, node)
     })
 
     // 注册 topic.edit 命令（F2 / Space 触发）
@@ -85,7 +85,7 @@ export const EditBridgeExtension = createExtension<Record<string, unknown>, Edit
  * 开始编辑
  * 流程：获取当前文字 → 打开 LeaferJS TextEditor → 监听关闭事件
  */
-function handleEditStart(ctx: ExtensionContext<EditBridgeStorage>, nodeId: string, node: any): void {
+function handleEditStart(ctx: ExtensionContext<EditBridgeStorage>, nodeId: string, node: { attrs?: Record<string, unknown> }): void {
   const storage = ctx.storage
 
   // 如果正在编辑其他节点，先取消
@@ -108,7 +108,7 @@ function handleEditStart(ctx: ExtensionContext<EditBridgeStorage>, nodeId: strin
   storage.isEditing = true
 
   // 获取 LeaferJS App
-  const view = ctx.getView() as ViewLike
+  const view = getViewLike(ctx)
   const app = view?.leaferView?.app
   if (!app) {
     console.warn('[EditBridge] no LeaferJS App found')

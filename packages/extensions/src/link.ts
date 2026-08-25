@@ -15,7 +15,7 @@ export const LinkExtension = createExtension({
   type: 'extension',
   defaultOptions: { enabled: true },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     ctx.registerPartView('link', LinkPartViewDesc)
 
     return () => {

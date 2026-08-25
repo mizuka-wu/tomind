@@ -11,8 +11,33 @@
  */
 
 import { createExtension, parseArgs } from '@tomind/core'
-import type { CommandFn, EventMap } from '@tomind/core'
+import type { CommandFn } from '@tomind/core'
 import { onDocEvent, offDocEvent } from '@tomind/core'
+import type { NodeViewDesc } from '@tomind/view'
+import type { DragViewDesc } from '@tomind/core'
+
+
+export interface DragBranchEvents {
+  // ─── Drag (basic) ───
+  'drag:start': { sourceId: string | null }
+  'drag:end': { sourceId: string | null }
+  'drag:drop': { sourceId: string; targetId: string; data?: unknown }
+
+  // ─── Drag Image/MathJax/MatrixLabel ───
+  'drag:image:move': unknown
+  'drag:matrix-label:move': unknown
+  'drag:mathjax:move': unknown
+
+  // ─── Drag Branch ───
+  'drag:branch:start': void
+  'drag:branch:end': void
+  'drag:branch:placeholder:update': unknown
+  'drag:branch:mount:detached': { views: DragViewDesc[]; position: { x: number; y: number }; isDuplicate?: boolean }
+  'drag:branch:mount:attach': { views: DragViewDesc[]; parentView: DragViewDesc; at: number; isDuplicate?: boolean }
+  'drag:branch:mount:free': { views: DragViewDesc[]; parentView: DragViewDesc; at: number; position: { x: number; y: number }; isDuplicate?: boolean }
+}
+
+type EmitData<T> = T extends void ? [] : [T]
 
 // ==================== 类型定义 ====================
 
@@ -26,11 +51,11 @@ interface DragHandlerOptions {
 
 interface DragTransferData {
   position: { x: number; y: number }
-  draggedView: any
-  dropView: any
-  selections: any[]
+  draggedView: DragViewDesc | null
+  dropView: DragViewDesc | null
+  selections: DragViewDesc[]
   keyPress: { shiftKey: boolean; altKey: boolean }
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface IDragHandler {
@@ -57,12 +82,12 @@ interface DragHandlerContext {
   getSheetEditor: () => SheetEditorLike | null | undefined
   getCentralBranch: () => unknown
   getSelectionManager: () => SelectionManagerLike | null | undefined
-  emit: <K extends keyof EventMap>(event: K, data?: EventMap[K]) => void
+  emit: <K extends keyof DragBranchEvents>(event: K, ...args: EmitData<DragBranchEvents[K]>) => void
 }
 
 // ==================== 工具函数 ====================
 
-function filterMultiSelectedBranches(selections: any[]): any[] {
+function filterMultiSelectedBranches(selections: DragViewDesc[]): DragViewDesc[] {
   return selections.filter((view) => {
     if (!view || !view.node) return false
     return view.node.type === 'topic' || view.node.type === 'root'
@@ -143,11 +168,11 @@ class BaseDragHandler implements IDragHandler {
 // ==================== BranchDragHandler ====================
 
 class BranchDragHandler extends BaseDragHandler {
-  protected _draggedViews: any[] = []
+  protected _draggedViews: DragViewDesc[] = []
   protected _draggedViewOldIndex: number | null = null
-  protected _draggedViewOldParentView: any = null
+  protected _draggedViewOldParentView: DragViewDesc | null = null
   protected _draggedViewNewIndex: number | null = null
-  protected _draggedViewNewParentView: any = null
+  protected _draggedViewNewParentView: DragViewDesc | null = null
   protected _isFreePositionBranch = false
   protected _isCurrentAddToRight = false
   protected _isDuplicate = false
@@ -371,13 +396,13 @@ class BranchDragHandler extends BaseDragHandler {
     })
   }
 
-  protected _mountAsFreePosition(parentView: any, options: { at: number; position: { x: number; y: number }; addToRight: boolean }): void {
+  protected _mountAsFreePosition(parentView: DragViewDesc, options: { at: number; position: { x: number; y: number }; addToRight: boolean }): void {
     this.context.emit('drag:branch:mount:free', {
       views: this._draggedViews, parentView, ...options, isDuplicate: this._isDuplicate,
     })
   }
 
-  protected _mountAsAttach(parentView: any, options: { at: number; addToRight: boolean }): void {
+  protected _mountAsAttach(parentView: DragViewDesc, options: { at: number; addToRight: boolean }): void {
     this.context.emit('drag:branch:mount:attach', {
       views: this._draggedViews, parentView, ...options, isDuplicate: this._isDuplicate,
     })
@@ -681,7 +706,7 @@ class DragHandlerManager {
 
 // ==================== DragHandlerExtension ====================
 
-export const DragHandlerExtension = createExtension<DragHandlerOptions>({
+export const DragHandlerExtension = createExtension<DragHandlerOptions, Record<string, unknown>, DragBranchEvents>({
   name: 'drag-handler',
   type: 'extension',
   defaultOptions: {
@@ -692,13 +717,15 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
   },
 
   onCreate(ctx) {
+    const activeSheet = (): SheetEditorLike | null => ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
+
     // 创建拖拽处理器上下文
     const handlerContext: DragHandlerContext = {
       getWorkbookEditor: () => ctx.getWorkbook(),
-      getSheetEditor: () => ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null,
+      getSheetEditor: activeSheet,
       getCentralBranch: () => null,
       getSelectionManager: () => null,
-      emit: ((event, data?) => ctx.emit(event, data)) as DragHandlerContext['emit'],
+      emit: ((event: string, ...args: unknown[]) => (ctx.emit as (event: string, ...args: unknown[]) => void)(event, ...args)) as DragHandlerContext['emit'],
     }
 
     // 创建管理器
@@ -728,10 +755,10 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
     // 监听事件
     const handlePlaceholderUpdate = (data: unknown) => ctx.emit('indicator:update', data)
 
-    const handleMountDetached = ({ views, position }: { views: unknown[]; position: { x: number; y: number } }) => {
-      const sheetEditor = ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
+    const handleMountDetached = ({ views, position }: { views: DragViewDesc[]; position: { x: number; y: number } }) => {
+      const sheetEditor = activeSheet()
       if (!sheetEditor) return
-      for (const view of views as any[]) {
+      for (const view of views) {
         sheetEditor.dispatch({
           type: 'insertNode',
           payload: {
@@ -745,15 +772,14 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
       }
     }
 
-    const handleMountAttach = ({ views, parentView, at }: { views: unknown[]; parentView: unknown; at: number }) => {
-      const sheetEditor = ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
-      const pv = parentView as any
-      if (!sheetEditor || !pv?.node) return
-      for (const view of views as any[]) {
+    const handleMountAttach = ({ views, parentView, at }: { views: DragViewDesc[]; parentView: DragViewDesc; at: number }) => {
+      const sheetEditor = activeSheet()
+      if (!sheetEditor || !parentView?.node) return
+      for (const view of views) {
         sheetEditor.dispatch({
           type: 'insertNode',
           payload: {
-            parentId: pv.node.id,
+            parentId: parentView.node.id,
             at,
             node: { type: 'topic', attrs: view.node.attrs, children: view.node.children },
           },
@@ -761,15 +787,14 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions>({
       }
     }
 
-    const handleMountFree = ({ views, parentView, at, position }: { views: unknown[]; parentView: unknown; at: number; position: { x: number; y: number } }) => {
-      const sheetEditor = ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
-      const pv = parentView as any
-      if (!sheetEditor || !pv?.node) return
-      for (const view of views as any[]) {
+    const handleMountFree = ({ views, parentView, at, position }: { views: DragViewDesc[]; parentView: DragViewDesc; at: number; position: { x: number; y: number } }) => {
+      const sheetEditor = activeSheet()
+      if (!sheetEditor || !parentView?.node) return
+      for (const view of views) {
         sheetEditor.dispatch({
           type: 'insertNode',
           payload: {
-            parentId: pv.node.id,
+            parentId: parentView.node.id,
             at,
             node: {
               type: 'topic',

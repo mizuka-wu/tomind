@@ -17,9 +17,16 @@
  * - file.save: 保存文件
  */
 
-import { createExtension, InsertNodeStep, RemoveNodeStep, Transaction } from '@tomind/core'
+import { createExtension, parseArgs, InsertNodeStep, RemoveNodeStep, Transaction } from '@tomind/core'
 import type { SheetState, NodeDesc, ExtensionContext, SelectionElement, SelectionState } from '@tomind/core'
 import { createAttributeTitleFromPlainText } from '@tomind/core'
+
+export interface TopicEvents {
+  'topic:addChild': Record<string, unknown>
+  'topic:addFloating': Record<string, unknown>
+  'topic:createFloating': Record<string, unknown>
+  'topic:customWidthChanged': Record<string, unknown>
+}
 
 // ==================== Options ====================
 
@@ -102,12 +109,12 @@ function createEmptyTopic(id: string): NodeDesc {
 
 // ==================== Extension ====================
 
-export const TopicExtension = createExtension<TopicOptions>({
+export const TopicExtension = createExtension<TopicOptions, Record<string, unknown>, TopicEvents>({
   name: 'topic',
   type: 'extension',
   defaultOptions: { enabled: true },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx) {
     // ==================== topic.addChild ====================
     ctx.registerCommand<SheetState>('topic.addChild', (
 
@@ -116,7 +123,7 @@ export const TopicExtension = createExtension<TopicOptions>({
       params?: unknown,
     ): boolean => {
       const sheetState = state
-      const { nodeId, title } = (params ?? {}) as { nodeId?: string; title?: string }
+      const { nodeId, title } = parseArgs<{ nodeId?: string; title?: string }>(params)
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
 
@@ -151,7 +158,7 @@ export const TopicExtension = createExtension<TopicOptions>({
       params?: unknown,
     ): boolean => {
       const sheetState = state
-      const { nodeId, title } = (params ?? {}) as { nodeId?: string; title?: string }
+      const { nodeId, title } = parseArgs<{ nodeId?: string; title?: string }>(params)
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
 
@@ -190,7 +197,7 @@ export const TopicExtension = createExtension<TopicOptions>({
       params?: unknown,
     ): boolean => {
       const sheetState = state
-      const { nodeId, title } = (params ?? {}) as { nodeId?: string; title?: string }
+      const { nodeId, title } = parseArgs<{ nodeId?: string; title?: string }>(params)
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
 
@@ -227,7 +234,7 @@ export const TopicExtension = createExtension<TopicOptions>({
       params?: unknown,
     ): boolean => {
       const sheetState = state
-      const { nodeId } = (params ?? {}) as { nodeId?: string }
+      const { nodeId } = parseArgs<{ nodeId?: string }>(params)
       const targetId = nodeId ?? getSelectedNodeId(sheetState)
       if (!targetId) return false
 

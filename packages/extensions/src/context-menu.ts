@@ -51,7 +51,7 @@ export interface ContextMenuActionArgs {
   /** 目标节点 ID（如果有） */
   targetId?: string
   /** 扩展上下文 */
-  ctx: ExtensionContext
+  ctx: ExtensionContext<any, any>
 }
 
 /** 菜单配置 */
@@ -71,9 +71,9 @@ interface ContextMenuStorage extends Record<string, unknown> {
 
 // ==================== ContextMenuExtension ====================
 
-interface ContextMenuEvents {
-  'contextMenu:show': { event: unknown; nodeId: string }
-  'contextMenu:action': { itemId: string; nodeId: string }
+export interface ContextMenuEvents {
+  'contextMenu:show': Record<string, unknown>
+  'contextMenu:action': Record<string, unknown>
 }
 
 export const ContextMenuExtension = createExtension<ContextMenuOptions, ContextMenuStorage, ContextMenuEvents>({
@@ -124,7 +124,7 @@ export const ContextMenuExtension = createExtension<ContextMenuOptions, ContextM
 // ==================== 事件处理 ====================
 
 function setupEventHandlers(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   options: Required<ContextMenuOptions>,
   menuItems: Map<string, ContextMenuItem>
 ): () => void {
@@ -133,8 +133,7 @@ function setupEventHandlers(
   let longPressTarget: EventTarget | null = null
 
   // 右键菜单处理
-  const handleContextMenu = (event: unknown) => {
-    const e = event as MouseEvent
+  const handleContextMenu = (e: MouseEvent) => {
     if (!options.enableContextMenu) return
 
     e.preventDefault?.()
@@ -148,8 +147,7 @@ function setupEventHandlers(
   }
 
   // 长按开始
-  const handlePointerDown = (event: unknown) => {
-    const e = event as PointerEvent
+  const handlePointerDown = (e: PointerEvent) => {
     if (!options.enableLongPress) return
 
     longPressTarget = e.target
@@ -202,7 +200,7 @@ function setupEventHandlers(
 function showContextMenu(
   event: MouseEvent | PointerEvent,
   targetId: string | null,
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   menuItems: Map<string, ContextMenuItem>
 ): void {
   // 构建菜单配置
@@ -247,7 +245,7 @@ function getTargetNodeId(target: EventTarget | null): string | null {
 // ==================== 命令工厂 ====================
 
 function createContextMenuCommands(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   menuItems: Map<string, ContextMenuItem>
 ): Record<string, CommandFn> {
   return {

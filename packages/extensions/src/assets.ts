@@ -29,7 +29,7 @@ export const AssetsExtension: Extension<AssetsExtensionOptions> = {
     return this.defaultOptions.enabled !== false
   },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     // 获取 assets provider
     const assetsProvider = getAssetsProvider()
 

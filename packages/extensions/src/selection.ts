@@ -1,5 +1,6 @@
 import { createExtension, Transaction, LayoutEngine, DEFAULT_LAYOUT_OPTIONS, parseArgs } from '@tomind/core'
 import type { LayoutAlgorithm } from '@tomind/core'
+import type { MouseBoxSelectEvents } from './mouse-box-select'
 import type { LayoutResult, ExtensionContext, CommandFn, SheetState, SelectionElement } from '@tomind/core'
 /**
  * SelectionExtension — 选择管理扩展
@@ -24,6 +25,18 @@ import type { LayoutResult, ExtensionContext, CommandFn, SheetState, SelectionEl
  */
 
 
+
+export interface SelectionEvents {
+  'selection:hoverEnter': { nodeId: string }
+  'selection:hoverLeave': { nodeId: string }
+  'selection:select': { nodeId: string }
+  'selection:toggle': { nodeId: string }
+  'selection:notify': void
+  'selection:setSilent': boolean
+  'selection:boxSelectPreview': { nodeIds: string[]; bounds: unknown }
+  'selection:boxSelectComplete': void
+}
+
 // ==================== 类型定义 ====================
 
 interface SelectionOptions {
@@ -44,7 +57,7 @@ interface Bounds {
 
 // ==================== SelectionExtension ====================
 
-export const SelectionExtension = createExtension<SelectionOptions>({
+export const SelectionExtension = createExtension<SelectionOptions, Record<string, unknown>, SelectionEvents & MouseBoxSelectEvents>({
   name: 'selection',
   type: 'extension',
   defaultOptions: {
@@ -152,7 +165,7 @@ function findNodesInBounds(
 // ==================== 事件处理 ====================
 
 function setupEventHandlers(
-  ctx: ExtensionContext,
+  ctx: ExtensionContext<any, any>,
   options: SelectionOptions,
 ): () => void {
   const boxSelect = options.boxSelect ?? true

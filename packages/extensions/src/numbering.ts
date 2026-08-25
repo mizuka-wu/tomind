@@ -20,7 +20,7 @@ export const NumberingExtension = createExtension({
   type: 'extension',
   defaultOptions: { enabled: true },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     const plugin = createNumberingPlugin()
     ctx.registerPlugin(plugin)
 

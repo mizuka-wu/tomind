@@ -16,7 +16,7 @@ export const CommentsExtension = createExtension({
   type: 'extension',
   defaultOptions: { enabled: true },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<any, any>) {
     ctx.registerPartView('comments', CommentsPartViewDesc)
 
     return () => {

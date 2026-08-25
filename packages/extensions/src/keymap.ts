@@ -74,7 +74,7 @@ export function getShortcutFromEvent(event: KeyboardEvent): string | null {
 /**
  * 创建默认快捷键映射
  */
-export function createDefaultKeymap(): Record<string, (ctx: ExtensionContext) => boolean> {
+export function createDefaultKeymap(): Record<string, (ctx: ExtensionContext<any, any>) => boolean> {
   return {
     // ==================== 编辑操作 ====================
 
@@ -221,14 +221,14 @@ export const KeymapExtension = createExtension({
   defaultOptions: {
     enabled: true,
     /** 自定义快捷键映射（会与默认映射合并） */
-    keymap: {} as Record<string, (ctx: ExtensionContext) => boolean>,
+    keymap: {} as Record<string, (ctx: ExtensionContext<any, any>) => boolean>,
   },
 
   addKeyboardShortcuts() {
     // 合并默认快捷键和自定义快捷键
     const defaultKeymap = createDefaultKeymap()
     const opts = (this as unknown as { defaultOptions?: Record<string, unknown> })?.defaultOptions
-    const customKeymap = (opts?.keymap as Record<string, (ctx: ExtensionContext) => boolean>) ?? {}
+    const customKeymap = (opts?.keymap as Record<string, (ctx: ExtensionContext<any, any>) => boolean>) ?? {}
 
     return {
       ...defaultKeymap,

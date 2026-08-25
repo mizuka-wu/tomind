@@ -20,7 +20,7 @@ import type {
 /**
  * 创建扩展
  */
-export function createExtension<Options extends Record<string, unknown> = {}, Storage = Record<string, unknown>, Events extends Record<string, any> = import('./types').EventMap>(definition: {
+export function createExtension<Options extends Record<string, unknown> = {}, Storage = Record<string, unknown>, Events extends Record<string, any> = {}>(definition: {
   name: string
   type: ExtensionType
   defaultOptions?: ExtensionOptions<Options>
@@ -89,7 +89,7 @@ export function createExtension<Options extends Record<string, unknown> = {}, St
 /**
  * 创建节点扩展（type='node'）
  */
-export function createNodeExtension<Options extends Record<string, unknown> = {}, Storage = Record<string, unknown>, Events extends Record<string, any> = import("./types").EventMap>(definition: {
+export function createNodeExtension<Options extends Record<string, unknown> = {}, Storage = Record<string, unknown>, Events extends Record<string, any> = {}>(definition: {
   name: string
   defaultOptions?: ExtensionOptions<Options>
   onCreate?: (ctx: ExtensionContext<Storage>) => CleanupFn | void
@@ -110,7 +110,7 @@ export function createNodeExtension<Options extends Record<string, unknown> = {}
 /**
  * 创建 Part 扩展（type='part'）
  */
-export function createPartExtension<Options extends Record<string, unknown> = {}, Storage = Record<string, unknown>, Events extends Record<string, any> = import("./types").EventMap>(definition: {
+export function createPartExtension<Options extends Record<string, unknown> = {}, Storage = Record<string, unknown>, Events extends Record<string, any> = {}>(definition: {
   name: string
   defaultOptions?: ExtensionOptions<Options>
   onCreate?: (ctx: ExtensionContext<Storage>) => CleanupFn | void
