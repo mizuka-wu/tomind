@@ -18,7 +18,7 @@ import { type ViewLike, getViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
 import type { SelectionEvents } from './selection'
-import { findOne } from './shared-utils'
+import { findOne, getGroupChildren } from './shared-utils'
 
 
 export interface RelationshipEvents {
@@ -50,7 +50,7 @@ interface RelationshipStorage extends Record<string, unknown> {
 // ==================== 工具函数 ====================
 
 function findNodeGroup(group: Group, nodeId: string): Group | null {
-  const children: Group[] = group.children as Group[]
+  const children = getGroupChildren(group)
   if (!children) return null
   for (const child of children) {
     if (child.name === nodeId) return child
@@ -464,8 +464,8 @@ function handleHoverEnter(ctx: ExtensionContext<RelationshipStorage>, nodeId: st
    * 从 node.attrs 读取真实的 fromId/toId
    * 如果没有设置，则用节点自身的位置作为默认端点
    */
-  const fromId = node.attrs?.fromId as string | undefined
-  const toId = node.attrs?.toId as string | undefined
+  const fromId = typeof node.attrs?.fromId === 'string' ? node.attrs.fromId : undefined
+  const toId = typeof node.attrs?.toId === 'string' ? node.attrs.toId : undefined
 
   let fromX: number, fromY: number, toX: number, toY: number
 

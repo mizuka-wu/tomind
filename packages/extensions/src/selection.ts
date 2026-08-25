@@ -173,7 +173,7 @@ function setupEventHandlers(
   // 监听点击事件
   const handleClick = (event: unknown) => {
     if (typeof event !== 'object' || event === null) return
-    const e = event as { targetId?: string; ctrlKey?: boolean; metaKey?: boolean }
+    const e = parseArgs<{ targetId?: string; ctrlKey?: boolean; metaKey?: boolean }>(event)
     if (!e.targetId) return
 
     const isMultiSelect = (e.ctrlKey || e.metaKey)
@@ -190,7 +190,7 @@ function setupEventHandlers(
   // 监听键盘事件（Shift+Click 范围选择）
   const handleKeyDown = (event: unknown) => {
     if (typeof event !== 'object' || event === null) return
-    const e = event as { key?: string; ctrlKey?: boolean; metaKey?: boolean; preventDefault?: () => void }
+    const e = parseArgs<{ key?: string; ctrlKey?: boolean; metaKey?: boolean; preventDefault?: () => void }>(event)
     if (e.key === 'a' && (e.ctrlKey || e.metaKey)) {
       // Ctrl+A 全选
       e.preventDefault?.()
@@ -229,7 +229,7 @@ function setupEventHandlers(
   }
 
   const handleHoverEnter = (...args: unknown[]) => {
-    const nodeId = args[0] as string | undefined
+    const [nodeId] = parseArgs<[string | undefined]>(args)
     if (!nodeId) return
 
     const state = ctx.getState<SheetState>()
@@ -271,8 +271,7 @@ function setupEventHandlers(
   const handleBoxSelecting = (...args: unknown[]) => {
     if (!boxSelect) return
 
-    const bounds = args[0] as Bounds | undefined
-    const isSegmentMultiSelect = args[1] as boolean | undefined
+    const [bounds, isSegmentMultiSelect] = parseArgs<[Bounds | undefined, boolean | undefined]>(args)
     if (!bounds) return
 
     const state = ctx.getState<SheetState>()
@@ -312,10 +311,9 @@ function setupEventHandlers(
    * 由 boxSelectComplete 事件触发，接收最终的节点 ID 列表
    */
   const handleBoxSelectComplete = (...args: unknown[]) => {
-    const nodeIds = args[0] as string[] | undefined
+    const [nodeIds, isShift] = parseArgs<[string[] | undefined, boolean | undefined]>(args)
     if (!nodeIds || nodeIds.length === 0) {
       // 空选框：清除选择（除非按住 Shift）
-      const isShift = args[1] as boolean | undefined
       if (!isShift) {
         ctx.executeCommand('selection.clear')
       }

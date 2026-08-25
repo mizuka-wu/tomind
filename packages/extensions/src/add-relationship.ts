@@ -1,4 +1,4 @@
-import { createExtension, Transaction } from '@tomind/core'
+import { createExtension, Transaction, parseArgs } from '@tomind/core'
 import type { ExtensionContext, CommandFn, SheetState } from '@tomind/core'
 import type { TopicEvents } from './topic'
 import { type ViewLike, getViewLike } from './shared-types'
@@ -320,7 +320,7 @@ function reset(ctx: ExtensionContext<any, any>, stateManager: any): void {
  */
 function bindEvents(ctx: ExtensionContext<any, any>, stateManager: any): void {
   const handleClick = (e: unknown) => {
-    const event = e as { targetId?: string; x?: number; y?: number }
+    const event = parseArgs<{ targetId?: string; x?: number; y?: number }>(e)
     if (event.targetId) {
       selectNode(ctx, stateManager, event.targetId)
     } else if (stateManager.getState() === 'SELECT_ANOTHER') {
@@ -334,7 +334,7 @@ function bindEvents(ctx: ExtensionContext<any, any>, stateManager: any): void {
     if (stateManager.getState() !== 'SELECT_ANOTHER') return
     if (!stateManager.getMovingRelationshipId()) return
 
-    const event = e as { x?: number; y?: number }
+    const event = parseArgs<{ x?: number; y?: number }>(e)
     const position: Position = { x: event.x || 0, y: event.y || 0 }
 
     // 更新移动中的关系线
@@ -351,7 +351,7 @@ function bindEvents(ctx: ExtensionContext<any, any>, stateManager: any): void {
   }
 
   const handleKeyDown = (e: unknown) => {
-    const event = e as { key?: string }
+    const event = parseArgs<{ key?: string }>(e)
     if (event.key === 'Escape') {
       cancel(ctx, stateManager)
     } else if (event.key === 'Shift') {
@@ -365,7 +365,7 @@ function bindEvents(ctx: ExtensionContext<any, any>, stateManager: any): void {
   }
 
   const handleKeyUp = (e: unknown) => {
-    const event = e as { key?: string }
+    const event = parseArgs<{ key?: string }>(e)
     if (event.key === 'Shift') {
       stateManager.setStickyToAngle(false)
       // 更新关系线样式

@@ -1,4 +1,4 @@
-import { createPartExtension } from '@tomind/core'
+import { createPartExtension, parseArgs } from '@tomind/core'
 import { getCanvasElement } from './shared-types'
 import type { ExtensionContext } from '@tomind/core'
 import type { SelectionEvents } from './selection'
@@ -253,7 +253,7 @@ export const MouseBoxSelectExtension = createPartExtension<Record<string, unknow
 
     // 开始框选
     const startBoxSelect = (...args: unknown[]) => {
-      const [position, segmentMultiSelect] = args as [Position, boolean]
+      const [position, segmentMultiSelect] = parseArgs<[Position, boolean]>(args)
 
       // 检查是否禁用框选
       const config = getConfig()

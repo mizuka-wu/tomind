@@ -99,9 +99,15 @@ interface InputEventWithCapabilities extends MouseEvent {
   sourceCapabilities?: InputCapabilities
 }
 
+/** 类型守卫：检查 MouseEvent 是否具有 sourceCapabilities（Chromium 非标准 API） */
+function hasSourceCapabilities(e: MouseEvent): e is MouseEvent & { sourceCapabilities?: InputCapabilities } {
+  return 'sourceCapabilities' in e
+}
+
 function isMouseEventFiredByTouch(e: MouseEvent): boolean {
   // 检查是否由触摸事件触发的鼠标事件
-  return (e as InputEventWithCapabilities).sourceCapabilities?.firesTouchEvents === true
+  if (!hasSourceCapabilities(e)) return false
+  return e.sourceCapabilities?.firesTouchEvents === true
 }
 
 // ==================== DraggableRegister ====================

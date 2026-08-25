@@ -10,17 +10,25 @@
  * 5. 实时预览移动效果
  */
 
-import { createExtension } from '@tomind/core'
+import { createExtension, parseArgs } from '@tomind/core'
 import type { ExtensionContext } from '@tomind/core'
 import type { NodeViewDesc } from '@tomind/view'
 
-/** LeaferJS 拖拽上下文 — 扩展 NodeViewDesc 的运行时属性 */
-interface LeaferDragContext {
+/** LeaferJS 拖拽上下文内部属性（NodeViewDesc 的运行时扩展） */
+interface LeaferDragLike {
   type?: string
   model?: unknown
   summaryModel?: unknown
-  parent?: () => LeaferDragContext | null
+  parent?: () => LeaferDragLike | null
+  getChildrenBranchesByType?: () => NodeViewDesc[]
+  node?: { id?: string }
+  onMouseout?: () => void
   [key: string]: unknown
+}
+
+/** 将 NodeViewDesc 安全转为 LeaferDragLike（boundary cast） */
+function asLeaferDrag(node: NodeViewDesc): LeaferDragLike {
+  return node as unknown as LeaferDragLike
 }
 
 export interface SelectDragEvents {
@@ -46,7 +54,7 @@ export const SelectDragExtension = createExtension<Record<string, unknown>, Reco
 
     // 开始拖拽
     const onSelectDragStart = (...args: unknown[]) => {
-      const [newSelectBox, newContext, newDirection] = args as [unknown, NodeViewDesc, string]
+      const [newSelectBox, newContext, newDirection] = parseArgs<[unknown, NodeViewDesc, string]>(args)
       context = newContext
       direction = newDirection
       selectedBranches = []
@@ -54,7 +62,7 @@ export const SelectDragExtension = createExtension<Record<string, unknown>, Reco
 
     // 添加选中的分支
     const addSelectBranch = (...args: unknown[]) => {
-      const [branchView] = args as [NodeViewDesc]
+      const [branchView] = parseArgs<[NodeViewDesc]>(args)
       if (!selectedBranches.includes(branchView)) {
         selectedBranches.push(branchView)
       }
@@ -62,7 +70,7 @@ export const SelectDragExtension = createExtension<Record<string, unknown>, Reco
 
     // 移除选中的分支
     const removeSelectBranch = (...args: unknown[]) => {
-      const [branchView] = args as [NodeViewDesc]
+      const [branchView] = parseArgs<[NodeViewDesc]>(args)
       selectedBranches = selectedBranches.filter(b => b !== branchView)
     }
 
@@ -70,11 +78,11 @@ export const SelectDragExtension = createExtension<Record<string, unknown>, Reco
     const calcRangeIndex = (): [number, number] => {
       if (!context || selectedBranches.length === 0) return [0, 0]
 
-      const leaferCtx = context as unknown as LeaferDragContext
+      const leaferCtx = asLeaferDrag(context)
       const parent = leaferCtx.parent?.()
       if (!parent) return [0, 0]
 
-      const children = (parent as { getChildrenBranchesByType?: () => NodeViewDesc[] }).getChildrenBranchesByType?.() || []
+      const children = (parent as LeaferDragLike).getChildrenBranchesByType?.() || []
       if (children.length === 0) return [0, 0]
 
       let maxIndex = children.indexOf(selectedBranches[0])
@@ -95,7 +103,7 @@ export const SelectDragExtension = createExtension<Record<string, unknown>, Reco
 
     // 移动选中的节点
     const onSelectDragMove = (...args: unknown[]) => {
-      const [manager] = args as [{ setRelationBranch: (id: string, range: [number, number]) => void }]
+      const [manager] = parseArgs<[{ setRelationBranch: (id: string, range: [number, number]) => void }]>(args)
       if (!context || selectedBranches.length === 0) return
 
       const range = calcRangeIndex()
@@ -108,7 +116,7 @@ export const SelectDragExtension = createExtension<Record<string, unknown>, Reco
     const onSelectDragEnd = () => {
       if (!context) return
 
-      const leaferCtx = context as unknown as LeaferDragContext
+      const leaferCtx = asLeaferDrag(context)
       const isBoundary = leaferCtx.type === 'boundary'
       const typeParam = isBoundary ? ['model', 'boundaries'] : ['summaryModel', 'summaries']
       const contextModel = leaferCtx[typeParam[0]]
@@ -122,16 +130,15 @@ export const SelectDragExtension = createExtension<Record<string, unknown>, Reco
       const range = calcRangeIndex()
       ctx.executeCommand('node.move', {
         sourceIds: selectedBranches.map(b => b.node.id),
-        targetId: (parent as { node?: { id?: string } }).node?.id,
+        targetId: (parent as LeaferDragLike).node?.id,
         position: direction === 'before' ? range[0] : range[0],
       })
     }
 
     // 鼠标移出分支
     const onBranchMouseout = (...args: unknown[]) => {
-      const [branch] = args as [NodeViewDesc]
-      const leaferBranch = branch as unknown as { onMouseout?: () => void }
-      leaferBranch.onMouseout?.()
+      const [branch] = parseArgs<[NodeViewDesc]>(args)
+      asLeaferDrag(branch).onMouseout?.()
     }
 
     // 注册事件
