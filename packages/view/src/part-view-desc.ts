@@ -421,3 +421,68 @@ export class CommentsPartViewDesc extends PartViewDesc {
     super.destroy()
   }
 }
+
+// ==================== InformationIconPartViewDesc ====================
+
+export class InformationIconPartViewDesc extends PartViewDesc {
+  private _text: Text | null = null
+
+  constructor(node: NodeDesc, role: NodeRole) {
+    super(node, role, 'informationIcon', 'right', 50)
+  }
+
+  protected createElement(): Group {
+    const group = new Group()
+    this._text = new Text({
+      text: '',
+      fontSize: 12,
+    })
+    group.add(this._text)
+    this._updateIcon()
+    return group
+  }
+
+  protected createContentGroup(): null {
+    return null
+  }
+
+  protected updatePart(_data: unknown): void {
+    this._updateIcon()
+  }
+
+  private _updateIcon(): void {
+    if (!this._text) return
+
+    const attrs = this.node.attrs
+    const hasNote = !!attrs['note']
+    const hasComments = !!attrs['comments']
+    const hasLink = !!attrs['link']
+    const hasTaskInfo = !!attrs['taskInfo']
+
+    const count = (hasNote ? 1 : 0) + (hasComments ? 1 : 0) + (hasLink ? 1 : 0) + (hasTaskInfo ? 1 : 0)
+
+    if (count === 0) {
+      this.element!.visible = false
+      return
+    }
+
+    this.element!.visible = true
+
+    if (count > 1) {
+      this._text.text = 'ℹ️'
+    } else if (hasNote) {
+      this._text.text = '📝'
+    } else if (hasComments) {
+      this._text.text = '💬'
+    } else if (hasLink) {
+      this._text.text = '🔗'
+    } else {
+      this._text.text = '✅'
+    }
+  }
+
+  override destroy(): void {
+    this._text = null
+    super.destroy()
+  }
+}

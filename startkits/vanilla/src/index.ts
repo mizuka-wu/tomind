@@ -29,6 +29,7 @@ import {
   CommentsExtension,
   MathjaxExtension,
   LegendExtension,
+  InformationIconExtension,
   // 布局（一个大类一个文件夹，文件夹导出多个方向插件）
   TreeRightExtension,
   TreeLeftExtension,
@@ -115,6 +116,7 @@ const builtInExtensions: Extension<any, any, any>[] = [
   CommentsExtension,
   MathjaxExtension,
   LegendExtension,
+  InformationIconExtension,
 
   // 主题
   PresetThemeExtension,

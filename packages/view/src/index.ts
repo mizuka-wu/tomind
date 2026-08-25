@@ -48,6 +48,7 @@ export {
   NotePartViewDesc,
   LinkPartViewDesc,
   CommentsPartViewDesc,
+  InformationIconPartViewDesc,
 } from './part-view-desc'
 
 // 事件系统 - 类型
