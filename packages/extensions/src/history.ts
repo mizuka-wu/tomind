@@ -108,7 +108,7 @@ export const HistoryExtension = createExtension<HistoryOptions>({
  * })
  * ```
  */
-export function createHistoryPluginWithKey(maxDepth = 100): Plugin {
-  return createHistoryPlugin(historyPluginKey, { maxDepth }) as Plugin
+export function createHistoryPluginWithKey(maxDepth = 100): Plugin<HistoryState> {
+  return createHistoryPlugin(historyPluginKey, { maxDepth })
 }
 

@@ -18,7 +18,7 @@ import { type ViewLike, getViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo, type DragPosition } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
 import type { SelectionEvents } from './selection'
-import { findOne } from './shared-utils'
+import { findOne, getGroupChildren } from './shared-utils'
 
 // ==================== 常量 ====================
 
@@ -45,7 +45,7 @@ interface TopicSelectBoxStorage extends Record<string, unknown> {
 
 /** 递归查找命名的 Group */
 function findNodeGroup(group: Group, nodeId: string): Group | null {
-  const children: Group[] = group.children as Group[]
+  const children = getGroupChildren(group)
   if (!children) return null
 
   for (const child of children) {
@@ -239,7 +239,7 @@ export const TopicSelectBoxExtension = createExtension<Record<string, unknown>, 
       rightRegister: null,
       overlayGroup: null,
       currentTargetId: null,
-    } as TopicSelectBoxStorage
+    }
   },
 
   onCreate(ctx) {

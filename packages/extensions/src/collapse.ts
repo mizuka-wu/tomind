@@ -29,7 +29,7 @@ function getSelectedNodeId(state: SheetState): string | null {
 
 /** 深拷贝 doc 并对指定节点执行 mutation */
 function cloneAndMutate(doc: NodeDesc, nodeId: string, fn: (node: NodeDesc) => void): NodeDesc {
-  const clone = structuredClone(doc) as NodeDesc
+  const clone = structuredClone(doc)
   function walk(node: NodeDesc): boolean {
     if (node.id === nodeId) { fn(node); return true }
     for (const children of Object.values(node.children ?? {})) {

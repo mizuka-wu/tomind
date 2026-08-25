@@ -18,7 +18,7 @@ import { type ViewLike, getViewLike } from './shared-types'
 import { DraggableRegister, type DragMoveInfo, type DragPosition } from './draggable'
 import type { ExtensionContext } from '@tomind/core'
 import type { SelectionEvents } from './selection'
-import { findOne } from './shared-utils'
+import { findOne, getGroupChildren } from './shared-utils'
 
 
 export interface SelectBoxEvents {
@@ -50,7 +50,7 @@ interface SelectBoxStorage extends Record<string, unknown> {
 // ==================== 工具函数 ====================
 
 function findNodeGroup(group: Group, nodeId: string): Group | null {
-  const children: Group[] = group.children as Group[]
+  const children = getGroupChildren(group)
   if (!children) return null
   for (const child of children) {
     if (child.name === nodeId) return child
@@ -558,7 +558,8 @@ function handleHoverEnter(ctx: ExtensionContext<any, any>, nodeId: string): void
   state._layoutResult = layoutResult
 
   // 方向：从节点 attrs 获取，默认 'UD'
-  const direction: Direction = (node.attrs?.direction as Direction) || 'UD'
+  const rawDir = node.attrs?.direction
+  const direction: Direction = (typeof rawDir === 'string' && ['up','down','left','right','UD','LR'].includes(rawDir)) ? rawDir as Direction : 'UD'
 
   const size = getSelectBoxSize(state, nodeId, direction)
 

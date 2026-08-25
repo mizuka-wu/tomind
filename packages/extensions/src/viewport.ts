@@ -88,7 +88,7 @@ export const ViewportExtension = createExtension<ViewportOptions, Record<string,
   },
 
   onCreate(ctx) {
-    const opts = {
+    const opts: Required<ViewportOptions> = {
       enabled: true,
       defaultZoom: 1.0,
       minZoom: 0.1,
@@ -99,7 +99,7 @@ export const ViewportExtension = createExtension<ViewportOptions, Record<string,
       enableAutoMove: true,
       minDragDistance: 3,
       edgeThreshold: 20,
-    } as Required<ViewportOptions>
+    }
 
     // 注册命令
     const commands = createViewportCommands(opts)

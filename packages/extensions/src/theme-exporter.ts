@@ -1,4 +1,4 @@
-import { createExtension } from '@tomind/core'
+import { createExtension, parseArgs } from '@tomind/core'
 import type { ExtensionContext, ThemeData, ResolvedStyle, StyleValue } from '@tomind/core'
 import { COLOR_KEYS, SKELETON_KEYS } from '@tomind/style'
 
@@ -224,9 +224,7 @@ export const ThemeExporterExtension = createExtension<ThemeExporterOptions>({
     // 注册导出命令
     ctx.registerCommand('theme.export', (state, dispatch, args) => {
       const workbook = ctx.getWorkbook()
-      const styleEngine = workbook && typeof workbook === 'object' && 'styleEngine' in workbook
-        ? (workbook as { styleEngine: unknown }).styleEngine
-        : null
+      const styleEngine = workbook?.styleEngine ?? null
       if (!styleEngine) return false
 
       const parsedArgs = isThemeExportArgs(args) ? args : {}
@@ -249,11 +247,11 @@ export const ThemeExporterExtension = createExtension<ThemeExporterOptions>({
     })
 
     ctx.registerCommand('theme.exportColor', (state, dispatch, args) => {
-      return ctx.executeCommand('theme.export', { ...(args as Record<string, unknown>), filter: 'color' })
+      return ctx.executeCommand('theme.export', { ...parseArgs<Record<string, unknown>>(args), filter: 'color' })
     })
 
     ctx.registerCommand('theme.exportSkeleton', (state, dispatch, args) => {
-      return ctx.executeCommand('theme.export', { ...(args as Record<string, unknown>), filter: 'skeleton' })
+      return ctx.executeCommand('theme.export', { ...parseArgs<Record<string, unknown>>(args), filter: 'skeleton' })
     })
   },
 })

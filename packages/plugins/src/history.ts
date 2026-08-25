@@ -14,7 +14,7 @@
  */
 
 import { Transaction } from '@tomind/state'
-import type { SheetState } from '@tomind/state'
+import type { SheetState, Plugin } from '@tomind/state'
 import type { PluginKey } from '@tomind/state'
 import { PluginState } from './plugin-state'
 
@@ -126,7 +126,7 @@ export interface HistoryConfig {
 export function createHistoryPlugin(
   key: PluginKey<HistoryState>,
   config: HistoryConfig = {}
-): { key: PluginKey<HistoryState>; state: { init: (state: SheetState) => HistoryState; apply: (tr: Transaction, value: HistoryState, state: SheetState) => HistoryState } } {
+): Plugin<HistoryState> {
   return {
     key,
     state: {

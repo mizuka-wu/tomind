@@ -240,7 +240,8 @@ export const KeymapExtension = createExtension({
     // 监听键盘事件
     const handleKeyDown = (event: KeyboardEvent) => {
       // 忽略输入框内的按键
-      const target = event.target as HTMLElement
+      const target = event.target
+      if (!(target instanceof HTMLElement)) return
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return
       }

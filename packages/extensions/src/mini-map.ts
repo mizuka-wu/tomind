@@ -81,7 +81,7 @@ export const MiniMapExtension = createExtension<MiniMapOptions, Record<string, u
   },
 
   onCreate(ctx) {
-    const opts = DEFAULT_OPTIONS as Required<MiniMapOptions>
+    const opts = DEFAULT_OPTIONS
 
     // 注册命令
     const commands = createCommands(ctx, opts)
