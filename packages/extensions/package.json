@@ -17,6 +17,7 @@
     "@tomind/state": "workspace:*",
     "@tomind/style": "workspace:*",
     "@tomind/view": "workspace:^",
+    "@tomind/plugins": "workspace:*",
     "leafer-ui": "^2.1.8"
   },
   "devDependencies": {

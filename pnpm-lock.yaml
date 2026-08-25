@@ -212,6 +212,9 @@ importers:
       '@tomind/layout':
         specifier: workspace:*
         version: link:../layout
+      '@tomind/plugins':
+        specifier: workspace:*
+        version: link:../plugins
       '@tomind/schema':
         specifier: workspace:*
         version: link:../schema

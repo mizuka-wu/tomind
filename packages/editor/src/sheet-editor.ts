@@ -429,9 +429,29 @@ export class SheetEditor {
     const factories = this._viewPluginManager.getWidgetViewFactories()
     for (const factory of factories.values()) {
       const result = factory(widgetType, widgetId, node)
-      if (result) return result as ViewDesc
+      if (result) {
+        // 如果结果已经是 ViewDesc，直接返回
+        if (result instanceof ViewDesc) return result
+        // 否则，根据 widgetType 创建对应的 ViewDesc
+        return this.createWidgetDescByType(widgetType, node)
+      }
     }
     return null
+  }
+
+  /**
+   * 根据 widgetType 创建 ViewDesc
+   */
+  private createWidgetDescByType(widgetType: string, node: NodeDesc): ViewDesc | null {
+    // 动态导入避免循环依赖
+    const { IndicatorNodeViewDesc } = require('@tomind/view')
+    
+    switch (widgetType) {
+      case 'indicator':
+        return new IndicatorNodeViewDesc(node, 'topic' as any, this._ctx)
+      default:
+        return null
+    }
   }
 
   /**

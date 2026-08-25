@@ -31,6 +31,7 @@ export { LinkExtension } from './link'
 export { ImageExtension } from './image'
 export { MathjaxExtension } from './mathjax'
 export { InformationIconExtension } from './information-icon'
+export { IndicatorExtension } from './indicator'
 export { LegendExtension } from './legend'
 
 // ─── 布局扩展（一个大类一个文件夹） ───
