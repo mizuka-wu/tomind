@@ -10,7 +10,7 @@
  */
 
 import { createExtension, Transaction, getAttributeTitle, getPlainTextFromAttributeTitle, createAttributeTitleFromPlainText } from '@tomind/core'
-import type { ExtensionContext } from '@tomind/core'
+import type { ExtensionContext, SheetState } from '@tomind/core'
 import { type ViewLike, getViewLike } from './shared-types'
 
 // ==================== Storage ====================
@@ -35,7 +35,7 @@ export const EditBridgeExtension = createExtension<Record<string, unknown>, Edit
       editingNodeId: null,
       originalText: '',
       isEditing: false,
-    } as EditBridgeStorage
+    }
   },
 
   onCreate(ctx) {
@@ -50,16 +50,15 @@ export const EditBridgeExtension = createExtension<Record<string, unknown>, Edit
     // 注册 topic.edit 命令（F2 / Space 触发）
     const commandNames = ['topic.edit']
     for (const name of commandNames) {
-      ctx.registerCommand(name, (
-        state: unknown,
+      ctx.registerCommand<SheetState>(name, (
+        state,
         _dispatch: ((tr: unknown) => void) | null,
         _args?: unknown,
       ): boolean => {
-        const sheetState = state as { selection?: { elements?: Array<{ id: string }> }; getNode?: (id: string) => any }
-        const selectedId = sheetState?.selection?.elements?.[0]?.id
+        const selectedId = state?.selection?.elements?.[0]?.id
         if (!selectedId) return false
 
-        const node = sheetState?.getNode?.(selectedId)
+        const node = state?.getNode(selectedId)
         if (!node) return false
 
         handleEditStart(ctx, selectedId, node)

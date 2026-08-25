@@ -95,7 +95,7 @@ export const ContextMenuExtension = createExtension<ContextMenuOptions, ContextM
         enableLongPress: true,
         longPressDuration: 500,
       },
-    } as ContextMenuStorage
+    }
   },
 
   onCreate(ctx) {
@@ -224,19 +224,25 @@ interface LeaferElementWithUserData {
   userData?: { nodeId?: string }
 }
 
+function isHTMLElement(target: EventTarget): target is HTMLElement {
+  return 'dataset' in target
+}
+
+function isLeaferElement(target: unknown): target is LeaferElementWithUserData {
+  return target != null && typeof target === 'object' && 'userData' in target
+}
+
 function getTargetNodeId(target: EventTarget | null): string | null {
   if (!target) return null
 
   // 从 DOM 元素提取节点 ID
-  const element = target as HTMLElement
-  if (element.dataset?.nodeId) {
-    return element.dataset.nodeId
+  if (isHTMLElement(target) && target.dataset.nodeId) {
+    return target.dataset.nodeId
   }
 
   // 从 LeaferJS 元素提取
-  const leaferElement = target as unknown as LeaferElementWithUserData
-  if (leaferElement.userData?.nodeId) {
-    return leaferElement.userData.nodeId
+  if (isLeaferElement(target) && target.userData?.nodeId) {
+    return target.userData.nodeId
   }
 
   return null

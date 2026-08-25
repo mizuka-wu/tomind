@@ -67,11 +67,11 @@ export const SelectionExtension = createExtension<SelectionOptions, Record<strin
   },
 
   onCreate(ctx) {
-    const opts = {
+    const opts: SelectionOptions = {
       enabled: true,
       multiSelect: true,
       boxSelect: true,
-    } as SelectionOptions
+    }
 
     // 注册命令
     const commands = createSelectionCommands()
@@ -172,6 +172,7 @@ function setupEventHandlers(
 
   // 监听点击事件
   const handleClick = (event: unknown) => {
+    if (typeof event !== 'object' || event === null) return
     const e = event as { targetId?: string; ctrlKey?: boolean; metaKey?: boolean }
     if (!e.targetId) return
 
@@ -188,6 +189,7 @@ function setupEventHandlers(
 
   // 监听键盘事件（Shift+Click 范围选择）
   const handleKeyDown = (event: unknown) => {
+    if (typeof event !== 'object' || event === null) return
     const e = event as { key?: string; ctrlKey?: boolean; metaKey?: boolean; preventDefault?: () => void }
     if (e.key === 'a' && (e.ctrlKey || e.metaKey)) {
       // Ctrl+A 全选
