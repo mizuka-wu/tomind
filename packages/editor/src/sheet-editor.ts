@@ -41,7 +41,7 @@ import { ExtensionManager } from '@tomind/extension'
 import type { Extension, ExtensionContext, CommandFn, ViewDescConstructor, PluginLike, ViewPluginLike } from '@tomind/extension'
 import { buildExtensionContext } from '@tomind/extension'
 import { ViewPluginManager } from '@tomind/plugins'
-import type { ViewPlugin, WidgetViewFactory } from '@tomind/plugins'
+import type { ViewPlugin } from '@tomind/plugins'
 import type { WorkbookEditor } from './workbook-editor'
 
 // ==================== 事件类型 ====================
