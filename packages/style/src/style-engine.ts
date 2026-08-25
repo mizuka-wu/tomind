@@ -34,7 +34,6 @@
 
 import type { SheetState } from '@tomind/state'
 import { numberingKey } from '@tomind/state'
-import type { NumberingState } from '@tomind/state' 
 import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue, LeaferStyle } from './style-types'
 import { isThemeClassEntry, resolveColorVariables } from './style-types'
 import { classifyNode, getParentId, findById, getMainTopicAncestor } from './classify'
@@ -46,6 +45,14 @@ import { colord, extend } from 'colord'
 import a11yPlugin from 'colord/plugins/a11y'
 
 extend([a11yPlugin])
+
+/**
+ * 从 node.attrs 获取类型化属性值
+ */
+function getAttr<T>(attrs: Readonly<Record<string, unknown>>, key: string): T | undefined {
+  const val = attrs[key]
+  return val !== undefined ? val as T : undefined
+}
 
 /**
  * 主题包接口（外部主题来源实现）
@@ -205,7 +212,7 @@ export class StyleEngine {
     }
 
     // 层 4.5: Layout Mode（布局模式覆盖，如 compact/loose）
-    const compactLevel = (state.doc.attrs['compactLayoutModeLevel'] as string) || 'Third'
+    const compactLevel = getAttr<string>(state.doc.attrs, 'compactLayoutModeLevel') || 'Third'
     const modeStyles = this._layoutModes.get(compactLevel)
     if (modeStyles) {
       const override = modeStyles[nodeType]
@@ -241,7 +248,7 @@ export class StyleEngine {
 
     // 层 2: User Class（显式类分配 → theme）
     // 从 node.attrs.class 解析类名，查找 theme 样式
-    const classString = node.attrs.class as string | undefined
+    const classString = getAttr<string>(node.attrs, "class")
     if (classString) {
       const classList = parseClassList(classString)
       const classStyles = getClassStyles(classList, theme)
@@ -250,8 +257,9 @@ export class StyleEngine {
       }
     }
     // 层 1: User Style（用户直接设置，最高优先级）
-    if (!options.ignoreUser && node.attrs.style) {
-      result = { ...result, ...filterNullish(node.attrs.style as ResolvedStyle) }
+    const userStyle = getAttr<ResolvedStyle>(node.attrs, "style")
+    if (!options.ignoreUser && userStyle) {
+      result = { ...result, ...filterNullish(userStyle) }
     }
 
     // 最终清理：处理 User 层可能引入的 inherit/initial 值
@@ -312,7 +320,7 @@ export class StyleEngine {
     // 从 node.attrs.image 读取图片属性
     const node = findById(state.doc, topicId)
     if (node) {
-      const imageData = node.attrs.image as Record<string, unknown> | undefined
+      const imageData = getAttr<Record<string, unknown>>(node.attrs, "image")
       if (imageData) {
         if (imageData.url) {
           leaferStyle.imageUrl = imageData.url
@@ -340,7 +348,7 @@ export class StyleEngine {
 
     // 从 NumberingPlugin state 读取编号文本
     try {
-      const numberingState = state.field(numberingKey) as NumberingState | undefined
+      const numberingState = state.field(numberingKey)
       if (numberingState) {
         const numberingText = numberingState.texts.get(topicId)
         if (numberingText) {
@@ -704,7 +712,7 @@ export class StyleEngine {
 
     const ancestor = getMainTopicAncestor(state.doc, topicId, (id) => {
       const node = findById(state.doc, id)
-      return node?.attrs?.style as Record<string, unknown> | undefined
+      return getAttr<Record<string, unknown>>(node?.attrs ?? {}, "style")
     })
     if (!ancestor) return result
 
