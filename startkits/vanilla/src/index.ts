@@ -20,6 +20,14 @@ import {
   EditBridgeExtension,
   ContextMenuExtension,
   PresetThemeExtension,
+  // Part 扩展
+  ImageExtension,
+  MarkersExtension,
+  LabelsExtension,
+  NoteExtension,
+  LinkExtension,
+  CommentsExtension,
+  MathjaxExtension,
   // 布局（一个大类一个文件夹，文件夹导出多个方向插件）
   TreeRightExtension,
   TreeLeftExtension,
@@ -96,6 +104,15 @@ const builtInExtensions: Extension<any, any, any>[] = [
   // 编号
   NumberingExtension,
   ContextMenuExtension,
+
+  // Part 扩展（topic 组件）
+  ImageExtension,
+  MarkersExtension,
+  LabelsExtension,
+  NoteExtension,
+  LinkExtension,
+  CommentsExtension,
+  MathjaxExtension,
 
   // 主题
   PresetThemeExtension,

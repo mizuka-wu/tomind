@@ -28,6 +28,8 @@ export { MarkersExtension } from './markers'
 export { LabelsExtension } from './labels'
 export { NoteExtension } from './note'
 export { LinkExtension } from './link'
+export { ImageExtension } from './image'
+export { MathjaxExtension } from './mathjax'
 
 // ─── 布局扩展（一个大类一个文件夹） ───
 export { TreeRightExtension, TreeLeftExtension, TreeDownExtension, TreeUpExtension } from './tree'
