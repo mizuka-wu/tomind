@@ -64,6 +64,8 @@ export interface ExtensionContext<Storage = Record<string, unknown>, Events exte
   registerPlugin: (plugin: PluginLike) => void
   /** 注销 Plugin */
   unregisterPlugin: (plugin: PluginLike) => void
+  /** 获取 sheet DOM 容器 */
+  getContainer: () => HTMLElement
 }
 
 /** ViewDesc 构造函数类型（跨包使用，避免依赖 @tomind/view） */
@@ -139,6 +141,8 @@ export interface Extension<Options = {}, Storage = Record<string, unknown>, Even
   configure: (options: Partial<ExtensionOptions<Options>>) => Extension<Options, Storage, Events>
   /** 生命周期：创建（Tiptap 风格） */
   onCreate?: (ctx: ExtensionContext<Storage, Events>) => CleanupFn | void
+  /** 生命周期：DOM 挂载（sheet 容器就绪后调用，适合 DOM overlay 插件） */
+  onDOMMount?: (ctx: ExtensionContext<Storage, Events>, container: HTMLElement) => CleanupFn | void
   /** 添加选项 */
   addOptions?: () => Partial<Options> | Record<string, unknown>
   /** 添加存储 */
@@ -243,6 +247,7 @@ export function buildExtensionContext(impl: {
   unregisterPartView: (partType: string) => void
   registerPlugin: (plugin: PluginLike) => void
   unregisterPlugin: (plugin: PluginLike) => void
+  getContainer: () => HTMLElement
 }): ExtensionContext {
   return impl as ExtensionContext
 }

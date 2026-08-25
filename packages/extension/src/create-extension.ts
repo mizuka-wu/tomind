@@ -25,6 +25,7 @@ export function createExtension<Options extends Record<string, unknown> = {}, St
   type: ExtensionType
   defaultOptions?: ExtensionOptions<Options>
   onCreate?: (ctx: import('./types').ExtensionContext<Storage, Events>) => CleanupFn | void
+  onDOMMount?: (ctx: import('./types').ExtensionContext<Storage, Events>, container: HTMLElement) => CleanupFn | void
   addOptions?: () => Partial<Options> | Record<string, unknown>
   addStorage?: () => Storage
   destroy?: () => void
@@ -61,6 +62,7 @@ export function createExtension<Options extends Record<string, unknown> = {}, St
     },
 
     onCreate: definition.onCreate,
+    onDOMMount: definition.onDOMMount,
 
     destroy() {
       if (cleanupFn) {

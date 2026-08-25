@@ -24,6 +24,8 @@ export class ExtensionManager {
   private _eventHandlers = new Map<string, Set<EventHandler>>()
   private _commands = new Map<string, CommandFn>()
   private _keyboardShortcuts = new Map<string, KeyboardShortcutHandler>()
+  private _domCleanupFns = new Map<string, () => void>()
+  private _domMounted = false
 
   // ==================== 注册 / 注销 ====================
 
@@ -111,8 +113,33 @@ export class ExtensionManager {
   }
 
   /**
-   * 单个扩展的完整初始化（唯一初始化路径）
+   * 挂载 DOM（sheet 容器就绪后调用）
+   * 为所有已初始化且有 onDOMMount 的扩展调用 DOM 挂载
    */
+  mountDOM(container: HTMLElement): void {
+    if (this._domMounted) return
+    this._domMounted = true
+    if (!this._ctx) return
+
+    for (const [, extension] of this._extensions) {
+      if (!extension.isEnabled()) continue
+      if (!this._initialized.has(extension.name)) continue
+      if (!extension.onDOMMount) continue
+
+      const storage = extension.storage ?? {}
+      const extensionCtx: ExtensionContext = { ...this._ctx, storage }
+      try {
+        const cleanup = extension.onDOMMount(extensionCtx, container)
+        if (cleanup) {
+          this._domCleanupFns.set(extension.name, cleanup)
+        }
+      } catch (e) {
+        console.error(`onDOMMount error "${extension.name}":`, e)
+      }
+    }
+  }
+
+  /** 单个扩展的完整初始化（唯一初始化路径） */
   private initializeExtension(extension: Extension, ctx: ExtensionContext): void {
     if (!extension.isEnabled()) return
     if (this._initialized.has(extension.name)) return
@@ -195,6 +222,11 @@ export class ExtensionManager {
   // ==================== 销毁 ====================
 
   destroy(): void {
+    for (const [name, cleanup] of this._domCleanupFns) {
+      try { cleanup() } catch (e) { console.error(`DOM cleanup error "${name}":`, e) }
+    }
+    this._domCleanupFns.clear()
+
     for (const [name, cleanup] of this._cleanupFns) {
       try { cleanup() } catch (e) { console.error(`Cleanup error "${name}":`, e) }
     }

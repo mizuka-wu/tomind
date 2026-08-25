@@ -386,6 +386,8 @@ export class SheetEditor {
     if (this.extensionManager.isSetup()) return
     const ctx = this.createExtensionContext()
     this.extensionManager.setup(ctx)
+    // DOM 挂载（sheet 容器就绪后）
+    this.extensionManager.mountDOM(this.dom)
   }
 
   /** 触发初始渲染（需在扩展注册完成后调用） */
@@ -481,6 +483,7 @@ export class SheetEditor {
       unregisterPlugin: (plugin: PluginLike) => {
         editor.unregisterPlugin(plugin as Plugin)
       },
+      getContainer: () => editor.dom,
     })
   }
 

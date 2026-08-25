@@ -54,6 +54,7 @@ export function createExtensionContext(editor: {
   unregisterLayout?: (name: string) => void
   registerPlugin?: (plugin: import('./types').PluginLike) => void
   unregisterPlugin?: (plugin: import('./types').PluginLike) => void
+  getContainer?: () => HTMLElement
 }): import('./types').ExtensionContext {
   return buildExtensionContext({
     storage: {},
@@ -75,6 +76,7 @@ export function createExtensionContext(editor: {
     unregisterLayout: editor.unregisterLayout ?? (() => {}),
     registerPlugin: editor.registerPlugin ?? (() => {}),
     unregisterPlugin: editor.unregisterPlugin ?? (() => {}),
+    getContainer: editor.getContainer ?? (() => document.body),
   })
 }
 export { onDocEvent, offDocEvent } from './event-listener-utils'

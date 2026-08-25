@@ -30,6 +30,7 @@ export { NoteExtension } from './note'
 export { LinkExtension } from './link'
 export { ImageExtension } from './image'
 export { MathjaxExtension } from './mathjax'
+export { LegendExtension } from './legend'
 
 // ─── 布局扩展（一个大类一个文件夹） ───
 export { TreeRightExtension, TreeLeftExtension, TreeDownExtension, TreeUpExtension } from './tree'
