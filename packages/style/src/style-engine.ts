@@ -37,7 +37,7 @@ import { numberingKey } from '@tomind/state'
 import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue, LeaferStyle } from './style-types'
 import { isThemeClassEntry, resolveColorVariables } from './style-types'
 import { classifyNode, getParentId, findById, getMainTopicAncestor } from './classify'
-import { DEFAULT_STYLES } from './default-styles'
+import { DEFAULT_STYLES, getDefaultStyle } from './default-styles'
 import { normalizeStyleObject, serializeStyleObject, normalizeClassName } from './style-converter'
 import { parseClassList, getClassStyles } from '@tomind/state'
 import { SKELETON_KEY_SET, COLOR_KEY_SET } from './style-keys'
@@ -45,6 +45,24 @@ import { colord, extend } from 'colord'
 import a11yPlugin from 'colord/plugins/a11y'
 
 extend([a11yPlugin])
+
+/** 空主题回退 — 集中边界断言 */
+const EMPTY_THEME: ThemeData = {}
+
+/** 空样式回退 — 集中边界断言 */
+const EMPTY_STYLE: ResolvedStyle = {}
+
+/** 安全解析 ThemeData（unknown → ThemeData，失败返回 EMPTY_THEME） */
+function toThemeData(value: unknown): ThemeData {
+  if (typeof value === 'object' && value !== null) return value as ThemeData
+  return EMPTY_THEME
+}
+
+/** 安全解析 ResolvedStyle（unknown → ResolvedStyle，失败返回 EMPTY_STYLE） */
+function toResolvedStyle(value: unknown): ResolvedStyle {
+  if (typeof value === 'object' && value !== null) return value as ResolvedStyle
+  return EMPTY_STYLE
+}
 
 /**
  * 从 node.attrs 获取类型化属性值
@@ -91,7 +109,7 @@ export class StyleEngine {
    * 编辑器保存时调用
    */
   serializeStyle(style: ResolvedStyle): ResolvedStyle {
-    return serializeStyleObject(style as Record<string, unknown>, this.defaultUnit) as ResolvedStyle
+    return toResolvedStyle(serializeStyleObject(style, this.defaultUnit))
   }
 
   /**
@@ -186,8 +204,8 @@ export class StyleEngine {
     const node = findById(state.doc, topicId)
     if (!node) return {}
 
-    const theme = options.themeOverride || this.getActiveTheme() || (state.theme || {}) as ThemeData
-    const sheetStyle = (state.style || {}) as ResolvedStyle
+    const theme: ThemeData = options.themeOverride ?? this.getActiveTheme() ?? toThemeData(state.theme)
+    const sheetStyle = toResolvedStyle(state.style)
     const nodeType = options.className || classifyNode(state.doc, topicId)
 
     // 层 6: Default
@@ -204,7 +222,7 @@ export class StyleEngine {
       // per-level 主题（level3, level4, ...）
       const depth = getDepthFromDoc(state, topicId)
       if (depth > 2) {
-        const levelStyle = this.getClassStyle(theme, `level${depth}` as NodeType)
+        const levelStyle = this.getClassStyle(theme, `level${depth}`)
         if (levelStyle) {
           result = { ...result, ...levelStyle }
         }
@@ -217,7 +235,7 @@ export class StyleEngine {
     if (modeStyles) {
       const override = modeStyles[nodeType]
       if (override) {
-        result = { ...result, ...filterNullish(override as ResolvedStyle) }
+        result = { ...result, ...filterNullish(toResolvedStyle(override)) }
       }
     }
 
@@ -253,7 +271,7 @@ export class StyleEngine {
       const classList = parseClassList(classString)
       const classStyles = getClassStyles(classList, theme)
       if (Object.keys(classStyles).length > 0) {
-        result = { ...result, ...filterNullish(classStyles as ResolvedStyle) }
+        result = { ...result, ...filterNullish(toResolvedStyle(classStyles)) }
       }
     }
     // 层 1: User Style（用户直接设置，最高优先级）
@@ -272,7 +290,7 @@ export class StyleEngine {
 
     // fontColor 根据 fillColor 自动计算对比色
     if (result.fillColor && result.fillColor !== 'none' && !result.fontColor) {
-      const bg = colord(result.fillColor as string)
+      const bg = colord(String(result.fillColor))
       if (bg.isValid()) {
         const white = colord('#ffffff')
         const ratio = bg.contrast(white)
@@ -284,7 +302,7 @@ export class StyleEngine {
     result = this.resolveColorVarsInStyle(result, theme.colorFieldsMap)
 
     // 规范化所有值：解析单位、处理 NaN、过滤无效值
-    return normalizeStyleObject(result as Record<string, unknown>, this.defaultUnit) as ResolvedStyle
+    return toResolvedStyle(normalizeStyleObject(result, this.defaultUnit))
   }
 
   /**
@@ -536,10 +554,10 @@ export class StyleEngine {
    * 获取全局样式（从主题的 global 类读取）
    */
   getGlobalStyle(state: SheetState, key: string): StyleValue {
-    const theme = this.getActiveTheme() || (state.theme || {}) as ThemeData
+    const theme: ThemeData = this.getActiveTheme() ?? toThemeData(state.theme)
     const globalEntry = theme['global']
     if (!isThemeClassEntry(globalEntry)) return undefined
-    const value = globalEntry.properties[key as keyof typeof globalEntry.properties]
+    const value = Object.fromEntries(Object.entries(globalEntry.properties))[key]
     return resolveColorVariables(value, theme.colorFieldsMap)
   }
 
@@ -551,7 +569,7 @@ export class StyleEngine {
     topicId: string,
     key: keyof ResolvedStyle,
   ): StyleValue {
-    const theme = this.getActiveTheme() || (state.theme || {}) as ThemeData
+    const theme: ThemeData = this.getActiveTheme() ?? toThemeData(state.theme)
     const nodeType = classifyNode(state.doc, topicId)
     const classStyle = this.getClassStyle(theme, nodeType)
     if (!classStyle) return undefined
@@ -603,10 +621,10 @@ export class StyleEngine {
   }
 
   /** 从主题获取类样式（过滤 nullish） */
-  private getClassStyle(theme: ThemeData, className: NodeType): ResolvedStyle | null {
+  private getClassStyle(theme: ThemeData, className: string): ResolvedStyle | null {
     const entry = theme[className]
     if (!isThemeClassEntry(entry)) return null
-    return filterNullish(entry.properties as ResolvedStyle)
+    return filterNullish(toResolvedStyle(entry.properties))
   }
 
   /** 处理 "inherit" 和 "initial" 特殊值 */
@@ -632,7 +650,7 @@ export class StyleEngine {
 
     const parentId = getParentId(state.doc, topicId)
     const nodeType = classifyNode(state.doc, topicId)
-    const result = { ...style } as Record<string, StyleValue>
+    const result: Record<string, StyleValue> = Object.fromEntries(Object.entries(style))
 
     for (const { key, type } of specialKeys) {
       if (type === 'inherit') {
@@ -642,7 +660,8 @@ export class StyleEngine {
             ...options,
             ignoreParent: false,
           })
-          const parentVal = (parentStyle as Record<string, StyleValue>)[key]
+          const parentEntries: Record<string, StyleValue> = Object.fromEntries(Object.entries(parentStyle))
+          const parentVal = parentEntries[key]
           if (parentVal !== undefined && parentVal !== null) {
             result[key] = parentVal
           } else {
@@ -653,7 +672,7 @@ export class StyleEngine {
         }
       } else if (type === 'initial') {
         // initial: 重置为默认值
-        const defaultVal = (DEFAULT_STYLES[nodeType] as Record<string, StyleValue> | undefined)?.[key]
+        const defaultVal = getDefaultStyle(nodeType, key)
         if (defaultVal !== undefined) {
           result[key] = defaultVal
         } else {
@@ -662,7 +681,7 @@ export class StyleEngine {
       }
     }
 
-    return result as ResolvedStyle
+    return toResolvedStyle(result)
   }
 
   /** 解析样式对象中所有值的颜色变量引用（未命中变量名时保持原样） */
@@ -679,7 +698,7 @@ export class StyleEngine {
         result[key] = resolved
       }
     }
-    return (result as ResolvedStyle) ?? style
+    return (result ? toResolvedStyle(result) : style)
   }
 
   /**
@@ -707,7 +726,7 @@ export class StyleEngine {
     const multiLineColors = mapEntry.properties.multiLineColors
     if (!multiLineColors || multiLineColors === 'none') return result
 
-    const colors = (multiLineColors as string).split(' ').filter(Boolean)
+    const colors = String(multiLineColors).split(' ').filter(Boolean)
     if (colors.length === 0) return result
 
     const ancestor = getMainTopicAncestor(state.doc, topicId, (id) => {
@@ -719,7 +738,7 @@ export class StyleEngine {
     const color = colors[ancestor.index % colors.length]
     if (!color) return result
 
-    const mapFill = (mapEntry.properties.fillColor as string) || '#ffffff'
+    const mapFill = String(mapEntry.properties.fillColor ?? '#ffffff')
 
     const fill = nodeType === 'subTopic' ? blendAlpha(color, 0.2, mapFill) : color
 
@@ -856,13 +875,10 @@ function mergeThemeData(
 
 /** 过滤 null/undefined（保留 "none" 和 falsy 值如 0） */
 function filterNullish(style: ResolvedStyle): ResolvedStyle {
-  const result: Record<string, StyleValue> = {}
-  for (const [key, value] of Object.entries(style)) {
-    if (value !== null && value !== undefined) {
-      result[key] = value
-    }
-  }
-  return result as ResolvedStyle
+  const result: Record<string, StyleValue> = Object.fromEntries(
+    Object.entries(style).filter(([, v]) => v !== null && v !== undefined)
+  )
+  return toResolvedStyle(result)
 }
 
 /** 从 doc 树获取深度 */

@@ -206,5 +206,8 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
 
 /** 获取默认样式值 */
 export function getDefaultStyle(nodeType: NodeType, key: string): StyleValue {
-  return DEFAULT_STYLES[nodeType]?.[key as keyof ResolvedStyle]
+  const style = DEFAULT_STYLES[nodeType]
+  if (!style) return undefined
+  const record: Record<string, StyleValue> = Object.fromEntries(Object.entries(style))
+  return record[key]
 }
