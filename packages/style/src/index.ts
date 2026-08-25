@@ -37,7 +37,7 @@ export { classifyNode, getParentId } from './classify'
 export { isThemeClassEntry, resolveColorVariables } from './style-types'
 
 // 默认样式
-export { DEFAULT_STYLES } from './default-styles'
+export { DEFAULT_STYLES, COMPACT_LAYOUT_PARAMS } from './default-styles'
 
 // 类型定义
 export type {

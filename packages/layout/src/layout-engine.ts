@@ -156,7 +156,7 @@ export function measureTextSize(
 
     const widthArr = wrappedLines.map(line => measureFn(line))
     const width = Math.max(...widthArr) * ratio
-    const height = wrappedLines.length * preFontSize * (options.lineHeight || 1.2)
+    const height = wrappedLines.length * Math.floor(preFontSize * (options.lineHeight || 1.34))
 
     return { width: Math.ceil(width), height: Math.ceil(height) }
   }
@@ -186,7 +186,7 @@ export function measureTextSize(
 
   const lineWidths = wrappedLines.map(line => measureFn(line))
   const width = Math.max(...lineWidths)
-  const height = wrappedLines.length * preFontSize * (options.lineHeight || 1.2)
+  const height = wrappedLines.length * Math.floor(preFontSize * (options.lineHeight || 1.34))
 
   return { width: Math.ceil(width), height: Math.ceil(height) }
 }

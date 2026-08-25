@@ -1,5 +1,8 @@
 /**
- * 默认样式 — 从旧 stableStyles 迁移，camelCase 键名
+ * 默认样式 — 对齐 snowbrush stableStyles
+ *
+ * 这是底层默认值，对应 snowbrush 的 stableStyles (defaultstyles.ts)
+ * 布局模式（compact）会覆盖这些值
  *
  * 值保持 DOM 风格：带单位（"16pt"）、颜色（"#ff0000"）、类名（"roundedRect"）
  * "none" 表示无，null/undefined 表示继承父级
@@ -28,6 +31,7 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     lineCorner: '16pt',
     linePattern: 'solid',
     arrowEndClass: 'none',
+    // 对齐 snowbrush stableStyles: centralTopic
     marginLeft: '29pt',
     marginRight: '29pt',
     marginTop: '15pt',
@@ -56,6 +60,7 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     lineCorner: '8pt',
     linePattern: 'solid',
     arrowEndClass: 'none',
+    // 对齐 snowbrush stableStyles: mainTopic
     marginLeft: '18pt',
     marginRight: '18pt',
     marginTop: '10pt',
@@ -84,6 +89,7 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     lineCorner: '8pt',
     linePattern: 'solid',
     arrowEndClass: 'none',
+    // 对齐 snowbrush stableStyles: subTopic
     marginLeft: '6pt',
     marginRight: '6pt',
     marginTop: '6pt',
@@ -106,17 +112,18 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     lineClass: 'roundedElbow',
     lineColor: '#333333',
     lineWidth: '1pt',
-    lineCorner: '8pt',
-    linePattern: 'solid',
-    borderColor: '#333333',
+    borderColor: 'none',
     borderWidth: '0pt',
     borderPattern: 'solid',
+    lineCorner: '8pt',
+    linePattern: 'solid',
     arrowEndClass: 'none',
-    marginLeft: '11pt',
-    marginRight: '11pt',
-    marginTop: '11pt',
-    marginBottom: '11pt',
-    spacingMajor: '26pt',
+    // 对齐 snowbrush stableStyles: floatingTopic
+    marginLeft: '9pt',
+    marginRight: '9pt',
+    marginTop: '9pt',
+    marginBottom: '9pt',
+    spacingMajor: '24pt',
     spacingMinor: '5pt',
   },
   calloutTopic: {
@@ -124,90 +131,181 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     fontColor: '#FFFFFF',
     fontFamily: '$system$',
     fontStyle: 'italic',
-    fontSize: '12pt',
+    fontSize: '14pt',
     textDecoration: 'none',
     textTransform: 'manual',
-    calloutShapeClass: 'roundedRect',
-    fillColor: '#333333',
+    shapeClass: 'callout',
+    shapeCorner: '8pt',
+    fillColor: '#FF6B35',
     fillPattern: 'solid',
     lineClass: 'curve',
     lineColor: '#333333',
     lineWidth: '1pt',
     borderColor: 'none',
-    borderWidth: '1pt',
+    borderWidth: '0pt',
     borderPattern: 'solid',
-    shapeCorner: '5pt',
     lineCorner: '8pt',
     linePattern: 'solid',
     arrowEndClass: 'none',
-    marginLeft: '6pt',
-    marginRight: '6pt',
-    marginTop: '6pt',
-    marginBottom: '6pt',
-    spacingMajor: '26pt',
+    // 对齐 snowbrush stableStyles: calloutTopic
+    marginLeft: '4pt',
+    marginRight: '4pt',
+    marginTop: '4pt',
+    marginBottom: '4pt',
+    spacingMajor: '22pt',
     spacingMinor: '5pt',
   },
   summaryTopic: {
     fontWeight: 'normal',
-    fontColor: '#FFFFFF',
+    fontColor: '#333333',
     fontFamily: '$system$',
-    fontStyle: 'italic',
-    fontSize: '14pt',
-    textDecoration: 'none',
-    shapeClass: 'roundedRect',
-    shapeCorner: '5pt',
-    fillColor: '#333333',
-    fillPattern: 'solid',
-    marginLeft: '12pt',
-    marginRight: '12pt',
-  },
-  boundary: {
-    shapeClass: 'roundedRect',
-    fillColor: '#D5E9FC',
-    lineColor: '#5291E5',
-    linePattern: 'dash',
-    lineWidth: '1pt',
-    opacity: 0.2,
-    shapeCorner: '5pt',
-    fontFamily: '$system$',
-    fontSize: '14pt',
-    fontWeight: 'normal',
     fontStyle: 'normal',
-    textTransform: 'manual',
+    fontSize: '14pt',
     textDecoration: 'none',
+    textTransform: 'manual',
+    shapeClass: 'summary',
+    shapeCorner: '8pt',
+    fillColor: '#2196F3',
     fillPattern: 'solid',
-  },
-  summary: {
-    shapeClass: 'square',
-    lineColor: '#5291E5',
+    lineClass: 'roundedElbow',
+    lineColor: '#333333',
     lineWidth: '1pt',
+    borderColor: 'none',
+    borderWidth: '0pt',
+    borderPattern: 'solid',
     lineCorner: '8pt',
     linePattern: 'solid',
-  },
-  relationship: {
-    lineClass: 'curve',
-    lineColor: '#5291E5',
-    linePattern: 'dash',
-    lineWidth: '1pt',
-    arrowEndClass: 'triangle',
-    lineCorner: '8pt',
-    fontFamily: '$system$',
-    fontSize: '14pt',
-    fontWeight: 'normal',
-    fontStyle: 'normal',
-    textTransform: 'manual',
-    textDecoration: 'none',
+    arrowEndClass: 'none',
+    // 对齐 snowbrush stableStyles: summaryTopic
+    marginLeft: '8pt',
+    marginRight: '8pt',
+    marginTop: '4pt',
+    marginBottom: '4pt',
+    spacingMajor: '22pt',
+    spacingMinor: '5pt',
   },
   map: {
-    lineTapered: 'none',
-    multiLineColors: 'none',
+    fontWeight: 'normal',
+    fontColor: '#333333',
+    fontFamily: '$system$',
+    fontStyle: 'normal',
+    fontSize: '12pt',
+    textDecoration: 'none',
+    shapeClass: 'roundedRect',
+    fillColor: 'none',
+    fillPattern: 'solid',
+    lineClass: 'curve',
+    lineColor: '#333333',
+    lineWidth: '1pt',
+    borderColor: 'none',
+    borderWidth: '0pt',
+    borderPattern: 'solid',
+    linePattern: 'solid',
+    arrowEndClass: 'none',
+  },
+
+  relationship: {
+    fontWeight: 'normal',
+    fontColor: '#333333',
+    fontFamily: '$system$',
+    fontStyle: 'normal',
+    fontSize: '12pt',
+    textDecoration: 'none',
+    lineClass: 'curve',
+    lineColor: '#333333',
+    lineWidth: '1pt',
+    linePattern: 'solid',
+  },
+  boundary: {
+    fontWeight: 'normal',
+    fontColor: '#333333',
+    fontFamily: '$system$',
+    fontStyle: 'normal',
+    fontSize: '12pt',
+    fillColor: 'none',
+    borderColor: '#333333',
+    borderWidth: '1pt',
+    borderPattern: 'dash',
+  },
+  summary: {
+    fontWeight: 'normal',
+    fontColor: '#333333',
+    fontFamily: '$system$',
+    fontStyle: 'normal',
+    fontSize: '12pt',
+    lineClass: 'curve',
+    lineColor: '#333333',
+    lineWidth: '1pt',
+    linePattern: 'solid',
   },
 }
 
-/** 获取默认样式值 */
-export function getDefaultStyle(nodeType: NodeType, key: string): StyleValue {
+/**
+ * 紧凑布局参数 — 对齐 snowbrush COMPACT_LAYOUT_PARAMS
+ *
+ * 用于覆盖 DEFAULT_STYLES，实现紧凑布局
+ * 参考：snowbrush-render/src/common/constants/styles.ts
+ */
+export const COMPACT_LAYOUT_PARAMS: Record<NodeType, Partial<ResolvedStyle>> = {
+  centralTopic: {
+    marginLeft: '22px',
+    marginRight: '22px',
+    marginTop: '12px',
+    marginBottom: '12px',
+    spacingMajor: '28px',
+    spacingMinor: '10px',
+  },
+  mainTopic: {
+    marginLeft: '12px',
+    marginRight: '12px',
+    marginTop: '6px',
+    marginBottom: '6px',
+    spacingMajor: '22px',
+    spacingMinor: '5px',
+  },
+  subTopic: {
+    marginLeft: '4px',
+    marginRight: '4px',
+    marginTop: '4px',
+    marginBottom: '4px',
+    spacingMajor: '22px',
+    spacingMinor: '5px',
+  },
+  floatingTopic: {
+    marginLeft: '9px',
+    marginRight: '9px',
+    marginTop: '9px',
+    marginBottom: '9px',
+    spacingMajor: '24px',
+    spacingMinor: '5px',
+  },
+  calloutTopic: {
+    marginLeft: '4px',
+    marginRight: '4px',
+    marginTop: '4px',
+    marginBottom: '4px',
+    spacingMajor: '22px',
+    spacingMinor: '5px',
+  },
+  summaryTopic: {
+    marginLeft: '8px',
+    marginRight: '8px',
+    marginTop: '4px',
+    marginBottom: '4px',
+    spacingMajor: '22px',
+    spacingMinor: '5px',
+  },
+  map: {},
+  relationship: {},
+  boundary: {},
+  summary: {},
+}
+
+/**
+ * 获取节点类型的默认样式值
+ */
+export function getDefaultStyle(nodeType: NodeType, key: string): StyleValue | undefined {
   const style = DEFAULT_STYLES[nodeType]
   if (!style) return undefined
-  const record: Record<string, StyleValue> = Object.fromEntries(Object.entries(style))
-  return record[key]
+  return (style as Record<string, StyleValue>)[key]
 }

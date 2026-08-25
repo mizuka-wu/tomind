@@ -22,6 +22,7 @@ import { ExtensionManager } from '@tomind/extension'
 import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEditorInterface, ViewDescConstructor } from '@tomind/extension'
 import { buildExtensionContext } from '@tomind/extension'
 import type { StyleEngine } from '@tomind/style'
+import { COMPACT_LAYOUT_PARAMS } from '@tomind/style'
 import type { ResolvedStyle, NodeType } from '@tomind/style'
 import type { LayoutEngine } from '@tomind/layout'
 import type { CommandManager } from '@tomind/commands'
@@ -155,10 +156,12 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       }
     }
 
-    // 初始化布局模式样式
-    if (options.overridedStyle?.layoutModes) {
-      this.styleEngine.setLayoutModes(options.overridedStyle.layoutModes)
+    // 初始化布局模式样式（自动注册 COMPACT_LAYOUT_PARAMS）
+    const defaultLayoutModes = {
+      Third: COMPACT_LAYOUT_PARAMS,
     }
+    const userLayoutModes = options.overridedStyle?.layoutModes || {}
+    this.styleEngine.setLayoutModes({ ...defaultLayoutModes, ...userLayoutModes })
 
     // 注入 StyleEngine 到 LayoutEngine
     this.layoutEngine.setStyleEngine(this.styleEngine)
