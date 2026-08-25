@@ -264,17 +264,20 @@ export function fromDomEventType(domType: string): ViewEventType | null {
 
 /** 检查是否为拖拽事件 */
 export function isDragEventType(type: ViewEventType): type is DragEventType {
-  return ['dragstart', 'drag', 'dragend', 'dragenter', 'dragleave', 'dragover', 'drop'].includes(type as DragEventType)
+  const DRAG_EVENTS: readonly string[] = ['dragstart', 'drag', 'dragend', 'dragenter', 'dragleave', 'dragover', 'drop']
+  return DRAG_EVENTS.includes(type)
 }
 
 /** 检查是否为键盘事件 */
 export function isKeyboardEventType(type: ViewEventType): type is KeyboardEventType {
-  return ['keydown', 'keyup', 'keypress'].includes(type as KeyboardEventType)
+  const KEYBOARD_EVENTS: readonly string[] = ['keydown', 'keyup', 'keypress']
+  return KEYBOARD_EVENTS.includes(type)
 }
 
 /** 检查是否为手势事件 */
 export function isGestureEventType(type: ViewEventType): type is GestureEventType {
-  return ['pinchstart', 'pinch', 'pinchend', 'rotatestart', 'rotate', 'rotateend'].includes(type as GestureEventType)
+  const GESTURE_EVENTS: readonly string[] = ['pinchstart', 'pinch', 'pinchend', 'rotatestart', 'rotate', 'rotateend']
+  return GESTURE_EVENTS.includes(type)
 }
 
 /**

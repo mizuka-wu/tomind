@@ -99,7 +99,7 @@ export class TitlePartViewDesc extends PartViewDesc {
 
   protected updatePart(data: unknown): void {
     if (this._text) {
-      this._text.text = (data as string) ?? ''
+      this._text.text = typeof data === 'string' ? data : ''
     }
   }
 }
@@ -128,7 +128,8 @@ export class ImagePartViewDesc extends PartViewDesc {
   }
 
   protected updatePart(data: unknown): void {
-    const imageData = data as { url?: string } | undefined
+    const imageData = (typeof data === 'object' && data !== null && 'url' in data)
+      ? data as { url?: string } : undefined
     if (this._image && imageData?.url) {
       this._image.url = imageData.url
     }
@@ -236,7 +237,8 @@ export class NotePartViewDesc extends PartViewDesc {
   }
 
   protected updatePart(data: unknown): void {
-    const note = data as NoteData | undefined
+    const note = (typeof data === 'object' && data !== null && 'content' in data)
+      ? data as NoteData : undefined
     const hasNote = !!note && (!!note.content || !!note.htmlContent)
 
     // 图标可见性
@@ -250,12 +252,11 @@ export class NotePartViewDesc extends PartViewDesc {
       return
     }
 
-    const noteData = note as NoteData
     // 优先使用 HTML 内容（对齐 snowbrush realHTML）
-    if (noteData.htmlContent) {
-      this._renderHtml(noteData.htmlContent)
-    } else if (noteData.content) {
-      this._renderPlain(noteData.content)
+    if (note.htmlContent) {
+      this._renderHtml(note.htmlContent)
+    } else if (note.content) {
+      this._renderPlain(note.content)
     }
   }
 
@@ -398,7 +399,7 @@ export class CommentsPartViewDesc extends PartViewDesc {
   }
 
   protected updatePart(data: unknown): void {
-    const comments = data as CommentItemData[] | undefined
+    const comments = Array.isArray(data) ? data as CommentItemData[] : undefined
     const hasComments = !!comments && comments.length > 0
 
     if (this._icon) {

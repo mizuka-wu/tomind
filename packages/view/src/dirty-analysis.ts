@@ -5,6 +5,7 @@
  */
 
 import type { Step } from '@tomind/state'
+import { UpdateNodeStep, InsertNodeStep, RemoveNodeStep } from '@tomind/state'
 import { DirtyFlag } from './view-desc'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -49,52 +50,39 @@ export function analyzeSteps(steps: readonly Step[]): DirtyAnalysis {
   let globalFlag = DirtyFlag.CLEAN
 
   for (const step of steps) {
-    switch (step.stepType) {
-      case 'updateNode': {
-        const { nodeId, attrs, oldAttrs } = step as import('@tomind/state').UpdateNodeStep
-        let flag = analyzeAttrsChange(attrs, oldAttrs)
+    if (step instanceof UpdateNodeStep) {
+      const { nodeId, attrs, oldAttrs } = step
+      let flag = analyzeAttrsChange(attrs, oldAttrs)
 
-        // 特殊处理：compactLayoutModeLevel 变化 → 全局刷新
-        if ('compactLayoutModeLevel' in attrs) {
-          const oldLevel = oldAttrs['compactLayoutModeLevel'] || 'Third'
-          const newLevel = attrs['compactLayoutModeLevel'] || 'Third'
-          if (oldLevel !== newLevel) {
-            globalDirty = true
-            globalFlag = DirtyFlag.STYLE | DirtyFlag.LAYOUT | DirtyFlag.SIZE
-            return { nodeFlags, globalDirty, globalFlag }
-          }
+      // 特殊处理：compactLayoutModeLevel 变化 → 全局刷新
+      if ('compactLayoutModeLevel' in attrs) {
+        const oldLevel = oldAttrs['compactLayoutModeLevel'] || 'Third'
+        const newLevel = attrs['compactLayoutModeLevel'] || 'Third'
+        if (oldLevel !== newLevel) {
+          globalDirty = true
+          globalFlag = DirtyFlag.STYLE | DirtyFlag.LAYOUT | DirtyFlag.SIZE
+          return { nodeFlags, globalDirty, globalFlag }
         }
-
-        if (flag !== DirtyFlag.CLEAN) {
-          mergeFlag(nodeFlags, nodeId, flag)
-        }
-        break
       }
 
-      case 'insertNode': {
-        const { parentId, node } = step as import('@tomind/state').InsertNodeStep
-        // 新节点标记 ALL
-        mergeFlag(nodeFlags, node.id, DirtyFlag.ALL)
-        // 父节点标记 CHILDREN
-        mergeFlag(nodeFlags, parentId, DirtyFlag.CHILDREN)
-        break
+      if (flag !== DirtyFlag.CLEAN) {
+        mergeFlag(nodeFlags, nodeId, flag)
       }
-
-      case 'removeNode': {
-        // removeNode 步骤：从 doc 树查找父节点并标记 CHILDREN
-        const { nodeId } = step as import('@tomind/state').RemoveNodeStep
-        // removeNode 会从 doc 中删除节点，需要从当前已知的节点中标记父节点
-        // 这里标记被删除节点自身为 CLEAN（已不在树中），父节点需要通过其他方式获取
-        // 简单方案：标记被删除节点 ID 为 ALL，让 ViewDesc 树重建时处理
-        mergeFlag(nodeFlags, nodeId, DirtyFlag.ALL)
-        break
-      }
-
-      // setSelection, setViewport 不影响标脏
-      case 'setSelection':
-      case 'setViewport':
-        break
+    } else if (step instanceof InsertNodeStep) {
+      const { parentId, node } = step
+      // 新节点标记 ALL
+      mergeFlag(nodeFlags, node.id, DirtyFlag.ALL)
+      // 父节点标记 CHILDREN
+      mergeFlag(nodeFlags, parentId, DirtyFlag.CHILDREN)
+    } else if (step instanceof RemoveNodeStep) {
+      // removeNode 步骤：从 doc 树查找父节点并标记 CHILDREN
+      const { nodeId } = step
+      // removeNode 会从 doc 中删除节点，需要从当前已知的节点中标记父节点
+      // 这里标记被删除节点自身为 CLEAN（已不在树中），父节点需要通过其他方式获取
+      // 简单方案：标记被删除节点 ID 为 ALL，让 ViewDesc 树重建时处理
+      mergeFlag(nodeFlags, nodeId, DirtyFlag.ALL)
     }
+    // setSelection, setViewport 不影响标脏
   }
 
   return { nodeFlags, globalDirty, globalFlag }

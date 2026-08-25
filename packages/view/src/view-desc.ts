@@ -300,7 +300,7 @@ export abstract class ViewDesc {
    * 绕过 readonly 约束，因为 ViewDesc 的生命周期由编辑器管理
    */
   protected updateNode(newNode: NodeDesc): void {
-    ;(this as { node: NodeDesc }).node = newNode
+    Object.assign(this, { node: newNode })
   }
 
   /**

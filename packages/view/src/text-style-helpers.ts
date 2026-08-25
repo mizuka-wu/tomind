@@ -14,10 +14,10 @@ type FontWeight = NonNullable<Text['fontWeight']>
 
 /** textDecoration 映射：snowbrush → LeaferJS */
 const DECORATION_MAP: Record<string, TextDecoration> = {
-  'underline': 'under' as TextDecoration,
-  'line-through': 'delete' as TextDecoration,
-  'under-delete': 'under-delete' as TextDecoration,
-  'none': 'none' as TextDecoration,
+  'underline': 'under',
+  'line-through': 'delete',
+  'under-delete': 'under-delete',
+  'none': 'none',
 }
 
 /**

@@ -59,8 +59,8 @@ export interface ViewContext {
 
 /** 获取类型化的 LeaferStyle（消除 Record<string, unknown> 断言） */
 export function getLeaferStyle(ctx: ViewContext, nodeId: string): LeaferStyle {
-  if (!ctx.styleEngine || !ctx.state) return {} as LeaferStyle
-  return ctx.styleEngine.getLeaferStyle(ctx.state, nodeId) as LeaferStyle
+  if (!ctx.styleEngine || !ctx.state) return {}
+  return ctx.styleEngine.getLeaferStyle(ctx.state, nodeId)
 }
 
 // ==================== NodeViewDesc ====================
@@ -258,9 +258,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       const parentLayout = parentViewDesc ? layout.nodes.get(parentViewDesc.node.id) : null
       if (parentLayout) {
         // 子节点：相对坐标（减去父节点绝对位置和 contentGroup y 偏移）
-        // _contentGroup 是 LeaferJS Group 内部属性，类型定义不包含
-        const parentGroup = parentViewDesc!.element as { _contentGroup?: { y?: number } } | undefined
-        const contentOffsetY = parentGroup?._contentGroup?.y ?? 40
+        const contentOffsetY = parentViewDesc!.contentGroup?.y ?? 40
         this.element.x = nodeLayout.x - parentLayout.x
         this.element.y = nodeLayout.y - parentLayout.y - contentOffsetY
       } else {
@@ -1157,7 +1155,7 @@ export class CollapseExtendNodeViewDesc extends NodeViewDesc {
         const parentId = this._parent?.node.id
         if (parentId) {
           const parentStyle = this.ctx.styleEngine.getLeaferStyle(this.ctx.state, parentId)
-          const lineColor = parentStyle.lineColor as string | undefined
+          const lineColor = parentStyle.lineColor
           if (lineColor) {
             const circleFill = this.renderer.getCircleFill()
             if (circleFill) {

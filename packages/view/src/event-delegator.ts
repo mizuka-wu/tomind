@@ -105,9 +105,9 @@ export class EventDelegator {
     handlers: Partial<Record<ViewEventType, ViewEventHandler>>
   ): void {
     for (const targetId of targetIds) {
-      for (const [type, handler] of Object.entries(handlers)) {
+      for (const [type, handler] of Object.entries(handlers) as [ViewEventType, ViewEventHandler | undefined][]) {
         if (handler) {
-          this.delegate(type as ViewEventType, targetId, handler)
+          this.delegate(type, targetId, handler)
         }
       }
     }
