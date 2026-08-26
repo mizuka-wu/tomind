@@ -368,30 +368,26 @@ function updateViewBox(
   if (!miniMapView.viewBox) return
 
   // 请求视口信息
-  ctx.emit('miniMap:requestViewport', (viewport: { x: number; y: number; width: number; height: number } | null) => {
-    if (!viewport || !miniMapView.viewBox) return
+  const viewport = ctx.query<{ x: number; y: number; width: number; height: number }>('miniMap:requestViewport')
+  if (!viewport || !miniMapView.viewBox) return
 
-    // 计算视口框在小地图中的位置和大小
-    // 需要根据内容边界和缩放比例计算
-    ctx.emit('miniMap:requestBounds', (bounds: { x: number; y: number; width: number; height: number } | null) => {
-      if (!bounds || !miniMapView.viewBox) return
+  const bounds = ctx.query<{ x: number; y: number; width: number; height: number }>('miniMap:requestBounds')
+  if (!bounds || !miniMapView.viewBox) return
 
-      const containerRect = miniMapView.container.getBoundingClientRect()
-      const scaleX = containerRect.width / bounds.width
-      const scaleY = containerRect.height / bounds.height
-      const scale = Math.min(scaleX, scaleY)
+  const containerRect = miniMapView.container.getBoundingClientRect()
+  const scaleX = containerRect.width / bounds.width
+  const scaleY = containerRect.height / bounds.height
+  const scale = Math.min(scaleX, scaleY)
 
-      const viewX = (viewport.x - bounds.x) * scale
-      const viewY = (viewport.y - bounds.y) * scale
-      const viewWidth = viewport.width * scale
-      const viewHeight = viewport.height * scale
+  const viewX = (viewport.x - bounds.x) * scale
+  const viewY = (viewport.y - bounds.y) * scale
+  const viewWidth = viewport.width * scale
+  const viewHeight = viewport.height * scale
 
-      miniMapView.viewBox.style.left = `${viewX}px`
-      miniMapView.viewBox.style.top = `${viewY}px`
-      miniMapView.viewBox.style.width = `${viewWidth}px`
-      miniMapView.viewBox.style.height = `${viewHeight}px`
-    })
-  })
+  miniMapView.viewBox.style.left = `${viewX}px`
+  miniMapView.viewBox.style.top = `${viewY}px`
+  miniMapView.viewBox.style.width = `${viewWidth}px`
+  miniMapView.viewBox.style.height = `${viewHeight}px`
 }
 
 /**
@@ -420,10 +416,10 @@ function updateScale(
   miniMapView: MiniMapView
 ): void {
   // 请求缩放信息
-  ctx.emit('miniMap:requestScale', (scale: number | null) => {
-    if (scale === null) return
+  const scale = ctx.query<number>('miniMap:requestScale')
+  if (scale != null) {
     miniMapView.scaleValue = scale
     // 更新视口框
     updateViewBox(ctx, miniMapView)
-  })
+  }
 }

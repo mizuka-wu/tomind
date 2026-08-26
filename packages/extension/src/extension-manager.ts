@@ -26,6 +26,7 @@ export class ExtensionManager {
   private _keyboardShortcuts = new Map<string, KeyboardShortcutHandler>()
   private _domCleanupFns = new Map<string, () => void>()
   private _domMounted = false
+  private _queryHandlers = new Map<string, (...args: unknown[]) => unknown>()
 
   // ==================== 注册 / 注销 ====================
 
@@ -301,6 +302,30 @@ export class ExtensionManager {
 
   getKeyboardShortcuts(): Map<string, KeyboardShortcutHandler> {
     return new Map(this._keyboardShortcuts)
+  }
+
+  // ==================== Query（请求-响应模式）====================
+
+  /** 注册 query handler（一个 event 只能有一个 handler，后注册覆盖前注册） */
+  registerQueryHandler(event: string, handler: (...args: unknown[]) => unknown): void {
+    this._queryHandlers.set(event, handler)
+  }
+
+  /** 注销 query handler */
+  unregisterQueryHandler(event: string): void {
+    this._queryHandlers.delete(event)
+  }
+
+  /** 执行 query，返回 handler 的返回值；无 handler 返回 undefined */
+  query<R = unknown>(event: string, ...args: unknown[]): R | undefined {
+    const handler = this._queryHandlers.get(event)
+    if (!handler) return undefined
+    try {
+      return handler(...args) as R
+    } catch (e) {
+      console.error(`Query error "${event}":`, e)
+      return undefined
+    }
   }
 
   // ==================== 内部工具 ====================

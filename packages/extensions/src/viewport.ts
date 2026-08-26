@@ -162,10 +162,8 @@ function createViewportShortcuts(): Record<string, KeyboardShortcutHandler> {
 function setupViewportInteractions(ctx: ExtensionContext<any, any>, opts: Required<ViewportOptions>): () => void {
   const cleanupFns: (() => void)[] = []
 
-  // 通过事件系统获取 DOM 容器
-  // SheetEditor 在接收到 'getContainer' 事件时回调传入 this.dom
-  let domContainer: HTMLElement | null = null
-  ctx.emit('getContainer', (dom: HTMLElement) => { domContainer = dom })
+  // 通过 query 获取 DOM 容器
+  const domContainer = ctx.query<HTMLElement>('getContainer') ?? null
 
   if (domContainer) {
     if (opts.enableWheelZoom) {

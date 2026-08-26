@@ -16,7 +16,7 @@
 
 import { createExtension } from '@tomind/core'
 import { getCanvasElement } from './shared-types'
-import { emitUnsafe } from './shared-utils'
+
 import type { CommandFn } from '@tomind/core'
 import type { TopicEvents } from './topic'
 
@@ -127,29 +127,17 @@ export const DropExtension = createExtension<DropOptions, Record<string, unknown
 
     // 获取 LeaferView
     const getLeaferView = (): any => {
-      let leaferView: any = null
-      ctx.emit('getLeaferView', (view: any) => {
-        leaferView = view
-      })
-      return leaferView
+      return ctx.query<any>('getLeaferView')
     }
 
     // 获取视口遮罩层
     const getViewPortCover = (): HTMLElement | null => {
-      let cover: HTMLElement | null = null
-      ctx.emit('getViewPortCover', (el: HTMLElement) => {
-        cover = el
-      })
-      return cover
+      return ctx.query<HTMLElement>('getViewPortCover') ?? null
     }
 
     // 坐标转换
     const viewportToMindMap = (clientPos: Position): Position => {
-      let result = clientPos
-      emitUnsafe(ctx, 'coordinate:viewportToMindMap', clientPos, (pos: Position) => {
-        result = pos
-      })
-      return result
+      return ctx.query<Position>('coordinate:viewportToMindMap', clientPos) ?? clientPos
     }
 
     // 事件处理器
@@ -188,18 +176,12 @@ export const DropExtension = createExtension<DropOptions, Record<string, unknown
         })
 
         // 获取拖拽经过的视图
-        let dropView: any = null
-        emitUnsafe(ctx, 'drop:getDropView', realPosition, (view: any) => {
-          dropView = view
-        })
+        const dropView = ctx.query<any>('drop:getDropView', realPosition) ?? null
 
         state.dropView = dropView
 
         // 获取传输选项
-        let transferOptions: any = null
-        emitUnsafe(ctx, 'drop:onDragMoving', dropView, realPosition, (options: any) => {
-          transferOptions = options
-        })
+        const transferOptions = ctx.query<any>('drop:onDragMoving', dropView, realPosition) ?? null
 
         state.transferOptions = transferOptions
 

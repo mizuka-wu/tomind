@@ -211,14 +211,8 @@ export class SheetEditor {
       }
     }
 
-    // 响应扩展的 'getContainer' 事件，回调传入 DOM 容器
-    // 必须在 setupExtensions 之前注册，否则扩展的 ctx.emit('getContainer') 无人接收
-    this._emitter.addEventListener('getContainer', ((e: Event) => {
-      const callback = getEventDetail(e)
-      if (typeof callback === 'function') {
-        callback(this.dom)
-      }
-    }))
+    // 注册 query handler：必须在 setupExtensions 之前，否则扩展的 ctx.query('getContainer') 返回 undefined
+    this.extensionManager.registerQueryHandler('getContainer', () => this.dom)
 
     // 初始化扩展（必须在 createDocView 之前，扩展注册的 NodeView 才能生效）
     this.setupExtensions()
@@ -565,6 +559,13 @@ export class SheetEditor {
         editor.unregisterWidgetPlugin(name)
       },
       getContainer: () => editor.dom,
+      query: <R = unknown>(event: string, ...args: unknown[]) => editor.extensionManager.query<R>(event, ...args),
+      registerQueryHandler: (event: string, handler: (...args: unknown[]) => unknown) => {
+        editor.extensionManager.registerQueryHandler(event, handler)
+      },
+      unregisterQueryHandler: (event: string) => {
+        editor.extensionManager.unregisterQueryHandler(event)
+      },
     })
   }
 

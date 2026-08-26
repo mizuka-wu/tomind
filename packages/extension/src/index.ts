@@ -58,6 +58,9 @@ export function createExtensionContext(editor: {
   registerWidgetPlugin?: (plugin: import('./types').WidgetPluginLike) => void
   unregisterWidgetPlugin?: (name: string) => void
   getContainer?: () => HTMLElement
+  query?: <R = unknown>(event: string, ...args: unknown[]) => R | undefined
+  registerQueryHandler?: (event: string, handler: (...args: unknown[]) => unknown) => void
+  unregisterQueryHandler?: (event: string) => void
 }): import('./types').ExtensionContext {
   return buildExtensionContext({
     storage: {},
@@ -82,6 +85,9 @@ export function createExtensionContext(editor: {
     registerWidgetPlugin: editor.registerWidgetPlugin ?? (() => {}),
     unregisterWidgetPlugin: editor.unregisterWidgetPlugin ?? (() => {}),
     getContainer: editor.getContainer ?? (() => document.body),
+    query: editor.query ?? (() => undefined),
+    registerQueryHandler: editor.registerQueryHandler ?? (() => {}),
+    unregisterQueryHandler: editor.unregisterQueryHandler ?? (() => {}),
   })
 }
 export { onDocEvent, offDocEvent } from './event-listener-utils'

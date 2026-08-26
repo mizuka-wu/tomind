@@ -190,11 +190,10 @@ function createFakeView(ctx: ExtensionContext<any, any>, position: Position): Gr
   group.add(text)
 
   // 添加到视图
-  ctx.emit("getLeaferView", (leaferView: any) => {
-    if (leaferView) {
-      leaferView.add(group)
-    }
-  })
+  const leaferView = ctx.query<any>('getLeaferView')
+  if (leaferView) {
+    leaferView.add(group)
+  }
 
   return group
 }

@@ -12,6 +12,13 @@ import { widgetDecoration } from '@tomind/state'
 import type { Decoration } from '@tomind/state'
 import type { WidgetPluginLike } from '@tomind/core'
 
+// ==================== Events ====================
+
+export interface IndicatorEvents {
+  'indicator:update': { nodeId: string | null; visible: boolean }
+  'indicator:clear': void
+}
+
 // ==================== 状态管理 ====================
 
 interface IndicatorState {
@@ -53,7 +60,7 @@ function createIndicatorViewPlugin(): WidgetPluginLike {
     widgetViewFactory: (widgetType: string, widgetId: string, node: unknown) => {
       if (widgetType === 'indicator') {
         // 返回标记对象，由 SheetEditor 创建实际的 ViewDesc
-        return { widgetType: 'indicator', node } as any
+        return { widgetType: 'indicator', node, element: null } as { element: unknown } | null
       }
       return null
     }
@@ -62,12 +69,12 @@ function createIndicatorViewPlugin(): WidgetPluginLike {
 
 // ==================== Extension ====================
 
-export const IndicatorExtension = createExtension({
+export const IndicatorExtension = createExtension<{}, Record<string, unknown>, IndicatorEvents>({
   name: 'indicator',
   type: 'extension',
   defaultOptions: { enabled: true },
 
-  onCreate(ctx: ExtensionContext) {
+  onCreate(ctx: ExtensionContext<Record<string, unknown>, IndicatorEvents>) {
     const viewPlugin = createIndicatorViewPlugin()
     ctx.registerWidgetPlugin(viewPlugin)
 
@@ -80,12 +87,12 @@ export const IndicatorExtension = createExtension({
       updateIndicatorState(null, false)
     }
 
-    ctx.on('indicator:update' as any, handleUpdate as any)
-    ctx.on('indicator:clear' as any, handleClear as any)
+    ctx.on('indicator:update', handleUpdate)
+    ctx.on('indicator:clear', handleClear)
 
     return () => {
-      ctx.off('indicator:update' as any, handleUpdate as any)
-      ctx.off('indicator:clear' as any, handleClear as any)
+      ctx.off('indicator:update', handleUpdate)
+      ctx.off('indicator:clear', handleClear)
       ctx.unregisterWidgetPlugin('indicator')
       updateIndicatorState(null, false)
     }

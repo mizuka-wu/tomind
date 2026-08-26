@@ -1003,7 +1003,15 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
 
     if (positions.length === 0) return
 
-    const padding = 8
+    // 对齐 snowbrush BOUNDARYGAP = 10，标题区域额外增加 top padding
+    const BOUNDARYGAP = 10
+    const titleFontSize = 12
+    const titleHeight = title ? Math.floor(titleFontSize * 1.34) : 0
+    const paddingTop = BOUNDARYGAP + titleHeight
+    const paddingBottom = BOUNDARYGAP
+    const paddingLeft = BOUNDARYGAP
+    const paddingRight = BOUNDARYGAP
+
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
     for (const p of positions) {
       minX = Math.min(minX, p.x)
@@ -1013,7 +1021,7 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
     }
 
     this.renderer.setBounds(
-      { x: minX - padding, y: minY - padding, width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 },
+      { x: minX - paddingLeft, y: minY - paddingTop, width: maxX - minX + paddingLeft + paddingRight, height: maxY - minY + paddingTop + paddingBottom },
       title,
     )
     this.updateStyle()

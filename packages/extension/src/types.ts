@@ -52,6 +52,12 @@ export interface ExtensionContext<Storage = Record<string, unknown>, Events exte
   off: <K extends keyof (BaseEventMap & Events)>(event: K, handler: (data: (BaseEventMap & Events)[K]) => void) => void
   /** 触发事件（已注册事件有完整类型，未注册事件用 string fallback） */
   emit: (<K extends keyof (BaseEventMap & Events)>(event: K, ...args: EmitData<(BaseEventMap & Events)[K]>) => void) & ((event: string, ...args: unknown[]) => void)
+  /** 请求-响应查询（同步，返回 handler 的返回值；无 handler 返回 undefined） */
+  query: <R = unknown>(event: string, ...args: unknown[]) => R | undefined
+  /** 注册 query handler（一个 event 只能有一个 handler） */
+  registerQueryHandler: (event: string, handler: (...args: unknown[]) => unknown) => void
+  /** 注销 query handler */
+  unregisterQueryHandler: (event: string) => void
   /** 注册 NodeViewDesc */
   registerNodeView: (nodeType: string, viewDesc: ViewDescConstructor) => void
   /** 注销 NodeViewDesc */
@@ -261,6 +267,9 @@ export function buildExtensionContext(impl: {
   registerWidgetPlugin: (plugin: WidgetPluginLike) => void
   unregisterWidgetPlugin: (name: string) => void
   getContainer: () => HTMLElement
+  query: <R = unknown>(event: string, ...args: unknown[]) => R | undefined
+  registerQueryHandler: (event: string, handler: (...args: unknown[]) => unknown) => void
+  unregisterQueryHandler: (event: string) => void
 }): ExtensionContext {
   return impl as ExtensionContext
 }

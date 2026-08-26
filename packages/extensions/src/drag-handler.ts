@@ -14,7 +14,7 @@ import { createExtension, parseArgs } from '@tomind/core'
 import type { CommandFn } from '@tomind/core'
 import { onDocEvent, offDocEvent } from '@tomind/core'
 import type { NodeViewDesc } from '@tomind/view'
-import { emitUnsafe } from './shared-utils'
+
 import type { DragViewDesc } from '@tomind/core'
 
 
@@ -726,7 +726,7 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions, Record<s
       getSheetEditor: activeSheet,
       getCentralBranch: () => null,
       getSelectionManager: () => null,
-      emit: ((event: string, ...args: unknown[]) => emitUnsafe(ctx, event, ...args)) as DragHandlerContext['emit'],
+      emit: ((event: string, ...args: unknown[]) => ctx.emit(event, ...args)) as DragHandlerContext['emit'],
     }
 
     // 创建管理器

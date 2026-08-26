@@ -201,9 +201,7 @@ function setupEventHandlers(
   // ==================== Hover 预选框 ====================
 
   const getLeaferView = (): any => {
-    let leaferView: any = null
-    ctx.emit('getLeaferView', (view: any) => { leaferView = view })
-    return leaferView
+    return ctx.query<any>('getLeaferView')
   }
 
   // hover 预选框元素（全局复用一个）

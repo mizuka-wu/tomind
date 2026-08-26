@@ -453,6 +453,13 @@ export class WorkbookEditor implements WorkbookEditorInterface {
         // ViewPlugin unregistration is handled at SheetEditor level
       },
       getContainer: () => document.body, // Workbook 级无 DOM 容器，实际由 SheetEditor 提供
+      query: <R = unknown>(event: string, ...args: unknown[]) => workbook.extensionManager.query<R>(event, ...args),
+      registerQueryHandler: (event: string, handler: (...args: unknown[]) => unknown) => {
+        workbook.extensionManager.registerQueryHandler(event, handler)
+      },
+      unregisterQueryHandler: (event: string) => {
+        workbook.extensionManager.unregisterQueryHandler(event)
+      },
     })
   }
 

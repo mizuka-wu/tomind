@@ -22,7 +22,7 @@ type BoundaryShapeType =
 const CORNER_RADIUS = 14
 
 /** 边界间距常量（对齐 snowbrush BOUNDARYGAP） */
-const BOUNDARY_GAP = 8
+const BOUNDARY_GAP = 10
 
 /** cross 形状延伸长度（对齐 snowbrush CROSSBOUNDARYLEN） */
 const CROSS_BOUNDARY_LEN = 30

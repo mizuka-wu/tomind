@@ -52,11 +52,7 @@ export const MouseBoxSelectExtension = createPartExtension<Record<string, unknow
     // 获取 LeaferView
     const getLeaferView = (): any => {
       // 通过事件获取 LeaferView
-      let leaferView: any = null
-      ctx.emit('getLeaferView', (view: any) => {
-        leaferView = view
-      })
-      return leaferView
+      return ctx.query<any>('getLeaferView')
     }
 
     // 初始化 LeaferJS 结构
@@ -244,11 +240,7 @@ export const MouseBoxSelectExtension = createPartExtension<Record<string, unknow
 
     // 获取视口遮罩层
     const getViewPortCover = (): HTMLElement | null => {
-      let cover: HTMLElement | null = null
-      ctx.emit('getViewPortCover', (el: HTMLElement) => {
-        cover = el
-      })
-      return cover
+      return ctx.query<HTMLElement>('getViewPortCover') ?? null
     }
 
     // 开始框选
@@ -270,11 +262,7 @@ export const MouseBoxSelectExtension = createPartExtension<Record<string, unknow
 
     // 获取配置
     const getConfig = (): { noMouseMultiSelectBox: boolean } => {
-      let config = { noMouseMultiSelectBox: false }
-      ctx.emit('getConfig', (c: any) => {
-        config = c
-      })
-      return config
+      return ctx.query<{ noMouseMultiSelectBox: boolean }>('getConfig') ?? { noMouseMultiSelectBox: false }
     }
 
     // 监听事件
