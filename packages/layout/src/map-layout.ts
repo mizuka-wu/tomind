@@ -46,10 +46,8 @@ interface NodeSize {
 // ─── MapLayout 类 ───
 
 class MapLayout extends BaseLayout {
-  override readonly name: string
+  readonly name: string
   private readonly config: MapLayoutConfig
-  private _styleEngine: import('@tomind/style').StyleEngine | null = null
-  private _state: import('@tomind/state').SheetState | null = null
 
   constructor(config: MapLayoutConfig) {
     super()
@@ -57,14 +55,7 @@ class MapLayout extends BaseLayout {
     this.name = config.name
   }
 
-  layout(
-    doc: NodeDesc,
-    options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS,
-    styleEngine: import('@tomind/style').StyleEngine | null = null,
-    state: import('@tomind/state').SheetState | null = null,
-  ): LayoutResult {
-    this._styleEngine = styleEngine
-    this._state = state
+  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS): LayoutResult {
     const nodes = new Map<string, import('./layout-engine').NodeLayout>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
@@ -130,15 +121,8 @@ class MapLayout extends BaseLayout {
 
   // ── 间距计算 ──
 
-  private getSpacingMajor(node: NodeDesc, options: LayoutOptions): number {
-    // 对齐 snowbrush calcSpacingMajor: majorSpacing + patch
-    // 大多数 map 节点 majorSpacing=0, patch=0 → spacingMajor=0
-    // 间距完全靠 boundary 对齐（maxOffset）提供
-    if (this._styleEngine && this._state) {
-      const val = this._styleEngine.getStyleValue(this._state, node.id, 'spacingMajor')
-      if (typeof val === 'number' && !isNaN(val)) return val
-    }
-    return 0
+  private getSpacingMajor(options: LayoutOptions): number {
+    return options.horizontalGap
   }
 
   private getAdaptiveSpacingMinor(
@@ -305,7 +289,7 @@ class MapLayout extends BaseLayout {
       numRight = this.calcNumRight(regularChildren, sizeMap)
     }
 
-    const spacingMajor = this.getSpacingMajor(node, options)
+    const spacingMajor = this.getSpacingMajor(options)
 
     // 根据方向分配左右子节点
     let rightChildren: readonly NodeDesc[]
@@ -335,16 +319,26 @@ class MapLayout extends BaseLayout {
       partBounds: size.partBounds,
     })
 
-    // 布局右侧子节点（对齐 snowbrush: x = parentRight + spacingMajor）
+    // 扇形外扩
+    const outwardOffsetRight = this.calcOutwardDistance(rightChildren, sizeMap)
+    const outwardOffsetLeft = this.calcOutwardDistance(leftChildren, sizeMap)
+
+    const masterPad = computeMasterOutsidePadding(node, 'right')
+
+    // 布局右侧子节点
     if (rightChildren.length > 0) {
-      const childX = x + size.width + spacingMajor
+      const childX = x + size.width + spacingMajor + outwardOffsetRight + masterPad.left
       const childY = y + size.height / 2
       this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node)
     }
 
-    // 布局左侧子节点（对齐 snowbrush: x = parentLeft - spacingMajor）
+    // 布局左侧子节点
     if (leftChildren.length > 0) {
-      const childX = x - spacingMajor
+      const maxLeftWidth = leftChildren.reduce((max, child) => {
+        const childSize = sizeMap.get(child.id)!
+        return Math.max(max, childSize.width)
+      }, 0)
+      const childX = x - maxLeftWidth - spacingMajor - outwardOffsetLeft - masterPad.right
       const childY = y + size.height / 2
       this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node)
     }
