@@ -32,6 +32,8 @@ export interface LayoutResult {
 
 export interface LayoutOptions {
   horizontalGap: number
+  /** Per-node spacing major (horizontal gap). Falls back to horizontalGap if not provided. */
+  getSpacingMajor?: (node: NodeDesc) => number
   verticalGap: number
   nodePadding: { top: number; right: number; bottom: number; left: number }
   rootOffsetX: number

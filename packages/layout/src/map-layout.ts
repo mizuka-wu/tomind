@@ -121,7 +121,8 @@ class MapLayout extends BaseLayout {
 
   // ── 间距计算 ──
 
-  private getSpacingMajor(options: LayoutOptions): number {
+  private getSpacingMajor(options: LayoutOptions, node?: NodeDesc): number {
+    if (node && options.getSpacingMajor) return options.getSpacingMajor(node)
     return options.horizontalGap
   }
 
@@ -289,7 +290,7 @@ class MapLayout extends BaseLayout {
       numRight = this.calcNumRight(regularChildren, sizeMap)
     }
 
-    const spacingMajor = this.getSpacingMajor(options)
+    const spacingMajor = this.getSpacingMajor(options, node)
 
     // 根据方向分配左右子节点
     let rightChildren: readonly NodeDesc[]
