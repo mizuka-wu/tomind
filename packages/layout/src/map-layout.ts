@@ -5,8 +5,6 @@
  * 对齐 snowbrush basemap.ts + map.ts 的布局逻辑。
  */
 import type { NodeDesc } from '@tomind/schema'
-import type { SheetState } from '@tomind/state'
-import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { BaseLayout } from './base-layout'
@@ -47,25 +45,11 @@ interface NodeSize {
 
 // ─── MapLayout 类 ───
 
-function parseStyleValue(value: unknown, fallback: number): number {
-  if (typeof value === 'number') return value
-  if (typeof value === 'string') {
-    const n = parseFloat(value)
-    if (!isNaN(n)) {
-      // pt → px: 1pt = 96/72 px
-      if (value.endsWith('pt')) return n * (96 / 72)
-      return n
-    }
-  }
-  return fallback
-}
+// ─── MapLayout 类 ───
 
 class MapLayout extends BaseLayout {
   readonly name: string
   private readonly config: MapLayoutConfig
-  private _styleEngine: StyleEngine | null = null
-  private _state: SheetState | null = null
-  private _styleCache = new Map<string, ResolvedStyle>()
 
   constructor(config: MapLayoutConfig) {
     super()
@@ -73,25 +57,14 @@ class MapLayout extends BaseLayout {
     this.name = config.name
   }
 
-  private getNodeStyle(nodeId: string): ResolvedStyle | undefined {
-    if (this._styleCache.has(nodeId)) return this._styleCache.get(nodeId)
-    if (!this._styleEngine || !this._state) return undefined
-    const style = this._styleEngine.computeStyle(this._state, nodeId)
-    this._styleCache.set(nodeId, style)
-    return style
-  }
-
   private getNodeSpacingMajor(node: NodeDesc, options: LayoutOptions): number {
     if (options.getSpacingMajor) return options.getSpacingMajor(node)
-    const style = this.getNodeStyle(node.id)
-    if (style?.spacingMajor != null) return parseStyleValue(style.spacingMajor, options.horizontalGap)
+    // 不从 style 读 spacingMajor — stableStyles 的值是渲染属性，不是布局间距
+    // 布局间距通过 horizontalGap 或 getSpacingMajor 回调传入
     return options.horizontalGap
   }
 
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine?: StyleEngine | null, state?: SheetState): LayoutResult {
-    this._styleEngine = styleEngine ?? null
-    this._state = state ?? null
-    this._styleCache.clear()
+  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS): LayoutResult {
     const nodes = new Map<string, import('./layout-engine').NodeLayout>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
