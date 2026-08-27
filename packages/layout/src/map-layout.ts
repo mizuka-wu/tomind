@@ -319,23 +319,19 @@ class MapLayout extends BaseLayout {
       partBounds: size.partBounds,
     })
 
-    // 对齐 snowbrush: x = topicView.bounds.x + topicView.bounds.width + spacingMajor
-    // tomind 中 topicView.bounds = 节点自身 (x, width)，不含子节点
-    const nodeRight = x + size.width
-    const nodeLeft = x
+    // snowbrush: x = topicView.bounds.x + topicView.bounds.width + spacingMajor
+    // topicView.bounds = 节点自身 (x, width)，不含子节点
 
     // 布局右侧子节点
-    // snowbrush: x = topicView.bounds.x + topicView.bounds.width + spacingMajor
     if (rightChildren.length > 0) {
-      const childX = nodeRight + spacingMajor
+      const childX = x + size.width + spacingMajor
       const childY = y + size.height / 2
       this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node)
     }
 
     // 布局左侧子节点
-    // snowbrush: x = topicView.bounds.x - spacingMajor
     if (leftChildren.length > 0) {
-      const childX = nodeLeft - spacingMajor
+      const childX = x - spacingMajor
       const childY = y + size.height / 2
       this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node)
     }
