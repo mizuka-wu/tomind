@@ -203,7 +203,38 @@ class MapLayout extends BaseLayout {
     return Math.ceil(children.length / 2)
   }
 
-  // ── 递归子树高度 ──
+  // ── 递归子树尺寸 ──
+
+  /**
+   * 递归计算子树在 X 方向的总宽度（含所有后代）。
+   * 对齐 snowbrush newBounds.width。
+   */
+  private calcSubtreeWidth(
+    node: NodeDesc,
+    sizeMap: Map<string, NodeSize>,
+    spacingMajor: number,
+    spacingMinor: number,
+  ): number {
+    const size = sizeMap.get(node.id)!
+
+    if (isCollapsed(node)) return size.width
+
+    const children = getAttachedChildren(node)
+    const regularChildren: NodeDesc[] = []
+    for (const child of children) {
+      if (child.type !== 'summary') regularChildren.push(child)
+    }
+    if (regularChildren.length === 0) return size.width
+
+    // 递归计算左右子树宽度
+    let maxChildWidth = 0
+    for (const child of regularChildren) {
+      const childW = this.calcSubtreeWidth(child, sizeMap, spacingMajor, spacingMinor)
+      maxChildWidth = Math.max(maxChildWidth, childW)
+    }
+
+    return size.width + spacingMajor + maxChildWidth
+  }
 
   /**
    * 递归计算子树在主轴方向的总高度（含 outsidePadding + 所有后代）。
@@ -335,14 +366,30 @@ class MapLayout extends BaseLayout {
       partBounds: size.partBounds,
     })
 
-    // 布局右侧子节点（对齐 snowbrush: x = parentRight + spacingMajor）
+    const minorSpacing = this.getAdaptiveSpacingMinor(size.height, regularChildren, sizeMap)
+
+    // 递归计算左右子树宽度（对齐 snowbrush newBounds）
+    let rightSubtreeWidth = 0
+    for (const child of rightChildren) {
+      rightSubtreeWidth = Math.max(rightSubtreeWidth, this.calcSubtreeWidth(child, sizeMap, spacingMajor, minorSpacing))
+    }
+    let leftSubtreeWidth = 0
+    for (const child of leftChildren) {
+      leftSubtreeWidth = Math.max(leftSubtreeWidth, this.calcSubtreeWidth(child, sizeMap, spacingMajor, minorSpacing))
+    }
+
+    // 布局右侧子节点
     if (rightChildren.length > 0) {
       const childX = x + size.width + spacingMajor
       const childY = y + size.height / 2
       this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node)
     }
 
-    // 布局左侧子节点（对齐 snowbrush: x = parentLeft - spacingMajor）
+    // 布局左侧子节点
+    // snowbrush: leftChildren 的 X = parentLeft - spacingMajor
+    // 但 snowbrush 的 newBounds.x 可能 < parentX（右侧子树向左延伸）
+    // 不过对于 map 布局，右侧子树向右延伸，parentLeft = parentX
+    // 所以 childX = parentX - spacingMajor 是正确的
     if (leftChildren.length > 0) {
       const childX = x - spacingMajor
       const childY = y + size.height / 2
