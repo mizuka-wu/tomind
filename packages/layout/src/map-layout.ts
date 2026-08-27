@@ -187,6 +187,42 @@ class MapLayout extends BaseLayout {
     return Math.ceil(children.length / 2)
   }
 
+  // ── 递归子树高度 ──
+
+  /**
+   * 递归计算子树在主轴方向的总高度（含 outsidePadding + 所有后代）。
+   * 对齐 snowbrush boundaryBounds.height。
+   */
+  private calcSubtreeHeight(
+    node: NodeDesc,
+    sizeMap: Map<string, NodeSize>,
+    parent: NodeDesc,
+    childIndex: number,
+    treeDir: 'right' | 'left',
+    spacingMinor: number,
+  ): number {
+    const size = sizeMap.get(node.id)!
+    const outsidePad = computeOutsidePadding(parent, childIndex, treeDir)
+    const selfH = size.height + outsidePad.top + outsidePad.bottom
+
+    if (isCollapsed(node)) return selfH
+
+    const children = getAttachedChildren(node)
+    const regularChildren: NodeDesc[] = []
+    for (const child of children) {
+      if (child.type !== 'summary') regularChildren.push(child)
+    }
+    if (regularChildren.length === 0) return selfH
+
+    let childrenTotal = 0
+    for (let i = 0; i < regularChildren.length; i++) {
+      childrenTotal += this.calcSubtreeHeight(regularChildren[i], sizeMap, node, i, treeDir, spacingMinor)
+      if (i < regularChildren.length - 1) childrenTotal += spacingMinor
+    }
+
+    return Math.max(selfH, childrenTotal)
+  }
+
   // ── 扇形外扩 ──
 
   private calcOutwardDistance(
@@ -328,25 +364,43 @@ class MapLayout extends BaseLayout {
     const treeDir = side === 'right' ? 'right' as const : 'left' as const
     const spacingMinor = this.getAdaptiveSpacingMinor(parentHeight, children, sizeMap)
 
-    // 使用基类的累积定位
-    const positions = this.calcCumulativePositions(
+    // 设置 outsidePadding
+    for (let i = 0; i < n; i++) {
+      const size = sizeMap.get(children[i].id)!
+      size.outsidePadding = computeOutsidePadding(parent, i, treeDir)
+    }
+
+    // 使用基类的 snowbrush 对齐算法
+    const yPos = this.calcCumulativePositions(
       children,
-      0, // startPos = 0, 因为 startY 已经是父节点中心
       spacingMinor,
-      (child, i) => {
-        const size = sizeMap.get(child.id)!
-        const outsidePad = computeOutsidePadding(parent, i, treeDir)
-        return size.height + outsidePad.top + outsidePad.bottom
-      },
+      (child) => sizeMap.get(child.id)!.height,
+      (child, i) => this.calcSubtreeHeight(child, sizeMap, parent, i, treeDir, spacingMinor),
+      parentHeight,
     )
 
+    // 父节点居中于首尾子节点之间
+    const firstChildCenter = yPos[0] + sizeMap.get(children[0].id)!.height / 2
+    const lastChildCenter = yPos[n - 1] + sizeMap.get(children[n - 1].id)!.height / 2
+    const childrenCenterY = (firstChildCenter + lastChildCenter) / 2
+    const firstChildY = startY - childrenCenterY
+
+    // posYoffsetToClosestChild（对齐 snowbrush）
+    let posYoffsetToClosestChild = Infinity
+    for (let i = 0; i < n; i++) {
+      const childCenterY = firstChildY + yPos[i] + sizeMap.get(children[i].id)!.height / 2
+      const offset = childCenterY - startY
+      if (Math.abs(offset) < Math.abs(posYoffsetToClosestChild)) {
+        posYoffsetToClosestChild = offset
+      }
+    }
+
+    // 放置子节点
     for (let i = 0; i < n; i++) {
       const child = children[i]
       const size = sizeMap.get(child.id)!
-      const outsidePad = computeOutsidePadding(parent, i, treeDir)
-      size.outsidePadding = outsidePad
       const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child), options)
-      const cy = startY + positions[i]
+      const cy = firstChildY + yPos[i] - posYoffsetToClosestChild
       nodes.set(child.id, {
         x: startX, y: cy,
         width: size.width, height: size.height,

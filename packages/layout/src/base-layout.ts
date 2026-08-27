@@ -40,41 +40,78 @@ export abstract class BaseLayout implements LayoutAlgorithm {
   // ── 累积定位 ──
 
   /**
-   * 沿主轴累积定位子节点，返回每个子节点的起始位置。
+   * 动态累积定位（对齐 snowbrush calSidePos 核心算法）。
+   *
+   * 每个子节点的位置取两个候选值的 max：
+   * 1. boundary 间距：prev.boundaryBottom + spacingMinor - curr.boundaryTop
+   * 2. topic 间距：prev.topicBottom + remainingSumSpacing/(n-i)
+   *
    * @param children 子节点列表
-   * @param startPos 主轴起始位置（第一个子节点的中心点）
-   * @param minorSpacing 兄弟间距
-   * @param getAxisSize 获取单个子节点在主轴方向的尺寸（含 outsidePadding）
-   * @returns 每个子节点在主轴方向的起始位置（中心点）
+   * @param spacingMinor 兄弟间距
+   * @param getTopicSize 获取节点自身高度（不含子树）
+   * @param getBoundarySize 获取节点子树总高度（含 outsidePadding + 所有后代）
+   * @param parentHeight 父节点高度（用于计算 minSumTopicSpacing）
+   * @returns 每个子节点相对于第一个子节点的 Y 偏移
    */
   protected calcCumulativePositions(
     children: readonly NodeDesc[],
-    startPos: number,
-    minorSpacing: number,
-    getAxisSize: (child: NodeDesc, index: number) => number,
+    spacingMinor: number,
+    getTopicSize: (child: NodeDesc, index: number) => number,
+    getBoundarySize: (child: NodeDesc, index: number) => number,
+    parentHeight: number,
   ): number[] {
     const n = children.length
     if (n === 0) return []
 
-    // 计算总高度
-    let totalSize = 0
-    const sizes: number[] = []
+    const topicSizes: number[] = []
+    const boundarySizes: number[] = []
     for (let i = 0; i < n; i++) {
-      const s = getAxisSize(children[i], i)
-      sizes.push(s)
-      totalSize += s
-      if (i < n - 1) totalSize += minorSpacing
+      topicSizes.push(getTopicSize(children[i], i))
+      boundarySizes.push(getBoundarySize(children[i], i))
     }
 
-    // 从 startPos - totalSize/2 开始累积
-    let pos = startPos - totalSize / 2
-    const positions: number[] = []
-    for (let i = 0; i < n; i++) {
-      positions.push(pos + sizes[i] / 2)
-      pos += sizes[i]
-      if (i < n - 1) pos += minorSpacing
+    // 计算 minSumTopicSpacing（对齐 snowbrush getMinSumTopicSpacing）
+    const MIN_TOP_BOTTOM_SPACING = 80
+    const MAX_TOP_BOTTOM_SPACING = 180
+    const PARENT_TOPIC_THRESHOLD = 230
+    let topBottomSpacing = MIN_TOP_BOTTOM_SPACING
+    if (parentHeight > PARENT_TOPIC_THRESHOLD) {
+      topBottomSpacing = Math.min(
+        MAX_TOP_BOTTOM_SPACING,
+        parentHeight - PARENT_TOPIC_THRESHOLD + topBottomSpacing,
+      )
     }
-    return positions
+
+    let minSumTopicSpacing: number
+    if (n <= 2) {
+      minSumTopicSpacing = topBottomSpacing
+    } else {
+      minSumTopicSpacing = topBottomSpacing
+      for (let i = 1; i < n - 1; i++) {
+        minSumTopicSpacing -= topicSizes[i]
+      }
+    }
+
+    // 动态计算 yPos（对齐 snowbrush calSidePos 核心循环）
+    const yPos: number[] = [0]
+    let sumTopicSpacing = minSumTopicSpacing
+    for (let i = 1; i < n; i++) {
+      // 候选1: boundary 间距
+      // snowbrush: prev.boundaryBounds.y + prev.boundaryBounds.height + spacingMinor - now.boundaryBounds.y
+      // boundaryBounds.y 对于叶子=0，对于有子节点的=-outsidePad.top
+      // boundaryBounds.height = 子树总高度
+      const boundaryCandidate = yPos[i - 1] + boundarySizes[i - 1] + spacingMinor
+
+      // 候选2: topic 间距（动态递减）
+      const topicCandidate = yPos[i - 1] + topicSizes[i - 1] + sumTopicSpacing / (n - i)
+
+      yPos[i] = Math.max(boundaryCandidate, topicCandidate)
+
+      // 递减 sumTopicSpacing
+      sumTopicSpacing -= (yPos[i] - yPos[i - 1]) - topicSizes[i - 1]
+    }
+
+    return yPos
   }
 
   // ── 子树尺寸递归 ──
