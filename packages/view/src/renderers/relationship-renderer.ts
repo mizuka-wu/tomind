@@ -2,6 +2,7 @@ import { Group, Path, Text } from 'leafer-ui'
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
 import type { ControlPoint } from '@tomind/schema'
+import { getStringStyle } from '../style-accessors'
 
 const HOVER_COLOR = '#2563eb'
 const HOVER_STROKE_WIDTH = 3
@@ -11,6 +12,22 @@ const DEFAULT_CTRL_RATIO = 0.2
 const DEFAULT_STROKE = '#666'
 const DEFAULT_STROKE_WIDTH = 2
 const DEFAULT_FONT_SIZE = 12
+
+/** 关系线形状类型（对齐 snowbrush RELATIONSHIPSHAPE 常量） */
+type RelationshipShapeType =
+  | 'org.xmind.relationshipShape.curved'
+  | 'org.xmind.relationshipShape.angled'
+  | 'org.xmind.relationshipShape.straight'
+  | 'org.xmind.relationshipShape.zigzag'
+  | 'org.xmind.relationshipShape.quad'
+
+const VALID_SHAPE_CLASSES: readonly string[] = [
+  'org.xmind.relationshipShape.curved',
+  'org.xmind.relationshipShape.angled',
+  'org.xmind.relationshipShape.straight',
+  'org.xmind.relationshipShape.zigzag',
+  'org.xmind.relationshipShape.quad',
+]
 
 function isString(value: unknown): value is string {
   return typeof value === 'string'
@@ -24,11 +41,108 @@ function isNumberArray(value: unknown): value is number[] {
   return Array.isArray(value) && value.every((item) => isNumber(item))
 }
 
+function isRelationshipShapeType(value: string): value is RelationshipShapeType {
+  return VALID_SHAPE_CLASSES.includes(value)
+}
+
+interface Point {
+  x: number
+  y: number
+}
+
+/** 向量归一化（可选缩放长度） */
+function vecNormalize(p: Point, length = 1): Point {
+  const mag = Math.sqrt(p.x * p.x + p.y * p.y)
+  if (mag === 0) return { x: 0, y: 0 }
+  return { x: (p.x / mag) * length, y: (p.y / mag) * length }
+}
+
+function vecSub(a: Point, b: Point): Point {
+  return { x: a.x - b.x, y: a.y - b.y }
+}
+
+function vecAdd(a: Point, b: Point): Point {
+  return { x: a.x + b.x, y: a.y + b.y }
+}
+
+function vecReverse(p: Point): Point {
+  return { x: -p.x, y: -p.y }
+}
+
+function pointDistance(a: Point, b: Point): number {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+/**
+ * zigzag 形状的控制点归一化（对齐 snowbrush calcPathParams）
+ * 将控制点对齐到轴方向，使路径呈直角转弯
+ */
+function normalizeZigzagControlPoints(
+  sp: Point,
+  tp: Point,
+  scp: Point,
+  tcp: Point,
+): { scp: Point; tcp: Point } {
+  const tcp1: Point = { x: tcp.x, y: tcp.y }
+  const scp1: Point = { x: scp.x, y: scp.y }
+
+  if (Math.abs(tcp1.x - tp.x) <= Math.abs(tcp1.y - tp.y)) {
+    tcp1.x = tp.x
+  } else {
+    tcp1.y = tp.y
+  }
+  if (Math.abs(scp1.x - sp.x) <= Math.abs(scp1.y - sp.y)) {
+    scp1.x = sp.x
+  } else {
+    scp1.y = sp.y
+  }
+
+  if (tcp1.x === tp.x) {
+    if (scp1.x === sp.x) {
+      tcp1.y = scp1.y = (scp1.y + tcp1.y) / 2
+    } else if (scp1.y === sp.y) {
+      tcp1.y = scp1.y = sp.y
+      scp1.x = tp.x
+    }
+  } else if (tcp1.y === tp.y) {
+    if (scp1.y === sp.y) {
+      tcp1.x = scp1.x = (tcp1.x + scp1.x) / 2
+    } else if (scp1.x === sp.x) {
+      tcp1.x = scp1.x = sp.x
+      scp1.y = tp.y
+    }
+  }
+
+  return { scp: scp1, tcp: tcp1 }
+}
+
+/**
+ * quad 形状的辅助控制点（对齐 snowbrush getQuadCurvedPoint）
+ * 沿 sp→tp 方向在 scp 两侧偏移 distance/3
+ */
+function getQuadCurvedPoints(
+  sp: Point,
+  tp: Point,
+  scp: Point,
+): { c1: Point; c2: Point } {
+  const direction = vecNormalize(vecSub(tp, sp))
+  const directionR = vecReverse(direction)
+  const distance = pointDistance(sp, tp)
+  const c1 = vecAdd(scp, vecNormalize(directionR, distance / 3))
+  const c2 = vecAdd(scp, vecNormalize(direction, distance / 3))
+  return { c1, c2 }
+}
+
 /**
  * RelationshipRenderer — 关系线渲染器
  *
- * 负责渲染贝塞尔曲线（M→L→Q）+ 可选箭头 + 可选标题
+ * 支持 5 种关系线形状，对齐 snowbrush：
+ * curved, angled, straight, zigzag, quad
+ *
  * 通过 setEndpoints() 设置起止点与控制点，render() 渲染
+ * shapeClass 由 style 传入，决定使用哪种形状
  */
 export class RelationshipRenderer implements Renderer {
   private group: Group | null = null
@@ -45,9 +159,16 @@ export class RelationshipRenderer implements Renderer {
 
   private title = ''
 
-  /** 二次贝塞尔 Q 控制点（由曲线计算得出，供箭头/标题复用） */
-  private qCtrlX = 0
-  private qCtrlY = 0
+  /** 当前形状类型 */
+  private currentShape: RelationshipShapeType = 'org.xmind.relationshipShape.curved'
+
+  /** 终点切线方向（供箭头计算复用） */
+  private endTangentX = 0
+  private endTangentY = 0
+
+  /** 曲线中点（供标题定位复用） */
+  private midX = 0
+  private midY = 0
 
   private isHovered = false
   private baseStroke: string | undefined
@@ -148,7 +269,19 @@ export class RelationshipRenderer implements Renderer {
     const strokeDash = isNumberArray(style.strokeDash) ? style.strokeDash : undefined
     path.dashPattern = strokeDash !== undefined && strokeDash.length > 0 ? strokeDash : undefined
 
-    path.path = this.computeCurvePath()
+    // 解析形状类型
+    const shapeClass = getStringStyle(style, 'shapeClass')
+    if (shapeClass !== undefined && isRelationshipShapeType(shapeClass)) {
+      this.currentShape = shapeClass
+    }
+
+    // 根据形状类型计算路径、中点、终点切线
+    const { pathData, midPoint, endTangent } = this.computeShapePath(this.currentShape)
+    path.path = pathData
+    this.midX = midPoint.x
+    this.midY = midPoint.y
+    this.endTangentX = endTangent.x
+    this.endTangentY = endTangent.y
 
     if (style.arrowEndClass === 'triangle') {
       arrow.visible = true
@@ -161,9 +294,8 @@ export class RelationshipRenderer implements Renderer {
     if (this.title) {
       titleText.text = this.title
       titleText.visible = true
-      const { midX, midY } = this.computeCurveMidPoint()
-      titleText.x = midX
-      titleText.y = midY - (titleText.fontSize ?? DEFAULT_FONT_SIZE) / 2
+      titleText.x = this.midX
+      titleText.y = this.midY - (titleText.fontSize ?? DEFAULT_FONT_SIZE) / 2
     } else {
       titleText.visible = false
     }
@@ -176,69 +308,208 @@ export class RelationshipRenderer implements Renderer {
     }
   }
 
-  /**
-   * 计算贝塞尔曲线路径
-   *
-   * M 起点 → L 拐点 → Q 终点：
-   * `M ${sx} ${sy} L ${ctrlX} ${ctrlY} Q ${qCtrlX} ${qCtrlY} ${ex} ${ey}`
-   */
-  private computeCurvePath(): string {
-    const sx = this.from.x
-    const sy = this.from.y
-    const ex = this.to.x
-    const ey = this.to.y
-
-    const { ctrlX, ctrlY } = this.resolveCtrlPoint()
-
-    // Q 控制点位于拐点到终点方向的 1/5 处（终点高度）
-    this.qCtrlX = ctrlX + (ex - ctrlX) / 5
-    this.qCtrlY = ey
-
-    return `M ${sx} ${sy} L ${ctrlX} ${ctrlY} Q ${this.qCtrlX} ${this.qCtrlY} ${ex} ${ey}`
-  }
+  // ==================== 形状路径分发 ====================
 
   /**
-   * 计算曲线中点（二次贝塞尔 t=0.5 处）
-   * B(0.5) = 0.25·P0 + 0.5·P1 + 0.25·P2
+   * 根据形状类型计算路径数据、中点和终点切线方向
    */
-  private computeCurveMidPoint(): { midX: number; midY: number } {
-    const sx = this.from.x
-    const sy = this.from.y
-    const ex = this.to.x
-    const ey = this.to.y
-
-    const { ctrlX, ctrlY } = this.resolveCtrlPoint()
-
-    return {
-      midX: (sx + 2 * ctrlX + ex) / 4,
-      midY: (sy + 2 * ctrlY + ey) / 4,
+  private computeShapePath(shape: RelationshipShapeType): {
+    pathData: string
+    midPoint: Point
+    endTangent: Point
+  } {
+    switch (shape) {
+      case 'org.xmind.relationshipShape.curved':
+        return this.computeCurvedPath()
+      case 'org.xmind.relationshipShape.angled':
+        return this.computeAngledPath()
+      case 'org.xmind.relationshipShape.straight':
+        return this.computeStraightPath()
+      case 'org.xmind.relationshipShape.zigzag':
+        return this.computeZigzagPath()
+      case 'org.xmind.relationshipShape.quad':
+        return this.computeQuadPath()
     }
   }
 
-  /** 优先使用外部传入的控制点，否则取起止点水平方向 20% 处（终点高度） */
-  private resolveCtrlPoint(): { ctrlX: number; ctrlY: number } {
-    const sx = this.from.x
-    const ex = this.to.x
-    const ey = this.to.y
+  // ── 1. curved — 三次贝塞尔 ──
+  private computeCurvedPath(): {
+    pathData: string
+    midPoint: Point
+    endTangent: Point
+  } {
+    const sp = this.from
+    const tp = this.to
+    const { scp, tcp } = this.resolveTwoControlPoints()
 
-    if (this.controlPoints.length > 0) {
-      return { ctrlX: this.controlPoints[0].x, ctrlY: this.controlPoints[0].y }
+    // M sp C scp tcp tp
+    const pathData = `M ${sp.x} ${sp.y} C ${scp.x} ${scp.y} ${tcp.x} ${tcp.y} ${tp.x} ${tp.y}`
+
+    // 三次贝塞尔 t=0.5 处的中点
+    // B(t) = (1-t)^3·P0 + 3(1-t)^2·t·P1 + 3(1-t)·t^2·P2 + t^3·P3
+    const t = 0.5
+    const mt = 1 - t
+    const midPoint: Point = {
+      x: mt * mt * mt * sp.x + 3 * mt * mt * t * scp.x + 3 * mt * t * t * tcp.x + t * t * t * tp.x,
+      y: mt * mt * mt * sp.y + 3 * mt * mt * t * scp.y + 3 * mt * t * t * tcp.y + t * t * t * tp.y,
     }
-    return {
-      ctrlX: sx + (ex - sx) * DEFAULT_CTRL_RATIO,
-      ctrlY: ey,
+
+    // 终点切线方向：tcp → tp
+    const endTangent: Point = { x: tp.x - tcp.x, y: tp.y - tcp.y }
+
+    return { pathData, midPoint, endTangent }
+  }
+
+  // ── 2. angled — 折线 ──
+  private computeAngledPath(): {
+    pathData: string
+    midPoint: Point
+    endTangent: Point
+  } {
+    const sp = this.from
+    const tp = this.to
+    const { scp, tcp } = this.resolveTwoControlPoints()
+
+    // M sp L scp L tcp L tp
+    const pathData = `M ${sp.x} ${sp.y} L ${scp.x} ${scp.y} L ${tcp.x} ${tcp.y} L ${tp.x} ${tp.y}`
+
+    // 中点取 tcp→tp 段的中点
+    const midPoint: Point = {
+      x: (tcp.x + tp.x) / 2,
+      y: (tcp.y + tp.y) / 2,
     }
+
+    // 终点切线方向：tcp → tp
+    const endTangent: Point = { x: tp.x - tcp.x, y: tp.y - tcp.y }
+
+    return { pathData, midPoint, endTangent }
+  }
+
+  // ── 3. straight — 直线 ──
+  private computeStraightPath(): {
+    pathData: string
+    midPoint: Point
+    endTangent: Point
+  } {
+    const sp = this.from
+    const tp = this.to
+
+    // M sp L tp
+    const pathData = `M ${sp.x} ${sp.y} L ${tp.x} ${tp.y}`
+
+    const midPoint: Point = {
+      x: (sp.x + tp.x) / 2,
+      y: (sp.y + tp.y) / 2,
+    }
+
+    // 终点切线方向：sp → tp
+    const endTangent: Point = { x: tp.x - sp.x, y: tp.y - sp.y }
+
+    return { pathData, midPoint, endTangent }
+  }
+
+  // ── 4. zigzag — 直角折线 ──
+  private computeZigzagPath(): {
+    pathData: string
+    midPoint: Point
+    endTangent: Point
+  } {
+    const sp = this.from
+    const tp = this.to
+    const { scp: rawScp, tcp: rawTcp } = this.resolveTwoControlPoints()
+
+    // 归一化控制点为轴对齐（对齐 snowbrush calcPathParams）
+    const { scp, tcp } = normalizeZigzagControlPoints(sp, tp, rawScp, rawTcp)
+
+    // M sp L scp L tcp L tp
+    const pathData = `M ${sp.x} ${sp.y} L ${scp.x} ${scp.y} L ${tcp.x} ${tcp.y} L ${tp.x} ${tp.y}`
+
+    // 中点取 scp→tcp 段的中点（路径中间的直角转弯处附近）
+    const midPoint: Point = {
+      x: (scp.x + tcp.x) / 2,
+      y: (scp.y + tcp.y) / 2,
+    }
+
+    // 终点切线方向：tcp → tp
+    const endTangent: Point = { x: tp.x - tcp.x, y: tp.y - tcp.y }
+
+    return { pathData, midPoint, endTangent }
+  }
+
+  // ── 5. quad — 双三次贝塞尔（对齐 snowbrush getQuadCurvedPoint） ──
+  private computeQuadPath(): {
+    pathData: string
+    midPoint: Point
+    endTangent: Point
+  } {
+    const sp = this.from
+    const tp = this.to
+    const { scp, tcp } = this.resolveTwoControlPoints()
+
+    const { c1, c2 } = getQuadCurvedPoints(sp, tp, scp)
+
+    // 对齐 snowbrush：两段三次贝塞尔在 scp 处汇合
+    // M sp C sp c1 scp   （从 sp 到 scp，控制点 sp 和 c1）
+    // C c2 tp tp          （从 scp 到 tp，控制点 c2 和 tp）
+    const pathData = `M ${sp.x} ${sp.y} C ${sp.x} ${sp.y} ${c1.x} ${c1.y} ${scp.x} ${scp.y} C ${c2.x} ${c2.y} ${tp.x} ${tp.y} ${tp.x} ${tp.y}`
+
+    // 中点取 scp（两段曲线的汇合点）
+    const midPoint: Point = { x: scp.x, y: scp.y }
+
+    // 终点切线方向：c2 → tp（第二段曲线末端切线近似方向）
+    const endTangent: Point = { x: tp.x - c2.x, y: tp.y - c2.y }
+
+    return { pathData, midPoint, endTangent }
+  }
+
+  // ==================== 控制点解析 ====================
+
+  /**
+   * 解析两个控制点（scp, tcp）
+   * 优先使用外部传入的控制点，否则生成默认值
+   */
+  private resolveTwoControlPoints(): { scp: Point; tcp: Point } {
+    const sp = this.from
+    const tp = this.to
+
+    let scp: Point
+    let tcp: Point
+
+    if (this.controlPoints.length >= 2) {
+      scp = this.controlPoints[0]
+      tcp = this.controlPoints[1]
+    } else if (this.controlPoints.length === 1) {
+      scp = this.controlPoints[0]
+      // 默认 tcp 在 scp 和 tp 的中间
+      tcp = {
+        x: (scp.x + tp.x) / 2,
+        y: (scp.y + tp.y) / 2,
+      }
+    } else {
+      // 默认 scp：起止点水平方向 20% 处
+      scp = {
+        x: sp.x + (tp.x - sp.x) * DEFAULT_CTRL_RATIO,
+        y: tp.y,
+      }
+      // 默认 tcp：起止点水平方向 80% 处
+      tcp = {
+        x: sp.x + (tp.x - sp.x) * (1 - DEFAULT_CTRL_RATIO),
+        y: tp.y,
+      }
+    }
+
+    return { scp, tcp }
   }
 
   /**
    * 计算三角形箭头路径（尖端位于终点）
-   * 方向取曲线末端切线（终点 → Q 控制点的反方向）
+   * 方向取曲线末端切线
    */
   private calculateArrowPath(): string {
     const x = this.to.x
     const y = this.to.y
 
-    const angle = Math.atan2(y - this.qCtrlY, x - this.qCtrlX)
+    const angle = Math.atan2(this.endTangentY, this.endTangentX)
     const p1x = x - ARROW_SIZE * Math.cos(angle - Math.PI / 6)
     const p1y = y - ARROW_SIZE * Math.sin(angle - Math.PI / 6)
     const p2x = x - ARROW_SIZE * Math.cos(angle + Math.PI / 6)
