@@ -7,6 +7,10 @@ export type { SimpleNodeSize } from './layout-utils'
 
 export { LayoutEngine } from './default-layout-engine'
 
+// BaseLayout 抽象基类
+export { BaseLayout } from './base-layout'
+export type { BoundaryBounds } from './base-layout'
+
 export { createTreeLayoutAlgorithm } from './tree-layout'
 export type { TreeDirection } from './tree-layout'
 
