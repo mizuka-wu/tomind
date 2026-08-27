@@ -319,26 +319,23 @@ class MapLayout extends BaseLayout {
       partBounds: size.partBounds,
     })
 
-    // 扇形外扩
-    const outwardOffsetRight = this.calcOutwardDistance(rightChildren, sizeMap)
-    const outwardOffsetLeft = this.calcOutwardDistance(leftChildren, sizeMap)
-
-    const masterPad = computeMasterOutsidePadding(node, 'right')
+    // 对齐 snowbrush: x = topicView.bounds.x + topicView.bounds.width + spacingMajor
+    // tomind 中 topicView.bounds = 节点自身 (x, width)，不含子节点
+    const nodeRight = x + size.width
+    const nodeLeft = x
 
     // 布局右侧子节点
+    // snowbrush: x = topicView.bounds.x + topicView.bounds.width + spacingMajor
     if (rightChildren.length > 0) {
-      const childX = x + size.width + spacingMajor + outwardOffsetRight + masterPad.left
+      const childX = nodeRight + spacingMajor
       const childY = y + size.height / 2
       this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node)
     }
 
     // 布局左侧子节点
+    // snowbrush: x = topicView.bounds.x - spacingMajor
     if (leftChildren.length > 0) {
-      const maxLeftWidth = leftChildren.reduce((max, child) => {
-        const childSize = sizeMap.get(child.id)!
-        return Math.max(max, childSize.width)
-      }, 0)
-      const childX = x - maxLeftWidth - spacingMajor - outwardOffsetLeft - masterPad.right
+      const childX = nodeLeft - spacingMajor
       const childY = y + size.height / 2
       this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node)
     }
@@ -412,12 +409,12 @@ class MapLayout extends BaseLayout {
     }
 
     // X offset 对齐（对齐 snowbrush getMapOfXOffSetByBranchIndex）
+    // snowbrush: 所有正常子节点用同一个 maxOffset
     if (boundaryBoundsMap) {
-      const { offsets, maxOffset } = this.calcMaxOffset(children, nodes, boundaryBoundsMap, side)
-      for (let i = 0; i < n; i++) {
-        const shift = maxOffset - offsets[i]
-        if (shift > 0) {
-          const dx = side === 'right' ? shift : -shift
+      const { maxOffset } = this.calcMaxOffset(children, nodes, boundaryBoundsMap, side)
+      if (maxOffset > 0) {
+        const dx = side === 'right' ? maxOffset : -maxOffset
+        for (let i = 0; i < n; i++) {
           this.shiftSubtree(children[i], dx, 0, nodes)
         }
       }
