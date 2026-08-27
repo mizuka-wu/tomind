@@ -444,7 +444,7 @@ export class RelationshipRenderer implements Renderer {
   } {
     const sp = this.from
     const tp = this.to
-    const { scp, tcp } = this.resolveTwoControlPoints()
+    const { scp } = this.resolveTwoControlPoints()
 
     const { c1, c2 } = getQuadCurvedPoints(sp, tp, scp)
 

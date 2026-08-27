@@ -18,7 +18,7 @@ import {
   getAttachedChildren,
   findRootTopic,
 } from './layout-utils'
-import { computeOutsidePadding, computeMasterOutsidePadding } from './boundary-padding'
+import { computeOutsidePadding } from './boundary-padding'
 import type { OutsidePadding } from './boundary-padding'
 import { layoutSummaries, getSummaryChildren } from './summary-layout'
 
@@ -231,28 +231,6 @@ class MapLayout extends BaseLayout {
     }
 
     return Math.max(selfH, childrenTotal)
-  }
-
-  // ── 扇形外扩 ──
-
-  private calcOutwardDistance(
-    children: readonly NodeDesc[],
-    sizeMap: Map<string, NodeSize>,
-  ): number {
-    const CHILDREN_COUNT_LIMIT = 8
-    const K = 0.15
-    const MIN = 400
-    const MAX = 800
-
-    if (children.length < CHILDREN_COUNT_LIMIT) return 0
-
-    const totalHeight = children.reduce((sum, child) => {
-      const size = sizeMap.get(child.id)
-      return sum + (size?.height ?? 0)
-    }, 0)
-
-    if (totalHeight <= MIN) return 0
-    return K * (Math.min(totalHeight, MAX) - MIN)
   }
 
   // ── 核心布局 ──
