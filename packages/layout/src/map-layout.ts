@@ -5,6 +5,8 @@
  * 对齐 snowbrush basemap.ts + map.ts 的布局逻辑。
  */
 import type { NodeDesc } from '@tomind/schema'
+import type { SheetState } from '@tomind/state'
+import type { StyleEngine } from '@tomind/style'
 import type { LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { BaseLayout } from './base-layout'
@@ -57,14 +59,40 @@ class MapLayout extends BaseLayout {
     this.name = config.name
   }
 
-  private getNodeSpacingMajor(node: NodeDesc, options: LayoutOptions): number {
+  private getNodeSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null): number {
     if (options.getSpacingMajor) return options.getSpacingMajor(node)
-    // 不从 style 读 spacingMajor — stableStyles 的值是渲染属性，不是布局间距
-    // 布局间距通过 horizontalGap 或 getSpacingMajor 回调传入
+    
+    // 对齐 snowbrush calcSpacingMajor 逻辑
+    // 如果有 StyleEngine，根据连接线类型计算间距
+    if (styleEngine && state) {
+      const lineClass = styleEngine.getStyleValue(state, node.id, 'lineClass')
+      const lineClassStr = typeof lineClass === 'string' ? lineClass : ''
+      
+      // snowbrush: fold/roundedFold/bight → LINECOLPOS * 3 = 39px
+      const FOLD_LINE_CLASSES = [
+        'org.xmind.branchConnection.fold',
+        'org.xmind.branchConnection.roundedfold',
+        'org.xmind.branchConnection.bight',
+      ]
+      if (FOLD_LINE_CLASSES.some(cls => lineClassStr.includes(cls))) {
+        return 39 // LINECOLPOS * 3 = 13 * 3
+      }
+      
+      // 其他连接线：读取 spacingMajor 样式值
+      const spacingMajor = styleEngine.getStyleValue(state, node.id, 'spacingMajor')
+      if (typeof spacingMajor === 'number' && spacingMajor > 0) {
+        return spacingMajor
+      }
+      if (typeof spacingMajor === 'string') {
+        const parsed = parseFloat(spacingMajor)
+        if (!isNaN(parsed) && parsed > 0) return parsed
+      }
+    }
+    
     return options.horizontalGap
   }
 
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS): LayoutResult {
+  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine?: StyleEngine | null, state?: SheetState | null): LayoutResult {
     const nodes = new Map<string, import('./layout-engine').NodeLayout>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
@@ -130,8 +158,8 @@ class MapLayout extends BaseLayout {
 
   // ── 间距计算 ──
 
-  private getSpacingMajor(options: LayoutOptions, node?: NodeDesc): number {
-    if (node) return this.getNodeSpacingMajor(node, options)
+  private getSpacingMajor(options: LayoutOptions, node?: NodeDesc, styleEngine?: StyleEngine | null, state?: SheetState | null): number {
+    if (node) return this.getNodeSpacingMajor(node, options, styleEngine, state)
     return options.horizontalGap
   }
 
@@ -243,6 +271,8 @@ class MapLayout extends BaseLayout {
     sizeMap: Map<string, NodeSize>,
     nodes: Map<string, import('./layout-engine').NodeLayout>,
     boundaryBoundsMap: Map<string, BoundaryBounds> | undefined,
+    styleEngine?: StyleEngine | null,
+    state?: SheetState | null,
   ): void {
     const size = sizeMap.get(node.id)!
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
@@ -277,7 +307,7 @@ class MapLayout extends BaseLayout {
       numRight = this.calcNumRight(regularChildren, sizeMap)
     }
 
-    const spacingMajor = this.getSpacingMajor(options, node)
+    const spacingMajor = this.getSpacingMajor(options, node, styleEngine, state)
 
     // 根据方向分配左右子节点
     let rightChildren: readonly NodeDesc[]
