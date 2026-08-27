@@ -15,8 +15,12 @@ import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
+import { layoutSummaries, getSummaryChildren } from './summary-layout'
 
 export type TreeDirection = 'right' | 'left' | 'down' | 'up'
+
+import { computeOutsidePadding, computeMasterOutsidePadding } from './boundary-padding'
+import type { OutsidePadding } from './boundary-padding'
 
 function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value
@@ -93,6 +97,7 @@ interface NodeSize {
   titleWidth: number
   titleHeight: number
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
+  outsidePadding: OutsidePadding
 }
 
 function measureNodeSize(
@@ -110,6 +115,7 @@ function measureNodeSize(
       titleWidth: result.titleWidth,
       titleHeight: result.titleHeight,
       partBounds: result.partBounds,
+      outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 },
     }
   }
 
@@ -121,6 +127,7 @@ function measureNodeSize(
     titleWidth: result.titleWidth,
     titleHeight: result.titleHeight,
     partBounds: result.partBounds,
+    outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 },
   }
 }
 
@@ -135,6 +142,11 @@ function measureSubtree(
   if (!isCollapsed(node)) {
     for (const child of getAttachedChildren(node)) {
       measureSubtree(ctx, child, sizeMap, direction)
+    }
+    // Also measure summary nodes so they're in sizeMap
+    for (const summary of getSummaryChildren(node)) {
+      const summarySpacing = getNodeSpacingCached(ctx, summary.id, direction)
+      sizeMap.set(summary.id, measureNodeSize(summary, summarySpacing.padding, ctx.options))
     }
   }
 }
@@ -162,32 +174,93 @@ function subtreeAxisSize(
   node: NodeDesc,
   sizeMap: Map<string, NodeSize>,
   dir: TreeDirection,
+  parent?: NodeDesc,
+  childIndex?: number,
 ): number {
   const h = isHorizontal(dir)
   const size = sizeMap.get(node.id)!
   const spacing = getNodeSpacingCached(ctx, node.id, dir)
-  
+
+  // Base size of the node itself + outsidePadding from its parent boundary
+  let selfSize: number
+  if (parent !== undefined && childIndex !== undefined) {
+    const outsidePad = computeOutsidePadding(parent, childIndex, dir)
+    selfSize = h
+      ? size.height + outsidePad.top + outsidePad.bottom
+      : size.width + outsidePad.left + outsidePad.right
+  } else {
+    selfSize = h ? size.height : size.width
+  }
+
   if (isCollapsed(node)) {
-    return h ? size.height : size.width
+    return selfSize
   }
-  
+
   const children = getAttachedChildren(node)
-  if (children.length === 0) {
-    return h ? size.height : size.width
+  // Filter out summary nodes — they are positioned separately
+  const regularChildren: NodeDesc[] = []
+  for (const child of children) {
+    if (child.type !== 'summary') {
+      regularChildren.push(child)
+    }
   }
-  
+  if (regularChildren.length === 0) {
+    return selfSize
+  }
+
   // 计算所有子节点的子树总跨度
   let childrenTotal = 0
-  for (let i = 0; i < children.length; i++) {
-    childrenTotal += subtreeAxisSize(ctx, children[i], sizeMap, dir)
-    if (i < children.length - 1) {
+  for (let i = 0; i < regularChildren.length; i++) {
+    childrenTotal += subtreeAxisSize(ctx, regularChildren[i], sizeMap, dir, node, i)
+    if (i < regularChildren.length - 1) {
       childrenTotal += h ? spacing.verticalGap : spacing.horizontalGap
     }
   }
-  
+
   // 返回 max(自身, 子节点总跨度)
-  const selfSize = h ? size.height : size.width
   return Math.max(selfSize, childrenTotal)
+}
+
+/** Position summary nodes for a parent after its attached children are laid out */
+function positionSummaries(
+  parent: NodeDesc,
+  regularChildren: readonly NodeDesc[],
+  nodes: Map<string, NodeLayoutOutput>,
+  direction: TreeDirection,
+  sizeMap: Map<string, NodeSize>,
+): void {
+  // Build childPositions from already-laid-out nodes
+  const childPositions = new Map<string, { x: number; y: number; width: number; height: number }>()
+  for (const child of regularChildren) {
+    const nl = nodes.get(child.id)
+    if (nl) {
+      childPositions.set(child.id, { x: nl.x, y: nl.y, width: nl.width, height: nl.height })
+    }
+  }
+
+  const summaryPositions = layoutSummaries(
+    parent,
+    regularChildren,
+    childPositions,
+    direction,
+    sizeMap,
+  )
+
+  // Add summary nodes to the layout result
+  for (const [summaryId, pos] of summaryPositions) {
+    const summarySize = sizeMap.get(summaryId)
+    if (!summarySize) continue
+    nodes.set(summaryId, {
+      x: pos.x,
+      y: pos.y,
+      width: summarySize.width,
+      height: summarySize.height,
+      titleWidth: summarySize.titleWidth,
+      titleHeight: summarySize.titleHeight,
+      branchHeight: summarySize.height,
+      partBounds: summarySize.partBounds,
+    })
+  }
 }
 
 function layoutSubtree(
@@ -202,6 +275,13 @@ function layoutSubtree(
   const size = sizeMap.get(node.id)!
   const spacing = getNodeSpacingCached(ctx, node.id, direction)
   const children = getAttachedChildren(node)
+  // Separate regular children from summary children
+  const regularChildren: NodeDesc[] = []
+  for (const child of children) {
+    if (child.type !== 'summary') {
+      regularChildren.push(child)
+    }
+  }
   const h = isHorizontal(direction)
 
   const branchAxisSize = subtreeAxisSize(ctx, node, sizeMap, direction)
@@ -216,35 +296,63 @@ function layoutSubtree(
     partBounds: size.partBounds,
   })
 
-  if (isCollapsed(node) || children.length === 0) return
+  if (isCollapsed(node) || regularChildren.length === 0) {
+    // Even if no regular children, still position summaries
+    if (!isCollapsed(node)) {
+      positionSummaries(node, regularChildren, nodes, direction, sizeMap)
+    }
+    return
+  }
 
   if (h) {
     // ── 水平布局（right/left）──
     // 子节点从 parent 下方开始，顺序堆叠
     const PARENT_GAP = 40
-    let childY = y + size.height + PARENT_GAP
-    for (const child of children) {
+    // Apply master boundary padding to parent bounds
+    const masterPad = computeMasterOutsidePadding(node, direction)
+    let childY = y + size.height + PARENT_GAP + masterPad.top
+    for (const child of regularChildren) {
+      const childIdx = regularChildren.indexOf(child)
+      const outsidePad = computeOutsidePadding(node, childIdx, direction)
       const childNodeSize = sizeMap.get(child.id)!
+      // Store the computed outsidePadding on the size
+      childNodeSize.outsidePadding = outsidePad
 
       const childX = direction === 'right'
         ? x + size.width + spacing.horizontalGap
         : x - childNodeSize.width - spacing.horizontalGap
 
+      // Use boundaryBounds height (size + outsidePadding) for spacing
+      const childBoundsH = childNodeSize.height + outsidePad.top + outsidePad.bottom
+
       layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes)
-      childY += childNodeSize.height + spacing.verticalGap
+      childY += childBoundsH + spacing.verticalGap
     }
   } else {
     // ── 垂直布局（down/up）──
-    let childX = x + size.width + spacing.horizontalGap
-    for (const child of children) {
+    // Apply master boundary padding to parent bounds
+    const masterPad = computeMasterOutsidePadding(node, direction)
+    let childX = x + size.width + spacing.horizontalGap + masterPad.left
+    for (const child of regularChildren) {
+      const childIdx = regularChildren.indexOf(child)
+      const outsidePad = computeOutsidePadding(node, childIdx, direction)
       const childNodeSize = sizeMap.get(child.id)!
+      // Store the computed outsidePadding on the size
+      childNodeSize.outsidePadding = outsidePad
+
+      // Use boundaryBounds width (size + outsidePadding) for spacing
+      const childBoundsW = childNodeSize.width + outsidePad.left + outsidePad.right
+
       const childY = direction === 'down'
         ? y + size.height + spacing.verticalGap
         : y - childNodeSize.height - spacing.verticalGap
       layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes)
-      childX += childNodeSize.width + spacing.horizontalGap
+      childX += childBoundsW + spacing.horizontalGap
     }
   }
+
+  // Position summary nodes after regular children are laid out
+  positionSummaries(node, regularChildren, nodes, direction, sizeMap)
 }
 
 // ─── 公开工厂 ───

@@ -10,6 +10,9 @@ import {
   getAttachedChildren,
   findRootTopic,
 } from './layout-utils'
+import { computeOutsidePadding, computeMasterOutsidePadding } from './boundary-padding'
+import type { OutsidePadding } from './boundary-padding'
+import { layoutSummaries, getSummaryChildren } from './summary-layout'
 
 // ─── 配置 ───
 
@@ -36,6 +39,7 @@ interface NodeSize {
   titleWidth: number
   titleHeight: number
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
+  outsidePadding: OutsidePadding
 }
 
 type NodeLayout = {
@@ -60,6 +64,7 @@ function measureNode(node: NodeDesc, options: LayoutOptions): NodeSize {
       titleWidth: result.titleWidth,
       titleHeight: result.titleHeight,
       partBounds: result.partBounds,
+      outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 },
     }
   }
   const result = measureTitleOnlyNode(node, options.nodePadding, options)
@@ -69,6 +74,7 @@ function measureNode(node: NodeDesc, options: LayoutOptions): NodeSize {
     titleWidth: result.titleWidth,
     titleHeight: result.titleHeight,
     partBounds: result.partBounds,
+    outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 },
   }
 }
 
@@ -77,6 +83,10 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
   if (!isCollapsed(node)) {
     for (const child of getAttachedChildren(node)) {
       measureSubtree(child, options, sizeMap)
+    }
+    // Also measure summary nodes so they're in sizeMap
+    for (const summary of getSummaryChildren(node)) {
+      sizeMap.set(summary.id, measureNode(summary, options))
     }
   }
 }
@@ -250,6 +260,7 @@ function layoutSideChildren(
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, NodeLayout>,
   boundaryBoundsMap: Map<string, BoundaryBounds> | undefined,
+  parent: NodeDesc,
 ): void {
   const n = children.length
   if (n === 0) return
@@ -257,13 +268,19 @@ function layoutSideChildren(
   // 自适应间距
   const spacingMinor = getAdaptiveSpacingMinor(parentHeight, children, options, sizeMap)
 
+  // Map layout side → tree direction for outsidePadding
+  const treeDir = side === 'right' ? 'right' as const : 'left' as const
+
   // 计算子节点位置（相对于第一个子节点）
+  // Use boundaryBounds height (= height + outsidePadding top + bottom) for spacing
   let totalHeight = 0
   const yPosArr: number[] = []
   for (let i = 0; i < n; i++) {
     yPosArr.push(totalHeight)
     const size = sizeMap.get(children[i].id)!
-    totalHeight += size.height
+    const outsidePad = computeOutsidePadding(parent, i, treeDir)
+    const boundsH = size.height + outsidePad.top + outsidePad.bottom
+    totalHeight += boundsH
     if (i < n - 1) totalHeight += spacingMinor
   }
 
@@ -272,6 +289,8 @@ function layoutSideChildren(
   for (let i = 0; i < n; i++) {
     const child = children[i]
     const size = sizeMap.get(child.id)!
+    const outsidePad = computeOutsidePadding(parent, i, treeDir)
+    size.outsidePadding = outsidePad
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child), options)
     const cy = startY + yPosArr[i] - posYoffset + size.height / 2
     nodes.set(child.id, {
@@ -337,8 +356,17 @@ function layoutSubtreeInner(
     return
   }
   const children = getAttachedChildren(node)
-  if (children.length === 0) {
+  // Filter out summary nodes — they are positioned separately
+  const regularChildren: NodeDesc[] = []
+  for (const child of children) {
+    if (child.type !== 'summary') {
+      regularChildren.push(child)
+    }
+  }
+  if (regularChildren.length === 0) {
     nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height, partBounds: size.partBounds })
+    // Position summaries even with no regular children
+    positionMapSummaries(node, regularChildren, nodes, options, sizeMap)
     return
   }
 
@@ -347,13 +375,13 @@ function layoutSubtreeInner(
   if (config && !config.balanced) {
     // unbalanced: 优先读节点属性
     const attrsNumRight = node.attrs.numRight
-    if (typeof attrsNumRight === 'number' && attrsNumRight >= 0 && attrsNumRight <= children.length) {
+    if (typeof attrsNumRight === 'number' && attrsNumRight >= 0 && attrsNumRight <= regularChildren.length) {
       numRight = attrsNumRight
     } else {
-      numRight = calcNumRight(children, sizeMap)
+      numRight = calcNumRight(regularChildren, sizeMap)
     }
   } else {
-    numRight = calcNumRight(children, sizeMap)
+    numRight = calcNumRight(regularChildren, sizeMap)
   }
 
   const spacingMajor = getSpacingMajor(node, options)
@@ -365,12 +393,12 @@ function layoutSubtreeInner(
   const isClockwise = !config || config.direction === 'clockwise'
   if (isClockwise) {
     // clockwise: 前 numRight 个在右侧（从上到下），其余在左侧（从下到上）
-    rightChildren = children.slice(0, numRight)
-    leftChildren = children.slice(numRight).reverse()
+    rightChildren = regularChildren.slice(0, numRight)
+    leftChildren = regularChildren.slice(numRight).reverse()
   } else {
     // anticlockwise: 前 numRight 个在左侧（从上到下），其余在右侧（从下到上）
-    leftChildren = children.slice(0, numRight)
-    rightChildren = children.slice(numRight).reverse()
+    leftChildren = regularChildren.slice(0, numRight)
+    rightChildren = regularChildren.slice(numRight).reverse()
   }
 
   // 计算两侧总高度
@@ -385,11 +413,14 @@ function layoutSubtreeInner(
   const outwardOffsetRight = calcOutwardDistance(rightChildren, sizeMap)
   const outwardOffsetLeft = calcOutwardDistance(leftChildren, sizeMap)
 
+  // Apply master boundary padding
+  const masterPad = computeMasterOutsidePadding(node, 'right')
+
   // 布局右侧子节点
   if (rightChildren.length > 0) {
-    const childX = x + size.width + spacingMajor + outwardOffsetRight
+    const childX = x + size.width + spacingMajor + outwardOffsetRight + masterPad.left
     const childY = y + size.height / 2
-    layoutSideChildren(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap)
+    layoutSideChildren(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node)
   }
 
   // 布局左侧子节点
@@ -398,9 +429,60 @@ function layoutSubtreeInner(
       const childSize = sizeMap.get(child.id)!
       return Math.max(max, childSize.width)
     }, 0)
-    const childX = x - maxLeftWidth - spacingMajor - outwardOffsetLeft
+    const childX = x - maxLeftWidth - spacingMajor - outwardOffsetLeft - masterPad.right
     const childY = y + size.height / 2
-    layoutSideChildren(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap)
+    layoutSideChildren(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node)
+  }
+
+  // Position summary nodes after regular children are laid out
+  positionMapSummaries(node, regularChildren, nodes, options, sizeMap)
+}
+
+/** Position summary nodes for a map layout parent after its children are laid out */
+function positionMapSummaries(
+  parent: NodeDesc,
+  regularChildren: readonly NodeDesc[],
+  nodes: Map<string, NodeLayout>,
+  options: LayoutOptions,
+  sizeMap: Map<string, NodeSize>,
+): void {
+  // Build childPositions from already-laid-out nodes
+  const childPositions = new Map<string, { x: number; y: number; width: number; height: number }>()
+  for (const child of regularChildren) {
+    const nl = nodes.get(child.id)
+    if (nl) {
+      childPositions.set(child.id, { x: nl.x, y: nl.y, width: nl.width, height: nl.height })
+    }
+  }
+
+  // Use 'right' as default direction for map layout summaries
+  const summaryPositions = layoutSummaries(
+    parent,
+    regularChildren,
+    childPositions,
+    'right',
+    sizeMap,
+  )
+
+  // Add summary nodes to the layout result
+  const summaryChildren = getSummaryChildren(parent)
+  for (const [summaryId, pos] of summaryPositions) {
+    const summarySize = sizeMap.get(summaryId)
+    if (!summarySize) continue
+    const summaryNode = summaryChildren.find(s => s.id === summaryId)
+    const { width: titleWidth, height: titleHeight } = summaryNode
+      ? measureTextSize(getTitle(summaryNode), getFontSize(summaryNode), options)
+      : { width: 0, height: 0 }
+    nodes.set(summaryId, {
+      x: pos.x,
+      y: pos.y,
+      width: summarySize.width,
+      height: summarySize.height,
+      titleWidth,
+      titleHeight,
+      branchHeight: summarySize.height,
+      partBounds: summarySize.partBounds,
+    })
   }
 }
 

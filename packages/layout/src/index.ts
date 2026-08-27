@@ -50,3 +50,10 @@ export type { TopicCellTree } from './part-cell-builder'
 
 export { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 export type { PartAwareNodeSize } from './part-node-size'
+
+// Boundary-aware padding
+export { computeOutsidePadding, computeMasterOutsidePadding, BOUNDARYGAP, BOUNDARY_TITLE_HEIGHT } from './boundary-padding'
+export type { OutsidePadding } from './boundary-padding'
+
+// Summary layout
+export { layoutSummaries, getSummaryChildren } from './summary-layout'
