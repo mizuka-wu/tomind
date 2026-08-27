@@ -164,7 +164,7 @@ export function computeOutsidePadding(
  */
 export function computeMasterOutsidePadding(
   parent: NodeDesc,
-  direction: TreeDirection,
+  _direction: TreeDirection,
 ): OutsidePadding {
   const padding = createZeroPadding()
   const boundaries = getBoundaryChildren(parent)
