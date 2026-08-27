@@ -104,7 +104,7 @@ class MapLayout extends BaseLayout {
     const rootY = 0
 
     // 第一遍：计算位置（无 boundaryBounds）
-    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes, undefined)
+    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes, undefined, styleEngine, state)
 
     // 计算 boundaryBounds
     const boundaryBoundsMap = new Map<string, BoundaryBounds>()
@@ -112,7 +112,7 @@ class MapLayout extends BaseLayout {
 
     // 第二遍：用 boundaryBounds 做 X offset 对齐
     const nodes2 = new Map<string, import('./layout-engine').NodeLayout>()
-    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap)
+    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap, styleEngine, state)
 
     // 平移到正数区
     const { totalWidth, totalHeight } = this.normalizePositions(nodes2)
@@ -344,14 +344,14 @@ class MapLayout extends BaseLayout {
     if (rightChildren.length > 0) {
       const childX = x + size.width + spacingMajor
       const childY = y + size.height / 2
-      this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node)
+      this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state)
     }
 
     // 布局左侧子节点
     if (leftChildren.length > 0) {
       const childX = x - spacingMajor
       const childY = y + size.height / 2
-      this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node)
+      this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state)
     }
 
     this.positionSummaries(node, regularChildren, nodes, options, sizeMap)
@@ -368,6 +368,8 @@ class MapLayout extends BaseLayout {
     nodes: Map<string, import('./layout-engine').NodeLayout>,
     boundaryBoundsMap: Map<string, BoundaryBounds> | undefined,
     parent: NodeDesc,
+    styleEngine?: StyleEngine | null,
+    state?: SheetState | null,
   ): void {
     const n = children.length
     if (n === 0) return
@@ -419,7 +421,7 @@ class MapLayout extends BaseLayout {
         branchHeight: size.height,
         partBounds: size.partBounds,
       })
-      this.layoutNode(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap)
+      this.layoutNode(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
     }
 
     // X offset 对齐（对齐 snowbrush getMapOfXOffSetByBranchIndex）
