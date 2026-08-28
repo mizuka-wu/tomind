@@ -456,9 +456,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
     // 使用基类的 snowbrush 对齐算法
     // snowbrush boundaryBounds.y = -outsidePad.top
-    const topicSizesArr = children.map(c => sizeMap.get(c.id)!.height)
     const boundarySizesArr = children.map((c, i) => this.calcSubtreeHeight(c, sizeMap, parent, i, treeDir, spacingMinor))
-    const bbOffsetYArr = children.map((c, i) => -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0))
 
     const yPos = this.calcCumulativePositions(
       children,
@@ -470,18 +468,6 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
       undefined, // topicView.bounds.y 通常为 0
     )
 
-    // Debug: 输出 root 级别（children >= 4）的布局细节
-    if (n >= 4) {
-      const parentTitle = getTitle(parent).slice(0, 15)
-      console.log(`[TM-LAYOUT] ${parentTitle} ${side} (${n} children): spacingMinor=${spacingMinor}, parentH=${parentHeight}`)
-      console.log(`  topicSizes:  [${topicSizesArr.join(', ')}]`)
-      console.log(`  boundarySz:  [${boundarySizesArr.join(', ')}]`)
-      console.log(`  bbOffsetY:   [${bbOffsetYArr.join(', ')}]`)
-      console.log(`  yPos:        [${yPos.join(', ')}]`)
-      const MIN_TOP_BOTTOM = parentHeight > 230 ? Math.min(180, parentHeight - 230 + 80) : 80
-      let minSum = n <= 2 ? MIN_TOP_BOTTOM : boundarySizesArr.reduce((s, b, i) => i > 0 && i < n - 1 ? s - b : s, MIN_TOP_BOTTOM)
-      console.log(`  minSumTopicSpacing: ${minSum} (topBottom=${MIN_TOP_BOTTOM})`)
-    }
 
     // 父节点居中于首尾子节点之间
     const firstChildCenter = yPos[0] + sizeMap.get(children[0].id)!.height / 2
