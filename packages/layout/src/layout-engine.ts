@@ -44,6 +44,8 @@ export interface LayoutOptions {
   canvasHeight: number
   fontFamily?: string
   fontWeight?: string | number
+  /** Custom text measurement function. Falls back to canvas API, then charWidthFactor. */
+  measureText?: (text: string, font: string) => number
 }
 
 export const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
@@ -125,6 +127,43 @@ export function measureTextSize(
   }
 
   const maxWidth = options.maxTitleWidth || 300
+
+  if (options.measureText) {
+    const customMeasure = options.measureText
+    const normalizedWeight = normalizeFontWeight(fontWeight)
+    const fontWeightStr = typeof normalizedWeight === 'number' ? normalizedWeight.toString() : normalizedWeight
+    const fontSizePx = `${fontSize}px`
+    const fontArr = [fontStyle, fontWeightStr, fontSizePx, fontFamily]
+    const font = fontArr.filter(Boolean).join(' ')
+
+    const measureFn = (t: string) => customMeasure(t, font)
+    const rawLines = text.split('\n')
+    const wrappedLines: string[] = []
+
+    for (const line of rawLines) {
+      if (measureFn(line) <= maxWidth) {
+        wrappedLines.push(line)
+      } else {
+        let current = ''
+        for (const char of line) {
+          const test = current + char
+          if (measureFn(test) > maxWidth && current) {
+            wrappedLines.push(current)
+            current = char
+          } else {
+            current = test
+          }
+        }
+        if (current) wrappedLines.push(current)
+      }
+    }
+
+    const widthArr = wrappedLines.map(line => measureFn(line))
+    const width = Math.max(...widthArr) * ratio
+    const height = wrappedLines.length * Math.floor(preFontSize * (options.lineHeight || 1.34))
+
+    return { width: Math.ceil(width), height: Math.ceil(height) }
+  }
 
   const ctx = getCanvasContext()
   if (ctx) {
