@@ -437,22 +437,12 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     const childrenCenterY = (firstChildCenter + lastChildCenter) / 2
     const firstChildY = startY - childrenCenterY
 
-    // posYoffsetToClosestChild（对齐 snowbrush）
-    let posYoffsetToClosestChild = Infinity
-    for (let i = 0; i < n; i++) {
-      const childCenterY = firstChildY + yPos[i] + sizeMap.get(children[i].id)!.height / 2
-      const offset = childCenterY - startY
-      if (Math.abs(offset) < Math.abs(posYoffsetToClosestChild)) {
-        posYoffsetToClosestChild = offset
-      }
-    }
-
     // 放置子节点
     for (let i = 0; i < n; i++) {
       const child = children[i]
       const size = sizeMap.get(child.id)!
       const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child, styleEngine, state), options)
-      const cy = firstChildY + yPos[i] - posYoffsetToClosestChild
+      const cy = firstChildY + yPos[i]
       nodes.set(child.id, {
         x: startX, y: cy,
         width: size.width, height: size.height,
