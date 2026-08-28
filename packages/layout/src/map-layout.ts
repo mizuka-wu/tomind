@@ -324,9 +324,10 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     const nodeSpacingMinor = typeof rawMinor === 'number' ? rawMinor : parseInt(String(rawMinor)) || 0
 
     let childrenTotal = 0
+    const lineWidth = 1 // borderWidth，对齐 SB
     for (let i = 0; i < regularChildren.length; i++) {
       childrenTotal += this.calcSubtreeHeight(regularChildren[i], sizeMap, node, i, treeDir, styleEngine, state)
-      if (i < regularChildren.length - 1) childrenTotal += nodeSpacingMinor
+      if (i < regularChildren.length - 1) childrenTotal += nodeSpacingMinor + lineWidth
     }
 
     // snowbrush mergeBounds: bounds = merge(topicView.bounds, children.boundaryBounds)
@@ -479,28 +480,28 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     }
 
     // 第一步: 预估子树高度用于定位（对齐 SB 的 boundaryBounds.height）
-    // 使用 calcSubtreeHeight 的估算值作为初始定位
     const estimatedBounds = children.map((c, i) => {
       const subH = this.calcSubtreeHeight(c, sizeMap, parent, i, treeDir, styleEngine, state)
       const op = sizeMap.get(c.id)?.outsidePadding
       return subH + (op?.top ?? 0) + (op?.bottom ?? 0)
     })
 
-    // 第二步: 用估算值计算定位（对齐 snowbrush calSidePos）
-    const yPos = this.calcCumulativePositions(
-      children,
-      spacingMinor,
-      (child) => sizeMap.get(child.id)!.height,
-      (_child, i) => estimatedBounds[i],
-      parentHeight,
-      (_child, i) => -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0),
-      undefined,
-    )
+    // 第二步: SB 累加定位（替换 calcCumulativePositions）
+    const lineWidth = 1 // borderWidth
+    let childrenTotalHeight = 0
+    for (let i = 0; i < n; i++) {
+      childrenTotalHeight += estimatedBounds[i]
+      if (i < n - 1) childrenTotalHeight += spacingMinor + lineWidth
+    }
 
-    const firstChildCenter = yPos[0] + sizeMap.get(children[0].id)!.height / 2
-    const lastChildCenter = yPos[n - 1] + sizeMap.get(children[n - 1].id)!.height / 2
-    const childrenCenterY = (firstChildCenter + lastChildCenter) / 2
-    const firstChildY = startY - childrenCenterY
+    // SB: 居中定位
+    let currentChildY = startY - childrenTotalHeight / 2
+    const childPositions: number[] = []
+    for (let i = 0; i < n; i++) {
+      const bbOffsetY = -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0)
+      childPositions.push(currentChildY - bbOffsetY)
+      currentChildY += estimatedBounds[i] + spacingMinor + lineWidth
+    }
 
     // 第三步: 布局子节点（用最终位置），收集真实包围盒
     const actualBounds: Array<{ width: number; height: number }> = []
@@ -508,7 +509,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
       const child = children[i]
       const size = sizeMap.get(child.id)!
       const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child, styleEngine, state), options)
-      const cy = firstChildY + yPos[i]
+      const cy = childPositions[i]
       const bounds = this.layoutNode(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state, subtreeHeightMap)
       nodes.set(child.id, {
         x: startX, y: cy,
@@ -533,12 +534,10 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
     // 计算整个侧的包围盒（对齐 snowbrush calBounds → mergeBounds）
     const allTops = children.map((_c, i) => {
-      const cy = firstChildY + yPos[i]
-      return cy + (sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0)
+      return childPositions[i] + (sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0)
     })
     const allBottoms = children.map((_c, i) => {
-      const cy = firstChildY + yPos[i]
-      return cy + actualBounds[i].height - (sizeMap.get(children[i].id)?.outsidePadding?.bottom ?? 0)
+      return childPositions[i] + actualBounds[i].height - (sizeMap.get(children[i].id)?.outsidePadding?.bottom ?? 0)
     })
     const minY = Math.min(startY - parentHeight / 2, ...allTops)
     const maxY = Math.max(startY + parentHeight / 2, ...allBottoms)
