@@ -160,8 +160,11 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
   // ── 测量 ──
 
   private measureNode(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null): NodeSize {
+    // 从 StyleEngine 读取 margin 作为 padding（对齐 snowbrush topicView.bounds）
+    const padding = this.getNodePadding(node, options, styleEngine, state)
+
     if (hasNonTitleParts(node)) {
-      const result = measurePartAwareNode(node, options, styleEngine, state)
+      const result = measurePartAwareNode(node, { ...options, nodePadding: padding }, styleEngine, state)
       return {
         width: result.width,
         height: result.height,
@@ -171,7 +174,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
         outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 },
       }
     }
-    const result = measureTitleOnlyNode(node, options.nodePadding, options, styleEngine, state)
+    const result = measureTitleOnlyNode(node, padding, options, styleEngine, state)
     return {
       width: result.width,
       height: result.height,
@@ -180,6 +183,22 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
       partBounds: result.partBounds,
       outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 },
     }
+  }
+
+  private getNodePadding(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null): { top: number; right: number; bottom: number; left: number } {
+    if (!styleEngine || !state) return options.nodePadding
+    const readMargin = (key: 'marginTop' | 'marginBottom' | 'marginLeft' | 'marginRight'): number => {
+      const val = styleEngine.getStyleValue(state, node.id, key)
+      if (typeof val === 'number') return val
+      if (typeof val === 'string') { const n = parseFloat(val); return isNaN(n) ? 0 : n }
+      return 0
+    }
+    const top = readMargin('marginTop')
+    const bottom = readMargin('marginBottom')
+    const left = readMargin('marginLeft')
+    const right = readMargin('marginRight')
+    if (top === 0 && bottom === 0 && left === 0 && right === 0) return options.nodePadding
+    return { top, right, bottom, left }
   }
 
   private measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: StyleEngine | null, state?: SheetState | null): void {
@@ -437,6 +456,10 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
     // 使用基类的 snowbrush 对齐算法
     // snowbrush boundaryBounds.y = -outsidePad.top
+    const topicSizesArr = children.map(c => sizeMap.get(c.id)!.height)
+    const boundarySizesArr = children.map((c, i) => this.calcSubtreeHeight(c, sizeMap, parent, i, treeDir, spacingMinor))
+    const bbOffsetYArr = children.map((c, i) => -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0))
+
     const yPos = this.calcCumulativePositions(
       children,
       spacingMinor,
@@ -446,6 +469,19 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
       (_child, i) => -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0),
       undefined, // topicView.bounds.y 通常为 0
     )
+
+    // Debug: 输出 root 级别（children >= 4）的布局细节
+    if (n >= 4) {
+      const parentTitle = getTitle(parent).slice(0, 15)
+      console.log(`[TM-LAYOUT] ${parentTitle} ${side} (${n} children): spacingMinor=${spacingMinor}, parentH=${parentHeight}`)
+      console.log(`  topicSizes:  [${topicSizesArr.join(', ')}]`)
+      console.log(`  boundarySz:  [${boundarySizesArr.join(', ')}]`)
+      console.log(`  bbOffsetY:   [${bbOffsetYArr.join(', ')}]`)
+      console.log(`  yPos:        [${yPos.join(', ')}]`)
+      const MIN_TOP_BOTTOM = parentHeight > 230 ? Math.min(180, parentHeight - 230 + 80) : 80
+      let minSum = n <= 2 ? MIN_TOP_BOTTOM : boundarySizesArr.reduce((s, b, i) => i > 0 && i < n - 1 ? s - b : s, MIN_TOP_BOTTOM)
+      console.log(`  minSumTopicSpacing: ${minSum} (topBottom=${MIN_TOP_BOTTOM})`)
+    }
 
     // 父节点居中于首尾子节点之间
     const firstChildCenter = yPos[0] + sizeMap.get(children[0].id)!.height / 2
