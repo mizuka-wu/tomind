@@ -93,7 +93,7 @@ class MapLayout extends BaseLayout {
   }
 
   layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine?: StyleEngine | null, state?: SheetState | null): LayoutResult {
-    const nodes = new Map<string, import('./layout-engine').NodeLayout>()
+        const nodes = new Map<string, import('./layout-engine').NodeLayout>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
@@ -110,13 +110,46 @@ class MapLayout extends BaseLayout {
     const boundaryBoundsMap = new Map<string, BoundaryBounds>()
     this.computeBoundaryBounds(root, nodes, boundaryBoundsMap)
 
+    // 从第一遍结果提取子树高度，供 outward distance 使用
+    const subtreeHeightMap = new Map<string, number>()
+    for (const [id, nl] of nodes) {
+      subtreeHeightMap.set(id, nl.branchHeight)
+    }
+
     // 第二遍：用 boundaryBounds 做 X offset 对齐
     const nodes2 = new Map<string, import('./layout-engine').NodeLayout>()
-    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap, styleEngine, state)
+    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap, styleEngine, state, subtreeHeightMap)
 
     // 平移到正数区
     const { totalWidth, totalHeight } = this.normalizePositions(nodes2)
     return { nodes: nodes2, totalWidth, totalHeight }
+  }
+
+  /**
+   * 对齐 snowbrush calcOutwardDistanceByAttachedChildren
+   * 子节点数量 ≥ CHILDREN_COUNT_LIMIT 时，添加扇出 X 偏移
+   * snowbrush 用 boundaryBounds.height（子树高度），不是节点高度
+   */
+  private calcOutwardDistance(
+    children: readonly NodeDesc[],
+    sizeMap: Map<string, NodeSize>,
+    subtreeHeightMap?: Map<string, number>,
+  ): number {
+    const CHILDREN_COUNT_LIMIT = 8
+    const K = 0.15
+    const MIN = 400
+    const MAX = 800
+
+if (children.length < CHILDREN_COUNT_LIMIT) return 0
+    // snowbrush 用 boundaryBounds.height（子树高度）
+    const totalHeight = children.reduce(
+      (sum, c) => sum + (subtreeHeightMap?.get(c.id) ?? sizeMap.get(c.id)?.height ?? 0), 0,
+    )
+    if (totalHeight <= MIN) {
+      return 0
+    }
+    const result = K * (Math.min(totalHeight, MAX) - MIN)
+    return result
   }
 
   // ── 测量 ──
@@ -273,6 +306,7 @@ class MapLayout extends BaseLayout {
     boundaryBoundsMap: Map<string, BoundaryBounds> | undefined,
     styleEngine?: StyleEngine | null,
     state?: SheetState | null,
+    subtreeHeightMap?: Map<string, number>,
   ): void {
     const size = sizeMap.get(node.id)!
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
@@ -340,18 +374,22 @@ class MapLayout extends BaseLayout {
     // snowbrush: x = topicView.bounds.x + topicView.bounds.width + spacingMajor
     // topicView.bounds = 节点自身 (x, width)，不含子节点
 
+    // 对齐 snowbrush: calcOutwardDistanceByAttachedChildren
+    const outwardOffsetRight = this.calcOutwardDistance(rightChildren, sizeMap, subtreeHeightMap)
+    const outwardOffsetLeft = this.calcOutwardDistance(leftChildren, sizeMap, subtreeHeightMap)
+
     // 布局右侧子节点
     if (rightChildren.length > 0) {
-      const childX = x + size.width + spacingMajor
+      const childX = x + size.width + spacingMajor + outwardOffsetRight
       const childY = y + size.height / 2
-      this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state)
+      this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, subtreeHeightMap)
     }
 
     // 布局左侧子节点
     if (leftChildren.length > 0) {
-      const childX = x - spacingMajor
+      const childX = x - spacingMajor - outwardOffsetLeft
       const childY = y + size.height / 2
-      this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state)
+      this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, subtreeHeightMap)
     }
 
     this.positionSummaries(node, regularChildren, nodes, options, sizeMap)
@@ -370,6 +408,7 @@ class MapLayout extends BaseLayout {
     parent: NodeDesc,
     styleEngine?: StyleEngine | null,
     state?: SheetState | null,
+    subtreeHeightMap?: Map<string, number>,
   ): void {
     const n = children.length
     if (n === 0) return
@@ -421,7 +460,7 @@ class MapLayout extends BaseLayout {
         branchHeight: size.height,
         partBounds: size.partBounds,
       })
-      this.layoutNode(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state)
+      this.layoutNode(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state, subtreeHeightMap)
     }
 
     // X offset 对齐（对齐 snowbrush getMapOfXOffSetByBranchIndex）
