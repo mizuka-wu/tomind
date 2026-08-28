@@ -294,7 +294,8 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     parent: NodeDesc,
     childIndex: number,
     treeDir: 'right' | 'left',
-    spacingMinor: number,
+    styleEngine?: StyleEngine | null,
+    state?: SheetState | null,
   ): number {
     const size = sizeMap.get(node.id)!
     const outsidePad = computeOutsidePadding(parent, childIndex, treeDir)
@@ -309,10 +310,16 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     }
     if (regularChildren.length === 0) return selfH
 
+    // snowbrush: 每个节点用自己的 minorSpacing
+    const rawMinor = (styleEngine && state)
+      ? styleEngine.getStyleValue(state, node.id, 'spacingMinor')
+      : undefined
+    const nodeSpacingMinor = typeof rawMinor === 'number' ? rawMinor : parseInt(String(rawMinor)) || 0
+
     let childrenTotal = 0
     for (let i = 0; i < regularChildren.length; i++) {
-      childrenTotal += this.calcSubtreeHeight(regularChildren[i], sizeMap, node, i, treeDir, spacingMinor)
-      if (i < regularChildren.length - 1) childrenTotal += spacingMinor
+      childrenTotal += this.calcSubtreeHeight(regularChildren[i], sizeMap, node, i, treeDir, styleEngine, state)
+      if (i < regularChildren.length - 1) childrenTotal += nodeSpacingMinor
     }
 
     return Math.max(selfH, childrenTotal)
@@ -384,7 +391,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     const rawMinorNode = (styleEngine && state)
       ? styleEngine.getStyleValue(state, node.id, 'spacingMinor')
       : undefined
-    const minorSpacing = typeof rawMinorNode === 'number' ? rawMinorNode : 0
+    const minorSpacing = typeof rawMinorNode === 'number' ? rawMinorNode : parseInt(String(rawMinorNode)) || 0
     const rightTotalH = rightChildren.reduce((sum, c) => sum + (sizeMap.get(c.id)?.height ?? 0), 0)
       + Math.max(0, rightChildren.length - 1) * minorSpacing
     const leftTotalH = leftChildren.reduce((sum, c) => sum + (sizeMap.get(c.id)?.height ?? 0), 0)
@@ -406,6 +413,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     const outwardOffsetLeft = this.calcOutwardDistance(leftChildren, sizeMap, subtreeHeightMap)
 
     // 布局右侧子节点
+    // snowbrush: newBounds = topicView.bounds, parentHeight = 节点自身高度
     if (rightChildren.length > 0) {
       const childX = x + size.width + spacingMajor + outwardOffsetRight
       const childY = y + size.height / 2
@@ -446,7 +454,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     const rawMinor = (styleEngine && state)
       ? styleEngine.getStyleValue(state, parent.id, 'spacingMinor')
       : undefined
-    const spacingMinor = typeof rawMinor === 'number' ? rawMinor : 0
+    const spacingMinor = typeof rawMinor === 'number' ? rawMinor : parseInt(String(rawMinor)) || 0
 
     // 设置 outsidePadding
     for (let i = 0; i < n; i++) {
@@ -456,13 +464,13 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
     // 使用基类的 snowbrush 对齐算法
     // snowbrush boundaryBounds.y = -outsidePad.top
-    const boundarySizesArr = children.map((c, i) => this.calcSubtreeHeight(c, sizeMap, parent, i, treeDir, spacingMinor))
+    const boundarySizesArr = children.map((c, i) => this.calcSubtreeHeight(c, sizeMap, parent, i, treeDir, styleEngine, state))
 
     const yPos = this.calcCumulativePositions(
       children,
       spacingMinor,
       (child) => sizeMap.get(child.id)!.height,
-      (child, i) => this.calcSubtreeHeight(child, sizeMap, parent, i, treeDir, spacingMinor),
+      (child, i) => this.calcSubtreeHeight(child, sizeMap, parent, i, treeDir, styleEngine, state),
       parentHeight,
       (_child, i) => -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0),
       undefined, // topicView.bounds.y 通常为 0
@@ -485,10 +493,13 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
         x: startX, y: cy,
         width: size.width, height: size.height,
         titleWidth, titleHeight,
-        branchHeight: size.height,
+        branchHeight: size.height, // 临时值，layoutNode 可能覆盖
         partBounds: size.partBounds,
       })
       this.layoutNode(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state, subtreeHeightMap)
+      // layoutNode 会覆盖 branchHeight，这里用正确的子树高度覆盖回来
+      const nl = nodes.get(child.id)
+      if (nl) nl.branchHeight = boundarySizesArr[i]
     }
 
     // X offset 对齐（对齐 snowbrush getMapOfXOffSetByBranchIndex）
