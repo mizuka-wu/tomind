@@ -330,7 +330,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     }
 
     // snowbrush mergeBounds: bounds = merge(topicView.bounds, children.boundaryBounds)
-    // 当 children 存在时，bounds 包含 parent topic + children 分布范围
+    // 近似: 当 children 跨度 > topicHeight 时 ≈ childrenTotal
     return Math.max(selfH, childrenTotal)
   }
 
@@ -347,13 +347,13 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     styleEngine?: StyleEngine | null,
     state?: SheetState | null,
     subtreeHeightMap?: Map<string, number>,
-  ): void {
+  ): { width: number; height: number } {
     const size = sizeMap.get(node.id)!
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
 
     if (isCollapsed(node)) {
       nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height, partBounds: size.partBounds })
-      return
+      return { width: size.width, height: size.height }
     }
 
     const children = getAttachedChildren(node)
@@ -365,7 +365,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     if (regularChildren.length === 0) {
       nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height, partBounds: size.partBounds })
       this.positionSummaries(node, regularChildren, nodes, options, sizeMap, styleEngine, state)
-      return
+      return { width: size.width, height: size.height }
     }
 
     // 计算分割点
@@ -423,20 +423,29 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
     // 布局右侧子节点
     // snowbrush: newBounds = topicView.bounds, parentHeight = 节点自身高度
+    let rightBounds = { x: x + size.width, y, width: 0, height: 0 }
     if (rightChildren.length > 0) {
       const childX = x + size.width + spacingMajor + outwardOffsetRight
       const childY = y + size.height / 2
-      this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, subtreeHeightMap)
+      rightBounds = this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, subtreeHeightMap)
     }
 
     // 布局左侧子节点
+    let leftBounds = { x, y, width: 0, height: 0 }
     if (leftChildren.length > 0) {
       const childX = x - spacingMajor - outwardOffsetLeft
       const childY = y + size.height / 2
-      this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, subtreeHeightMap)
+      leftBounds = this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, subtreeHeightMap)
     }
 
     this.positionSummaries(node, regularChildren, nodes, options, sizeMap, styleEngine, state)
+
+    // 计算子树包围盒（对齐 snowbrush calBounds → mergeBounds）
+    const topicBottom = y + size.height
+    const topicRight = x + size.width
+    const allMinY = Math.min(y, rightBounds.y, leftBounds.y)
+    const allMaxY = Math.max(topicBottom, rightBounds.y + rightBounds.height, leftBounds.y + leftBounds.height)
+    return { width: topicRight - Math.min(x, rightBounds.x, leftBounds.x), height: allMaxY - allMinY }
   }
 
   private layoutSide(
@@ -453,13 +462,11 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     styleEngine?: StyleEngine | null,
     state?: SheetState | null,
     subtreeHeightMap?: Map<string, number>,
-  ): void {
+  ): { x: number; y: number; width: number; height: number } {
     const n = children.length
-    if (n === 0) return
+    if (n === 0) return { x: startX, y: startY, width: 0, height: 0 }
 
     const treeDir = side === 'right' ? 'right' as const : 'left' as const
-    // snowbrush: spacingMinor = branch.figure.minorSpacing ?? 0（来自样式系统）
-    // 不要用 getAdaptiveSpacingMinor（那是 minSumTopicSpacing，不是 spacingMinor）
     const rawMinor = (styleEngine && state)
       ? styleEngine.getStyleValue(state, parent.id, 'spacingMinor')
       : undefined
@@ -471,52 +478,49 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
       size.outsidePadding = computeOutsidePadding(parent, i, treeDir)
     }
 
-    // 使用基类的 snowbrush 对齐算法
-    // snowbrush boundaryBounds.height = outsidePad.top + subtreeHeight + outsidePad.bottom
-    const boundarySizesArr = children.map((c, i) => {
+    // 第一步: 预估子树高度用于定位（对齐 SB 的 boundaryBounds.height）
+    // 使用 calcSubtreeHeight 的估算值作为初始定位
+    const estimatedBounds = children.map((c, i) => {
       const subH = this.calcSubtreeHeight(c, sizeMap, parent, i, treeDir, styleEngine, state)
       const op = sizeMap.get(c.id)?.outsidePadding
-      const totalH = subH + (op?.top ?? 0) + (op?.bottom ?? 0)
-      return totalH
+      return subH + (op?.top ?? 0) + (op?.bottom ?? 0)
     })
 
+    // 第二步: 用估算值计算定位（对齐 snowbrush calSidePos）
     const yPos = this.calcCumulativePositions(
       children,
       spacingMinor,
       (child) => sizeMap.get(child.id)!.height,
-      (_child, i) => boundarySizesArr[i],
+      (_child, i) => estimatedBounds[i],
       parentHeight,
       (_child, i) => -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0),
-      undefined, // topicView.bounds.y 通常为 0
+      undefined,
     )
 
-    // 父节点居中于首尾子节点之间
     const firstChildCenter = yPos[0] + sizeMap.get(children[0].id)!.height / 2
     const lastChildCenter = yPos[n - 1] + sizeMap.get(children[n - 1].id)!.height / 2
     const childrenCenterY = (firstChildCenter + lastChildCenter) / 2
     const firstChildY = startY - childrenCenterY
 
-    // 放置子节点
+    // 第三步: 布局子节点（用最终位置），收集真实包围盒
+    const actualBounds: Array<{ width: number; height: number }> = []
     for (let i = 0; i < n; i++) {
       const child = children[i]
       const size = sizeMap.get(child.id)!
       const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child, styleEngine, state), options)
       const cy = firstChildY + yPos[i]
+      const bounds = this.layoutNode(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state, subtreeHeightMap)
       nodes.set(child.id, {
         x: startX, y: cy,
         width: size.width, height: size.height,
         titleWidth, titleHeight,
-        branchHeight: size.height, // 临时值，layoutNode 可能覆盖
+        branchHeight: bounds.height,
         partBounds: size.partBounds,
       })
-      this.layoutNode(child, startX, cy, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state, subtreeHeightMap)
-      // layoutNode 会覆盖 branchHeight，这里用正确的子树高度覆盖回来
-      const nl = nodes.get(child.id)
-      if (nl) nl.branchHeight = boundarySizesArr[i]
+      actualBounds.push(bounds)
     }
 
-    // X offset 对齐（对齐 snowbrush getMapOfXOffSetByBranchIndex）
-    // snowbrush: 所有正常子节点用同一个 maxOffset
+    // X offset 对齐
     if (boundaryBoundsMap) {
       const { maxOffset } = this.calcMaxOffset(children, nodes, boundaryBoundsMap, side)
       if (maxOffset > 0) {
@@ -526,6 +530,19 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
         }
       }
     }
+
+    // 计算整个侧的包围盒（对齐 snowbrush calBounds → mergeBounds）
+    const allTops = children.map((_c, i) => {
+      const cy = firstChildY + yPos[i]
+      return cy + (sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0)
+    })
+    const allBottoms = children.map((_c, i) => {
+      const cy = firstChildY + yPos[i]
+      return cy + actualBounds[i].height - (sizeMap.get(children[i].id)?.outsidePadding?.bottom ?? 0)
+    })
+    const minY = Math.min(startY - parentHeight / 2, ...allTops)
+    const maxY = Math.max(startY + parentHeight / 2, ...allBottoms)
+    return { x: startX, y: minY, width: 0, height: maxY - minY }
   }
 
   // ── Summary 定位 ──
