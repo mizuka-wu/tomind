@@ -104,11 +104,13 @@ function measureNodeSize(
   node: NodeDesc,
   padding: { top: number; right: number; bottom: number; left: number },
   options: LayoutOptions,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
 ): NodeSize {
   // 检查是否有非 title 的 part
   if (hasNonTitleParts(node)) {
     // 使用 part-aware 测量
-    const result = measurePartAwareNode(node, options)
+    const result = measurePartAwareNode(node, options, styleEngine, state)
     return {
       width: result.width,
       height: result.height,
@@ -120,7 +122,7 @@ function measureNodeSize(
   }
 
   // 快速路径：只测量 title + padding
-  const result = measureTitleOnlyNode(node, padding, options)
+  const result = measureTitleOnlyNode(node, padding, options, styleEngine, state)
   return {
     width: result.width,
     height: result.height,
@@ -138,7 +140,7 @@ function measureSubtree(
   direction: TreeDirection,
 ): void {
   const spacing = getNodeSpacingCached(ctx, node.id, direction)
-  sizeMap.set(node.id, measureNodeSize(node, spacing.padding, ctx.options))
+  sizeMap.set(node.id, measureNodeSize(node, spacing.padding, ctx.options, ctx.styleEngine, ctx.state))
   if (!isCollapsed(node)) {
     for (const child of getAttachedChildren(node)) {
       measureSubtree(ctx, child, sizeMap, direction)
@@ -146,7 +148,7 @@ function measureSubtree(
     // Also measure summary nodes so they're in sizeMap
     for (const summary of getSummaryChildren(node)) {
       const summarySpacing = getNodeSpacingCached(ctx, summary.id, direction)
-      sizeMap.set(summary.id, measureNodeSize(summary, summarySpacing.padding, ctx.options))
+      sizeMap.set(summary.id, measureNodeSize(summary, summarySpacing.padding, ctx.options, ctx.styleEngine, ctx.state))
     }
   }
 }

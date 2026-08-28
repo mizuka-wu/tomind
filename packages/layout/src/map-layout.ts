@@ -98,7 +98,7 @@ class MapLayout extends BaseLayout {
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    this.measureSubtree(root, options, sizeMap)
+    this.measureSubtree(root, options, sizeMap, styleEngine, state)
 
     const rootX = 0
     const rootY = 0
@@ -154,9 +154,9 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
   // ── 测量 ──
 
-  private measureNode(node: NodeDesc, options: LayoutOptions): NodeSize {
+  private measureNode(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null): NodeSize {
     if (hasNonTitleParts(node)) {
-      const result = measurePartAwareNode(node, options)
+      const result = measurePartAwareNode(node, options, styleEngine, state)
       return {
         width: result.width,
         height: result.height,
@@ -166,7 +166,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
         outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 },
       }
     }
-    const result = measureTitleOnlyNode(node, options.nodePadding, options)
+    const result = measureTitleOnlyNode(node, options.nodePadding, options, styleEngine, state)
     return {
       width: result.width,
       height: result.height,
@@ -177,14 +177,14 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     }
   }
 
-  private measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): void {
-    sizeMap.set(node.id, this.measureNode(node, options))
+  private measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: StyleEngine | null, state?: SheetState | null): void {
+    sizeMap.set(node.id, this.measureNode(node, options, styleEngine, state))
     if (!isCollapsed(node)) {
       for (const child of getAttachedChildren(node)) {
-        this.measureSubtree(child, options, sizeMap)
+        this.measureSubtree(child, options, sizeMap, styleEngine, state)
       }
       for (const summary of getSummaryChildren(node)) {
-        sizeMap.set(summary.id, this.measureNode(summary, options))
+        sizeMap.set(summary.id, this.measureNode(summary, options, styleEngine, state))
       }
     }
   }
@@ -309,7 +309,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     subtreeHeightMap?: Map<string, number>,
   ): void {
     const size = sizeMap.get(node.id)!
-    const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
+    const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
 
     if (isCollapsed(node)) {
       nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height, partBounds: size.partBounds })
@@ -324,7 +324,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
     if (regularChildren.length === 0) {
       nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight: size.height, partBounds: size.partBounds })
-      this.positionSummaries(node, regularChildren, nodes, options, sizeMap)
+      this.positionSummaries(node, regularChildren, nodes, options, sizeMap, styleEngine, state)
       return
     }
 
@@ -392,7 +392,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
       this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, subtreeHeightMap)
     }
 
-    this.positionSummaries(node, regularChildren, nodes, options, sizeMap)
+    this.positionSummaries(node, regularChildren, nodes, options, sizeMap, styleEngine, state)
   }
 
   private layoutSide(
@@ -451,7 +451,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     for (let i = 0; i < n; i++) {
       const child = children[i]
       const size = sizeMap.get(child.id)!
-      const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child), options)
+      const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(child), getFontSize(child, styleEngine, state), options)
       const cy = firstChildY + yPos[i] - posYoffsetToClosestChild
       nodes.set(child.id, {
         x: startX, y: cy,
@@ -484,6 +484,8 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     nodes: Map<string, import('./layout-engine').NodeLayout>,
     options: LayoutOptions,
     sizeMap: Map<string, NodeSize>,
+    styleEngine?: StyleEngine | null,
+    state?: SheetState | null,
   ): void {
     const childPositions = new Map<string, { x: number; y: number; width: number; height: number }>()
     for (const child of regularChildren) {
@@ -499,7 +501,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
       if (!summarySize) continue
       const summaryNode = summaryChildren.find(s => s.id === summaryId)
       const { width: titleWidth, height: titleHeight } = summaryNode
-        ? measureTextSize(getTitle(summaryNode), getFontSize(summaryNode), options)
+        ? measureTextSize(getTitle(summaryNode), getFontSize(summaryNode, styleEngine, state), options)
         : { width: 0, height: 0 }
       nodes.set(summaryId, {
         x: pos.x, y: pos.y,

@@ -3,6 +3,8 @@
  * 所有布局算法共享的基础操作
  */
 import type { NodeDesc } from '@tomind/schema'
+import type { StyleEngine } from '@tomind/style'
+import type { SheetState } from '@tomind/state'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
 
@@ -31,15 +33,27 @@ export function getStyleAttr<T>(node: NodeDesc, key: string): T | undefined {
   return style ? (style[key] as T) : undefined
 }
 
-export function getFontFamily(node: NodeDesc): string {
+export function getFontFamily(node: NodeDesc, styleEngine?: StyleEngine | null, state?: SheetState | null): string {
+  if (styleEngine && state) {
+    const computed = styleEngine.getStyleValue(state, node.id, 'fontFamily')
+    if (typeof computed === 'string' && computed.length > 0) return computed
+  }
   return getStyleAttr<string>(node, 'fontFamily') || 'NeverMind, Microsoft YaHei, PingFang SC, Microsoft JhengHei'
 }
 
-export function getFontWeight(node: NodeDesc): string | number {
+export function getFontWeight(node: NodeDesc, styleEngine?: StyleEngine | null, state?: SheetState | null): string | number {
+  if (styleEngine && state) {
+    const computed = styleEngine.getStyleValue(state, node.id, 'fontWeight')
+    if (computed != null && (typeof computed === 'string' || typeof computed === 'number')) return computed
+  }
   return getStyleAttr<string | number>(node, 'fontWeight') || 'normal'
 }
 
-export function getFontStyle(node: NodeDesc): string {
+export function getFontStyle(node: NodeDesc, styleEngine?: StyleEngine | null, state?: SheetState | null): string {
+  if (styleEngine && state) {
+    const computed = styleEngine.getStyleValue(state, node.id, 'fontStyle')
+    if (typeof computed === 'string' && computed.length > 0) return computed
+  }
   return getStyleAttr<string>(node, 'fontStyle') || 'normal'
 }
 
@@ -52,7 +66,14 @@ export function getTitle(node: NodeDesc): string {
   return ''
 }
 
-export function getFontSize(node: NodeDesc): number {
+export function getFontSize(node: NodeDesc, styleEngine?: StyleEngine | null, state?: SheetState | null): number {
+  if (styleEngine && state) {
+    const computed = styleEngine.getStyleValue(state, node.id, 'fontSize')
+    if (computed != null) {
+      const parsed = typeof computed === 'string' ? parseInt(computed) : computed
+      if (typeof parsed === 'number' && !isNaN(parsed)) return parsed
+    }
+  }
   const style = getNodeStyle(node)
   const fontSize = style?.fontSize
   if (typeof fontSize === 'string') {
@@ -96,10 +117,18 @@ export interface SimpleNodeSize {
 }
 
 /** 简单节点测量（title + padding），适用于不需要 part-aware 的布局 */
-export function measureSimpleNode(node: NodeDesc, options: LayoutOptions): SimpleNodeSize {
-  const fontSize = getFontSize(node)
+export function measureSimpleNode(
+  node: NodeDesc,
+  options: LayoutOptions,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
+): SimpleNodeSize {
+  const fontSize = getFontSize(node, styleEngine, state)
   const title = getTitle(node)
-  const { width, height } = measureTextSize(title, fontSize, options)
+  const fontFamily = getFontFamily(node, styleEngine, state)
+  const fontWeight = getFontWeight(node, styleEngine, state)
+  const fontStyle = getFontStyle(node, styleEngine, state)
+  const { width, height } = measureTextSize(title, fontSize, options, fontFamily, fontWeight, fontStyle)
   return {
     width: width + options.nodePadding.left + options.nodePadding.right,
     height: height + options.nodePadding.top + options.nodePadding.bottom,
@@ -111,11 +140,13 @@ export function measureSimpleSubtree(
   node: NodeDesc,
   options: LayoutOptions,
   sizeMap: Map<string, SimpleNodeSize>,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
 ): void {
-  sizeMap.set(node.id, measureSimpleNode(node, options))
+  sizeMap.set(node.id, measureSimpleNode(node, options, styleEngine, state))
   if (!isCollapsed(node)) {
     for (const child of getAttachedChildren(node)) {
-      measureSimpleSubtree(child, options, sizeMap)
+      measureSimpleSubtree(child, options, sizeMap, styleEngine, state)
     }
   }
 }

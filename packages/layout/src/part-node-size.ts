@@ -11,6 +11,8 @@
  */
 
 import type { NodeDesc } from '@tomind/schema'
+import type { StyleEngine } from '@tomind/style'
+import type { SheetState } from '@tomind/state'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
 import { getTitle, getFontSize } from './layout-utils'
@@ -59,9 +61,11 @@ function extractPartBounds(cell: CellLayout, bounds: Map<string, { x: number; y:
 export function measurePartAwareNode(
   node: NodeDesc,
   options: LayoutOptions,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
 ): PartAwareNodeSize {
   // 第一轮：测量非 labels 的 parts，用于计算 contentWidth
-  const parts = measureNodeParts(node, options)
+  const parts = measureNodeParts(node, options, styleEngine, state)
 
   // 从非 labels parts 计算 contentWidth（对齐 snowbrush parentWidth）
   // contentWidth = max(titleWidth + padding, markersWidth, numberingWidth, ...)
@@ -121,12 +125,14 @@ export function measureTitleOnlyNode(
   node: NodeDesc,
   padding: { top: number; right: number; bottom: number; left: number },
   options: LayoutOptions,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
 ): PartAwareNodeSize {
-  const fontSize = getFontSize(node)
+  const fontSize = getFontSize(node, styleEngine, state)
   const title = getTitle(node)
-  const fontFamily = getFontFamily(node)
-  const fontWeight = getFontWeight(node)
-  const fontStyle = getFontStyle(node)
+  const fontFamily = getFontFamily(node, styleEngine, state)
+  const fontWeight = getFontWeight(node, styleEngine, state)
+  const fontStyle = getFontStyle(node, styleEngine, state)
 
   const { width: titleWidth, height: titleHeight } = measureTextSize(
     title,

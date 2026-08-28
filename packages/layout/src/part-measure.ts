@@ -5,6 +5,8 @@
  */
 
 import type { NodeDesc } from '@tomind/schema'
+import type { StyleEngine } from '@tomind/style'
+import type { SheetState } from '@tomind/state'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
 import { getTitle, getFontSize } from './layout-utils'
@@ -93,12 +95,12 @@ interface CommentData {
 /**
  * 测量 title 尺寸
  */
-function measureTitle(node: NodeDesc, options: LayoutOptions): { width: number; height: number } {
+function measureTitle(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null): { width: number; height: number } {
   const title = getTitle(node)
-  const fontSize = getFontSize(node)
-  const fontFamily = getFontFamily(node)
-  const fontWeight = getFontWeight(node)
-  const fontStyle = getFontStyle(node)
+  const fontSize = getFontSize(node, styleEngine, state)
+  const fontFamily = getFontFamily(node, styleEngine, state)
+  const fontWeight = getFontWeight(node, styleEngine, state)
+  const fontStyle = getFontStyle(node, styleEngine, state)
   return measureTextSize(title, fontSize, options, fontFamily, fontWeight, fontStyle)
 }
 
@@ -247,7 +249,7 @@ function measureLink(node: NodeDesc): { width: number; height: number } {
 /**
  * 测量 numbering 尺寸
  */
-function measureNumbering(node: NodeDesc, options: LayoutOptions): { width: number; height: number } {
+function measureNumbering(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null): { width: number; height: number } {
   const numbering = getAttr<NumberingData>(node, 'numbering')
   if (!numbering) return { width: 0, height: 0 }
 
@@ -255,7 +257,7 @@ function measureNumbering(node: NodeDesc, options: LayoutOptions): { width: numb
   const prefix = numbering.prefix ?? ''
   const suffix = numbering.suffix ?? '.'
   const numberingText = `${prefix}1${suffix}` // 用 "1" 作为示例数字
-  return measureTextSize(numberingText, getFontSize(node), options)
+  return measureTextSize(numberingText, getFontSize(node, styleEngine, state), options)
 }
 
 /**
@@ -277,11 +279,13 @@ function measureComments(node: NodeDesc): { width: number; height: number } {
 export function measureNodeParts(
   node: NodeDesc,
   options: LayoutOptions,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
 ): PartMeasurement[] {
   const parts: PartMeasurement[] = []
 
   // 测量 title
-  const titleSize = measureTitle(node, options)
+  const titleSize = measureTitle(node, options, styleEngine, state)
   if (titleSize.width > 0 || titleSize.height > 0) {
     parts.push({
       partType: 'title',
@@ -292,7 +296,7 @@ export function measureNodeParts(
   }
 
   // 测量 numbering
-  const numberingSize = measureNumbering(node, options)
+  const numberingSize = measureNumbering(node, options, styleEngine, state)
   if (numberingSize.width > 0 || numberingSize.height > 0) {
     parts.push({
       partType: 'numbering',

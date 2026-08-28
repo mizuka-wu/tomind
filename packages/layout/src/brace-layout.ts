@@ -6,9 +6,11 @@
  * 与 Logic 的区别: Brace 的子节点更紧凑，适合表示列表或分组
  */
 import type { NodeDesc } from '@tomind/schema'
+import type { StyleEngine } from '@tomind/style'
+import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
-import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleSubtree } from './layout-utils'
+import { getTitle, getFontSize, getFontFamily, getFontWeight, getFontStyle, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleSubtree } from './layout-utils'
 type NodeSize = import('./layout-utils').SimpleNodeSize
 
 /** 递归计算子树总高度（垂直方向的总跨度） */
@@ -47,9 +49,14 @@ function layoutSubtreeRight(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
-  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
+  const { width: titleWidth, height: titleHeight } = measureTextSize(
+    getTitle(node), getFontSize(node, styleEngine, state), options,
+    getFontFamily(node, styleEngine, state), getFontWeight(node, styleEngine, state), getFontStyle(node, styleEngine, state),
+  )
 
   // 子节点垂直堆叠，向右展开
   let totalH = 0
@@ -78,7 +85,7 @@ function layoutSubtreeRight(
 
   for (const child of children) {
     const ch = subtreeTotalHeight(child, options, sizeMap)
-    layoutSubtreeRight(child, childX, childY, options, sizeMap, nodes)
+    layoutSubtreeRight(child, childX, childY, options, sizeMap, nodes, styleEngine, state)
     childY += ch + compactGap
   }
 }
@@ -92,9 +99,14 @@ function layoutSubtreeLeft(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
-  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
+  const { width: titleWidth, height: titleHeight } = measureTextSize(
+    getTitle(node), getFontSize(node, styleEngine, state), options,
+    getFontFamily(node, styleEngine, state), getFontWeight(node, styleEngine, state), getFontStyle(node, styleEngine, state),
+  )
 
   let totalH = 0
   const children = getAttachedChildren(node)
@@ -123,7 +135,7 @@ function layoutSubtreeLeft(
   for (const child of children) {
     const cs = sizeMap.get(child.id)!
     const ch = subtreeTotalHeight(child, options, sizeMap)
-    layoutSubtreeLeft(child, childX - cs.width, childY, options, sizeMap, nodes)
+    layoutSubtreeLeft(child, childX - cs.width, childY, options, sizeMap, nodes, styleEngine, state)
     childY += ch + compactGap
   }
 }
@@ -132,19 +144,19 @@ function layoutSubtreeLeft(
 
 export const braceRightLayoutAlgorithm: LayoutAlgorithm = {
   name: 'brace-right',
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS): LayoutResult {
+  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
     const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSimpleSubtree(root, options, sizeMap)
+    measureSimpleSubtree(root, options, sizeMap, styleEngine, state)
 
     const totalH = subtreeTotalHeight(root, options, sizeMap)
     const rootX = options.rootOffsetX
     const rootY = (totalH - sizeMap.get(root.id)!.height) / 2
 
-    layoutSubtreeRight(root, rootX, rootY, options, sizeMap, nodes)
+    layoutSubtreeRight(root, rootX, rootY, options, sizeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {
@@ -158,13 +170,13 @@ export const braceRightLayoutAlgorithm: LayoutAlgorithm = {
 
 export const braceLeftLayoutAlgorithm: LayoutAlgorithm = {
   name: 'brace-left',
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS): LayoutResult {
+  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
     const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSimpleSubtree(root, options, sizeMap)
+    measureSimpleSubtree(root, options, sizeMap, styleEngine, state)
 
     const totalH = subtreeTotalHeight(root, options, sizeMap)
     const totalW = subtreeTotalWidth(root, options, sizeMap)
@@ -172,7 +184,7 @@ export const braceLeftLayoutAlgorithm: LayoutAlgorithm = {
     const rootX = totalW - rootW - options.rootOffsetX
     const rootY = (totalH - sizeMap.get(root.id)!.height) / 2
 
-    layoutSubtreeLeft(root, rootX, rootY, options, sizeMap, nodes)
+    layoutSubtreeLeft(root, rootX, rootY, options, sizeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {

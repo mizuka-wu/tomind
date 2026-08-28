@@ -27,9 +27,11 @@ function measureNodeSize(
   node: NodeDesc,
   padding: { top: number; right: number; bottom: number; left: number },
   options: LayoutOptions,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
 ): NodeSize {
   if (hasNonTitleParts(node)) {
-    const result = measurePartAwareNode(node, options)
+    const result = measurePartAwareNode(node, options, styleEngine, state)
     return {
       width: result.width,
       height: result.height,
@@ -39,7 +41,7 @@ function measureNodeSize(
     }
   }
 
-  const result = measureTitleOnlyNode(node, padding, options)
+  const result = measureTitleOnlyNode(node, padding, options, styleEngine, state)
   return {
     width: result.width,
     height: result.height,
@@ -49,11 +51,11 @@ function measureNodeSize(
   }
 }
 
-function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): void {
-  sizeMap.set(node.id, measureNodeSize(node, options.nodePadding, options))
+function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: StyleEngine | null, state?: SheetState | null): void {
+  sizeMap.set(node.id, measureNodeSize(node, options.nodePadding, options, styleEngine, state))
   if (!isCollapsed(node)) {
     for (const child of getAttachedChildren(node)) {
-      measureSubtree(child, options, sizeMap)
+      measureSubtree(child, options, sizeMap, styleEngine, state)
     }
   }
 }
@@ -152,7 +154,7 @@ export const logicRightLayoutAlgorithm: LayoutAlgorithm = {
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSubtree(root, options, sizeMap)
+    measureSubtree(root, options, sizeMap, styleEngine, state)
 
     const totalH = subtreeTotalHeight(root, options, sizeMap, styleEngine, state)
     const rootX = options.rootOffsetX
@@ -189,7 +191,7 @@ export const logicLeftLayoutAlgorithm: LayoutAlgorithm = {
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSubtree(root, options, sizeMap)
+    measureSubtree(root, options, sizeMap, styleEngine, state)
 
     const totalH = subtreeTotalHeight(root, options, sizeMap, styleEngine, state)
     const totalW = subtreeTotalWidth(root, options, sizeMap, styleEngine, state)
