@@ -362,7 +362,10 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     }
 
     // 计算两侧总高度（用于 branchHeight）
-    const minorSpacing = this.getAdaptiveSpacingMinor(size.height, regularChildren, sizeMap)
+    const rawMinorNode = (styleEngine && state)
+      ? styleEngine.getStyleValue(state, node.id, 'spacingMinor')
+      : undefined
+    const minorSpacing = typeof rawMinorNode === 'number' ? rawMinorNode : 0
     const rightTotalH = rightChildren.reduce((sum, c) => sum + (sizeMap.get(c.id)?.height ?? 0), 0)
       + Math.max(0, rightChildren.length - 1) * minorSpacing
     const leftTotalH = leftChildren.reduce((sum, c) => sum + (sizeMap.get(c.id)?.height ?? 0), 0)
@@ -419,7 +422,12 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     if (n === 0) return
 
     const treeDir = side === 'right' ? 'right' as const : 'left' as const
-    const spacingMinor = this.getAdaptiveSpacingMinor(parentHeight, children, sizeMap)
+    // snowbrush: spacingMinor = branch.figure.minorSpacing ?? 0（来自样式系统）
+    // 不要用 getAdaptiveSpacingMinor（那是 minSumTopicSpacing，不是 spacingMinor）
+    const rawMinor = (styleEngine && state)
+      ? styleEngine.getStyleValue(state, parent.id, 'spacingMinor')
+      : undefined
+    const spacingMinor = typeof rawMinor === 'number' ? rawMinor : 0
 
     // 设置 outsidePadding
     for (let i = 0; i < n; i++) {
