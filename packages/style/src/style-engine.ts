@@ -227,6 +227,7 @@ export class StyleEngine {
           result = { ...result, ...levelStyle }
         }
       }
+
     }
 
     // 层 4.5: Layout Mode（布局模式覆盖，如 compact/loose）

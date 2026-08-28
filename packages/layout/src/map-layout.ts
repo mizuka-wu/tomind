@@ -7,6 +7,7 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
+import { DEFAULT_STYLES, classifyNode } from '@tomind/style'
 import type { LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { BaseLayout } from './base-layout'
@@ -187,14 +188,18 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
   private getNodePadding(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null): { top: number; right: number; bottom: number; left: number } {
     if (!styleEngine || !state) return options.nodePadding
-    const readVal = (key: 'marginTop' | 'marginBottom' | 'marginLeft' | 'marginRight' | 'borderWidth'): number => {
+    const readVal = (key: 'marginTop' | 'marginBottom' | 'marginLeft' | 'marginRight'): number => {
       const val = styleEngine.getStyleValue(state, node.id, key)
       if (typeof val === 'number') return val
       if (typeof val === 'string') { const n = parseFloat(val); return isNaN(n) ? 0 : n }
       return 0
     }
     // snowbrush getTopicMargins: margin + borderWidth
-    const bw = readVal('borderWidth')
+    // borderWidth 从 DEFAULT_STYLES 读取（对齐 SB 的 stableStyles，不受文件主题影响）
+    const nodeType = classifyNode(state.doc, node.id)
+    const defaults = (DEFAULT_STYLES as Record<string, Record<string, unknown>>)[nodeType] ?? DEFAULT_STYLES['mainTopic']
+    const rawBw = defaults['borderWidth']
+    const bw = typeof rawBw === 'string' ? parseFloat(rawBw) : (typeof rawBw === 'number' ? rawBw : 0)
     const top = readVal('marginTop') + bw
     const bottom = readVal('marginBottom') + bw
     const left = readVal('marginLeft') + bw
