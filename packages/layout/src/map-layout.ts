@@ -450,29 +450,46 @@ class MapLayout extends BaseLayout {
       this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, localBBMap)
     }
 
-    // Compute boundaryBounds by merging topic + children's bounds (SB mergeBounds)
+    // Compute boundaryBounds (SB mergeBounds: topic merged with children's subtree extents)
+    // X: use positioned children's actual extent (correct)
     let bbMinX = 0
-    let bbMinY = 0
     let bbMaxX = size.width
-    let bbMaxY = size.height
 
     for (const child of regularChildren) {
       const nl = nodes.get(child.id)
       const childBB = localBBMap.get(child.id)
       if (!nl || !childBB) continue
       const relX = nl.x - x
-      const relY = nl.y - y
       bbMinX = Math.min(bbMinX, relX + childBB.x)
-      bbMinY = Math.min(bbMinY, relY + childBB.y)
       bbMaxX = Math.max(bbMaxX, relX + childBB.x + childBB.width)
-      bbMaxY = Math.max(bbMaxY, relY + childBB.y + childBB.height)
     }
+
+    // Y/Height: use childrenTotalHeight (sum of bb.height + outsidePad + spacing)
+    // to include full subtree extent, not positioned centering which clips to parent size.
+    // This matches layoutSide's childrenTotalHeight calculation (step d).
+    const rawSm = (styleEngine && state)
+      ? styleEngine.getStyleValue(state, node.id, 'spacingMinor')
+      : undefined
+    const bbSpacingMinor = typeof rawSm === 'number' ? rawSm : parseInt(String(rawSm)) || 0
+    const bbLineWidth = 1
+
+    let childrenTotalHeight = 0
+    for (let i = 0; i < regularChildren.length; i++) {
+      const childBB = localBBMap.get(regularChildren[i].id)
+      const childSize = sizeMap.get(regularChildren[i].id)
+      const op = childSize?.outsidePadding
+      const outsidePadH = (op?.top ?? 0) + (op?.bottom ?? 0)
+      childrenTotalHeight += (childBB?.height ?? 0) + outsidePadH
+      if (i < regularChildren.length - 1) childrenTotalHeight += bbSpacingMinor + bbLineWidth
+    }
+
+    const bbHeight = Math.max(size.height, childrenTotalHeight)
 
     const boundaryBounds: BoundaryBounds = {
       x: bbMinX,
-      y: bbMinY,
+      y: -(bbHeight - size.height) / 2,
       width: bbMaxX - bbMinX,
-      height: bbMaxY - bbMinY,
+      height: bbHeight,
     }
     localBBMap.set(node.id, boundaryBounds)
 
