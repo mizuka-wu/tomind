@@ -286,7 +286,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
   /**
    * 递归计算子树在主轴方向的总高度（含 outsidePadding + 所有后代）。
-   * 对齐 snowbrush boundaryBounds.height。
+   * 对齐 snowbrush boundaryBounds.height = mergeBounds(topic.bounds, children.bounds)
    */
   private calcSubtreeHeight(
     node: NodeDesc,
@@ -310,7 +310,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     }
     if (regularChildren.length === 0) return selfH
 
-    // snowbrush: 每个节点用自己的 minorSpacing
+    // snowbrush: minorSpacing 来自父节点（当前 node 是子节点们的父）
     const rawMinor = (styleEngine && state)
       ? styleEngine.getStyleValue(state, node.id, 'spacingMinor')
       : undefined
@@ -322,6 +322,8 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
       if (i < regularChildren.length - 1) childrenTotal += nodeSpacingMinor
     }
 
+    // snowbrush mergeBounds: bounds = merge(topicView.bounds, children.boundaryBounds)
+    // 当 children 存在时，bounds 包含 parent topic + children 分布范围
     return Math.max(selfH, childrenTotal)
   }
 
@@ -463,14 +465,19 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     }
 
     // 使用基类的 snowbrush 对齐算法
-    // snowbrush boundaryBounds.y = -outsidePad.top
-    const boundarySizesArr = children.map((c, i) => this.calcSubtreeHeight(c, sizeMap, parent, i, treeDir, styleEngine, state))
+    // snowbrush boundaryBounds.height = outsidePad.top + subtreeHeight + outsidePad.bottom
+    const boundarySizesArr = children.map((c, i) => {
+      const subH = this.calcSubtreeHeight(c, sizeMap, parent, i, treeDir, styleEngine, state)
+      const op = sizeMap.get(c.id)?.outsidePadding
+      const totalH = subH + (op?.top ?? 0) + (op?.bottom ?? 0)
+      return totalH
+    })
 
     const yPos = this.calcCumulativePositions(
       children,
       spacingMinor,
       (child) => sizeMap.get(child.id)!.height,
-      (child, i) => this.calcSubtreeHeight(child, sizeMap, parent, i, treeDir, styleEngine, state),
+      (_child, i) => boundarySizesArr[i],
       parentHeight,
       (_child, i) => -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0),
       undefined, // topicView.bounds.y 通常为 0
