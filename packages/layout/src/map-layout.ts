@@ -187,16 +187,18 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
   private getNodePadding(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null): { top: number; right: number; bottom: number; left: number } {
     if (!styleEngine || !state) return options.nodePadding
-    const readMargin = (key: 'marginTop' | 'marginBottom' | 'marginLeft' | 'marginRight'): number => {
+    const readVal = (key: 'marginTop' | 'marginBottom' | 'marginLeft' | 'marginRight' | 'borderWidth'): number => {
       const val = styleEngine.getStyleValue(state, node.id, key)
       if (typeof val === 'number') return val
       if (typeof val === 'string') { const n = parseFloat(val); return isNaN(n) ? 0 : n }
       return 0
     }
-    const top = readMargin('marginTop')
-    const bottom = readMargin('marginBottom')
-    const left = readMargin('marginLeft')
-    const right = readMargin('marginRight')
+    // snowbrush getTopicMargins: margin + borderWidth
+    const bw = readVal('borderWidth')
+    const top = readVal('marginTop') + bw
+    const bottom = readVal('marginBottom') + bw
+    const left = readVal('marginLeft') + bw
+    const right = readVal('marginRight') + bw
     if (top === 0 && bottom === 0 && left === 0 && right === 0) return options.nodePadding
     return { top, right, bottom, left }
   }
@@ -482,7 +484,6 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
       (_child, i) => -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0),
       undefined, // topicView.bounds.y 通常为 0
     )
-
 
     // 父节点居中于首尾子节点之间
     const firstChildCenter = yPos[0] + sizeMap.get(children[0].id)!.height / 2
