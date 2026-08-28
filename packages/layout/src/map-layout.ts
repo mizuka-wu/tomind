@@ -107,17 +107,31 @@ class MapLayout extends BaseLayout {
     // 第一遍：计算位置（无 boundaryBounds）
     this.layoutNode(root, rootX, rootY, options, sizeMap, nodes, undefined, styleEngine, state)
 
-    // 计算 boundaryBounds
+    // 用 calcSubtreeHeight 构建 boundaryBoundsMap（对齐 SB boundaryBounds.height）
+    // 不用 computeBoundaryBounds（实际 extent 因级联效应偏小）
     const boundaryBoundsMap = new Map<string, BoundaryBounds>()
-    this.computeBoundaryBounds(root, nodes, boundaryBoundsMap)
+    const buildBBMap = (node: NodeDesc, parent: NodeDesc, childIndex: number, treeDir: 'right' | 'left') => {
+      const nl = nodes.get(node.id)
+      if (!nl) return
+      const subH = this.calcSubtreeHeight(node, sizeMap, parent, childIndex, treeDir, styleEngine, state)
+      boundaryBoundsMap.set(node.id, { x: nl.x, y: nl.y, width: nl.width, height: subH })
+      if (!isCollapsed(node)) {
+        const children = getAttachedChildren(node)
+        children.forEach((c, i) => buildBBMap(c, node, i, treeDir))
+      }
+    }
+    // root 的子节点分左右两侧
+    const rootChildren = getAttachedChildren(root)
+    // 简化：所有子节点都用 'right' 方向（outsidePad 差异很小）
+    rootChildren.forEach((c, i) => buildBBMap(c, root, i, 'right'))
 
     // 从第一遍结果提取子树高度，供 outward distance 使用
     const subtreeHeightMap = new Map<string, number>()
-    for (const [id, nl] of nodes) {
-      subtreeHeightMap.set(id, nl.branchHeight)
+    for (const [id, bb] of boundaryBoundsMap) {
+      subtreeHeightMap.set(id, bb.height)
     }
 
-    // 第二遍：用 boundaryBounds 做 X offset 对齐
+    // 第二遍：用 boundaryBounds 做定位
     const nodes2 = new Map<string, import('./layout-engine').NodeLayout>()
     this.layoutNode(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap, styleEngine, state, subtreeHeightMap)
 
@@ -305,8 +319,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     state?: SheetState | null,
   ): number {
     const size = sizeMap.get(node.id)!
-    const outsidePad = computeOutsidePadding(parent, childIndex, treeDir)
-    const selfH = size.height + outsidePad.top + outsidePad.bottom
+    const selfH = size.height
 
     if (isCollapsed(node)) return selfH
 
@@ -441,12 +454,17 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
 
     this.positionSummaries(node, regularChildren, nodes, options, sizeMap, styleEngine, state)
 
-    // 计算子树包围盒（对齐 snowbrush calBounds → mergeBounds）
-    const topicBottom = y + size.height
-    const topicRight = x + size.width
+    // 用 calcSubtreeHeight 计算 branchHeight（对齐 SB boundaryBounds.height）
+    // 不用实际 extent，因为递归级联导致实际值偏小
     const allMinY = Math.min(y, rightBounds.y, leftBounds.y)
-    const allMaxY = Math.max(topicBottom, rightBounds.y + rightBounds.height, leftBounds.y + leftBounds.height)
-    return { width: topicRight - Math.min(x, rightBounds.x, leftBounds.x), height: allMaxY - allMinY }
+    const allMaxY = Math.max(y + size.height, rightBounds.y + rightBounds.height, leftBounds.y + leftBounds.height)
+    const actualHeight = allMaxY - allMinY
+
+    // branchHeight 用 calcSubtreeHeight 的估算值（更接近 SB）
+    // 但 layoutNode 没有 parent/childIndex 参数，所以用 actualHeight
+    // 差异在 layoutSide 的 subtreeSizes 中已处理
+
+    return { width: (x + size.width) - Math.min(x, rightBounds.x, leftBounds.x), height: actualHeight }
   }
 
   private layoutSide(
@@ -479,18 +497,23 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
       size.outsidePadding = computeOutsidePadding(parent, i, treeDir)
     }
 
-    // 第一步: 预估子树高度用于定位（对齐 SB 的 boundaryBounds.height）
-    const estimatedBounds = children.map((c, i) => {
-      const subH = this.calcSubtreeHeight(c, sizeMap, parent, i, treeDir, styleEngine, state)
-      const op = sizeMap.get(c.id)?.outsidePadding
-      return subH + (op?.top ?? 0) + (op?.bottom ?? 0)
+    // 第一步: 获取子树高度（第二遍用实际 boundaryBounds，第一遍用估算）
+    const useActualBB = !!boundaryBoundsMap
+    const subtreeSizes = children.map((c, i) => {
+      if (useActualBB) {
+        // 第二遍：用第一遍的实际 boundaryBounds.height（已含 outsidePad）
+        const bb = boundaryBoundsMap!.get(c.id)
+        return bb?.height ?? sizeMap.get(c.id)?.height ?? 0
+      }
+      // 第一遍：用 calcSubtreeHeight（已含 outsidePad）
+      return this.calcSubtreeHeight(c, sizeMap, parent, i, treeDir, styleEngine, state)
     })
 
     // 第二步: SB 累加定位（替换 calcCumulativePositions）
     const lineWidth = 1 // borderWidth
     let childrenTotalHeight = 0
     for (let i = 0; i < n; i++) {
-      childrenTotalHeight += estimatedBounds[i]
+      childrenTotalHeight += subtreeSizes[i]
       if (i < n - 1) childrenTotalHeight += spacingMinor + lineWidth
     }
 
@@ -500,7 +523,7 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     for (let i = 0; i < n; i++) {
       const bbOffsetY = -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0)
       childPositions.push(currentChildY - bbOffsetY)
-      currentChildY += estimatedBounds[i] + spacingMinor + lineWidth
+      currentChildY += subtreeSizes[i] + spacingMinor + lineWidth
     }
 
     // 第三步: 布局子节点（用最终位置），收集真实包围盒
