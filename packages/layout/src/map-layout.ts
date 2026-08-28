@@ -100,7 +100,7 @@ class MapLayout extends BaseLayout {
     const sizeMap = new Map<string, NodeSize>()
     this.measureSubtree(root, options, sizeMap, styleEngine, state)
 
-    const rootX = 0
+    const rootX = options.rootOffsetX
     const rootY = 0
 
     // 第一遍：计算位置（无 boundaryBounds）
@@ -120,8 +120,13 @@ class MapLayout extends BaseLayout {
     const nodes2 = new Map<string, import('./layout-engine').NodeLayout>()
     this.layoutNode(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap, styleEngine, state, subtreeHeightMap)
 
-    // 平移到正数区
-    const { totalWidth, totalHeight } = this.normalizePositions(nodes2)
+    // 不做 normalizePositions — 保持原始坐标（对齐 snowbrush 坐标系）
+    let totalWidth = 0
+    let totalHeight = 0
+    for (const l of nodes2.values()) {
+      totalWidth = Math.max(totalWidth, l.x + l.width)
+      totalHeight = Math.max(totalHeight, l.y + l.height)
+    }
     return { nodes: nodes2, totalWidth, totalHeight }
   }
 
@@ -423,12 +428,15 @@ if (children.length < CHILDREN_COUNT_LIMIT) return 0
     }
 
     // 使用基类的 snowbrush 对齐算法
+    // snowbrush boundaryBounds.y = -outsidePad.top
     const yPos = this.calcCumulativePositions(
       children,
       spacingMinor,
       (child) => sizeMap.get(child.id)!.height,
       (child, i) => this.calcSubtreeHeight(child, sizeMap, parent, i, treeDir, spacingMinor),
       parentHeight,
+      (_child, i) => -(sizeMap.get(children[i].id)?.outsidePadding?.top ?? 0),
+      undefined, // topicView.bounds.y 通常为 0
     )
 
     // 父节点居中于首尾子节点之间

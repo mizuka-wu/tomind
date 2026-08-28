@@ -42,16 +42,19 @@ export abstract class BaseLayout implements LayoutAlgorithm {
   /**
    * 动态累积定位（对齐 snowbrush calSidePos 核心算法）。
    *
-   * 每个子节点的位置取两个候选值的 max：
-   * 1. boundary 间距：prev.boundaryBottom + spacingMinor - curr.boundaryTop
-   * 2. topic 间距：prev.topicBottom + remainingSumSpacing/(n-i)
+   * snowbrush 公式（每个子节点相对第一个子节点的 Y 偏移）：
+   * yPos[i] = max(
+   *   yPos[i-1] + pre.bb.y + pre.bb.h + spacingMinor - now.bb.y,      // boundary 候选
+   *   yPos[i-1] + pre.tv.y + pre.tv.h + sumSpacing/(n-i) - now.tv.y   // topic 候选
+   * )
    *
    * @param children 子节点列表
    * @param spacingMinor 兄弟间距
-   * @param getTopicSize 获取节点自身高度（不含子树）
-   * @param getBoundarySize 获取节点子树总高度（含 outsidePadding + 所有后代）
-   * @param parentHeight 父节点高度（用于计算 minSumTopicSpacing）
-   * @returns 每个子节点相对于第一个子节点的 Y 偏移
+   * @param getTopicSize 节点自身高度
+   * @param getBoundarySize 子树总高度（含 outsidePadding）
+   * @param getBoundaryOffsetY boundaryBounds.y（=-outsidePad.top）
+   * @param getTopicOffsetY topicView.bounds.y（节点在 branch 内的 Y 偏移，通常 0）
+   * @param parentHeight 父节点高度（用于 minSumTopicSpacing）
    */
   protected calcCumulativePositions(
     children: readonly NodeDesc[],
@@ -59,15 +62,21 @@ export abstract class BaseLayout implements LayoutAlgorithm {
     getTopicSize: (child: NodeDesc, index: number) => number,
     getBoundarySize: (child: NodeDesc, index: number) => number,
     parentHeight: number,
+    getBoundaryOffsetY?: (child: NodeDesc, index: number) => number,
+    getTopicOffsetY?: (child: NodeDesc, index: number) => number,
   ): number[] {
     const n = children.length
     if (n === 0) return []
 
     const topicSizes: number[] = []
     const boundarySizes: number[] = []
+    const bbOffsetY: number[] = []
+    const tvOffsetY: number[] = []
     for (let i = 0; i < n; i++) {
       topicSizes.push(getTopicSize(children[i], i))
       boundarySizes.push(getBoundarySize(children[i], i))
+      bbOffsetY.push(getBoundaryOffsetY ? getBoundaryOffsetY(children[i], i) : 0)
+      tvOffsetY.push(getTopicOffsetY ? getTopicOffsetY(children[i], i) : 0)
     }
 
     // 计算 minSumTopicSpacing（对齐 snowbrush getMinSumTopicSpacing）
@@ -86,9 +95,10 @@ export abstract class BaseLayout implements LayoutAlgorithm {
     if (n <= 2) {
       minSumTopicSpacing = topBottomSpacing
     } else {
+      // snowbrush: for middle children, subtract boundaryBounds.height
       minSumTopicSpacing = topBottomSpacing
       for (let i = 1; i < n - 1; i++) {
-        minSumTopicSpacing -= topicSizes[i]
+        minSumTopicSpacing -= boundarySizes[i]
       }
     }
 
@@ -97,18 +107,17 @@ export abstract class BaseLayout implements LayoutAlgorithm {
     let sumTopicSpacing = minSumTopicSpacing
     for (let i = 1; i < n; i++) {
       // 候选1: boundary 间距
-      // snowbrush: prev.boundaryBounds.y + prev.boundaryBounds.height + spacingMinor - now.boundaryBounds.y
-      // boundaryBounds.y 对于叶子=0，对于有子节点的=-outsidePad.top
-      // boundaryBounds.height = 子树总高度
-      const boundaryCandidate = yPos[i - 1] + boundarySizes[i - 1] + spacingMinor
+      // snowbrush: pre.bb.y + pre.bb.h + spacingMinor - now.bb.y
+      const boundaryCandidate = yPos[i - 1] + bbOffsetY[i - 1] + boundarySizes[i - 1] + spacingMinor - bbOffsetY[i]
 
       // 候选2: topic 间距（动态递减）
-      const topicCandidate = yPos[i - 1] + topicSizes[i - 1] + sumTopicSpacing / (n - i)
+      // snowbrush: pre.tv.y + pre.tv.h + sumSpacing/(n-i) - now.tv.y
+      const topicCandidate = yPos[i - 1] + tvOffsetY[i - 1] + topicSizes[i - 1] + sumTopicSpacing / (n - i) - tvOffsetY[i]
 
       yPos[i] = Math.max(boundaryCandidate, topicCandidate)
 
-      // 递减 sumTopicSpacing
-      sumTopicSpacing -= (yPos[i] - yPos[i - 1]) - topicSizes[i - 1]
+      // 递减 sumTopicSpacing（对齐 snowbrush）
+      sumTopicSpacing -= (yPos[i] + tvOffsetY[i]) - (yPos[i - 1] + tvOffsetY[i - 1] + topicSizes[i - 1])
     }
 
     return yPos
