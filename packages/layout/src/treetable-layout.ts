@@ -10,6 +10,7 @@ import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { getTitle, getFontSize, getFontFamily, getFontWeight, getFontStyle, isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
+import { measureStyledSubtree } from './spacing-utils'
 import { measureTitleOnlyNode } from './part-node-size'
 
 interface NodeSize {
