@@ -248,7 +248,6 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
         const lastRow = getLastRow(rows, item.id)
         if (firstRow === lastRow) {
           // 单行项
-          const size = sizeMap.get(item.id)!
           const extendW = getExtendWidth(item, styleEngine, state, options)
           singleItems.push({ node: item, extendW })
         }
@@ -365,7 +364,6 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
         const existing = nodePositions.get(item.id)
         if (existing) continue // 已经定位过（跨行项只定位一次）
 
-        const size = sizeMap.get(item.id)!
         const firstRow = getFirstRow(rows, item.id)
         const lastRow = getLastRow(rows, item.id)
 

@@ -125,25 +125,6 @@ function computeBoundaryBounds(
   return bb
 }
 
-/** 子树水平方向总跨度 — 仅累加子节点宽度 + gaps，不 Math.max 节点宽度 */
-function subtreeTotalWidth(
-  node: NodeDesc,
-  options: LayoutOptions,
-  sizeMap: Map<string, NodeSize>,
-  styleEngine: StyleEngine | null,
-  state: SheetState | null,
-): number {
-  if (isCollapsed(node)) return sizeMap.get(node.id)!.width
-  const children = getAttachedChildren(node)
-  if (children.length === 0) return sizeMap.get(node.id)!.width
-  let total = 0
-  for (let i = 0; i < children.length; i++) {
-    total += subtreeTotalWidth(children[i], options, sizeMap, styleEngine, state)
-    if (i < children.length - 1) total += getNodeSpacing(node, options, styleEngine, state, 'vertical').horizontalGap
-  }
-  return total
-}
-
 /** 子树总高度 */
 function subtreeHeight(
   node: NodeDesc,
