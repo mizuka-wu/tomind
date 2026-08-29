@@ -12,8 +12,8 @@ import type { NodeDesc } from '@tomind/schema'
 import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
-import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
-import { getTitle, getFontSize, getFontFamily, getFontWeight, getFontStyle, isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
+import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
+import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
 import { measureTitleOnlyNode } from './part-node-size'
 
 interface NodeSize {
@@ -160,12 +160,6 @@ function getLastRow(rows: TableRow[], nodeId: string): number {
   return -1
 }
 
-/** 判断节点是否在行中出现多次（跨行） */
-function isExpandItem(row: (NodeDesc | null)[], item: NodeDesc): boolean {
-  const indices = row.map((n, i) => n?.id === item.id ? i : -1).filter(i => i >= 0)
-  return indices.length > 1 && indices[0] !== indices[indices.length - 1]
-}
-
 /** 获取节点的扩展宽度（padding + border）对齐 SB getExtendWidth */
 function getExtendWidth(
   node: NodeDesc,
@@ -268,7 +262,6 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
     }
 
     // 计算跨行项的宽度
-    const nodeCellWidths = new Map<string, number>()
     for (const nodeId of allNodeIds) {
       const firstRow = getFirstRow(rows, nodeId)
       const lastRow = getLastRow(rows, nodeId)

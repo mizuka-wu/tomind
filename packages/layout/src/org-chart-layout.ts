@@ -13,10 +13,9 @@ import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
-import { measureStyledSubtree } from './spacing-utils'
+import { getNodeSpacing } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
-import { getNodeSpacing } from './spacing-utils'
 
 interface NodeSize {
   width: number
