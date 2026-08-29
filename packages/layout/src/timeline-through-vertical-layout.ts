@@ -1,4 +1,3 @@
-// TODO: 与 XMind timeline.through.vertical 间距对齐
 /**
  * Timeline Through Vertical 布局 — 穿透垂直时间线
  *
@@ -8,7 +7,9 @@
  * 对齐 snowbrush 双约束定位算法：
  *   - boundaryBounds 包含节点自身 + 所有后代的包围盒
  *   - Y 位置取两个候选值的 max（间距约束 vs bounds 约束）
+ * snowbrush designPadding: central=60, 其他=36
  */
+const DESIGN_PADDING = 10
 import type { NodeDesc } from '@tomind/schema'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
@@ -67,11 +68,11 @@ function computeBoundaryBounds(
       rightMaxWidth = Math.max(rightMaxWidth, cs.width + options.horizontalGap)
     }
     totalChildrenHeight += childBBs[i].height
-    if (i < children.length - 1) totalChildrenHeight += options.verticalGap
+    if (i < children.length - 1) totalChildrenHeight += DESIGN_PADDING
   }
 
   const width = leftMaxWidth + size.width + rightMaxWidth
-  const height = size.height + options.verticalGap + totalChildrenHeight
+  const height = size.height + DESIGN_PADDING + totalChildrenHeight
   // x 偏移：左子树扩展时为负值
   const x = -leftMaxWidth
 
@@ -112,7 +113,7 @@ function layoutSubtree(
     for (let i = 0; i < children.length; i++) {
       const cBB = bbMap.get(children[i].id)!
       total += cBB.height
-      if (i < children.length - 1) total += options.verticalGap
+      if (i < children.length - 1) total += DESIGN_PADDING
     }
     branchHeight = Math.max(size.height, total)
   }
@@ -123,11 +124,9 @@ function layoutSubtree(
 
   // 双约束定位（对齐 snowbrush boundaryBounds 算法）
   // SB 核心公式：
-  //   offsetYOfTopics = prevY + TOPIC_SPACING
-  //   offsetYOfBounds = prevY + prevBoundsHeight + prevBoundsY
-  //   y = Math.max(offsetYOfTopics, offsetYOfBounds)
-  // 其中 prevBoundsY=0（BB 从节点位置开始），简化为：
-  //   childY = Math.max(prevY + spacing, prevY + prevBBHeight)
+  //   offsetYOfTopics = prevShapeOffsetY + TOPIC_SPACING - currBoundsY
+  //   offsetYOfBounds = prevShapeOffsetY + prevBoundsHeight + prevBoundsY - currBoundsY
+  //   y = prevPosY + Math.max(offsetYOfTopics, offsetYOfBounds)
 
   let prevY = y
   let prevBBHeight = size.height  // 初始：父节点自身高度作为"前一个"高度
@@ -138,7 +137,7 @@ function layoutSubtree(
     const cBB = bbMap.get(child.id)!
 
     // 约束 1：基于节点间距 — 前一个位置底部 + 间距
-    const offsetYOfTopics = prevY + options.verticalGap
+    const offsetYOfTopics = prevY + DESIGN_PADDING
     // 约束 2：基于 boundaryBounds — 前一个位置 + 前一个 BB 高度
     //   确保当前子节点的子树不与前一个子节点的子树重叠
     const offsetYOfBounds = prevY + prevBBHeight
