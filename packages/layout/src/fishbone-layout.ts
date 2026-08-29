@@ -1,5 +1,4 @@
-// TODO: 与 XMind fishbone 斜线角度/间距对齐
-// TODO: leftHeaded/rightHeaded 对称性
+// snowbrush fishbone 对角线算法对齐 (BONE_CONNECTION_TAN = 1.5)
 /**
  * Fishbone 布局 — 鱼骨图（石川图）
  *
@@ -16,6 +15,9 @@ import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layo
 import { measureStyledSubtree } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
+
+/** snowbrush fishbone 骨线斜率 (tan 值) */
+const BONE_CONNECTION_TAN = 1.5
 
 function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value
@@ -182,10 +184,11 @@ function layoutFishbone(
   state: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
-
-  // 分支高度 = 主脊上下两侧子节点的垂直总跨度
-  let branchHeight = size.height
   const children = getAttachedChildren(node)
+  const lineSpacing = getSpacingMajor(node, options, styleEngine, state)
+
+  // 分支高度 = 上下两组子节点的最大累积高度
+  let branchHeight = size.height
   if (!isCollapsed(node) && children.length > 0) {
     let topH = 0
     let bottomH = 0
@@ -198,31 +201,52 @@ function layoutFishbone(
 
   nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight, partBounds: size.partBounds })
 
-  if (isCollapsed(node)) return
-  if (children.length === 0) return
+  if (isCollapsed(node) || children.length === 0) return
 
-  // 鱼骨: 子节点沿主脊排列，交替上下
-  const spineGap = getSpacingMajor(node, options, styleEngine, state) * 1.5
-  let childX = headLeft
-    ? x + size.width + spineGap  // 鱼头在左，原因向右
-    : x - spineGap  // 鱼头在右，原因向左
+  // 对齐 snowbrush fishbone: 骨线沿对角线排列子节点
+  // boneX = 骨线起点（父节点边缘 + lineSpacing）
+  const boneX = headLeft ? x + size.width + lineSpacing : x - lineSpacing
+  // boneBaseY = 父节点垂直中心（骨线从中线出发）
+  const boneBaseY = y + size.height / 2
+
+  // 上方骨线（direction = -1）和下方骨线（direction = 1）各自维护骨线位置
+  let topBoneBaseX = boneX
+  let topBoneBaseY = boneBaseY
+  let bottomBoneBaseX = boneX
+  let bottomBoneBaseY = boneBaseY
 
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
     const cs = sizeMap.get(child.id)!
-    const childY = (i % 2 === 0)
-      ? y - cs.height - getSpacingMinor(node, options, styleEngine, state) * 2  // 上方（斜向上）
-      : y + size.height + getSpacingMinor(node, options, styleEngine, state) * 2  // 下方（斜向下）
+    const isTop = i % 2 === 0
+    const direction = isTop ? -1 : 1
 
-    // 水平偏移（斜线效果）
-    const spacingMajor = getSpacingMajor(node, options, styleEngine, state)
-    const offsetX = headLeft ? -spacingMajor * 0.3 : spacingMajor * 0.3
+    // 选择当前骨线位置
+    const currentBaseX = isTop ? topBoneBaseX : bottomBoneBaseX
+    const currentBaseY = isTop ? topBoneBaseY : bottomBoneBaseY
 
-    layoutFishbone(child, childX + offsetX, childY, headLeft, options, sizeMap, nodes, styleEngine, state)
+    // 子节点 Y: 最近边缘贴骨线 + lineSpacing
+    const childY = currentBaseY + (isTop ? -(cs.height + lineSpacing) : lineSpacing)
 
-    childX = headLeft
-      ? childX + subtreeTotalWidth(child, options, sizeMap, styleEngine, state) + spineGap
-      : childX - subtreeTotalWidth(child, options, sizeMap, styleEngine, state) - spineGap
+    // 子节点 X: SB 公式 — 沿斜线偏移
+    // childX 中心 = boneBaseX - (childHeight / 2 / BONE_TAN) * direction
+    const offsetX = -(cs.height / 2 / BONE_CONNECTION_TAN) * direction
+    const childX = currentBaseX + offsetX
+
+    layoutFishbone(child, childX, childY, headLeft, options, sizeMap, nodes, styleEngine, state)
+
+    // 更新骨线位置: 沿斜线方向推进
+    const childDistanceY = (cs.height + lineSpacing) * direction
+    const nextBaseX = currentBaseX - (Math.abs(childDistanceY) / BONE_CONNECTION_TAN) * direction
+    const nextBaseY = currentBaseY + childDistanceY
+
+    if (isTop) {
+      topBoneBaseX = nextBaseX
+      topBoneBaseY = nextBaseY
+    } else {
+      bottomBoneBaseX = nextBaseX
+      bottomBoneBaseY = nextBaseY
+    }
   }
 }
 
