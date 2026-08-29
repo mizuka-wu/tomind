@@ -8,7 +8,18 @@ import type { NodeDesc } from '@tomind/schema'
 import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutOptions } from './layout-engine'
-import { getAttr } from './layout-utils'
+import { measureTextSize } from './layout-engine'
+import {
+  getAttr,
+  getFontSize,
+  getFontFamily,
+  getFontWeight,
+  getFontStyle,
+  getTitle,
+  isCollapsed,
+  getAttachedChildren,
+} from './layout-utils'
+import type { SimpleNodeSize } from './layout-utils'
 
 export function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value
@@ -86,5 +97,32 @@ export function getNodeSpacing(
     horizontalGap: majorAxis === 'horizontal' ? majorGap : minorGap,
     verticalGap: majorAxis === 'horizontal' ? minorGap : majorGap,
     padding: { top, right, bottom, left },
+  }
+}
+
+/** 递归测量整棵子树，使用 getNodeSpacing 的样式感知 padding */
+export function measureStyledSubtree(
+  node: NodeDesc,
+  options: LayoutOptions,
+  sizeMap: Map<string, SimpleNodeSize>,
+  majorAxis: 'horizontal' | 'vertical',
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
+): void {
+  const fontSize = getFontSize(node, styleEngine, state)
+  const title = getTitle(node)
+  const fontFamily = getFontFamily(node, styleEngine, state)
+  const fontWeight = getFontWeight(node, styleEngine, state)
+  const fontStyle = getFontStyle(node, styleEngine, state)
+  const spacing = getNodeSpacing(node, options, styleEngine ?? null, state ?? null, majorAxis)
+  const { width, height } = measureTextSize(title, fontSize, options, fontFamily, fontWeight, fontStyle)
+  sizeMap.set(node.id, {
+    width: width + spacing.padding.left + spacing.padding.right,
+    height: height + spacing.padding.top + spacing.padding.bottom,
+  })
+  if (!isCollapsed(node)) {
+    for (const child of getAttachedChildren(node)) {
+      measureStyledSubtree(child, options, sizeMap, majorAxis, styleEngine, state)
+    }
   }
 }

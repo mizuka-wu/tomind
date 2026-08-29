@@ -11,6 +11,7 @@ import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleSubtree } from './layout-utils'
+import { measureStyledSubtree } from './spacing-utils'
 type NodeSize = import('./layout-utils').SimpleNodeSize
 
 function getSpacing(node: NodeDesc, key: 'spacingMajor' | 'spacingMinor', fallback: number, styleEngine: StyleEngine | null, state: SheetState | null): number {
@@ -102,7 +103,7 @@ export const timelineHorizontalLayoutAlgorithm: LayoutAlgorithm = {
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSimpleSubtree(root, options, sizeMap)
+    measureStyledSubtree(root, options, sizeMap, 'horizontal', styleEngine, state)
 
     layoutTimelineHorizontal(root, options.rootOffsetX, 200, options, sizeMap, nodes, styleEngine, state)
 
@@ -180,7 +181,7 @@ export const timelineVerticalLayoutAlgorithm: LayoutAlgorithm = {
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSimpleSubtree(root, options, sizeMap)
+    measureStyledSubtree(root, options, sizeMap, 'horizontal', styleEngine, state)
 
     layoutTimelineVertical(root, 200, options.rootOffsetX, options, sizeMap, nodes, styleEngine, state)
 
