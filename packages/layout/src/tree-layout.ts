@@ -351,11 +351,11 @@ function layoutSubtree(
         ? x + size.width + spacing.horizontalGap
         : x - childNodeSize.width - spacing.horizontalGap
 
-      // Use boundaryBounds height (size + outsidePadding) for spacing
-      const childBoundsH = childNodeSize.height + outsidePad.top + outsidePad.bottom
+      // Use subtree height (full branch extent) for spacing, matching snowbrush boundaryBounds behavior
+      const childSubtreeH = subtreeAxisSize(ctx, child, sizeMap, direction, node, childIdx)
 
       layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes)
-      childY += childBoundsH + spacing.verticalGap
+      childY += childSubtreeH + spacing.verticalGap
     }
   } else {
     // ── 垂直布局（down/up）──
@@ -369,14 +369,14 @@ function layoutSubtree(
       // Store the computed outsidePadding on the size
       childNodeSize.outsidePadding = outsidePad
 
-      // Use boundaryBounds width (size + outsidePadding) for spacing
-      const childBoundsW = childNodeSize.width + outsidePad.left + outsidePad.right
+      // Use subtree width (full branch extent) for spacing, matching snowbrush boundaryBounds behavior
+      const childSubtreeW = subtreeAxisSize(ctx, child, sizeMap, direction, node, childIdx)
 
       const childY = direction === 'down'
         ? y + size.height + spacing.verticalGap
         : y - childNodeSize.height - spacing.verticalGap
       layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes)
-      childX += childBoundsW + spacing.horizontalGap
+      childX += childSubtreeW + spacing.horizontalGap
     }
   }
 

@@ -6,38 +6,151 @@
  * 与 Logic 的区别: Brace 的子节点更紧凑，适合表示列表或分组
  */
 import type { NodeDesc } from '@tomind/schema'
-import type { StyleEngine } from '@tomind/style'
+import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
-import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
-import { getTitle, getFontSize, getFontFamily, getFontWeight, getFontStyle, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleSubtree } from './layout-utils'
-type NodeSize = import('./layout-utils').SimpleNodeSize
+import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
+import { getTitle, getFontSize, getFontFamily, getFontWeight, getFontStyle, isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
+import { measureTextSize } from './layout-engine'
+import { measureTitleOnlyNode } from './part-node-size'
+
+function parseStyleValue(value: unknown, fallback: number): number {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') {
+    const num = parseFloat(value)
+    return isNaN(num) ? fallback : num
+  }
+  return fallback
+}
+
+/**
+ * 读取节点的间距配置，对齐 logic-layout.ts 的 getNodeSpacing 模式：
+ * - spacingMajor / spacingMinor 从 resolved style 读取
+ * - padding 从 resolved style margin 属性 + attrs.style.margin 统一回退
+ */
+function getNodeSpacing(
+  node: NodeDesc,
+  options: LayoutOptions,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+) {
+  let style: ResolvedStyle | undefined
+  if (styleEngine && state) {
+    style = styleEngine.computeStyle(state, node.id)
+  }
+
+  if (!style) {
+    return {
+      horizontalGap: options.horizontalGap,
+      verticalGap: options.verticalGap,
+      padding: options.nodePadding,
+    }
+  }
+
+  const majorGap = parseStyleValue(style.spacingMajor, options.horizontalGap)
+  const minorGap = parseStyleValue(style.spacingMinor, options.verticalGap)
+
+  // 对齐 snowbrush getTopicMargins: 先读统一 margin，有值则四方向使用，否则 fallback 到分侧值
+  const rawStyle = getAttr<Record<string, unknown>>(node, 'style')
+  const rawMargin = rawStyle?.margin
+
+  let top: number
+  let bottom: number
+  let left: number
+  let right: number
+
+  if (typeof rawMargin === 'number' && rawMargin > 0) {
+    top = bottom = left = right = rawMargin
+  } else if (typeof rawMargin === 'string') {
+    const parsed = parseFloat(rawMargin)
+    if (!isNaN(parsed) && parsed > 0) {
+      top = bottom = left = right = parsed
+    } else {
+      top = parseStyleValue(style.marginTop, options.nodePadding.top)
+      bottom = parseStyleValue(style.marginBottom, options.nodePadding.bottom)
+      left = parseStyleValue(style.marginLeft, options.nodePadding.left)
+      right = parseStyleValue(style.marginRight, options.nodePadding.right)
+    }
+  } else {
+    top = parseStyleValue(style.marginTop, options.nodePadding.top)
+    bottom = parseStyleValue(style.marginBottom, options.nodePadding.bottom)
+    left = parseStyleValue(style.marginLeft, options.nodePadding.left)
+    right = parseStyleValue(style.marginRight, options.nodePadding.right)
+  }
+
+  return {
+    horizontalGap: majorGap,
+    verticalGap: minorGap,
+    padding: { top, right, bottom, left },
+  }
+}
+
+interface NodeSize {
+  width: number
+  height: number
+  titleWidth: number
+  titleHeight: number
+}
+
+function measureNodeSize(
+  node: NodeDesc,
+  padding: { top: number; right: number; bottom: number; left: number },
+  options: LayoutOptions,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
+): NodeSize {
+  const result = measureTitleOnlyNode(node, padding, options, styleEngine, state)
+  return {
+    width: result.width,
+    height: result.height,
+    titleWidth: result.titleWidth,
+    titleHeight: result.titleHeight,
+  }
+}
+
+function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: StyleEngine | null, state?: SheetState | null): void {
+  const spacing = getNodeSpacing(node, options, styleEngine ?? null, state ?? null)
+  sizeMap.set(node.id, measureNodeSize(node, spacing.padding, options, styleEngine, state))
+  if (!isCollapsed(node)) {
+    for (const child of getAttachedChildren(node)) {
+      measureSubtree(child, options, sizeMap, styleEngine, state)
+    }
+  }
+}
+
+function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  return getNodeSpacing(node, options, styleEngine, state).horizontalGap
+}
+
+function getSpacingMinor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  return getNodeSpacing(node, options, styleEngine, state).verticalGap
+}
 
 /** 递归计算子树总高度（垂直方向的总跨度） */
-function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine: StyleEngine | null, state: SheetState | null): number {
   const size = sizeMap.get(node.id)!
   if (isCollapsed(node)) return size.height
   const children = getAttachedChildren(node)
   if (children.length === 0) return size.height
   let total = 0
   for (let i = 0; i < children.length; i++) {
-    total += subtreeTotalHeight(children[i], options, sizeMap)
-    if (i < children.length - 1) total += options.verticalGap
+    total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state)
+    if (i < children.length - 1) total += getSpacingMinor(node, options, styleEngine, state)
   }
   return Math.max(size.height, total)
 }
 
 /** 递归计算子树总宽度（水平方向的总跨度） */
-function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>): number {
+function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine: StyleEngine | null, state: SheetState | null): number {
   const size = sizeMap.get(node.id)!
   if (isCollapsed(node)) return size.width
   const children = getAttachedChildren(node)
   if (children.length === 0) return size.width
   let maxChildWidth = 0
   for (const child of children) {
-    maxChildWidth = Math.max(maxChildWidth, subtreeTotalWidth(child, options, sizeMap))
+    maxChildWidth = Math.max(maxChildWidth, subtreeTotalWidth(child, options, sizeMap, styleEngine, state))
   }
-  return size.width + options.horizontalGap + maxChildWidth
+  return size.width + getSpacingMajor(node, options, styleEngine, state) + maxChildWidth
 }
 
 // ─── 右侧大括号布局 ───
@@ -49,29 +162,25 @@ function layoutSubtreeRight(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
-  styleEngine?: StyleEngine | null,
-  state?: SheetState | null,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
-  const { width: titleWidth, height: titleHeight } = measureTextSize(
-    getTitle(node), getFontSize(node, styleEngine, state), options,
-    getFontFamily(node, styleEngine, state), getFontWeight(node, styleEngine, state), getFontStyle(node, styleEngine, state),
-  )
 
   // 子节点垂直堆叠，向右展开
   let totalH = 0
   const children = getAttachedChildren(node)
   if (!isCollapsed(node) && children.length > 0) {
     for (let i = 0; i < children.length; i++) {
-      totalH += subtreeTotalHeight(children[i], options, sizeMap)
-      if (i < children.length - 1) totalH += options.verticalGap
+      totalH += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state)
+      if (i < children.length - 1) totalH += getSpacingMinor(node, options, styleEngine, state)
     }
   }
 
   nodes.set(node.id, {
     x, y,
     width: size.width, height: size.height,
-    titleWidth, titleHeight,
+    titleWidth: size.titleWidth, titleHeight: size.titleHeight,
     branchHeight: children.length > 0 && !isCollapsed(node) ? totalH : size.height,
   })
 
@@ -79,12 +188,12 @@ function layoutSubtreeRight(
   if (children.length === 0) return
 
   // 大括号布局：子节点更紧凑，间距减半
-  const compactGap = options.verticalGap * 0.5
+  const compactGap = getSpacingMinor(node, options, styleEngine, state) * 0.5
   let childY = y + (size.height - totalH) / 2
-  const childX = x + size.width + options.horizontalGap
+  const childX = x + size.width + getSpacingMajor(node, options, styleEngine, state)
 
   for (const child of children) {
-    const ch = subtreeTotalHeight(child, options, sizeMap)
+    const ch = subtreeTotalHeight(child, options, sizeMap, styleEngine, state)
     layoutSubtreeRight(child, childX, childY, options, sizeMap, nodes, styleEngine, state)
     childY += ch + compactGap
   }
@@ -99,28 +208,24 @@ function layoutSubtreeLeft(
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
-  styleEngine?: StyleEngine | null,
-  state?: SheetState | null,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
 ): void {
   const size = sizeMap.get(node.id)!
-  const { width: titleWidth, height: titleHeight } = measureTextSize(
-    getTitle(node), getFontSize(node, styleEngine, state), options,
-    getFontFamily(node, styleEngine, state), getFontWeight(node, styleEngine, state), getFontStyle(node, styleEngine, state),
-  )
 
   let totalH = 0
   const children = getAttachedChildren(node)
   if (!isCollapsed(node) && children.length > 0) {
     for (let i = 0; i < children.length; i++) {
-      totalH += subtreeTotalHeight(children[i], options, sizeMap)
-      if (i < children.length - 1) totalH += options.verticalGap
+      totalH += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state)
+      if (i < children.length - 1) totalH += getSpacingMinor(node, options, styleEngine, state)
     }
   }
 
   nodes.set(node.id, {
     x, y,
     width: size.width, height: size.height,
-    titleWidth, titleHeight,
+    titleWidth: size.titleWidth, titleHeight: size.titleHeight,
     branchHeight: children.length > 0 && !isCollapsed(node) ? totalH : size.height,
   })
 
@@ -128,13 +233,13 @@ function layoutSubtreeLeft(
   if (children.length === 0) return
 
   // 大括号布局：子节点更紧凑，间距减半
-  const compactGap = options.verticalGap * 0.5
+  const compactGap = getSpacingMinor(node, options, styleEngine, state) * 0.5
   let childY = y + (size.height - totalH) / 2
-  const childX = x - options.horizontalGap
+  const childX = x - getSpacingMajor(node, options, styleEngine, state)
 
   for (const child of children) {
     const cs = sizeMap.get(child.id)!
-    const ch = subtreeTotalHeight(child, options, sizeMap)
+    const ch = subtreeTotalHeight(child, options, sizeMap, styleEngine, state)
     layoutSubtreeLeft(child, childX - cs.width, childY, options, sizeMap, nodes, styleEngine, state)
     childY += ch + compactGap
   }
@@ -150,9 +255,9 @@ export const braceRightLayoutAlgorithm: LayoutAlgorithm = {
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSimpleSubtree(root, options, sizeMap, styleEngine, state)
+    measureSubtree(root, options, sizeMap, styleEngine, state)
 
-    const totalH = subtreeTotalHeight(root, options, sizeMap)
+    const totalH = subtreeTotalHeight(root, options, sizeMap, styleEngine, state)
     const rootX = options.rootOffsetX
     const rootY = (totalH - sizeMap.get(root.id)!.height) / 2
 
@@ -176,10 +281,10 @@ export const braceLeftLayoutAlgorithm: LayoutAlgorithm = {
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
     const sizeMap = new Map<string, NodeSize>()
-    measureSimpleSubtree(root, options, sizeMap, styleEngine, state)
+    measureSubtree(root, options, sizeMap, styleEngine, state)
 
-    const totalH = subtreeTotalHeight(root, options, sizeMap)
-    const totalW = subtreeTotalWidth(root, options, sizeMap)
+    const totalH = subtreeTotalHeight(root, options, sizeMap, styleEngine, state)
+    const totalW = subtreeTotalWidth(root, options, sizeMap, styleEngine, state)
     const rootW = sizeMap.get(root.id)!.width
     const rootX = totalW - rootW - options.rootOffsetX
     const rootY = (totalH - sizeMap.get(root.id)!.height) / 2

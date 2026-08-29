@@ -6,13 +6,89 @@
  * 根节点在顶部/底部，子节点水平展开，父节点居中对齐子节点组
  */
 import type { NodeDesc } from '@tomind/schema'
-import type { StyleEngine } from '@tomind/style'
+import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
-import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
+import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
+
+function parseStyleValue(value: unknown, fallback: number): number {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') {
+    const num = parseFloat(value)
+    return isNaN(num) ? fallback : num
+  }
+  return fallback
+}
+
+/**
+ * 读取节点的间距配置，对齐 logic-layout.ts 的 getNodeSpacing 模式：
+ * - spacingMajor / spacingMinor 从 resolved style 读取
+ * - padding 从 resolved style margin 属性 + attrs.style.margin 统一回退
+ *
+ * org-chart 方向映射:
+ *   spacingMajor → 垂直间距（父→子）
+ *   spacingMinor → 水平间距（兄弟间）
+ */
+function getNodeSpacing(
+  node: NodeDesc,
+  options: LayoutOptions,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+) {
+  let style: ResolvedStyle | undefined
+  if (styleEngine && state) {
+    style = styleEngine.computeStyle(state, node.id)
+  }
+
+  if (!style) {
+    return {
+      horizontalGap: options.horizontalGap,
+      verticalGap: options.verticalGap,
+      padding: options.nodePadding,
+    }
+  }
+
+  const majorGap = parseStyleValue(style.spacingMajor, options.verticalGap)
+  const minorGap = parseStyleValue(style.spacingMinor, options.horizontalGap)
+
+  // 对齐 snowbrush getTopicMargins: 先读统一 margin，有值则四方向使用，否则 fallback 到分侧值
+  const rawStyle = getAttr<Record<string, unknown>>(node, 'style')
+  const rawMargin = rawStyle?.margin
+
+  let top: number
+  let bottom: number
+  let left: number
+  let right: number
+
+  if (typeof rawMargin === 'number' && rawMargin > 0) {
+    top = bottom = left = right = rawMargin
+  } else if (typeof rawMargin === 'string') {
+    const parsed = parseFloat(rawMargin)
+    if (!isNaN(parsed) && parsed > 0) {
+      top = bottom = left = right = parsed
+    } else {
+      top = parseStyleValue(style.marginTop, options.nodePadding.top)
+      bottom = parseStyleValue(style.marginBottom, options.nodePadding.bottom)
+      left = parseStyleValue(style.marginLeft, options.nodePadding.left)
+      right = parseStyleValue(style.marginRight, options.nodePadding.right)
+    }
+  } else {
+    top = parseStyleValue(style.marginTop, options.nodePadding.top)
+    bottom = parseStyleValue(style.marginBottom, options.nodePadding.bottom)
+    left = parseStyleValue(style.marginLeft, options.nodePadding.left)
+    right = parseStyleValue(style.marginRight, options.nodePadding.right)
+  }
+
+  return {
+    horizontalGap: minorGap,
+    verticalGap: majorGap,
+    padding: { top, right, bottom, left },
+  }
+}
+
 
 interface NodeSize {
   width: number
@@ -51,7 +127,8 @@ function measureNodeSize(
 }
 
 function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine?: StyleEngine | null, state?: SheetState | null): void {
-  sizeMap.set(node.id, measureNodeSize(node, options.nodePadding, options, styleEngine, state))
+  const spacing = getNodeSpacing(node, options, styleEngine ?? null, state ?? null)
+  sizeMap.set(node.id, measureNodeSize(node, spacing.padding, options, styleEngine, state))
   if (!isCollapsed(node)) {
     for (const child of getAttachedChildren(node)) {
       measureSubtree(child, options, sizeMap, styleEngine, state)
@@ -59,21 +136,12 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
   }
 }
 
-/** spacingMajor: 父→子方向间距（垂直），spacingMinor: 兄弟间间距（水平） */
 function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
-  if (styleEngine && state) {
-    const val = styleEngine.getStyleValue(state, node.id, 'spacingMajor')
-    if (typeof val === 'number') return val
-  }
-  return options.verticalGap
+  return getNodeSpacing(node, options, styleEngine, state).verticalGap
 }
 
 function getSpacingMinor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
-  if (styleEngine && state) {
-    const val = styleEngine.getStyleValue(state, node.id, 'spacingMinor')
-    if (typeof val === 'number') return val
-  }
-  return options.horizontalGap
+  return getNodeSpacing(node, options, styleEngine, state).horizontalGap
 }
 
 /** 子节点水平方向总跨度 */
