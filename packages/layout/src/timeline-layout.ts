@@ -55,6 +55,7 @@ function layoutTimelineHorizontal(
   node: NodeDesc,
   x: number,
   y: number,
+  parent: NodeDesc | null,
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
@@ -82,16 +83,56 @@ function layoutTimelineHorizontal(
   if (isCollapsed(node)) return
   if (children.length === 0) return
 
-  // 子节点沿水平轴排列，交替上下
-  let childX = x + size.width + getSpacing(node, 'spacingMajor', options.horizontalGap, styleEngine, state)
+  // 子节点沿水平轴排列，交替上下 — snowbrush 三重约束定位
+  const CHILDREN_PADDING = getSpacing(node, 'spacingMajor', options.horizontalGap, styleEngine, state)
+  const CHILDREN_GAP = getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state)
+
+  let lastUpBranch: NodeDesc | null = parent
+  let lastDownBranch: NodeDesc | null = parent
+
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
     const cs = sizeMap.get(child.id)!
-    const childY = (i % 2 === 0)
-      ? y - cs.height - getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state)  // 上方
-      : y + size.height + getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state)  // 下方
-    layoutTimelineHorizontal(child, childX, childY, options, sizeMap, nodes, styleEngine, state)
-    childX += subtreeTotalWidth(child, options, sizeMap, styleEngine, state, 'spacingMajor') + getSpacing(node, 'spacingMajor', options.horizontalGap, styleEngine, state)
+    const isUp = i % 2 === 0
+    const sameDirBranch = isUp ? lastUpBranch : lastDownBranch
+
+    // 候选 1: 基于前一个节点（或父节点）的右边缘
+    let posXByPrevBranchTopicShape: number
+    if (i === 0) {
+      // 首个子节点：紧接父节点右侧
+      posXByPrevBranchTopicShape = x + size.width + CHILDREN_PADDING
+    } else {
+      const prevNode = children[i - 1]
+      posXByPrevBranchTopicShape = nodes.get(prevNode.id)!.x + sizeMap.get(prevNode.id)!.width + CHILDREN_PADDING
+    }
+
+    // 候选 2: 基于同方向最后一个分支的完整子树宽度
+    let posXBySameDirBranch: number
+    if (sameDirBranch === null || sameDirBranch === parent) {
+      // 尚无同方向分支：紧接父节点右侧
+      posXBySameDirBranch = x + size.width + CHILDREN_PADDING
+    } else {
+      const sameDirSubtreeW = subtreeTotalWidth(sameDirBranch, options, sizeMap, styleEngine, state, 'spacingMajor')
+      posXBySameDirBranch = nodes.get(sameDirBranch.id)!.x + sameDirSubtreeW + CHILDREN_PADDING / 2
+    }
+
+    // 候选 3: 方向切换时基于前一个分支的完整子树宽度
+    let posXByPrevBranchBounds = 0
+    if (i > 0 && !isUp) {
+      const prevChild = children[i - 1]
+      const prevSubtreeW = subtreeTotalWidth(prevChild, options, sizeMap, styleEngine, state, 'spacingMajor')
+      posXByPrevBranchBounds = nodes.get(prevChild.id)!.x + prevSubtreeW + CHILDREN_PADDING / 2
+    }
+
+    const childX = Math.max(posXByPrevBranchTopicShape, posXBySameDirBranch, posXByPrevBranchBounds)
+    const childY = isUp
+      ? y - cs.height - CHILDREN_GAP
+      : y + size.height + CHILDREN_GAP
+
+    layoutTimelineHorizontal(child, childX, childY, node, options, sizeMap, nodes, styleEngine, state)
+
+    if (isUp) lastUpBranch = child
+    else lastDownBranch = child
   }
 }
 
@@ -105,7 +146,7 @@ export const timelineHorizontalLayoutAlgorithm: LayoutAlgorithm = {
     const sizeMap = new Map<string, NodeSize>()
     measureStyledSubtree(root, options, sizeMap, 'horizontal', styleEngine, state)
 
-    layoutTimelineHorizontal(root, options.rootOffsetX, 200, options, sizeMap, nodes, styleEngine, state)
+    layoutTimelineHorizontal(root, options.rootOffsetX, 200, null, options, sizeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {
