@@ -13,7 +13,7 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
-import { DEFAULT_STYLES, classifyNode, findById, getParentId } from '@tomind/style'
+import { DEFAULT_STYLES, classifyNode, findById } from '@tomind/style'
 import type { LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { BaseLayout } from './base-layout'
@@ -270,35 +270,6 @@ class MapLayout extends BaseLayout {
     return options.horizontalGap
   }
 
-  private getAdaptiveSpacingMinor(
-    parentHeight: number,
-    children: readonly NodeDesc[],
-    sizeMap: Map<string, NodeSize>,
-  ): number {
-    const MIN_TOP_BOTTOM_SPACING = 80
-    const MAX_TOP_BOTTOM_SPACING = 180
-    const PARENT_TOPIC_THRESHOLD = 230
-
-    let topBottomSpacing = MIN_TOP_BOTTOM_SPACING
-    if (parentHeight > PARENT_TOPIC_THRESHOLD) {
-      topBottomSpacing = Math.min(
-        MAX_TOP_BOTTOM_SPACING,
-        parentHeight - PARENT_TOPIC_THRESHOLD + topBottomSpacing,
-      )
-    }
-
-    const n = children.length
-    if (n <= 2) return topBottomSpacing
-
-    let sumSpacing = topBottomSpacing
-    for (let i = 1; i < n - 1; i++) {
-      const childSize = sizeMap.get(children[i].id)
-      if (childSize) sumSpacing -= childSize.height
-    }
-    return sumSpacing
-  }
-
-  // ── 权重计算（对齐 snowbrush calcNumRight）───
 
   private getWeight(node: NodeDesc, sizeMap: Map<string, NodeSize>): number {
     const size = sizeMap.get(node.id)
@@ -330,51 +301,6 @@ class MapLayout extends BaseLayout {
     }
 
     return Math.ceil(children.length / 2)
-  }
-
-  // ── 递归子树高度 ──
-
-  /**
-   * 递归计算子树在主轴方向的总高度（含 outsidePadding + 所有后代）。
-   * 对齐 snowbrush boundaryBounds.height = mergeBounds(topic.bounds, children.boundaryBounds)
-   */
-  private calcSubtreeHeight(
-    node: NodeDesc,
-    sizeMap: Map<string, NodeSize>,
-    parent: NodeDesc,
-    childIndex: number,
-    treeDir: 'right' | 'left',
-    styleEngine?: StyleEngine | null,
-    state?: SheetState | null,
-  ): number {
-    const size = sizeMap.get(node.id)!
-    const selfH = size.height
-
-    if (isCollapsed(node)) return selfH
-
-    const children = getAttachedChildren(node)
-    const regularChildren: NodeDesc[] = []
-    for (const child of children) {
-      if (child.type !== 'summary') regularChildren.push(child)
-    }
-    if (regularChildren.length === 0) return selfH
-
-    // snowbrush: minorSpacing 来自父节点（当前 node 是子节点们的父）
-    const rawMinor = (styleEngine && state)
-      ? styleEngine.getStyleValue(state, node.id, 'spacingMinor')
-      : undefined
-    const nodeSpacingMinor = typeof rawMinor === 'number' ? rawMinor : parseInt(String(rawMinor)) || 0
-
-    let childrenTotal = 0
-    const lineWidth = 1 // borderWidth，对齐 SB
-    for (let i = 0; i < regularChildren.length; i++) {
-      childrenTotal += this.calcSubtreeHeight(regularChildren[i], sizeMap, node, i, treeDir, styleEngine, state)
-      if (i < regularChildren.length - 1) childrenTotal += nodeSpacingMinor + lineWidth
-    }
-
-    // snowbrush mergeBounds: bounds = merge(topicView.bounds, children.boundaryBounds)
-    // 近似: 当 children 跨度 > topicHeight 时 ≈ childrenTotal
-    return Math.max(selfH, childrenTotal)
   }
 
   // ── 核心布局：bottom-up recursive ──
