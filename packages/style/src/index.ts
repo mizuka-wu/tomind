@@ -33,7 +33,7 @@ export { StyleEngine } from './style-engine'
 export type { ThemePackage } from './style-engine'
 
 // 工具函数
-export { classifyNode, getParentId } from './classify'
+export { classifyNode, getParentId, findById } from './classify'
 export { isThemeClassEntry, resolveColorVariables } from './style-types'
 
 // 默认样式

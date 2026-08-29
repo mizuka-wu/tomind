@@ -13,7 +13,7 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
-import { DEFAULT_STYLES, classifyNode } from '@tomind/style'
+import { DEFAULT_STYLES, classifyNode, findById, getParentId } from '@tomind/style'
 import type { LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { BaseLayout } from './base-layout'
@@ -26,6 +26,7 @@ import {
   isCollapsed,
   getAttachedChildren,
   findRootTopic,
+  getAttr,
 } from './layout-utils'
 import { computeOutsidePadding } from './boundary-padding'
 import type { OutsidePadding } from './boundary-padding'
@@ -216,10 +217,36 @@ class MapLayout extends BaseLayout {
     const defaults = (DEFAULT_STYLES as Record<string, Record<string, unknown>>)[nodeType] ?? DEFAULT_STYLES['mainTopic']
     const rawBw = defaults['borderWidth']
     const bw = typeof rawBw === 'string' ? parseFloat(rawBw) : (typeof rawBw === 'number' ? rawBw : 0)
-    const top = readVal('marginTop') + bw
-    const bottom = readVal('marginBottom') + bw
-    const left = readVal('marginLeft') + bw
-    const right = readVal('marginRight') + bw
+    // 对齐 snowbrush getTopicMargins：先读统一 margin，有值则四方向使用，否则 fallback 到分侧值
+    // ResolvedStyle 没有 margin 键，所以从节点原始 attrs.style.margin 读取
+    const node2 = findById(state.doc, node.id)
+    const rawStyle = node2 ? getAttr<Record<string, unknown>>(node2, 'style') : undefined
+    const rawMargin = rawStyle?.margin
+    let top: number
+    let bottom: number
+    let left: number
+    let right: number
+
+    if (typeof rawMargin === 'number' && rawMargin > 0) {
+      top = bottom = left = right = rawMargin
+    } else if (typeof rawMargin === 'string') {
+      const parsed = parseFloat(rawMargin)
+      if (!isNaN(parsed) && parsed > 0) {
+        top = bottom = left = right = parsed
+      } else {
+        top = readVal('marginTop')
+        bottom = readVal('marginBottom')
+        left = readVal('marginLeft')
+        right = readVal('marginRight')
+      }
+    } else {
+      top = readVal('marginTop')
+      bottom = readVal('marginBottom')
+      left = readVal('marginLeft')
+      right = readVal('marginRight')
+    }
+
+    top += bw; bottom += bw; left += bw; right += bw
     if (top === 0 && bottom === 0 && left === 0 && right === 0) return options.nodePadding
     return { top, right, bottom, left }
   }
@@ -534,7 +561,6 @@ class MapLayout extends BaseLayout {
       ? styleEngine.getStyleValue(state, parent.id, 'spacingMinor')
       : undefined
     const spacingMinor = typeof rawMinor === 'number' ? rawMinor : parseInt(String(rawMinor)) || 0
-    const lineWidth = 1 // borderWidth
 
     // Step a: Set outsidePadding for each child
     for (let i = 0; i < n; i++) {
@@ -559,27 +585,68 @@ class MapLayout extends BaseLayout {
       }
     }
 
-    // Step d: Compute childrenTotalHeight = sum(bb.height + outsidePad + spacingMinor + lineWidth)
+    // Step d: Compute child heights including outside padding (used for centering)
+    const childHeights: number[] = []
     let childrenTotalHeight = 0
     for (let i = 0; i < n; i++) {
       const outsidePad = sizeMap.get(children[i].id)?.outsidePadding
       const outsidePadHeight = (outsidePad?.top ?? 0) + (outsidePad?.bottom ?? 0)
-      childrenTotalHeight += childBBs[i].height + outsidePadHeight
-      if (i < n - 1) childrenTotalHeight += spacingMinor + lineWidth
+      const childHeight = childBBs[i].height + outsidePadHeight
+      childHeights.push(childHeight)
+      childrenTotalHeight += childHeight
     }
 
-    // Step e: Center children around startY (SB-style)
-    let currentChildY = startY - childrenTotalHeight / 2
+    // Step e: Dual-constraint child positioning (aligned with snowbrush calSidePos)
+    // 1) Compute adaptive spacing budget (getMinSumTopicSpacing)
+    const minTopBottomSpacing = 80
+    const maxTopBottomSpacing = 180
+    const parentTopicThreshold = 230
+
+    let topBottomSpacing = minTopBottomSpacing
+    if (parentHeight > parentTopicThreshold) {
+      topBottomSpacing = Math.min(maxTopBottomSpacing, parentHeight - parentTopicThreshold + minTopBottomSpacing)
+    }
+    let sumTopicSpacing = n <= 2 ? topBottomSpacing : topBottomSpacing
+    if (n > 2) {
+      for (let i = 1; i < n - 1; i++) {
+        sumTopicSpacing -= childHeights[i]
+      }
+    }
+
+    // 2) Compute positions relative to first child using two constraints
+    const yPosRelativeToFirstChild: number[] = [0]
+    for (let i = 1; i < n; i++) {
+      const prevHeight = childHeights[i - 1]
+      const boundaryConstraint =
+        yPosRelativeToFirstChild[i - 1] + prevHeight + spacingMinor
+      const topicConstraint =
+        yPosRelativeToFirstChild[i - 1] + prevHeight + sumTopicSpacing / (n - i)
+
+      yPosRelativeToFirstChild[i] = Math.max(boundaryConstraint, topicConstraint)
+
+      const usedSpacing =
+        yPosRelativeToFirstChild[i] - (yPosRelativeToFirstChild[i - 1] + prevHeight)
+      sumTopicSpacing -= usedSpacing
+    }
+
+    // 3) Center children around startY (SB-style parent centering)
+    const firstChildEndPosY = childHeights[0] / 2
+    const lastChildEndPosY = childHeights[n - 1] / 2
+    const parentPosRelativeToFirstChild =
+      (firstChildEndPosY +
+        yPosRelativeToFirstChild[0] +
+        lastChildEndPosY +
+        yPosRelativeToFirstChild[n - 1]) /
+      2
+    const firstChildY = startY - parentPosRelativeToFirstChild
 
     // Step f: Shift each child to its final Y position
     for (let i = 0; i < n; i++) {
       const child = children[i]
       const bb = childBBs[i]
       const outsidePad = sizeMap.get(child.id)?.outsidePadding
-      const finalY = currentChildY + (outsidePad?.top ?? 0) - bb.y
+      const finalY = firstChildY + yPosRelativeToFirstChild[i] + (outsidePad?.top ?? 0) - bb.y
       this.shiftSubtree(child, 0, finalY, nodes)
-      const outsidePadHeight = (outsidePad?.top ?? 0) + (outsidePad?.bottom ?? 0)
-      currentChildY += bb.height + outsidePadHeight + spacingMinor + lineWidth
     }
 
     // Step g: X offset alignment if boundaryBoundsMap provided
