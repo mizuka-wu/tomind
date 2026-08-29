@@ -9,12 +9,13 @@
  */
 import type { NodeDesc } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
+import { findById } from '@tomind/style'
 import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
-import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
+import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
 import { layoutSummaries, getSummaryChildren } from './summary-layout'
 
 export type TreeDirection = 'right' | 'left' | 'down' | 'up'
@@ -35,6 +36,7 @@ function getNodeSpacing(
   style: ResolvedStyle | undefined,
   options: LayoutOptions,
   direction: TreeDirection,
+  rawMargin?: unknown,
 ) {
   if (!style) {
     return {
@@ -51,15 +53,36 @@ function getNodeSpacing(
   // 水平方向(right/left)：父子沿 X 轴 → horizontalGap；兄弟沿 Y 轴 → verticalGap
   // 垂直方向(down/up)：父子沿 Y 轴 → verticalGap；兄弟沿 X 轴 → horizontalGap
   const isHorizontal = direction === 'right' || direction === 'left'
+
+  // 对齐 snowbrush getTopicMargins: 先读统一 margin，有值则四方向使用，否则 fallback 到分侧值
+  let top: number
+  let bottom: number
+  let left: number
+  let right: number
+
+  if (typeof rawMargin === 'number' && rawMargin > 0) {
+    top = bottom = left = right = rawMargin
+  } else if (typeof rawMargin === 'string') {
+    const parsed = parseFloat(rawMargin)
+    if (!isNaN(parsed) && parsed > 0) {
+      top = bottom = left = right = parsed
+    } else {
+      top = parseStyleValue(style.marginTop, options.nodePadding.top)
+      bottom = parseStyleValue(style.marginBottom, options.nodePadding.bottom)
+      left = parseStyleValue(style.marginLeft, options.nodePadding.left)
+      right = parseStyleValue(style.marginRight, options.nodePadding.right)
+    }
+  } else {
+    top = parseStyleValue(style.marginTop, options.nodePadding.top)
+    bottom = parseStyleValue(style.marginBottom, options.nodePadding.bottom)
+    left = parseStyleValue(style.marginLeft, options.nodePadding.left)
+    right = parseStyleValue(style.marginRight, options.nodePadding.right)
+  }
+
   return {
     horizontalGap: isHorizontal ? majorGap : minorGap,
     verticalGap: isHorizontal ? minorGap : majorGap,
-    padding: {
-      top: parseStyleValue(style.marginTop, options.nodePadding.top),
-      right: parseStyleValue(style.marginRight, options.nodePadding.right),
-      bottom: parseStyleValue(style.marginBottom, options.nodePadding.bottom),
-      left: parseStyleValue(style.marginLeft, options.nodePadding.left),
-    },
+    padding: { top, right, bottom, left },
   }
 }
 
@@ -84,7 +107,11 @@ function getNodeStyle(ctx: TreeLayoutContext, nodeId: string): ResolvedStyle | u
 function getNodeSpacingCached(ctx: TreeLayoutContext, nodeId: string, direction: TreeDirection) {
   if (ctx.spacingCache.has(nodeId)) return ctx.spacingCache.get(nodeId)!
   const style = getNodeStyle(ctx, nodeId)
-  const spacing = getNodeSpacing(style, ctx.options, direction)
+  // 读取节点原始 attrs.style.margin，传递给 getNodeSpacing 做 unified margin fallback
+  const node = ctx.state ? findById(ctx.state.doc, nodeId) : undefined
+  const rawStyle = node ? getAttr<Record<string, unknown>>(node, 'style') : undefined
+  const rawMargin = rawStyle?.margin
+  const spacing = getNodeSpacing(style, ctx.options, direction, rawMargin)
   ctx.spacingCache.set(nodeId, spacing)
   return spacing
 }
