@@ -215,6 +215,7 @@ function subtreeAxisSize(
   const spacing = getNodeSpacingCached(ctx, node.id, dir)
 
   // Base size of the node itself + outsidePadding from its parent boundary
+  // Snowbrush: boundaryBounds.height includes PADDING*2 for every node
   let selfSize: number
   if (parent !== undefined && childIndex !== undefined) {
     const outsidePad = computeOutsidePadding(parent, childIndex, dir)
@@ -302,6 +303,7 @@ function layoutSubtree(
   direction: TreeDirection,
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, NodeLayoutOutput>,
+  depth = 0,
 ): void {
   const size = sizeMap.get(node.id)!
   const spacing = getNodeSpacingCached(ctx, node.id, direction)
@@ -357,8 +359,17 @@ function layoutSubtree(
       // Use subtree height (full branch extent) for spacing, matching snowbrush boundaryBounds behavior
       const childSubtreeH = subtreeAxisSize(ctx, child, sizeMap, direction, node, childIdx)
 
-      layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes)
-      childY += childSubtreeH + spacing.verticalGap
+      if (depth === 0) {
+        console.log(`[TREE-DEBUG] d${depth} child[${childIdx}]="${child.id}" childY=${childY.toFixed(1)} outsidePad.top=${outsidePad.top} subtreeH=${childSubtreeH.toFixed(1)} vGap=${spacing.verticalGap} hGap=${spacing.horizontalGap} masterPad.top=${masterPad.top}`)
+      }
+
+      layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes, depth + 1)
+      // Snowbrush: childrenY += boundaryBounds.height + spacingMinor + lineWidth
+      // boundaryBounds.height includes PADDING*2 per node, so add PARENT_GAP to gap
+      childY += childSubtreeH + spacing.verticalGap + PARENT_GAP
+    }
+    if (depth === 0) {
+      console.log(`[TREE-DEBUG] d${depth} root="${node.id}" pos=(${x.toFixed(1)},${y.toFixed(1)}) size=${size.width.toFixed(1)}x${size.height.toFixed(1)} PARENT_GAP=${PARENT_GAP} masterPad.top=${masterPad.top} branchH=${branchAxisSize.toFixed(1)} firstChildY=${(y + size.height + PARENT_GAP + masterPad.top).toFixed(1)} lastChildBottom=${childY.toFixed(1)}`)
     }
   } else {
     // ── 垂直布局（down/up）──
@@ -375,11 +386,15 @@ function layoutSubtree(
       // Use subtree width (full branch extent) for spacing, matching snowbrush boundaryBounds behavior
       const childSubtreeW = subtreeAxisSize(ctx, child, sizeMap, direction, node, childIdx)
 
+      if (depth <= 1) {
+        console.log(`[tree]   child "${child.id}" childX=${childX.toFixed(1)} subtreeW=${childSubtreeW.toFixed(1)}`)
+      }
+
       const childY = direction === 'down'
         ? y + size.height + spacing.verticalGap
         : y - childNodeSize.height - spacing.verticalGap
-      layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes)
-      childX += childSubtreeW + spacing.horizontalGap
+      layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes, depth + 1)
+      childX += childSubtreeW + spacing.horizontalGap + PARENT_GAP
     }
   }
 
