@@ -246,7 +246,6 @@ function subtreeAxisSize(
     regularChildren,
     (child) => subtreeAxisSize(ctx, child, sizeMap, dir, node, regularChildren.indexOf(child)),
     () => h ? spacing.verticalGap : spacing.horizontalGap,
-    { parentGap: PARENT_GAP },
   )
 
   const result = Math.max(selfSize, childrenTotal)
