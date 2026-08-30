@@ -126,3 +126,27 @@ export function measureStyledSubtree(
     }
   }
 }
+
+/**
+ * 计算子节点总高度（累加子树高度 + 间距）
+ * @param children 子节点列表
+ * @param getHeight 获取单个子节点高度的函数
+ * @param getSpacing 获取相邻子节点间距的函数
+ * @param options.parentGap 父子层间间距（tree=40, map=0）
+ */
+export function computeChildrenTotalHeight(
+  children: readonly NodeDesc[],
+  getHeight: (child: NodeDesc) => number,
+  getSpacing: (index: number) => number,
+  options?: { parentGap?: number },
+): number {
+  const parentGap = options?.parentGap ?? 0
+  let total = 0
+  for (let i = 0; i < children.length; i++) {
+    total += getHeight(children[i]) + parentGap
+    if (i < children.length - 1) {
+      total += getSpacing(i)
+    }
+  }
+  return total
+}

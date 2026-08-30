@@ -22,6 +22,10 @@ export type TreeDirection = 'right' | 'left' | 'down' | 'up'
 
 import { computeOutsidePadding, computeMasterOutsidePadding } from './boundary-padding'
 import type { OutsidePadding } from './boundary-padding'
+import { computeChildrenTotalHeight } from './spacing-utils'
+
+/** Snowbrush: PADDING * 2 = 40, 用于父子垂直间距 */
+const PARENT_GAP = 40
 
 function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value
@@ -238,16 +242,15 @@ function subtreeAxisSize(
   }
 
   // 计算所有子节点的子树总跨度
-  let childrenTotal = 0
-  for (let i = 0; i < regularChildren.length; i++) {
-    childrenTotal += subtreeAxisSize(ctx, regularChildren[i], sizeMap, dir, node, i)
-    if (i < regularChildren.length - 1) {
-      childrenTotal += h ? spacing.verticalGap : spacing.horizontalGap
-    }
-  }
+  const childrenTotal = computeChildrenTotalHeight(
+    regularChildren,
+    (child) => subtreeAxisSize(ctx, child, sizeMap, dir, node, regularChildren.indexOf(child)),
+    () => h ? spacing.verticalGap : spacing.horizontalGap,
+    { parentGap: PARENT_GAP },
+  )
 
-  // 返回 max(自身, 子节点总跨度)
-  return Math.max(selfSize, childrenTotal)
+  const result = Math.max(selfSize, childrenTotal)
+  return result
 }
 
 /** Position summary nodes for a parent after its attached children are laid out */
@@ -336,7 +339,8 @@ function layoutSubtree(
   if (h) {
     // ── 水平布局（right/left）──
     // 子节点从 parent 下方开始，顺序堆叠
-    const PARENT_GAP = 40
+    // Snowbrush: childrenY = newBounds.y + newBounds.height + PADDING * 2
+    //            posY = childrenY - childBranch.boundaryBounds.y  (boundaryBounds.y = -outsidePadding.top)
     // Apply master boundary padding to parent bounds
     const masterPad = computeMasterOutsidePadding(node, direction)
     let childY = y + size.height + PARENT_GAP + masterPad.top

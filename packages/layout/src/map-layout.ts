@@ -31,6 +31,7 @@ import {
 import { computeOutsidePadding } from './boundary-padding'
 import type { OutsidePadding } from './boundary-padding'
 import { layoutSummaries, getSummaryChildren } from './summary-layout'
+import { computeChildrenTotalHeight } from './spacing-utils'
 
 // ─── 配置 ───
 
@@ -426,15 +427,18 @@ class MapLayout extends BaseLayout {
     const bbSpacingMinor = typeof rawSm === 'number' ? rawSm : parseInt(String(rawSm)) || 0
     const bbLineWidth = 1
 
-    let childrenTotalHeight = 0
-    for (let i = 0; i < regularChildren.length; i++) {
-      const childBB = localBBMap.get(regularChildren[i].id)
-      const childSize = sizeMap.get(regularChildren[i].id)
-      const op = childSize?.outsidePadding
-      const outsidePadH = (op?.top ?? 0) + (op?.bottom ?? 0)
-      childrenTotalHeight += (childBB?.height ?? 0) + outsidePadH
-      if (i < regularChildren.length - 1) childrenTotalHeight += bbSpacingMinor + bbLineWidth
-    }
+    const childrenTotalHeight = computeChildrenTotalHeight(
+      regularChildren,
+      (child) => {
+        const childBB = localBBMap.get(child.id)
+        const childSize = sizeMap.get(child.id)
+        const op = childSize?.outsidePadding
+        const outsidePadH = (op?.top ?? 0) + (op?.bottom ?? 0)
+        return (childBB?.height ?? 0) + outsidePadH
+      },
+      () => bbSpacingMinor + bbLineWidth,
+      // map布局不需要PARENT_GAP，outsidePadding已处理层间间距
+    )
 
     const bbHeight = Math.max(size.height, childrenTotalHeight)
 
