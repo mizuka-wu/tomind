@@ -124,7 +124,17 @@ function computeSubtreeWidthMap(
     // Logic 结构: 子节点垂直排列，宽度 = topicW + spacingMajor + 最宽子树
     // 对齐 SB: newBounds.width = topicW + spacingMajor + max(child.bbW)
     const style = styleEngine && state ? styleEngine.computeStyle(state, node.id) : null
-    const spacingMajor = parseStyleValue(style?.spacingMajor, options.horizontalGap)
+    let spacingMajor = parseStyleValue(style?.spacingMajor, options.horizontalGap)
+
+    // 对齐 SB calcSpacingMajor: 斜线样式倍增
+    // TM normalizeClassName 去掉 "org.xmind.branchConnection." 前缀
+    const SLANT_LINE_CLASSES = ['curve', 'straight', 'fold', 'roundedfold', 'bight']
+    const lineClass = styleEngine && state ? styleEngine.getStyleValue(state, node.id, 'lineClass') : null
+    const lineClassStr = typeof lineClass === 'string' ? lineClass : ''
+    if (SLANT_LINE_CLASSES.some(cls => lineClassStr.includes(cls))) {
+      spacingMajor *= 2
+    }
+
     const topicW = sizeMap.get(node.id)!.width
     let maxChildW = 0
     for (const child of children) {
@@ -134,7 +144,7 @@ function computeSubtreeWidthMap(
     return
   }
 
-  // Org-chart 结构: 不在 subtreeMap 中设置，由 layoutOrgChartSubtree 直接计算
+  // Org-chart 结构: 不在 subtreeMap 中设置，由 layoutSubtreeDown 用 getBoundaryWidth
 }
 
 /** 子树总高度 */
@@ -207,10 +217,10 @@ function layoutSubtreeDown(
 
   function getChildWidth(child: NodeDesc, index: number): number {
     const childStruct = getNodeStructureClass(child, styleEngine, state)
-    if (isLogicStructure(childStruct)) {
-      return subtreeMap.get(child.id) ?? sizeMap.get(child.id)!.width
+    if (isLogicStructure(childStruct) && subtreeMap.has(child.id)) {
+      return subtreeMap.get(child.id)!
     }
-    // org-chart 或其他: 用 getBoundaryWidth
+    // org-chart 子节点: 用 getBoundaryWidth（对齐 SB boundaryBounds.width）
     const cs = sizeMap.get(child.id)!
     return getBoundaryWidth(child, cs.width, styleEngine, state, index === 0, index === children.length - 1)
   }
