@@ -14,9 +14,27 @@ import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
-import { getNodeSpacing, getLayoutWidth, getBoundaryWidth } from './spacing-utils'
+import { getNodeSpacing, getLayoutWidth, parseStyleValue } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
+
+/** 获取节点的 structureClass */
+function getNodeStructureClass(
+  node: NodeDesc,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+): string {
+  if (styleEngine && state) {
+    const style = styleEngine.computeStyle(state, node.id)
+    if (style?.structureClass) return String(style.structureClass)
+  }
+  return ''
+}
+
+/** 判断是否为 logic 结构 */
+function isLogicStructure(structClass: string): boolean {
+  return structClass.includes('logic')
+}
 
 interface NodeSize {
   width: number
@@ -71,6 +89,57 @@ function measureSubtree(
   }
 }
 
+/**
+ * 预计算每个节点的子树包围盒宽度（对齐 SB boundaryBounds.width）
+ *
+ * - logic 结构: layoutW + spacingMajor + maxChildSubtreeW
+ * - 其他结构: getBoundaryWidth（含 BOUNDARYGAP padding）
+ */
+function computeSubtreeWidthMap(
+  node: NodeDesc,
+  options: LayoutOptions,
+  sizeMap: Map<string, NodeSize>,
+  subtreeMap: Map<string, number>,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+): void {
+  const children = getAttachedChildren(node)
+
+  // 先递归计算所有子节点
+  if (!isCollapsed(node)) {
+    for (const child of children) {
+      computeSubtreeWidthMap(child, options, sizeMap, subtreeMap, styleEngine, state)
+    }
+  }
+
+  if (isCollapsed(node) || children.length === 0) {
+    // 叶子节点：用 getLayoutWidth（不含 BOUNDARYGAP，因为叶子没有 boundary padding）
+    subtreeMap.set(node.id, getLayoutWidth(node, sizeMap.get(node.id)!.width, styleEngine, state))
+    return
+  }
+
+  const structClass = getNodeStructureClass(node, styleEngine, state)
+
+  if (isLogicStructure(structClass)) {
+    // Logic 结构: 子节点垂直排列，宽度 = 本节点 + spacingMajor + 最宽子树
+    const style = styleEngine && state ? styleEngine.computeStyle(state, node.id) : null
+    const spacingMajor = parseStyleValue(style?.spacingMajor, options.horizontalGap)
+    const layoutW = getLayoutWidth(node, sizeMap.get(node.id)!.width, styleEngine, state)
+    let maxChildW = 0
+    for (const child of children) {
+      maxChildW = Math.max(maxChildW, subtreeMap.get(child.id)!)
+    }
+    subtreeMap.set(node.id, layoutW + spacingMajor + maxChildW)
+    return
+  }
+
+  // Org-chart 或其他结构：用 getBoundaryWidth（原有逻辑）
+  // 父节点的 subtreeWidth 由 layoutSubtreeDown 中的 childrenSize 计算
+  // 这里只设置叶子/中间节点的默认值
+  // 注意：非叶子节点的 subtreeWidth 会在 layoutSubtreeDown 中被 childrenSize 覆盖
+  // 所以这里只需要保证子节点有正确的值
+}
+
 /** 子树总高度 */
 function subtreeHeight(
   node: NodeDesc,
@@ -107,6 +176,7 @@ function layoutSubtreeDown(
   y: number,
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
+  subtreeMap: Map<string, number>,
   nodes: Map<string, NodeLayout>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
@@ -134,10 +204,7 @@ function layoutSubtreeDown(
   let childrenSizeWidth = 0
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
-    const cs = sizeMap.get(child.id)!
-    const isFirst = i === 0
-    const isLast = i === children.length - 1
-    childrenSizeWidth += getBoundaryWidth(child, cs.width, styleEngine, state, isFirst, isLast)
+    childrenSizeWidth += subtreeMap.get(child.id)!
   }
   if (children.length > 1) childrenSizeWidth += spacing.horizontalGap * (children.length - 1)
 
@@ -148,10 +215,8 @@ function layoutSubtreeDown(
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
     const cs = sizeMap.get(child.id)!
-    const isFirst = i === 0
-    const isLast = i === children.length - 1
-    layoutSubtreeDown(child, childX, childY, options, sizeMap, nodes, styleEngine, state)
-    childX += getBoundaryWidth(child, cs.width, styleEngine, state, isFirst, isLast) + spacing.horizontalGap
+    layoutSubtreeDown(child, childX, childY, options, sizeMap, subtreeMap, nodes, styleEngine, state)
+    childX += subtreeMap.get(child.id)! + spacing.horizontalGap
   }
 }
 
@@ -161,6 +226,7 @@ function layoutSubtreeUp(
   y: number,
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
+  subtreeMap: Map<string, number>,
   nodes: Map<string, NodeLayout>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
@@ -187,10 +253,7 @@ function layoutSubtreeUp(
   let childrenSizeWidth = 0
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
-    const cs = sizeMap.get(child.id)!
-    const isFirst = i === 0
-    const isLast = i === children.length - 1
-    childrenSizeWidth += getBoundaryWidth(child, cs.width, styleEngine, state, isFirst, isLast)
+    childrenSizeWidth += subtreeMap.get(child.id)!
   }
   if (children.length > 1) childrenSizeWidth += spacing.horizontalGap * (children.length - 1)
 
@@ -201,10 +264,8 @@ function layoutSubtreeUp(
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
     const cs = sizeMap.get(child.id)!
-    const isFirst = i === 0
-    const isLast = i === children.length - 1
-    layoutSubtreeUp(child, childX, childY - cs.height, options, sizeMap, nodes, styleEngine, state)
-    childX += getBoundaryWidth(child, cs.width, styleEngine, state, isFirst, isLast) + spacing.horizontalGap
+    layoutSubtreeUp(child, childX, childY - cs.height, options, sizeMap, subtreeMap, nodes, styleEngine, state)
+    childX += subtreeMap.get(child.id)! + spacing.horizontalGap
   }
 }
 
@@ -218,10 +279,13 @@ export const orgChartDownLayoutAlgorithm: LayoutAlgorithm = {
     const sizeMap = new Map<string, NodeSize>()
     measureSubtree(root, options, sizeMap, styleEngine, state)
 
+    const subtreeMap = new Map<string, number>()
+    computeSubtreeWidthMap(root, options, sizeMap, subtreeMap, styleEngine, state)
+
     const rootSize = sizeMap.get(root.id)!
     const rootX = -getLayoutWidth(root, rootSize.width, styleEngine, state) / 2
 
-    layoutSubtreeDown(root, rootX, 50, options, sizeMap, nodes, styleEngine, state)
+    layoutSubtreeDown(root, rootX, 50, options, sizeMap, subtreeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {
@@ -243,11 +307,14 @@ export const orgChartUpLayoutAlgorithm: LayoutAlgorithm = {
     const sizeMap = new Map<string, NodeSize>()
     measureSubtree(root, options, sizeMap, styleEngine, state)
 
+    const subtreeMap = new Map<string, number>()
+    computeSubtreeWidthMap(root, options, sizeMap, subtreeMap, styleEngine, state)
+
     const rootSize = sizeMap.get(root.id)!
     const rootX = -getLayoutWidth(root, rootSize.width, styleEngine, state) / 2
     const rootY = subtreeHeight(root, options, sizeMap, styleEngine, state) - rootSize.height - 50
 
-    layoutSubtreeUp(root, rootX, rootY, options, sizeMap, nodes, styleEngine, state)
+    layoutSubtreeUp(root, rootX, rootY, options, sizeMap, subtreeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {
