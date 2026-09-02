@@ -14,11 +14,32 @@ import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
-import { getNodeSpacing, getLayoutWidth, getBoundaryWidth, parseStyleValue } from './spacing-utils'
+import { getNodeSpacing, parseStyleValue } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 
-/** 获取节点的 structureClass */
+const SNOWBRUSH_INNER_SPACING = 20
+
+/** SB对齐的topicW = titleWidth + innerSpacing(20) + 2×borderWidth */
+function getSBTopicWidth(
+  titleWidth: number,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+  nodeId: string,
+): number {
+  const style = styleEngine && state ? styleEngine.computeStyle(state, nodeId) : null
+  const borderWidth = parseStyleValue(style?.borderWidth, 0)
+  return titleWidth + SNOWBRUSH_INNER_SPACING + 2 * borderWidth
+}
+
+interface NodeSize {
+  width: number
+  height: number
+  titleWidth: number
+  titleHeight: number
+  partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
+}
+
 function getNodeStructureClass(
   node: NodeDesc,
   styleEngine: StyleEngine | null,
@@ -135,7 +156,7 @@ function computeSubtreeWidthMap(
       spacingMajor *= 2
     }
 
-    const topicW = getLayoutWidth(node, sizeMap.get(node.id)!.width, styleEngine, state)
+    const topicW = getSBTopicWidth(sizeMap.get(node.id)!.titleWidth, styleEngine, state, node.id)
     let maxChildW = 0
     for (const child of children) {
       maxChildW = Math.max(maxChildW, subtreeMap.get(child.id)!)
@@ -144,17 +165,18 @@ function computeSubtreeWidthMap(
     return
   }
 
-  // Org-chart 结构: 对齐 SB getChildBoundariesWidth
-  // 叶子节点 subtreeW = topicW，非叶节点 subtreeW = max(csW, topicW)
+  // Org-chart 结构: 对齐 SB getChildrenSize + getChildBoundariesWidth
   const style = styleEngine && state ? styleEngine.computeStyle(state, node.id) : null
   const spacingMinor = parseStyleValue(style?.spacingMinor, options.horizontalGap)
   const borderWidth = parseStyleValue(style?.borderWidth, 0)
   const gap = spacingMinor + borderWidth
-  const topicW = getLayoutWidth(node, sizeMap.get(node.id)!.width, styleEngine, state)
+  const topicW = getSBTopicWidth(sizeMap.get(node.id)!.titleWidth, styleEngine, state, node.id)
 
+  // SB: childrenSize = sum(child.boundaryBounds.width) + gaps
+  // 递归前 child.boundaryBounds.width = topicW
   let csW = 0
   for (const child of children) {
-    csW += sizeMap.get(child.id)!.width
+    csW += getSBTopicWidth(sizeMap.get(child.id)!.titleWidth, styleEngine, state, child.id)
   }
   if (children.length > 1) csW += gap * (children.length - 1)
 
@@ -230,7 +252,7 @@ function layoutSubtreeDown(
   const childGap = spacingMinor + lineWidth
 
   function getChildWidth(child: NodeDesc, index: number): number {
-    return getLayoutWidth(child, sizeMap.get(child.id)!.width, styleEngine, state)
+    return getSBTopicWidth(sizeMap.get(child.id)!.titleWidth, styleEngine, state, child.id)
   }
 
   let childrenSizeWidth = 0
@@ -242,20 +264,19 @@ function layoutSubtreeDown(
   const childY = y + size.height + spacing.verticalGap
 
   // Position children — 对齐 SB calAttachedChildrenPos
-  // Sort children by subtreeW descending
   const sortedChildren = children
 
   function getChildBBX(child: NodeDesc, subtreeW: number): number {
     const childChildren = getAttachedChildren(child)
     if (isCollapsed(child) || childChildren.length === 0) return -15
-    return Math.min(-subtreeW / 2, -getLayoutWidth(child, sizeMap.get(child.id)!.width, styleEngine, state) / 2)
+    return Math.min(-subtreeW / 2, -getSBTopicWidth(sizeMap.get(child.id)!.titleWidth, styleEngine, state, child.id) / 2)
   }
 
   const firstChild = sortedChildren[0]
   const firstChildX = getChildBBX(firstChild, subtreeMap.get(firstChild.id)!)
   const lastChild = sortedChildren[sortedChildren.length - 1]
-  const lastChildW = getLayoutWidth(lastChild, sizeMap.get(lastChild.id)!.width, styleEngine, state)
-  const lastChildX = getChildBBX(lastChild, lastChildW)
+  const lastChildW = getSBTopicWidth(sizeMap.get(lastChild.id)!.titleWidth, styleEngine, state, lastChild.id)
+  const lastChildX = getChildBBX(lastChild, subtreeMap.get(lastChild.id)!)
   const gcW = firstChildX - lastChildW - lastChildX
   const levelWidth = childrenSizeWidth + gcW
   let minChildX = -levelWidth / 2 + firstChildX
@@ -268,7 +289,7 @@ function layoutSubtreeDown(
     const posX = curX - bbX
     const childCenterX = parentCenterX + posX
     layoutSubtreeDown(child, childCenterX - childW / 2, childY, options, sizeMap, subtreeMap, nodes, styleEngine, state)
-    curX += childW
+    curX += childW + childGap
   }
 
   // Debug: 打印根节点 childrenSizeWidth 和每个子节点 subtreeW
