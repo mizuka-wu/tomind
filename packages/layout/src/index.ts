@@ -61,4 +61,4 @@ export type { OutsidePadding } from './boundary-padding'
 
 // Summary layout
 export { layoutSummaries, getSummaryChildren } from './summary-layout'
-export { parseStyleValue, getNodeSpacing, measureStyledSubtree } from './spacing-utils'
+export { parseStyleValue, getNodeSpacing, getLayoutWidth, measureStyledSubtree } from './spacing-utils'

@@ -14,7 +14,7 @@ import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
-import { getNodeSpacing } from './spacing-utils'
+import { getNodeSpacing, getLayoutWidth } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 
@@ -128,13 +128,13 @@ function layoutSubtreeDown(
   if (children.length === 0) return
 
   const spacing = getNodeSpacing(node, options, styleEngine, state, 'vertical')
-  const parentCenterX = x + size.width / 2
+  const parentCenterX = x + getLayoutWidth(node, size.width, styleEngine, state) / 2
 
-  // childrenSize: sum of child node widths + gaps (snowbrush getChildrenSize)
+  // childrenSize: sum of child node layout widths + gaps (snowbrush getChildrenSize)
   const childrenSize = children.reduce(
     (acc, child) => {
       const cs = sizeMap.get(child.id)!
-      acc.width += cs.width
+      acc.width += getLayoutWidth(child, cs.width, styleEngine, state)
       return acc
     },
     { width: 0 },
@@ -144,12 +144,11 @@ function layoutSubtreeDown(
   let childX = parentCenterX - childrenSize.width / 2
   const childY = y + size.height + spacing.verticalGap
 
-
   // Position children using sizeMap.x offsets (snowbrush calAttachedChildrenPos)
   for (const child of children) {
     const cs = sizeMap.get(child.id)!
     layoutSubtreeDown(child, childX, childY, options, sizeMap, nodes, styleEngine, state)
-    childX += cs.width + spacing.horizontalGap
+    childX += getLayoutWidth(child, cs.width, styleEngine, state) + spacing.horizontalGap
   }
 }
 
@@ -179,13 +178,13 @@ function layoutSubtreeUp(
   if (children.length === 0) return
 
   const spacing = getNodeSpacing(node, options, styleEngine, state, 'vertical')
-  const parentCenterX = x + size.width / 2
+  const parentCenterX = x + getLayoutWidth(node, size.width, styleEngine, state) / 2
 
-  // childrenSize: sum of child node widths + gaps (snowbrush getChildrenSize)
+  // childrenSize: sum of child node layout widths + gaps (snowbrush getChildrenSize)
   const childrenSize = children.reduce(
     (acc, child) => {
       const cs = sizeMap.get(child.id)!
-      acc.width += cs.width
+      acc.width += getLayoutWidth(child, cs.width, styleEngine, state)
       return acc
     },
     { width: 0 },
@@ -199,7 +198,7 @@ function layoutSubtreeUp(
   for (const child of children) {
     const cs = sizeMap.get(child.id)!
     layoutSubtreeUp(child, childX, childY - cs.height, options, sizeMap, nodes, styleEngine, state)
-    childX += cs.width + spacing.horizontalGap
+    childX += getLayoutWidth(child, cs.width, styleEngine, state) + spacing.horizontalGap
   }
 }
 
@@ -214,7 +213,7 @@ export const orgChartDownLayoutAlgorithm: LayoutAlgorithm = {
     measureSubtree(root, options, sizeMap, styleEngine, state)
 
     const rootSize = sizeMap.get(root.id)!
-    const rootX = -rootSize.width / 2
+    const rootX = -getLayoutWidth(root, rootSize.width, styleEngine, state) / 2
 
     layoutSubtreeDown(root, rootX, 50, options, sizeMap, nodes, styleEngine, state)
 
@@ -239,7 +238,7 @@ export const orgChartUpLayoutAlgorithm: LayoutAlgorithm = {
     measureSubtree(root, options, sizeMap, styleEngine, state)
 
     const rootSize = sizeMap.get(root.id)!
-    const rootX = -rootSize.width / 2
+    const rootX = -getLayoutWidth(root, rootSize.width, styleEngine, state) / 2
     const rootY = subtreeHeight(root, options, sizeMap, styleEngine, state) - rootSize.height - 50
 
     layoutSubtreeUp(root, rootX, rootY, options, sizeMap, nodes, styleEngine, state)

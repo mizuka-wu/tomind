@@ -150,3 +150,22 @@ export function computeChildrenTotalHeight(
   }
   return total
 }
+
+/**
+ * SB对齐的布局宽度 = nodeWidth + innerSpacing(20) + 2 × borderWidth
+ * SB的topicBounds.width包含grid水平间距(horizontalSpacing=10 × 2 gaps)和borderWidth
+ * TM的measureNodeSize不含这两项，需要在布局定位时补上
+ */
+export function getLayoutWidth(
+  node: NodeDesc,
+  nodeWidth: number,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+): number {
+  let style: Record<string, unknown> | null = null
+  if (styleEngine && state) {
+    style = styleEngine.computeStyle(state, node.id)
+  }
+  const borderWidth = parseStyleValue(style?.borderWidth, 0)
+  return nodeWidth + 20 + 2 * borderWidth
+}
