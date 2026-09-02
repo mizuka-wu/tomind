@@ -13,6 +13,9 @@ import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
 import { measureTitleOnlyNode } from './part-node-size'
 
+/** Snowbrush: PADDING * 2 = 40, 用于父子垂直间距 */
+const PARENT_GAP = 40
+
 function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value
   if (typeof value === 'string') {
@@ -194,7 +197,7 @@ function layoutSubtreeRight(
   for (const child of children) {
     const ch = subtreeTotalHeight(child, options, sizeMap, styleEngine, state)
     layoutSubtreeRight(child, childX, childY, options, sizeMap, nodes, styleEngine, state)
-    childY += ch + compactGap
+    childY += ch + compactGap + PARENT_GAP
   }
 }
 
@@ -240,7 +243,7 @@ function layoutSubtreeLeft(
     const cs = sizeMap.get(child.id)!
     const ch = subtreeTotalHeight(child, options, sizeMap, styleEngine, state)
     layoutSubtreeLeft(child, childX - cs.width, childY, options, sizeMap, nodes, styleEngine, state)
-    childY += ch + compactGap
+    childY += ch + compactGap + PARENT_GAP
   }
 }
 
