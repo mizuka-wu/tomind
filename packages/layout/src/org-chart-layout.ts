@@ -14,7 +14,7 @@ import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
-import { getNodeSpacing, getLayoutWidth } from './spacing-utils'
+import { getNodeSpacing, getLayoutWidth, getBoundaryWidth } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 
@@ -130,25 +130,28 @@ function layoutSubtreeDown(
   const spacing = getNodeSpacing(node, options, styleEngine, state, 'vertical')
   const parentCenterX = x + getLayoutWidth(node, size.width, styleEngine, state) / 2
 
-  // childrenSize: sum of child node layout widths + gaps (snowbrush getChildrenSize)
-  const childrenSize = children.reduce(
-    (acc, child) => {
-      const cs = sizeMap.get(child.id)!
-      acc.width += getLayoutWidth(child, cs.width, styleEngine, state)
-      return acc
-    },
-    { width: 0 },
-  )
-  if (children.length > 1) childrenSize.width += spacing.horizontalGap * (children.length - 1)
+  // childrenSize: sum of child boundaryBounds widths + gaps (snowbrush getChildrenSize)
+  let childrenSizeWidth = 0
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+    const cs = sizeMap.get(child.id)!
+    const isFirst = i === 0
+    const isLast = i === children.length - 1
+    childrenSizeWidth += getBoundaryWidth(child, cs.width, styleEngine, state, isFirst, isLast)
+  }
+  if (children.length > 1) childrenSizeWidth += spacing.horizontalGap * (children.length - 1)
 
-  let childX = parentCenterX - childrenSize.width / 2
+  let childX = parentCenterX - childrenSizeWidth / 2
   const childY = y + size.height + spacing.verticalGap
 
   // Position children using sizeMap.x offsets (snowbrush calAttachedChildrenPos)
-  for (const child of children) {
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
     const cs = sizeMap.get(child.id)!
+    const isFirst = i === 0
+    const isLast = i === children.length - 1
     layoutSubtreeDown(child, childX, childY, options, sizeMap, nodes, styleEngine, state)
-    childX += getLayoutWidth(child, cs.width, styleEngine, state) + spacing.horizontalGap
+    childX += getBoundaryWidth(child, cs.width, styleEngine, state, isFirst, isLast) + spacing.horizontalGap
   }
 }
 
@@ -180,25 +183,28 @@ function layoutSubtreeUp(
   const spacing = getNodeSpacing(node, options, styleEngine, state, 'vertical')
   const parentCenterX = x + getLayoutWidth(node, size.width, styleEngine, state) / 2
 
-  // childrenSize: sum of child node layout widths + gaps (snowbrush getChildrenSize)
-  const childrenSize = children.reduce(
-    (acc, child) => {
-      const cs = sizeMap.get(child.id)!
-      acc.width += getLayoutWidth(child, cs.width, styleEngine, state)
-      return acc
-    },
-    { width: 0 },
-  )
-  if (children.length > 1) childrenSize.width += spacing.horizontalGap * (children.length - 1)
+  // childrenSize: sum of child boundaryBounds widths + gaps (snowbrush getChildrenSize)
+  let childrenSizeWidth = 0
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+    const cs = sizeMap.get(child.id)!
+    const isFirst = i === 0
+    const isLast = i === children.length - 1
+    childrenSizeWidth += getBoundaryWidth(child, cs.width, styleEngine, state, isFirst, isLast)
+  }
+  if (children.length > 1) childrenSizeWidth += spacing.horizontalGap * (children.length - 1)
 
-  let childX = parentCenterX - childrenSize.width / 2
+  let childX = parentCenterX - childrenSizeWidth / 2
   const childY = y - spacing.verticalGap
 
   // Position children using sizeMap.x offsets (snowbrush calAttachedChildrenPos)
-  for (const child of children) {
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
     const cs = sizeMap.get(child.id)!
+    const isFirst = i === 0
+    const isLast = i === children.length - 1
     layoutSubtreeUp(child, childX, childY - cs.height, options, sizeMap, nodes, styleEngine, state)
-    childX += getLayoutWidth(child, cs.width, styleEngine, state) + spacing.horizontalGap
+    childX += getBoundaryWidth(child, cs.width, styleEngine, state, isFirst, isLast) + spacing.horizontalGap
   }
 }
 

@@ -169,3 +169,27 @@ export function getLayoutWidth(
   const borderWidth = parseStyleValue(style?.borderWidth, 0)
   return nodeWidth + 20 + 2 * borderWidth
 }
+
+const BOUNDARYGAP = 10
+
+/**
+ * SB对齐的boundaryBounds.width = topicBounds.width + outsidePadding
+ * outsidePadding由SB的_setBoundaryPadding计算：
+ * - 中间子节点: left=BOUNDARYGAP, right=BOUNDARYGAP
+ * - 首子节点: left=BOUNDARYGAP*2, right=BOUNDARYGAP
+ * - 末子节点: left=BOUNDARYGAP, right=BOUNDARYGAP*2
+ * - 独子: left=BOUNDARYGAP*2, right=BOUNDARYGAP*2
+ */
+export function getBoundaryWidth(
+  node: NodeDesc,
+  nodeWidth: number,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+  isFirstChild: boolean,
+  isLastChild: boolean,
+): number {
+  const topicBoundsWidth = getLayoutWidth(node, nodeWidth, styleEngine, state)
+  const leftPad = isFirstChild ? BOUNDARYGAP * 2 : BOUNDARYGAP
+  const rightPad = isLastChild ? BOUNDARYGAP * 2 : BOUNDARYGAP
+  return topicBoundsWidth + leftPad + rightPad
+}
