@@ -13,7 +13,7 @@ import type { StyleEngine } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
-import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
+import { isCollapsed, getAttachedChildren, findRootTopic, getTitle } from './layout-utils'
 import { getNodeSpacing, parseStyleValue } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
@@ -160,7 +160,7 @@ function computeSubtreeWidthMap(
   const topicW = getSBTopicWidth(sizeMap.get(node.id)!.titleWidth, styleEngine, state, node.id)
 
   // SB: childrenSize = sum(child.boundaryBounds.width) + gaps
-  // 递归前 child.boundaryBounds.width = topicW
+  // 暂用 topicW，后续修正树结构后改用 subtreeW
   let csW = 0
   for (const child of children) {
     csW += getSBTopicWidth(sizeMap.get(child.id)!.titleWidth, styleEngine, state, child.id)
