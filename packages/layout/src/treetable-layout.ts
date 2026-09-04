@@ -9,7 +9,8 @@
  * - 节点在单元格内左对齐（默认 textAlign=left）
  */
 import type { NodeDesc } from '@tomind/schema'
-import type { StyleEngine, ResolvedStyle } from '@tomind/style'
+import type { StyleEngine, ResolvedStyle, NodeType } from '@tomind/style'
+import { classifyNode, DEFAULT_STYLES } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
@@ -32,7 +33,34 @@ function parseStyleValue(value: unknown, fallback: number): number {
   return fallback
 }
 
+// SB TREE_TABLE_CELL padding presets
+const TREE_TABLE_CELL_PADDING_HORIZON = 10
+const TREE_TABLE_CELL_PADDING_VERTICAL = 6
+
+/**
+ * Normalize margin value per SB formula: (styleValue * presetValue) / defaultValue
+ * Returns rawValue if no default found or default is 0.
+ */
+function normalizeMargin(
+  rawValue: number,
+  nodeType: NodeType,
+  key: string,
+  presetH: number = TREE_TABLE_CELL_PADDING_HORIZON,
+  presetV: number = TREE_TABLE_CELL_PADDING_VERTICAL,
+): number {
+  const defaultStyle = DEFAULT_STYLES[nodeType]
+  if (!defaultStyle) return rawValue
+  const defaultRaw = (defaultStyle as Record<string, unknown>)[key]
+  if (defaultRaw === undefined || defaultRaw === null) return rawValue
+  const defaultValue = parseStyleValue(defaultRaw, 0)
+  if (defaultValue <= 0) return rawValue
+  const preset = (key === "marginLeft" || key === "marginRight") ? presetH : presetV
+  return Math.round((rawValue * preset) / defaultValue)
+}
+
+
 function getNodeSpacing(
+  doc: NodeDesc,
   node: NodeDesc,
   options: LayoutOptions,
   styleEngine: StyleEngine | null,
@@ -56,29 +84,36 @@ function getNodeSpacing(
 
   const rawStyle = getAttr<Record<string, unknown>>(node, 'style')
   const rawMargin = rawStyle?.margin
+  const nodeType = classifyNode(doc, node.id)
 
   let top: number
   let bottom: number
   let left: number
   let right: number
 
-  if (typeof rawMargin === 'number' && rawMargin > 0) {
-    top = bottom = left = right = rawMargin
-  } else if (typeof rawMargin === 'string') {
+  if (typeof rawMargin === "number" && rawMargin > 0) {
+    top = normalizeMargin(rawMargin, nodeType, "marginTop")
+    bottom = normalizeMargin(rawMargin, nodeType, "marginBottom")
+    left = normalizeMargin(rawMargin, nodeType, "marginLeft")
+    right = normalizeMargin(rawMargin, nodeType, "marginRight")
+  } else if (typeof rawMargin === "string") {
     const parsed = parseFloat(rawMargin)
     if (!isNaN(parsed) && parsed > 0) {
-      top = bottom = left = right = parsed
+      top = normalizeMargin(parsed, nodeType, "marginTop")
+      bottom = normalizeMargin(parsed, nodeType, "marginBottom")
+      left = normalizeMargin(parsed, nodeType, "marginLeft")
+      right = normalizeMargin(parsed, nodeType, "marginRight")
     } else {
-      top = parseStyleValue(style.marginTop, options.nodePadding.top)
-      bottom = parseStyleValue(style.marginBottom, options.nodePadding.bottom)
-      left = parseStyleValue(style.marginLeft, options.nodePadding.left)
-      right = parseStyleValue(style.marginRight, options.nodePadding.right)
+      top = normalizeMargin(parseStyleValue(style.marginTop, options.nodePadding.top), nodeType, "marginTop")
+      bottom = normalizeMargin(parseStyleValue(style.marginBottom, options.nodePadding.bottom), nodeType, "marginBottom")
+      left = normalizeMargin(parseStyleValue(style.marginLeft, options.nodePadding.left), nodeType, "marginLeft")
+      right = normalizeMargin(parseStyleValue(style.marginRight, options.nodePadding.right), nodeType, "marginRight")
     }
   } else {
-    top = parseStyleValue(style.marginTop, options.nodePadding.top)
-    bottom = parseStyleValue(style.marginBottom, options.nodePadding.bottom)
-    left = parseStyleValue(style.marginLeft, options.nodePadding.left)
-    right = parseStyleValue(style.marginRight, options.nodePadding.right)
+    top = normalizeMargin(parseStyleValue(style.marginTop, options.nodePadding.top), nodeType, "marginTop")
+    bottom = normalizeMargin(parseStyleValue(style.marginBottom, options.nodePadding.bottom), nodeType, "marginBottom")
+    left = normalizeMargin(parseStyleValue(style.marginLeft, options.nodePadding.left), nodeType, "marginLeft")
+    right = normalizeMargin(parseStyleValue(style.marginRight, options.nodePadding.right), nodeType, "marginRight")
   }
 
   return {
@@ -162,12 +197,13 @@ function getLastRow(rows: TableRow[], nodeId: string): number {
 
 /** 获取节点的扩展宽度（padding + border）对齐 SB getExtendWidth */
 function getExtendWidth(
+  doc: NodeDesc,
   node: NodeDesc,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
   options: LayoutOptions,
 ): number {
-  const spacing = getNodeSpacing(node, options, styleEngine, state)
+  const spacing = getNodeSpacing(doc, node, options, styleEngine, state)
   const padding = spacing.padding
   // SB: borderWidth + marginLeft + marginRight
   // TM 没有 borderWidth，用 padding left + right 模拟
@@ -175,12 +211,13 @@ function getExtendWidth(
 }
 
 function getExtendHeight(
+  doc: NodeDesc,
   node: NodeDesc,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
   options: LayoutOptions,
 ): number {
-  const spacing = getNodeSpacing(node, options, styleEngine, state)
+  const spacing = getNodeSpacing(doc, node, options, styleEngine, state)
   const padding = spacing.padding
   return padding.top + padding.bottom
 }
@@ -195,7 +232,7 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
     // 测量所有节点尺寸
     const sizeMap = new Map<string, NodeSize>()
     function measureSubtree(node: NodeDesc): void {
-      const spacing = getNodeSpacing(node, options, styleEngine, state)
+      const spacing = getNodeSpacing(doc, node, options, styleEngine, state)
       sizeMap.set(node.id, measureNodeSize(node, spacing.padding, options, styleEngine, state))
       if (!isCollapsed(node)) {
         for (const child of getAttachedChildren(node)) {
@@ -248,7 +285,7 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
         const lastRow = getLastRow(rows, item.id)
         if (firstRow === lastRow) {
           // 单行项
-          const extendW = getExtendWidth(item, styleEngine, state, options)
+          const extendW = getExtendWidth(doc, item, styleEngine, state, options)
           singleItems.push({ node: item, extendW })
         }
       }
@@ -269,7 +306,7 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
         const item = rows[firstRow].find(n => n?.id === nodeId)
         if (item) {
           const size = sizeMap.get(nodeId)!
-          const extendW = getExtendWidth(item, styleEngine, state, options)
+          const extendW = getExtendWidth(doc, item, styleEngine, state, options)
           let spannedWidth = 0
           for (let col = 0; col < colCount; col++) {
             if (rows[firstRow][col]?.id === nodeId) {
@@ -305,7 +342,7 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
         if (firstRow === lastRow) {
           // 单行项
           const size = sizeMap.get(item.id)!
-          const extendH = getExtendHeight(item, styleEngine, state, options)
+          const extendH = getExtendHeight(doc, item, styleEngine, state, options)
           maxH = Math.max(maxH, size.height + extendH)
         }
       }
@@ -321,7 +358,7 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
         const item = rows[firstRow].find(n => n?.id === nodeId)
         if (item) {
           const size = sizeMap.get(nodeId)!
-          const extendH = getExtendHeight(item, styleEngine, state, options)
+          const extendH = getExtendHeight(doc, item, styleEngine, state, options)
           let spannedHeight = 0
           for (let r = firstRow; r <= lastRow; r++) {
             spannedHeight += cellHeights[r]
