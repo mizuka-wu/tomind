@@ -16,6 +16,7 @@ import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engi
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
 import { measureTitleOnlyNode } from './part-node-size'
+import { getLayoutWidth } from './spacing-utils'
 
 interface NodeSize {
   width: number
@@ -205,9 +206,13 @@ function getExtendWidth(
 ): number {
   const spacing = getNodeSpacing(doc, node, options, styleEngine, state)
   const padding = spacing.padding
+  let borderWidth = 0
+  if (styleEngine && state) {
+    const style = styleEngine.computeStyle(state, node.id)
+    borderWidth = parseStyleValue(style.borderWidth, 0)
+  }
   // SB: borderWidth + marginLeft + marginRight
-  // TM 没有 borderWidth，用 padding left + right 模拟
-  return padding.left + padding.right
+  return padding.left + padding.right + 2 * borderWidth
 }
 
 function getExtendHeight(
@@ -290,9 +295,9 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
         }
       }
       if (singleItems.length > 0) {
-        cellWidths[col] = Math.max(...singleItems.map(({ node, extendW }) => {
+        cellWidths[col] = Math.max(...singleItems.map(({ node }) => {
           const size = sizeMap.get(node.id)!
-          return size.width + extendW
+          return getLayoutWidth(node, size.width, styleEngine, state)
         }))
       }
     }
@@ -313,7 +318,7 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
               spannedWidth += cellWidths[col]
             }
           }
-          const neededWidth = size.width + extendW
+          const neededWidth = getLayoutWidth(item, size.width, styleEngine, state)
           if (spannedWidth < neededWidth) {
             // 需要额外宽度
             const extra = neededWidth - spannedWidth
@@ -431,7 +436,12 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
     for (const [nodeId, pos] of nodePositions) {
       const size = sizeMap.get(nodeId)!
       // SB: getItemCellXY - 左对齐（默认），垂直居中
-      const extendW = 0 // 已经包含在 cellWidth 中
+      let nodeRef: NodeDesc | undefined
+      for (const row of rows) {
+        const found = row.find(n => n?.id === nodeId)
+        if (found) { nodeRef = found; break }
+      }
+      const extendW = nodeRef ? getExtendWidth(doc, nodeRef, styleEngine, state, options) : 0
       const x = pos.x + extendW / 2
       const y = pos.y + (pos.cellHeight - size.height) / 2
 
