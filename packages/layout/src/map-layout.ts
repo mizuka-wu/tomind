@@ -579,6 +579,33 @@ class MapLayout extends BaseLayout {
       this.shiftSubtree(child, 0, finalY, nodes)
     }
 
+    // Step f2: posYoffsetToClosestChild re-align (对齐 SB calSidePos)
+    // SB 找最近子节点的连接锚点偏移，如果偏移 < min(30, childrenHeight * 0.15)，整体微调
+    const MAX_BRANCH_POSITION_REALIGN_OFFSET = 30
+    const BRANCH_POSITION_REALIGN_RATIO = 0.15
+    let posYoffsetToClosestChild = MAX_BRANCH_POSITION_REALIGN_OFFSET + 1
+    for (let i = 0; i < n; i++) {
+      const nl = nodes.get(children[i].id)
+      if (!nl) continue
+      // endAnchorRelativePosition.y ≈ 0 for standard shapes (anchor at edge center)
+      const posYoffset = nl.y
+      if (Math.abs(posYoffset) < Math.abs(posYoffsetToClosestChild)) {
+        posYoffsetToClosestChild = posYoffset
+      }
+    }
+    // childrenHeight = sum of bb.height + spacingMinor
+    let childrenHeight = 0
+    for (let i = 0; i < n; i++) {
+      childrenHeight += childBBs[i].height + (i < n - 1 ? spacingMinor : 0)
+    }
+    const maxRealignOffset = Math.min(MAX_BRANCH_POSITION_REALIGN_OFFSET, childrenHeight * BRANCH_POSITION_REALIGN_RATIO)
+    if (n >= 3 && Math.abs(posYoffsetToClosestChild) < maxRealignOffset) {
+      // re-align: shift all children to center closest child at Y=0
+      for (let i = 0; i < n; i++) {
+        this.shiftSubtree(children[i], 0, -posYoffsetToClosestChild, nodes)
+      }
+    }
+
     // Step g: X offset alignment if boundaryBoundsMap provided
     if (boundaryBoundsMap) {
       const { maxOffset } = this.calcMaxOffset(children, nodes, boundaryBoundsMap, side)
