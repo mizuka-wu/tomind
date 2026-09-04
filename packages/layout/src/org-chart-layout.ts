@@ -254,18 +254,18 @@ function layoutSubtreeDown(
 
   let childrenSizeWidth = 0
   for (let i = 0; i < children.length; i++) {
-    childrenSizeWidth += getSBTopicWidth(sizeMap.get(children[i].id)!.titleWidth, styleEngine, state, children[i].id)
+    childrenSizeWidth += subtreeMap.get(children[i].id)!
   }
   if (children.length > 1) childrenSizeWidth += childGap * (children.length - 1)
 
   const childY = y + size.height + spacing.verticalGap
 
   // Position children — 对齐 SB calAttachedChildrenPos
-  // levelWidth = childrenSizeWidth + firstChild.bbX - lastChild.topicW - lastChild.bbX
+  // levelWidth = childrenSizeWidth + firstChild.bbX - lastChild.subtreeW - lastChild.bbX
   const firstChild = children[0]
   const firstChildX = getChildBBX(firstChild, subtreeMap.get(firstChild.id)!, sizeMap, styleEngine, state)
   const lastChild = children[children.length - 1]
-  const lastChildW = getSBTopicWidth(sizeMap.get(lastChild.id)!.titleWidth, styleEngine, state, lastChild.id)
+  const lastChildW = subtreeMap.get(lastChild.id)!
   const lastChildX = getChildBBX(lastChild, subtreeMap.get(lastChild.id)!, sizeMap, styleEngine, state)
   const gcW = firstChildX - lastChildW - lastChildX
   const levelWidth = childrenSizeWidth + gcW
@@ -319,7 +319,7 @@ function layoutSubtreeUp(
 
   let childrenSizeWidth = 0
   for (let i = 0; i < children.length; i++) {
-    childrenSizeWidth += getSBTopicWidth(sizeMap.get(children[i].id)!.titleWidth, styleEngine, state, children[i].id)
+    childrenSizeWidth += subtreeMap.get(children[i].id)!
   }
   if (children.length > 1) childrenSizeWidth += childGap * (children.length - 1)
 
@@ -327,7 +327,7 @@ function layoutSubtreeUp(
   const firstChild = children[0]
   const firstChildX = getChildBBX(firstChild, subtreeMap.get(firstChild.id)!, sizeMap, styleEngine, state)
   const lastChild = children[children.length - 1]
-  const lastChildW = getSBTopicWidth(sizeMap.get(lastChild.id)!.titleWidth, styleEngine, state, lastChild.id)
+  const lastChildW = subtreeMap.get(lastChild.id)!
   const lastChildX = getChildBBX(lastChild, subtreeMap.get(lastChild.id)!, sizeMap, styleEngine, state)
   const gcW = firstChildX - lastChildW - lastChildX
   const levelWidth = childrenSizeWidth + gcW
