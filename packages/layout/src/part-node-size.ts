@@ -143,9 +143,22 @@ export function measureTitleOnlyNode(
     fontStyle,
   )
 
+  // 编号显示在子节点（配置在父节点），测量时补上文本宽
+  let extraW = 0
+  if (styleEngine && state) {
+    try {
+      const ls = styleEngine.getLeaferStyle(state, node.id) as { numberingText?: string }
+      if (ls?.numberingText) {
+        extraW = measureTextSize(ls.numberingText, fontSize, options, fontFamily, fontWeight, fontStyle).width + 6
+      }
+    } catch {
+      // plugin 未注册时忽略
+    }
+  }
+
   return {
     // 对齐 snowbrush getSBTopicWidth: titleWidth + innerSpacing(20) + 2*borderWidth
-    width: titleWidth + padding.left + padding.right + 20,
+    width: titleWidth + padding.left + padding.right + 20 + extraW,
     height: titleHeight + padding.top + padding.bottom,
     titleWidth,
     titleHeight,

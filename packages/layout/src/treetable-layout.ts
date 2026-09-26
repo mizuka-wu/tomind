@@ -211,8 +211,8 @@ function getExtendWidth(
     const style = styleEngine.computeStyle(state, node.id)
     borderWidth = parseStyleValue(style.borderWidth, 0)
   }
-  // SB: borderWidth + marginLeft + marginRight
-  return padding.left + padding.right + 2 * borderWidth
+  // SB getExtendWidth：cell 从左边框中心线量到右边框中心线，只加一份 borderWidth
+  return padding.left + padding.right + borderWidth
 }
 
 function getExtendHeight(
@@ -296,8 +296,11 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
       }
       if (singleItems.length > 0) {
         cellWidths[col] = Math.max(...singleItems.map(({ node }) => {
+          // SB calcTableCellWidth: topicBounds.width + extendWidth
+          // extendWidth = borderWidth + marginLeft + marginRight（居中线量法，只加一份 border）
           const size = sizeMap.get(node.id)!
-          return getLayoutWidth(node, size.width, styleEngine, state)
+          const extendW = getExtendWidth(doc, node, styleEngine, state, options)
+          return size.titleWidth + extendW
         }))
       }
     }

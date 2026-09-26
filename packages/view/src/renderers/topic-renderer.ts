@@ -3,7 +3,7 @@ import type { IFontWeight, ITextAlign, ITextDecorationType, IImagePaint } from '
 import type { LayoutResult, NodeLayout } from '@tomind/layout'
 import { getStringStyle } from '../style-accessors'
 import type { Renderer } from './renderer'
-import { getTitleText } from '@tomind/schema'
+import { getTitleText, isRichAttributeTitle, getAttributeTitle } from '@tomind/schema'
 
 const SYSTEM_FONT_STACK = "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif"
 
@@ -151,6 +151,47 @@ function handDrawnEllipsePath(x: number, y: number, w: number, h: number): strin
     `M ${capPoint.x} ${capPoint.y + capOffset}`,
     `C ${x - w / 7} ${y - h / 4}, ${x - w / 4} ${y + h}, ${x + w / 2} ${y + h}`,
     `C ${x + w * 1.1} ${y + h}, ${x + w * 1.1} ${y + h / 6}, ${capPoint.x} ${capPoint.y - capOffset}`,
+  ].join(' ')
+}
+
+/** 手绘矩形（handDrawnRect）— 四边轻微抖动 */
+function handDrawnRectPath(x: number, y: number, w: number, h: number): string {
+  const j = Math.min(w, h) * 0.02
+  return [
+    `M ${x + j} ${y - j / 2}`,
+    `L ${x + w - j} ${y + j / 3}`,
+    `L ${x + w + j / 2} ${y + h - j / 2}`,
+    `L ${x + j / 2} ${y + h + j / 3}`,
+    'Z',
+  ].join(' ')
+}
+
+/** 手绘圆角矩形（handDrawnRoundedRect） */
+function handDrawnRoundedRectPath(x: number, y: number, w: number, h: number, r: number): string {
+  const j = Math.min(w, h) * 0.02
+  const rr = Math.min(r, w / 2, h / 2)
+  return [
+    `M ${x + rr + j} ${y - j / 2}`,
+    `L ${x + w - rr - j} ${y + j / 3}`,
+    `Q ${x + w + j / 2} ${y} ${x + w + j / 2} ${y + rr}`,
+    `L ${x + w - j} ${y + h - rr}`,
+    `Q ${x + w} ${y + h + j / 3} ${x + w - rr} ${y + h + j / 3}`,
+    `L ${x + rr} ${y + h - j / 2}`,
+    `Q ${x - j / 2} ${y + h} ${x - j / 2} ${y + h - rr}`,
+    `L ${x + j} ${y + rr}`,
+    `Q ${x} ${y - j / 2} ${x + rr + j} ${y - j / 2}`,
+    'Z',
+  ].join(' ')
+}
+
+/** 手绘下划线（handDrawnUnderline）— 波浪底线 */
+function handDrawnUnderlinePath(x: number, y: number, w: number, h: number): string {
+  const lineY = y + h - 2
+  const j = h * 0.04
+  return [
+    `M ${x} ${lineY + j}`,
+    `Q ${x + w * 0.25} ${lineY - j}, ${x + w * 0.5} ${lineY + j / 2}`,
+    `Q ${x + w * 0.75} ${lineY + j * 1.5}, ${x + w} ${lineY}`,
   ].join(' ')
 }
 
@@ -360,6 +401,8 @@ export class TopicRenderer implements Renderer {
   private group: Group | null = null
   private shape: Rect | Line | Ellipse | Path | null = null
   private text: Text | null = null
+  /** 富文本多 run（attributeTitle 各 unit 独立样式） */
+  private richRuns: Text[] = []
   private nodeId: string
 
   constructor(nodeId: string) {
@@ -377,6 +420,15 @@ export class TopicRenderer implements Renderer {
     this.group.add(this.text)
 
     parent.add(this.group)
+  }
+
+  /** 清理富文本 run */
+  private clearRichRuns(): void {
+    for (const t of this.richRuns) {
+      this.group?.remove(t)
+      t.destroy()
+    }
+    this.richRuns = []
   }
 
   render(layout: LayoutResult, style: Record<string, unknown>, nodeAttrs?: Record<string, unknown>): void {
@@ -495,6 +547,15 @@ export class TopicRenderer implements Renderer {
         break
       case 'handDrawnEllipse':
         this.renderHandDrawnEllipse(layout, style)
+        break
+      case 'handDrawnRect':
+        this.renderHandDrawnRect(layout, style)
+        break
+      case 'handDrawnRoundedRect':
+        this.renderHandDrawnRoundedRect(layout, style)
+        break
+      case 'handDrawnUnderline':
+        this.renderHandDrawnUnderline(layout, style)
         break
       case 'squareQuote':
         this.renderSquareQuote(layout, style)
@@ -999,6 +1060,31 @@ export class TopicRenderer implements Renderer {
     this.applyPathFillAndStroke(style)
   }
 
+  /** handDrawnRect：手绘矩形 */
+  private renderHandDrawnRect(layout: NodeLayout, style: Record<string, unknown>): void {
+    const { x, y, w, h } = computeDrawBounds(layout, style)
+    this.ensurePath(handDrawnRectPath(x, y, w, h))
+    applyPathInset(this.shape!, style)
+    this.applyPathFillAndStroke(style)
+  }
+
+  /** handDrawnRoundedRect：手绘圆角矩形 */
+  private renderHandDrawnRoundedRect(layout: NodeLayout, style: Record<string, unknown>): void {
+    const { x, y, w, h } = computeDrawBounds(layout, style)
+    const r = typeof style.cornerRadius === 'number' ? style.cornerRadius : 8
+    this.ensurePath(handDrawnRoundedRectPath(x, y, w, h, r))
+    applyPathInset(this.shape!, style)
+    this.applyPathFillAndStroke(style)
+  }
+
+  /** handDrawnUnderline：手绘下划线 */
+  private renderHandDrawnUnderline(layout: NodeLayout, style: Record<string, unknown>): void {
+    const { x, y, w, h } = computeDrawBounds(layout, style)
+    this.ensurePath(handDrawnUnderlinePath(x, y, w, h))
+    applyPathInset(this.shape!, style)
+    this.applyPathStroke(style)
+  }
+
   /** squareQuote：方引号形（左上和右下角的 L 形括号） */
   private renderSquareQuote(layout: NodeLayout, style: Record<string, unknown>): void {
     const w = layout.width
@@ -1346,6 +1432,40 @@ export class TopicRenderer implements Renderer {
     // 字体颜色：优先用 fontColor，fallback 到 color
     const fontColor = style.fontColor ?? style.color ?? '#333'
     if (typeof fontColor === 'string') this.text.fill = fontColor
+
+    // 富文本：attributeTitle 多 run 独立样式（对齐 snowbrush tspan）
+    this.clearRichRuns()
+    const attrTitle = getAttributeTitle(titleStyle)
+    if (isRichAttributeTitle(attrTitle) && attrTitle.length > 1) {
+      this.text.text = ''
+      const baseSize = typeof style.fontSize === 'number' ? style.fontSize : 14
+      let runX = 0
+      for (const unit of attrTitle) {
+        if (!unit.text) continue
+        const run = new Text({ text: unit.text })
+        const runColor = unit['fo:color'] ?? (typeof fontColor === 'string' ? fontColor : '#333')
+        run.fill = runColor
+        const runSize = unit['fo:font-size'] != null
+          ? (typeof unit['fo:font-size'] === 'number' ? unit['fo:font-size'] : parseFloat(String(unit['fo:font-size'])))
+          : baseSize
+        if (!isNaN(runSize) && runSize > 0) run.fontSize = runSize
+        if (unit['fo:font-weight'] != null) {
+          const w = unit['fo:font-weight']
+          run.fontWeight = (typeof w === 'number' ? w : String(w)) as IFontWeight
+        }
+        if (unit['fo:font-style'] === 'italic') run.italic = true
+        if (unit['fo:font-family'] && typeof unit['fo:font-family'] === 'string') {
+          run.fontFamily = unit['fo:font-family']
+        }
+        if (unit['fo:text-decoration'] === 'underline') run.textDecoration = 'under'
+        else if (unit['fo:text-decoration'] === 'line-through') run.textDecoration = 'delete'
+        this.group?.add(run)
+        this.richRuns.push(run)
+        // 同一行顺序排布（换行由 width 限制处理）
+        run.x = runX
+        runX += (run.width || unit.text.length * runSize * 0.6) + 1
+      }
+    }
 
     // fontFamily：'$system$' 解析为系统字体栈
     if (typeof style.fontFamily === 'string') {
