@@ -1,5 +1,5 @@
 import { Group, Rect, Text, Line, Ellipse, Path } from 'leafer-ui'
-import type { IFontWeight, ITextAlign, ITextDecorationType, IImagePaint } from 'leafer-ui'
+import type { ITextDecorationType, IImagePaint } from 'leafer-ui'
 import type { LayoutResult, NodeLayout } from '@tomind/layout'
 import { getStringStyle } from '../style-accessors'
 import { mapFontWeight, mapTextAlign } from '../text-style-helpers'

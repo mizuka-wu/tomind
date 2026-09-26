@@ -16,8 +16,6 @@
 
 import type { SheetState } from '@tomind/state'
 import { Transaction } from '@tomind/state'
-import type { NodeDesc } from '@tomind/schema'
-import { ViewDesc } from '@tomind/view'
 import { SheetEditor, createNodeViewDescRegistry, createPartViewDescRegistry } from './sheet-editor'
 import { ExtensionManager } from '@tomind/extension'
 import type { Extension, ExtensionContext, CommandFn, EventHandler, WorkbookEditorInterface, ViewDescConstructor } from '@tomind/extension'
