@@ -61,21 +61,38 @@ function layoutTimelineHorizontal(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
+  /**
+   * 'axis'：时间轴层，子项沿水平线排（对齐 TIMELINEHORIZONTAL）
+   * 'up'/'down'：子树纵向堆叠（对齐 TIMELINEHORIZONTALUP/DOWN）
+   */
+  mode: 'axis' | 'up' | 'down' = 'axis',
 ): void {
   const size = sizeMap.get(node.id)!
   const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
 
-  // 分支高度 = 上下两侧子节点的垂直总跨度
-  let branchHeight = size.height
   const children = getAttachedChildren(node)
+  const gapKey = mode === 'axis' ? 'spacingMinor' : 'spacingMajor'
+  let branchHeight = size.height
   if (!isCollapsed(node) && children.length > 0) {
-    let topH = 0
-    let bottomH = 0
-    for (let i = 0; i < children.length; i++) {
-      if (i % 2 === 0) topH = Math.max(topH, subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, 'spacingMinor'))
-      else bottomH = Math.max(bottomH, subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, 'spacingMinor'))
+    if (mode === 'axis') {
+      // 轴层：上下两侧交替
+      let topH = 0
+      let bottomH = 0
+      for (let i = 0; i < children.length; i++) {
+        const h = subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, 'spacingMinor')
+        if (i % 2 === 0) topH = Math.max(topH, h)
+        else bottomH = Math.max(bottomH, h)
+      }
+      branchHeight = topH + size.height + bottomH + getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state) * 2
+    } else {
+      // 纵向堆叠：所有子项同侧
+      let total = 0
+      for (let i = 0; i < children.length; i++) {
+        total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, 'spacingMajor')
+        if (i < children.length - 1) total += getSpacing(node, 'spacingMajor', options.horizontalGap, styleEngine, state)
+      }
+      branchHeight = Math.max(size.height, total)
     }
-    branchHeight = topH + size.height + bottomH + getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state) * 2
   }
 
   nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
@@ -83,10 +100,29 @@ function layoutTimelineHorizontal(
   if (isCollapsed(node)) return
   if (children.length === 0) return
 
-  // 子节点沿水平轴排列，交替上下 — snowbrush 三重约束定位
   const CHILDREN_PADDING = getSpacing(node, 'spacingMajor', options.horizontalGap, styleEngine, state)
   const CHILDREN_GAP = getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state)
 
+  if (mode !== 'axis') {
+    // 纵向堆叠（timeline-up/down）：子项在父节点下方/上方，水平居中
+    let curY = mode === 'up'
+      ? y + size.height + CHILDREN_PADDING
+      : y - CHILDREN_PADDING
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
+      const cs = sizeMap.get(child.id)!
+      const childH = subtreeTotalHeight(child, options, sizeMap, styleEngine, state, 'spacingMajor')
+      const childY = mode === 'up'
+        ? curY
+        : curY - childH
+      layoutTimelineHorizontal(child, x + size.width / 2 - cs.width / 2, childY, node, options, sizeMap, nodes, styleEngine, state, mode)
+      if (mode === 'up') curY += childH + CHILDREN_PADDING
+      else curY -= childH + CHILDREN_PADDING
+    }
+    return
+  }
+
+  // 轴层：子项沿水平线，交替上下
   let lastUpBranch: NodeDesc | null = parent
   let lastDownBranch: NodeDesc | null = parent
 
@@ -96,27 +132,22 @@ function layoutTimelineHorizontal(
     const isUp = i % 2 === 0
     const sameDirBranch = isUp ? lastUpBranch : lastDownBranch
 
-    // 候选 1: 基于前一个节点（或父节点）的右边缘
     let posXByPrevBranchTopicShape: number
     if (i === 0) {
-      // 首个子节点：紧接父节点右侧
       posXByPrevBranchTopicShape = x + size.width + CHILDREN_PADDING
     } else {
       const prevNode = children[i - 1]
       posXByPrevBranchTopicShape = nodes.get(prevNode.id)!.x + sizeMap.get(prevNode.id)!.width + CHILDREN_PADDING
     }
 
-    // 候选 2: 基于同方向最后一个分支的完整子树宽度
     let posXBySameDirBranch: number
     if (sameDirBranch === null || sameDirBranch === parent) {
-      // 尚无同方向分支：紧接父节点右侧
       posXBySameDirBranch = x + size.width + CHILDREN_PADDING
     } else {
       const sameDirSubtreeW = subtreeTotalWidth(sameDirBranch, options, sizeMap, styleEngine, state, 'spacingMajor')
       posXBySameDirBranch = nodes.get(sameDirBranch.id)!.x + sameDirSubtreeW + CHILDREN_PADDING / 2
     }
 
-    // 候选 3: 方向切换时基于前一个分支的完整子树宽度
     let posXByPrevBranchBounds = 0
     if (i > 0 && !isUp) {
       const prevChild = children[i - 1]
@@ -125,11 +156,10 @@ function layoutTimelineHorizontal(
     }
 
     const childX = Math.max(posXByPrevBranchTopicShape, posXBySameDirBranch, posXByPrevBranchBounds)
-    const childY = isUp
-      ? y - cs.height - CHILDREN_GAP
-      : y + size.height + CHILDREN_GAP
+    // 对齐 SB：轴层子项贴近父节点垂直中心，不交替撑开
+    const childY = y + size.height / 2 - cs.height / 2
 
-    layoutTimelineHorizontal(child, childX, childY, node, options, sizeMap, nodes, styleEngine, state)
+    layoutTimelineHorizontal(child, childX, childY, node, options, sizeMap, nodes, styleEngine, state, isUp ? 'up' : 'down')
 
     if (isUp) lastUpBranch = child
     else lastDownBranch = child

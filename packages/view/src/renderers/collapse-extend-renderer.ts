@@ -3,12 +3,15 @@ import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
 import { getStringStyle, getNumberStyle, getBoolStyle, getObjectStyle } from '../style-accessors'
 
-/** 常量 */
-const EXT_RADIUS = 7
-const COL_RADIUS = 5
+/** 常量 — 对齐 snowbrush layoutConstant */
+const EXT_RADIUS = 8
+const COL_RADIUS = 6
+const EXT_GAP = 14
+const COL_GAP = 13
 const SYMBOLGAP = 2
 const RADIUS = Math.max(EXT_RADIUS, COL_RADIUS)
 const EXT_STROKE_WIDTH = 1
+const BIGGEST_NUM = 99
 
 /**
  * CollapseExtendRenderer — 折叠/展开按钮渲染器
@@ -108,6 +111,73 @@ export class CollapseExtendRenderer implements Renderer {
     this.group.add(this.actionArea)
 
     parent.add(this.group)
+  }
+
+  /**
+   * 对齐 snowbrush layoutExtendCollapse：按子节点方向把按钮放在节点外缘
+   */
+  place(
+    bounds: { x: number; y: number; width: number; height: number },
+    side: 'right' | 'left' | 'down' | 'up',
+    collapsed: boolean,
+    descendantCount: number,
+  ): void {
+    if (!this.group) return
+    const gap = collapsed ? EXT_GAP : COL_GAP
+    const r = collapsed ? EXT_RADIUS : COL_RADIUS
+
+    let x: number
+    let y: number
+    switch (side) {
+      case 'right':
+        x = bounds.x + bounds.width + gap - r
+        y = bounds.y + bounds.height / 2 - r
+        break
+      case 'left':
+        x = bounds.x - gap - r
+        y = bounds.y + bounds.height / 2 - r
+        break
+      case 'down':
+        x = bounds.x + bounds.width / 2 - r
+        y = bounds.y + bounds.height + gap - r
+        break
+      case 'up':
+        x = bounds.x + bounds.width / 2 - r
+        y = bounds.y - gap - r
+        break
+    }
+    this.group.x = x
+    this.group.y = y
+
+    // 连接线：按钮圆心 → 节点边缘
+    if (this.connectPath) {
+      const cx = r
+      const cy = r
+      let tx: number
+      let ty: number
+      switch (side) {
+        case 'right': tx = -gap + r; ty = cy; break
+        case 'left': tx = gap + r * 2 - r; ty = cy; break
+        case 'down': tx = cx; ty = -gap + r; break
+        case 'up': tx = cx; ty = gap + r * 2 - r; break
+      }
+      this.connectPath.points = [cx, cy, tx, ty]
+      this.connectPath.strokeWidth = EXT_STROKE_WIDTH
+    }
+
+    // 折叠时显示后代计数（对齐 snowbrush BIGGEST_NUM=99 → "···"）
+    if (this.text) {
+      if (collapsed) {
+        const label = descendantCount > BIGGEST_NUM ? '···' : String(descendantCount)
+        this.text.text = label
+        this.text.visible = true
+        const tw = label.length * 6
+        this.text.x = r - tw / 2
+        this.text.y = r - 6
+      } else {
+        this.text.visible = false
+      }
+    }
   }
 
   render(layout: LayoutResult, style: Record<string, unknown>): void {

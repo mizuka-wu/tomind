@@ -1247,12 +1247,54 @@ export class CollapseExtendNodeViewDesc extends NodeViewDesc {
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
     const style = getLeaferStyle(this.ctx, this.node.id)
-    const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
+    const layout = this.ctx.layoutEngine?.getLayoutResult?.() ?? { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
 
   protected updateContent(): void {
+    if (!this.renderer || !this.ctx.layoutEngine) return
     this.updateStyle()
+
+    const layout = this.ctx.layoutEngine.getLayoutResult()
+    const nl = layout.nodes.get(this.node.id)
+    if (!nl) return
+
+    const kids = this.node.children.attached ?? []
+    const collapsed = this.node.attrs.collapsed === true
+
+    // 侧向：按首个子节点相对位置判断
+    let side: 'right' | 'left' | 'down' | 'up' = 'right'
+    const firstKid = kids[0]
+    const kn = firstKid ? layout.nodes.get(firstKid.id) : undefined
+    if (kn) {
+      const dx = kn.x - nl.x
+      const dy = kn.y - nl.y
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        side = dx >= 0 ? 'right' : 'left'
+      } else {
+        side = dy >= 0 ? 'down' : 'up'
+      }
+    }
+
+    // 后代计数（对齐 snowbrush BIGGEST_NUM）
+    let count = 0
+    const walk = (n: typeof this.node) => {
+      for (const c of (n.children.attached ?? [])) {
+        count++
+        walk(c)
+      }
+    }
+    walk(this.node)
+
+    this.renderer.place({ x: nl.x, y: nl.y, width: nl.width, height: nl.height }, side, collapsed, count)
+    // 无子节点且未折叠时不显示
+    const group = this.renderer as { place: (...a: unknown[]) => void }
+    void group
+    if (kids.length === 0 && !collapsed) {
+      // place() 已定位，再靠 visible 隐藏
+      const el = this.element
+      if (el) el.visible = kids.length > 0 || collapsed
+    }
   }
 }
 

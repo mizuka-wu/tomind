@@ -162,12 +162,13 @@ export function getLayoutWidth(
   styleEngine: StyleEngine | null,
   state: SheetState | null,
 ): number {
+  // nodeWidth 已含 measureTitleOnlyNode 的 +20 innerSpacing，这里只补 border
   let style: Record<string, unknown> | null = null
   if (styleEngine && state) {
     style = styleEngine.computeStyle(state, node.id)
   }
   const borderWidth = parseStyleValue(style?.borderWidth, 0)
-  return nodeWidth + 20 + 2 * borderWidth
+  return nodeWidth + 2 * borderWidth
 }
 
 const BOUNDARYGAP = 10
