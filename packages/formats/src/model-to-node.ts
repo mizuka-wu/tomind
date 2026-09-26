@@ -176,10 +176,13 @@ function modelRelToNodeDesc(node: ModelNode): NodeDesc {
 /** ModelTree → NodeDesc（根节点） */
 export function modelToNodeDesc(tree: ModelTree): NodeDesc {
   const root = modelNodeToNodeDesc(tree.root)
-  const rels = tree.relationships
-  if (rels?.length) {
+  const nodeRels = tree.root.relationships
+  const treeRels = tree.relationships
+  const allRels = [...(nodeRels ?? []), ...(treeRels ?? [])]
+  if (allRels.length > 0) {
     const children: Record<string, readonly NodeDesc[]> = { ...root.children }
-    children.relationship = rels.map((r) => modelRelToNodeDesc(r))
+    const existing = children.relationship ?? []
+    children.relationship = [...existing, ...allRels.map((r) => modelRelToNodeDesc(r))]
     return { ...root, children }
   }
   return root
