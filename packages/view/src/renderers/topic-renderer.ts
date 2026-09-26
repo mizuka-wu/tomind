@@ -1,7 +1,7 @@
 import { Group, Rect, Text, Line, Ellipse, Path } from 'leafer-ui'
 import type { IFontWeight, ITextAlign, ITextDecorationType, IImagePaint } from 'leafer-ui'
 import type { LayoutResult, NodeLayout } from '@tomind/layout'
-import { getStringStyle, getNumberStyle } from '../style-accessors'
+import { getStringStyle } from '../style-accessors'
 import type { Renderer } from './renderer'
 import { getTitleText } from '@tomind/schema'
 

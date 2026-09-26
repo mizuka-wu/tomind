@@ -71,7 +71,6 @@ function layoutTimelineHorizontal(
   const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
 
   const children = getAttachedChildren(node)
-  const gapKey = mode === 'axis' ? 'spacingMinor' : 'spacingMajor'
   let branchHeight = size.height
   if (!isCollapsed(node) && children.length > 0) {
     if (mode === 'axis') {
@@ -101,7 +100,6 @@ function layoutTimelineHorizontal(
   if (children.length === 0) return
 
   const CHILDREN_PADDING = getSpacing(node, 'spacingMajor', options.horizontalGap, styleEngine, state)
-  const CHILDREN_GAP = getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state)
 
   if (mode !== 'axis') {
     // 纵向堆叠（timeline-up/down）：子项在父节点下方/上方，水平居中

@@ -31,7 +31,7 @@ import {
 import { computeOutsidePadding } from './boundary-padding'
 import type { OutsidePadding } from './boundary-padding'
 import { layoutSummaries, getSummaryChildren } from './summary-layout'
-import { computeChildrenTotalHeight } from './spacing-utils'
+
 
 // ─── 配置 ───
 
@@ -589,9 +589,7 @@ class MapLayout extends BaseLayout {
       const prevBB = childBBs[i - 1]
       const nowBB = childBBs[i]
       const prevSize = sizeMap.get(children[i - 1].id)
-      const nowSize = sizeMap.get(children[i].id)
       const prevNodeH = prevSize?.height ?? prevBB.height
-      const nowNodeH = nowSize?.height ?? nowBB.height
       // bb.y 是 topic 在子树包围盒内的偏移（通常为负）
       const prevBbY = prevBB.y
       const nowBbY = nowBB.y

@@ -311,7 +311,6 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
         const item = rows[firstRow].find(n => n?.id === nodeId)
         if (item) {
           const size = sizeMap.get(nodeId)!
-          const extendW = getExtendWidth(doc, item, styleEngine, state, options)
           let spannedWidth = 0
           for (let col = 0; col < colCount; col++) {
             if (rows[firstRow][col]?.id === nodeId) {
