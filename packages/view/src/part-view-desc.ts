@@ -237,8 +237,13 @@ export class NotePartViewDesc extends PartViewDesc {
   }
 
   protected updatePart(data: unknown): void {
-    const note = (typeof data === 'object' && data !== null && 'content' in data)
-      ? data as NoteData : undefined
+    let note: NoteData | undefined
+    if (typeof data === 'object' && data !== null) {
+      const d = data as { content?: string; htmlContent?: string }
+      if (typeof d.content === 'string' || typeof d.htmlContent === 'string') {
+        note = { content: d.content ?? '', ...(d.htmlContent ? { htmlContent: d.htmlContent, format: 'html' as const } : {}) }
+      }
+    }
     const hasNote = !!note && (!!note.content || !!note.htmlContent)
 
     // 图标可见性
@@ -399,7 +404,9 @@ export class CommentsPartViewDesc extends PartViewDesc {
   }
 
   protected updatePart(data: unknown): void {
-    const comments = Array.isArray(data) ? data as CommentItemData[] : undefined
+    const comments = Array.isArray(data)
+      ? data.filter((c): c is CommentItemData => typeof c === 'object' && c !== null)
+      : undefined
     const hasComments = !!comments && comments.length > 0
 
     if (this._icon) {

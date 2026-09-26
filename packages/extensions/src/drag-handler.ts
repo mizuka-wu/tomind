@@ -718,7 +718,10 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions, Record<s
   },
 
   onCreate(ctx) {
-    const activeSheet = (): SheetEditorLike | null => ctx.getWorkbook().getActiveSheet() as SheetEditorLike | null
+    const activeSheet = (): SheetEditorLike | null => {
+      const s = ctx.getWorkbook().getActiveSheet()
+      return (s && typeof s === 'object') ? s as SheetEditorLike : null
+    }
 
     // 创建拖拽处理器上下文
     const handlerContext: DragHandlerContext = {
@@ -726,7 +729,7 @@ export const DragHandlerExtension = createExtension<DragHandlerOptions, Record<s
       getSheetEditor: activeSheet,
       getCentralBranch: () => null,
       getSelectionManager: () => null,
-      emit: ((event: string, ...args: unknown[]) => ctx.emit(event, ...args)) as DragHandlerContext['emit'],
+      emit: (event: string, ...args: unknown[]) => { ctx.emit(event, ...args) },
     }
 
     // 创建管理器

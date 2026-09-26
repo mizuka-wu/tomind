@@ -155,7 +155,8 @@ export class SheetState {
    * 获取标题
    */
   get title(): string | undefined {
-    return this.doc.attrs['title'] as string | undefined
+    const t = this.doc.attrs['title']
+    return typeof t === 'string' ? t : undefined
   }
 
   /**

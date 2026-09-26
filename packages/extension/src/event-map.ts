@@ -55,6 +55,7 @@ export interface BaseEventMap {
   viewportChange: void
   scaleChange: unknown
   contentChange: void
+  stateUpdate: unknown
   'file:save': void
 
   // ─── 基础设施 ───

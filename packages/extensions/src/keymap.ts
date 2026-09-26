@@ -221,14 +221,17 @@ export const KeymapExtension = createExtension({
   defaultOptions: {
     enabled: true,
     /** 自定义快捷键映射（会与默认映射合并） */
-    keymap: {} as Record<string, (ctx: ExtensionContext<any, any>) => boolean>,
+    keymap: {} as Record<string, (ctx: ExtensionContext<Record<string, unknown>, Record<string, unknown>>) => boolean>,
   },
 
   addKeyboardShortcuts() {
     // 合并默认快捷键和自定义快捷键
     const defaultKeymap = createDefaultKeymap()
     const opts = (this as unknown as { defaultOptions?: Record<string, unknown> })?.defaultOptions
-    const customKeymap = (opts?.keymap as Record<string, (ctx: ExtensionContext<any, any>) => boolean>) ?? {}
+    const rawKeymap = opts?.keymap
+    const customKeymap = (rawKeymap && typeof rawKeymap === 'object')
+      ? rawKeymap as Record<string, (ctx: ExtensionContext<Record<string, unknown>, Record<string, unknown>>) => boolean>
+      : {}
 
     return {
       ...defaultKeymap,

@@ -35,6 +35,10 @@ import type {
 } from './view-event'
 import { createViewEvent, isKeyboardEventType } from './view-event'
 
+function isLeaferNativeEvent(v: unknown): v is LeaferNativeEvent {
+  return typeof v === 'object' && v !== null && 'type' in v
+}
+
 /** 委托事件处理器 */
 interface DelegatedHandler {
   /** 目标元素 ID */
@@ -248,7 +252,7 @@ export class EventDelegator {
    * 处理事件
    */
   private handleEvent(type: ViewEventType, nativeEvent: unknown): void {
-    const ne = nativeEvent as LeaferNativeEvent
+    const ne = isLeaferNativeEvent(nativeEvent) ? nativeEvent : ({} as LeaferNativeEvent)
     const targetId = ne.target?.id
 
     if (!targetId) return
@@ -277,7 +281,7 @@ export class EventDelegator {
     targetId: string,
     nativeEvent: unknown
   ): ViewEvent {
-    const ne = nativeEvent as LeaferNativeEvent
+    const ne = isLeaferNativeEvent(nativeEvent) ? nativeEvent : ({} as LeaferNativeEvent)
     const position = {
       x: ne.x ?? ne.clientX ?? 0,
       y: ne.y ?? ne.clientY ?? 0,

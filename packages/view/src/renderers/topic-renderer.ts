@@ -2,6 +2,7 @@ import { Group, Rect, Text, Line, Ellipse, Path } from 'leafer-ui'
 import type { IFontWeight, ITextAlign, ITextDecorationType, IImagePaint } from 'leafer-ui'
 import type { LayoutResult, NodeLayout } from '@tomind/layout'
 import { getStringStyle } from '../style-accessors'
+import { mapFontWeight, mapTextAlign } from '../text-style-helpers'
 import type { Renderer } from './renderer'
 import { getTitleText, isRichAttributeTitle, getAttributeTitle } from '@tomind/schema'
 
@@ -1451,7 +1452,7 @@ export class TopicRenderer implements Renderer {
         if (!isNaN(runSize) && runSize > 0) run.fontSize = runSize
         if (unit['fo:font-weight'] != null) {
           const w = unit['fo:font-weight']
-          run.fontWeight = (typeof w === 'number' ? w : String(w)) as IFontWeight
+          run.fontWeight = mapFontWeight(typeof w === 'number' ? w : String(w))
         }
         if (unit['fo:font-style'] === 'italic') run.italic = true
         if (unit['fo:font-family'] && typeof unit['fo:font-family'] === 'string') {
@@ -1473,10 +1474,10 @@ export class TopicRenderer implements Renderer {
     }
     if (typeof style.fontSize === 'number') this.text.fontSize = style.fontSize
     if (typeof style.fontWeight === 'string' || typeof style.fontWeight === 'number') {
-      this.text.fontWeight = style.fontWeight as IFontWeight
+      this.text.fontWeight = mapFontWeight(style.fontWeight)
     }
     if (typeof style.textAlign === 'string') {
-      this.text.textAlign = style.textAlign as ITextAlign
+      this.text.textAlign = mapTextAlign(style.textAlign)
     }
 
     // 限制文本宽度，避免长标题溢出（对齐 snowbrush TITLE_MAX_WIDTH 换行）

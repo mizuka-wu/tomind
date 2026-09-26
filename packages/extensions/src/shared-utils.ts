@@ -9,7 +9,8 @@ import type { UI, Group } from 'leafer-ui'
 
 /** 类型安全的 findOne — 从 Group 中查找指定名称的元素 */
 export function findOne<T extends UI = UI>(group: Group, name: string): T | null {
-  return (group.findOne(name) as T | null)
+  const found = group.findOne(name)
+  return (found && typeof found === 'object') ? found as T : null
 }
 
 /** 获取 Group 的子元素（LeaferJS children 的类型安全包装） */

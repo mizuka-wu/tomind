@@ -32,7 +32,8 @@ export const historyPluginKey = new PluginKey<HistoryState>('history')
 
 /** 从 SheetState 中获取 HistoryState（boundary cast 集中于此） */
 function getHistory(state: SheetState): HistoryState | undefined {
-  return state.field(historyPluginKey) as HistoryState | undefined
+  const s = state.field(historyPluginKey)
+  return (s && typeof s === 'object') ? s as HistoryState : undefined
 }
 
 // ==================== Extension ====================

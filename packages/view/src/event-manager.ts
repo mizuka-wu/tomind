@@ -25,7 +25,7 @@ import {
 
 /** 安全地将原生事件转换为 LeaferNativeEvent 结构 */
 function toLeaferNativeEvent(nativeEvent: unknown): LeaferNativeEvent {
-  if (nativeEvent && typeof nativeEvent === 'object') {
+  if (nativeEvent && typeof nativeEvent === 'object' && 'type' in nativeEvent) {
     return nativeEvent as LeaferNativeEvent
   }
   return {} as LeaferNativeEvent

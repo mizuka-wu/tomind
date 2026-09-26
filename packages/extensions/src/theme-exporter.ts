@@ -63,11 +63,10 @@ function generateId(): string {
 }
 
 /** 从样式中提取指定键 */
-function extractStyleKeys(style: ResolvedStyle, keys: readonly string[]): Record<string, StyleValue> {
+function extractStyleKeys(style: ResolvedStyle, keys: readonly (keyof ResolvedStyle)[]): Record<string, StyleValue> {
   const result: Record<string, StyleValue> = {}
-  const styleRecord = style as Record<string, StyleValue>
   for (const key of keys) {
-    const value = styleRecord[key]
+    const value = style[key]
     if (value !== undefined && value !== null) {
       result[key] = value
     }
@@ -229,7 +228,7 @@ export const ThemeExporterExtension = createExtension<ThemeExporterOptions>({
 
       const parsedArgs = isThemeExportArgs(args) ? args : {}
       const filter = parsedArgs.filter
-      const theme = collectThemeFromDoc(state, styleEngine as Parameters<typeof collectThemeFromDoc>[1], filter)
+      const theme = collectThemeFromDoc(state, styleEngine, filter)
 
       const result: ThemeExportResult = {
         id: generateId(),

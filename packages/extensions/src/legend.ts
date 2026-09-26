@@ -126,31 +126,36 @@ function makeDraggable(panel: HTMLElement, handle: HTMLElement): void {
 
 // ==================== 数据收集 ====================
 
-function collectMarkers(state: { doc?: { children?: Record<string, readonly { attrs?: Record<string, unknown> }[]> } } | null): Map<string, { name: string; color?: string }> {
+function collectMarkers(state: unknown): Map<string, { name: string; color?: string }> {
   const markers = new Map<string, { name: string; color?: string }>()
-  if (!state?.doc) return markers
+  if (!state || typeof state !== 'object') return markers
+  const doc = (state as { doc?: unknown }).doc
+  if (!doc || typeof doc !== 'object') return markers
 
-  function walk(node: { attrs?: Record<string, unknown>; children?: Record<string, readonly { attrs?: Record<string, unknown> }[]> }) {
-    const nodeMarkers = node.attrs?.markers as { id: string; name?: string; color?: string }[] | undefined
+  function walk(node: unknown) {
+    if (!node || typeof node !== 'object') return
+    const n = node as { attrs?: Record<string, unknown>; children?: Record<string, unknown> }
+    const nodeMarkers = n.attrs?.markers
     if (Array.isArray(nodeMarkers)) {
       for (const m of nodeMarkers) {
-        if (m.id && !markers.has(m.id)) {
-          markers.set(m.id, { name: m.name || m.id, color: m.color })
+        if (m && typeof m === 'object') {
+          const mm = m as { id?: string; name?: string; color?: string }
+          if (mm.id && !markers.has(mm.id)) {
+            markers.set(mm.id, { name: mm.name || mm.id, color: mm.color })
+          }
         }
       }
     }
-    if (node.children) {
-      for (const childArr of Object.values(node.children)) {
+    if (n.children) {
+      for (const childArr of Object.values(n.children)) {
         if (Array.isArray(childArr)) {
-          for (const child of childArr) {
-            walk(child)
-          }
+          for (const child of childArr) walk(child)
         }
       }
     }
   }
 
-  walk(state.doc)
+  walk(doc)
   return markers
 }
 
@@ -175,7 +180,7 @@ export const LegendExtension = createExtension({
     // 渲染 marker 列表
     function render() {
       const state = ctx.getState() as { doc?: unknown } | null
-      const markers = collectMarkers(state as Parameters<typeof collectMarkers>[0])
+      const markers = collectMarkers(state)
       markerList.innerHTML = ''
       if (markers.size === 0) {
         const empty = document.createElement('div')
@@ -194,14 +199,14 @@ export const LegendExtension = createExtension({
 
     // 监听状态变化
     const handleStateUpdate = () => render()
-    ctx.on('stateUpdate' as never, handleStateUpdate as never)
+    ctx.on('stateUpdate', handleStateUpdate)
 
     // 挂载到容器
     const container = ctx.getContainer()
     container.appendChild(panel)
 
     return () => {
-      ctx.off('stateUpdate' as never, handleStateUpdate as never)
+      ctx.off('stateUpdate', handleStateUpdate)
       panel.remove()
     }
   },

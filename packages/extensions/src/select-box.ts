@@ -559,7 +559,7 @@ function handleHoverEnter(ctx: ExtensionContext<any, any>, nodeId: string): void
 
   // 方向：从节点 attrs 获取，默认 'UD'
   const rawDir = node.attrs?.direction
-  const direction: Direction = (typeof rawDir === 'string' && ['up','down','left','right','UD','LR'].includes(rawDir)) ? rawDir as Direction : 'UD'
+  const direction: Direction = (rawDir === 'up' || rawDir === 'down' || rawDir === 'left' || rawDir === 'right' || rawDir === 'UD' || rawDir === 'LR') ? rawDir : 'UD'
 
   const size = getSelectBoxSize(state, nodeId, direction)
 

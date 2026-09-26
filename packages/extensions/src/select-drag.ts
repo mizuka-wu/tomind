@@ -28,6 +28,7 @@ interface LeaferDragLike {
 
 /** 将 NodeViewDesc 安全转为 LeaferDragLike（boundary cast） */
 function asLeaferDrag(node: NodeViewDesc): LeaferDragLike {
+  // boundary cast：NodeViewDesc 与 LeaferDragLike 结构不重叠，经 unknown 中转
   return node as unknown as LeaferDragLike
 }
 

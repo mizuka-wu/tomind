@@ -85,7 +85,7 @@ export const PresetThemeExtension = createExtension({
   defaultOptions: {
     enabled: true,
     themeId: DEFAULT_THEME_ID,
-  } as PresetThemeOptions,
+  } satisfies PresetThemeOptions,
 
   onCreate(ctx) {
     const workbook = ctx.getWorkbook()

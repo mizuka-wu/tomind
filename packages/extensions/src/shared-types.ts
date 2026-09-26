@@ -22,10 +22,12 @@ export interface LeaferViewLike {
 
 /** 类型安全的 getView 包装 */
 export function getViewLike(ctx: { getView(): unknown | null }): ViewLike | null {
-  return (ctx.getView() ?? null) as ViewLike | null
+  const v = ctx.getView()
+  return (v && typeof v === 'object') ? v as ViewLike : null
 }
 
 /** 获取 LeaferJS canvas 的 DOM 元素 */
 export function getCanvasElement(leaferView: { $el?: unknown }): HTMLElement | null {
-  return (leaferView.$el ?? null) as HTMLElement | null
+  const el = leaferView.$el
+  return (el && typeof el === 'object') ? el as HTMLElement : null
 }

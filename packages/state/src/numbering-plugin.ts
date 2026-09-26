@@ -88,7 +88,10 @@ function computeNumberingTexts(doc: NodeDesc): Map<string, string> {
     parentComputedSeparator: string | undefined,
   ) {
     // 当前节点的 numbering 配置（从 attrs 中读取）
-    const nodeNumbering = node.attrs?.numbering as NumberingData | undefined
+    const rawNumbering = node.attrs?.numbering
+    const nodeNumbering = (rawNumbering && typeof rawNumbering === 'object')
+      ? rawNumbering as NumberingData
+      : undefined
 
     // 当前节点的计算后 format（继承自 parent 或自己定义）
     const computedFormat = nodeNumbering?.numberFormat ?? parentComputedFormat
