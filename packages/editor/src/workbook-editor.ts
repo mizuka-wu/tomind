@@ -264,6 +264,13 @@ export class WorkbookEditor implements WorkbookEditorInterface {
     this._activeSheetId = id
   }
 
+  /** 主题/样式变更后强制所有 Sheet 重绘 */
+  refreshStyles(): void {
+    for (const sheet of this._sheets.values()) {
+      sheet.refreshStyles()
+    }
+  }
+
   /**
    * 获取活动 Sheet ID
    */

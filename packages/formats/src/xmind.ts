@@ -31,6 +31,13 @@ interface XMindTopic {
   title: string
   structureClass?: string
   collapsed?: boolean
+  /** summary/boundary 覆盖的子节点下标 [start, end] */
+  range?: number[]
+  rangeStart?: number
+  rangeEnd?: number
+  /** relationship 端点 */
+  end1Id?: string
+  end2Id?: string
   numbering?: {
     numberFormat?: string
     numberSeparator?: string
@@ -42,6 +49,7 @@ interface XMindTopic {
     attached?: XMindTopic[]
     summary?: XMindTopic[]
     boundary?: XMindTopic[]
+    relationship?: XMindTopic[]
   }
   markers?: { markerId: string }[]
   labels?: string[]
@@ -152,10 +160,52 @@ function convertXMindThemeEntries(
 /** XMindTopic → ModelNode */
 function convertTopic(topic: XMindTopic): ModelNode {
   const children: ModelNode[] = []
+  const summaries: ModelNode[] = []
+  const boundaries: ModelNode[] = []
 
   if (topic.children?.attached) {
     for (const child of topic.children.attached) {
       children.push(convertTopic(child))
+    }
+  }
+  if (topic.children?.summary) {
+    for (const s of topic.children.summary) {
+      const rangeStart = s.rangeStart ?? s.range?.[0] ?? 0
+      const rangeEnd = s.rangeEnd ?? s.range?.[1] ?? rangeStart
+      summaries.push({
+        id: s.id,
+        title: s.title || '',
+        children: [],
+        rangeStart,
+        rangeEnd,
+        ...(s.style?.properties ? { style: convertXMindProps(s.style.properties) } : {}),
+      })
+    }
+  }
+  if (topic.children?.boundary) {
+    for (const b of topic.children.boundary) {
+      const rangeStart = b.rangeStart ?? b.range?.[0] ?? 0
+      const rangeEnd = b.rangeEnd ?? b.range?.[1] ?? rangeStart
+      boundaries.push({
+        id: b.id,
+        title: b.title || '',
+        children: [],
+        rangeStart,
+        rangeEnd,
+        ...(b.style?.properties ? { style: convertXMindProps(b.style.properties) } : {}),
+      })
+    }
+  }
+  const relationships: ModelNode[] = []
+  if (topic.children?.relationship) {
+    for (const r of topic.children.relationship) {
+      relationships.push({
+        id: r.id,
+        title: r.title || '',
+        children: [],
+        sourceId: r.end1Id,
+        targetId: r.end2Id,
+      })
     }
   }
 
@@ -163,6 +213,9 @@ function convertTopic(topic: XMindTopic): ModelNode {
     id: topic.id,
     title: topic.title || '',
     children,
+    ...(summaries.length ? { summaries } : {}),
+    ...(boundaries.length ? { boundaries } : {}),
+    ...(relationships.length ? { relationships } : {}),
     ...(topic.structureClass ? { structureClass: topic.structureClass } : {}),
     ...(topic.collapsed ? { collapsed: true } : {}),
     ...(topic.markers?.length ? { markers: topic.markers.map((m) => m.markerId) } : {}),
@@ -278,6 +331,21 @@ export async function parseXMind(
 
   const root = convertTopic(sheet.rootTopic)
 
+  // 关联连线（sheet 级 relationships）
+  const rawRels = (sheet as { relationships?: XMindTopic[] }).relationships
+  const relationships: ModelNode[] = []
+  if (rawRels?.length) {
+    for (const r of rawRels) {
+      relationships.push({
+        id: r.id,
+        title: r.title || '',
+        children: [],
+        sourceId: r.end1Id,
+        targetId: r.end2Id,
+      })
+    }
+  }
+
   // 读取 comments.xml（可选文件）
   const commentsFile = zip.file('comments.xml')
   if (commentsFile) {
@@ -289,6 +357,7 @@ export async function parseXMind(
     root,
     title: sheet.title,
     themeData,
+    ...(relationships.length ? { relationships } : {}),
   }
 }
 

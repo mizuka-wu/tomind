@@ -5,7 +5,7 @@
  */
 
 import { Group } from 'leafer-ui'
-import type { NodeDesc, NodeRole } from '@tomind/schema'
+import type { NodeDesc } from '@tomind/schema'
 import { NodeViewDesc } from './node-view-desc'
 import type { ViewContext } from './node-view-desc'
 import { IndicatorRenderer } from './renderers/indicator-renderer'
@@ -13,7 +13,7 @@ import { IndicatorRenderer } from './renderers/indicator-renderer'
 export class IndicatorNodeViewDesc extends NodeViewDesc {
   private renderer: IndicatorRenderer | null = null
 
-  constructor(node: NodeDesc, role: NodeRole, ctx: ViewContext) {
+  constructor(node: NodeDesc, role: string, ctx: ViewContext) {
     super(node, role, ctx)
   }
 

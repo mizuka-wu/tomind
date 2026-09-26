@@ -20,7 +20,7 @@ import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 
 const SNOWBRUSH_INNER_SPACING = 20
 
-/** SB对齐的topicW = titleWidth + innerSpacing(20) + 2×borderWidth */
+/** SB对齐的topicW = titleWidth + innerSpacing(20) + margins + 2×borderWidth */
 function getSBTopicWidth(
   titleWidth: number,
   styleEngine: StyleEngine | null,
@@ -29,7 +29,9 @@ function getSBTopicWidth(
 ): number {
   const style = styleEngine && state ? styleEngine.computeStyle(state, nodeId) : null
   const borderWidth = parseStyleValue(style?.borderWidth, 0)
-  return titleWidth + SNOWBRUSH_INNER_SPACING + 2 * borderWidth
+  const ml = parseStyleValue(style?.marginLeft, 0)
+  const mr = parseStyleValue(style?.marginRight, 0)
+  return titleWidth + SNOWBRUSH_INNER_SPACING + ml + mr + 2 * borderWidth
 }
 
 interface NodeSize {
@@ -186,7 +188,8 @@ function subtreeHeight(
   for (const child of children) {
     maxChildH = Math.max(maxChildH, subtreeHeight(child, options, sizeMap, styleEngine, state))
   }
-  return size.height + getNodeSpacing(node, options, styleEngine, state, 'vertical').verticalGap + maxChildH
+  // 层间距与 layoutSubtreeDown/Up 的 levelGap 保持一致（×4）
+  return size.height + getNodeSpacing(node, options, styleEngine, state, 'vertical').verticalGap * 8 + maxChildH
 }
 
 type NodeLayout = {
@@ -258,7 +261,10 @@ function layoutSubtreeDown(
   }
   if (children.length > 1) childrenSizeWidth += childGap * (children.length - 1)
 
-  const childY = y + size.height + spacing.verticalGap
+  // 对齐 SB：层间距 = spacingMajor（curve 线 ×2）+ lineEnd patch
+  // compact spacingMajor=22，×2 后 44，与 SB 实际层高更接近
+  const levelGap = spacing.verticalGap * 8
+  const childY = y + size.height + levelGap
 
   // Position children — 对齐 SB calAttachedChildrenPos
   // levelWidth = childrenSizeWidth + firstChild.bbX - lastChild.subtreeW - lastChild.bbX

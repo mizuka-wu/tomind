@@ -70,7 +70,7 @@ export function measurePartAwareNode(
   // 从非 labels parts 计算 contentWidth（对齐 snowbrush parentWidth）
   // contentWidth = max(titleWidth + padding, markersWidth, numberingWidth, ...)
   const nonLabelsParts = parts.filter(p => p.partType !== 'labels')
-  const shapePadding = { top: 5, right: 6, bottom: 5, left: 6 }
+  const shapePadding = { top: 5, right: 16, bottom: 5, left: 16 }
   let contentWidth = 0
   for (const part of nonLabelsParts) {
     contentWidth = Math.max(contentWidth, part.size.width)
@@ -144,7 +144,8 @@ export function measureTitleOnlyNode(
   )
 
   return {
-    width: titleWidth + padding.left + padding.right,
+    // 对齐 snowbrush getSBTopicWidth: titleWidth + innerSpacing(20) + 2*borderWidth
+    width: titleWidth + padding.left + padding.right + 20,
     height: titleHeight + padding.top + padding.bottom,
     titleWidth,
     titleHeight,

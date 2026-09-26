@@ -52,6 +52,8 @@ interface NodeSize {
   titleHeight: number
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
   outsidePadding: OutsidePadding
+  /** 子树高度（boundaryBounds.height 近似），用于 calcNumRight 权重 */
+  subtreeHeight: number
 }
 
 // ─── MapLayout 类 ───
@@ -66,36 +68,49 @@ class MapLayout extends BaseLayout {
     this.name = config.name
   }
 
-  private getNodeSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null): number {
+  private getNodeSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null, isRootLevel: boolean = false): number {
     if (options.getSpacingMajor) return options.getSpacingMajor(node)
-    
+
     // 对齐 snowbrush calcSpacingMajor 逻辑
-    // 如果有 StyleEngine，根据连接线类型计算间距
     if (styleEngine && state) {
       const lineClass = styleEngine.getStyleValue(state, node.id, 'lineClass')
       const lineClassStr = typeof lineClass === 'string' ? lineClass : ''
-      
+
       // snowbrush: fold/roundedFold/bight → LINECOLPOS * 3 = 39px
       const FOLD_LINE_CLASSES = [
         'org.xmind.branchConnection.fold',
         'org.xmind.branchConnection.roundedfold',
         'org.xmind.branchConnection.bight',
       ]
-      if (FOLD_LINE_CLASSES.some(cls => lineClassStr.includes(cls))) {
+      const isFold = FOLD_LINE_CLASSES.some(cls => lineClassStr.includes(cls))
+      if (isFold) {
         return 39 // LINECOLPOS * 3 = 13 * 3
       }
-      
+
       // 其他连接线：读取 spacingMajor 样式值
-      const spacingMajor = styleEngine.getStyleValue(state, node.id, 'spacingMajor')
-      if (typeof spacingMajor === 'number' && spacingMajor > 0) {
-        return spacingMajor
+      let spacingMajor = 0
+      const raw = styleEngine.getStyleValue(state, node.id, 'spacingMajor')
+      if (typeof raw === 'number' && raw > 0) {
+        spacingMajor = raw
+      } else if (typeof raw === 'string') {
+        const parsed = parseFloat(raw)
+        if (!isNaN(parsed) && parsed > 0) spacingMajor = parsed
       }
-      if (typeof spacingMajor === 'string') {
-        const parsed = parseFloat(spacingMajor)
-        if (!isNaN(parsed) && parsed > 0) return parsed
+      if (spacingMajor <= 0) spacingMajor = options.horizontalGap
+
+      // snowbrush logicleftandright: 非根层 curve/straight 线 → spacingMajor * 2
+      // 注意：roundedElbow 不在 ×2 名单里（默认 main/sub 就是 roundedElbow）
+      const DOUBLE_SPACING = ['curve', 'straight']
+      const isDouble =
+        isFold ||
+        DOUBLE_SPACING.some(cls => lineClassStr.includes(cls)) ||
+        lineClassStr === ''
+      if (!isRootLevel && isDouble) {
+        return spacingMajor * 2
       }
+      return spacingMajor
     }
-    
+
     return options.horizontalGap
   }
 
@@ -114,7 +129,7 @@ class MapLayout extends BaseLayout {
 
     // First pass: compute positions and localBBMap (position-independent boundaryBounds)
     const localBBMap = new Map<string, BoundaryBounds>()
-    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes, undefined, styleEngine, state, localBBMap)
+    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes, undefined, styleEngine, state, localBBMap, undefined, true)
 
     // Convert localBBMap to absolute boundaryBoundsMap for X offset alignment
     const boundaryBoundsMap = new Map<string, BoundaryBounds>()
@@ -138,7 +153,7 @@ class MapLayout extends BaseLayout {
 
     // Second pass: with boundaryBoundsMap for X offset alignment
     const nodes2 = new Map<string, import('./layout-engine').NodeLayout>()
-    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap, styleEngine, state, new Map(), subtreeHeightMap)
+    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap, styleEngine, state, new Map(), subtreeHeightMap, true)
 
     let totalWidth = 0
     let totalHeight = 0
@@ -191,6 +206,7 @@ class MapLayout extends BaseLayout {
         titleHeight: result.titleHeight,
         partBounds: result.partBounds,
         outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 },
+        subtreeHeight: result.height,
       }
     }
     const result = measureTitleOnlyNode(node, padding, options, styleEngine, state)
@@ -201,6 +217,7 @@ class MapLayout extends BaseLayout {
       titleHeight: result.titleHeight,
       partBounds: result.partBounds,
       outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 },
+      subtreeHeight: result.height,
     }
   }
 
@@ -262,19 +279,43 @@ class MapLayout extends BaseLayout {
         sizeMap.set(summary.id, this.measureNode(summary, options, styleEngine, state))
       }
     }
+    // bottom-up 累加子树高度（对齐 snowbrush boundaryBounds.height）
+    this.computeSubtreeHeight(node, sizeMap)
+  }
+
+  private computeSubtreeHeight(node: NodeDesc, sizeMap: Map<string, NodeSize>): number {
+    const size = sizeMap.get(node.id)
+    if (!size) return 0
+    if (isCollapsed(node)) {
+      size.subtreeHeight = size.height
+      return size.subtreeHeight
+    }
+    const children = getAttachedChildren(node).filter(c => c.type !== 'summary')
+    if (children.length === 0) {
+      size.subtreeHeight = size.height
+      return size.subtreeHeight
+    }
+    let childSum = 0
+    for (const child of children) {
+      childSum += this.computeSubtreeHeight(child, sizeMap)
+    }
+    // 近似 spacingMinor=0 时的子树高度
+    size.subtreeHeight = Math.max(size.height, childSum)
+    return size.subtreeHeight
   }
 
   // ── 间距计算 ──
 
-  private getSpacingMajor(options: LayoutOptions, node?: NodeDesc, styleEngine?: StyleEngine | null, state?: SheetState | null): number {
-    if (node) return this.getNodeSpacingMajor(node, options, styleEngine, state)
+  private getSpacingMajor(options: LayoutOptions, node?: NodeDesc, styleEngine?: StyleEngine | null, state?: SheetState | null, isRootLevel: boolean = false): number {
+    if (node) return this.getNodeSpacingMajor(node, options, styleEngine, state, isRootLevel)
     return options.horizontalGap
   }
 
 
   private getWeight(node: NodeDesc, sizeMap: Map<string, NodeSize>): number {
+    // snowbrush calcNumRight: weight = boundaryBounds.height + (PADDING/2)*3
     const size = sizeMap.get(node.id)
-    return (size?.height ?? 0) + 20 * 1.5
+    return (size?.subtreeHeight ?? size?.height ?? 0) + 30
   }
 
   private calcNumRight(
@@ -322,6 +363,9 @@ class MapLayout extends BaseLayout {
     state?: SheetState | null,
     localBBMap: Map<string, BoundaryBounds> = new Map(),
     subtreeHeightMap?: Map<string, number>,
+    isMapRoot: boolean = false,
+    /** 非中央节点：子节点全部放在这一侧（对齐 snowbrush LOGICLEFT/RIGHT） */
+    forceSide: 'left' | 'right' | null = null,
   ): { width: number; height: number; boundaryBounds: BoundaryBounds } {
     const size = sizeMap.get(node.id)!
     const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
@@ -350,32 +394,42 @@ class MapLayout extends BaseLayout {
     }
 
     // Compute split point
-    let numRight: number
-    if (!this.config.balanced) {
-      const attrsNumRight = node.attrs.numRight
-      if (typeof attrsNumRight === 'number' && attrsNumRight >= 0 && attrsNumRight <= regularChildren.length) {
-        numRight = attrsNumRight
-      } else {
-        numRight = this.calcNumRight(regularChildren, sizeMap)
-      }
-    } else {
-      numRight = this.calcNumRight(regularChildren, sizeMap)
-    }
-
-    const spacingMajor = this.getSpacingMajor(options, node, styleEngine, state)
-
-    // Assign left/right children based on direction
     let rightChildren: readonly NodeDesc[]
     let leftChildren: readonly NodeDesc[]
 
-    const isClockwise = this.config.direction === 'clockwise'
-    if (isClockwise) {
-      rightChildren = regularChildren.slice(0, numRight)
-      leftChildren = regularChildren.slice(numRight).reverse()
+    if (forceSide) {
+      // 非中央节点：全部子节点单侧堆叠（LOGICLEFT / LOGICRIGHT）
+      if (forceSide === 'right') {
+        rightChildren = regularChildren
+        leftChildren = []
+      } else {
+        leftChildren = regularChildren
+        rightChildren = []
+      }
     } else {
-      leftChildren = regularChildren.slice(0, numRight)
-      rightChildren = regularChildren.slice(numRight).reverse()
+      let numRight: number
+      if (!this.config.balanced) {
+        const attrsNumRight = node.attrs.numRight
+        if (typeof attrsNumRight === 'number' && attrsNumRight >= 0 && attrsNumRight <= regularChildren.length) {
+          numRight = attrsNumRight
+        } else {
+          numRight = this.calcNumRight(regularChildren, sizeMap)
+        }
+      } else {
+        numRight = this.calcNumRight(regularChildren, sizeMap)
+      }
+
+      const isClockwise = this.config.direction === 'clockwise'
+      if (isClockwise) {
+        rightChildren = regularChildren.slice(0, numRight)
+        leftChildren = regularChildren.slice(numRight).reverse()
+      } else {
+        leftChildren = regularChildren.slice(0, numRight)
+        rightChildren = regularChildren.slice(numRight).reverse()
+      }
     }
+
+    const spacingMajor = this.getSpacingMajor(options, node, styleEngine, state, isMapRoot)
 
     // Calculate outward distance (uses subtreeHeightMap from first pass)
     const outwardOffsetRight = this.calcOutwardDistance(rightChildren, sizeMap, subtreeHeightMap)
@@ -394,59 +448,40 @@ class MapLayout extends BaseLayout {
     if (rightChildren.length > 0) {
       const childX = x + size.width + spacingMajor + outwardOffsetRight
       const childY = y + size.height / 2
-      this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, localBBMap)
+      // 子树方向：中央节点的右侧子树继续向右（LOGICRIGHT），左侧向左（LOGICLEFT）
+      this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, localBBMap, 'right')
     }
 
     // Layout left side: recursively lay out all left children, then position them
     if (leftChildren.length > 0) {
       const childX = x - spacingMajor - outwardOffsetLeft
       const childY = y + size.height / 2
-      this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, localBBMap)
+      this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, localBBMap, 'left')
     }
 
-    // Compute boundaryBounds (SB mergeBounds: topic merged with children's subtree extents)
-    // X: use positioned children's actual extent (correct)
+    // Compute boundaryBounds (SB mergeBounds: topic merged with children's actual extents)
     let bbMinX = 0
     let bbMaxX = size.width
+    let bbMinY = 0
+    let bbMaxY = size.height
 
     for (const child of regularChildren) {
       const nl = nodes.get(child.id)
       const childBB = localBBMap.get(child.id)
       if (!nl || !childBB) continue
       const relX = nl.x - x
+      const relY = nl.y - y
       bbMinX = Math.min(bbMinX, relX + childBB.x)
       bbMaxX = Math.max(bbMaxX, relX + childBB.x + childBB.width)
+      bbMinY = Math.min(bbMinY, relY + childBB.y)
+      bbMaxY = Math.max(bbMaxY, relY + childBB.y + childBB.height)
     }
-
-    // Y/Height: use childrenTotalHeight (sum of bb.height + outsidePad + spacing)
-    // to include full subtree extent, not positioned centering which clips to parent size.
-    // This matches layoutSide's childrenTotalHeight calculation (step d).
-    const rawSm = (styleEngine && state)
-      ? styleEngine.getStyleValue(state, node.id, 'spacingMinor')
-      : undefined
-    const bbSpacingMinor = typeof rawSm === 'number' ? rawSm : parseInt(String(rawSm)) || 0
-    const bbLineWidth = 1
-
-    const childrenTotalHeight = computeChildrenTotalHeight(
-      regularChildren,
-      (child) => {
-        const childBB = localBBMap.get(child.id)
-        const childSize = sizeMap.get(child.id)
-        const op = childSize?.outsidePadding
-        const outsidePadH = (op?.top ?? 0) + (op?.bottom ?? 0)
-        return (childBB?.height ?? 0) + outsidePadH
-      },
-      () => bbSpacingMinor + bbLineWidth,
-      // map布局不需要PARENT_GAP，outsidePadding已处理层间间距
-    )
-
-    const bbHeight = Math.max(size.height, childrenTotalHeight)
 
     const boundaryBounds: BoundaryBounds = {
       x: bbMinX,
-      y: -(bbHeight - size.height) / 2,
+      y: bbMinY,
       width: bbMaxX - bbMinX,
-      height: bbHeight,
+      height: bbMaxY - bbMinY,
     }
     localBBMap.set(node.id, boundaryBounds)
 
@@ -482,6 +517,8 @@ class MapLayout extends BaseLayout {
     styleEngine?: StyleEngine | null,
     state?: SheetState | null,
     localBBMap: Map<string, BoundaryBounds> = new Map(),
+    /** 传递给子节点的单侧方向（LOGICLEFT/RIGHT） */
+    childForceSide: 'left' | 'right' | null = null,
   ): void {
     const n = children.length
     if (n === 0) return
@@ -500,7 +537,7 @@ class MapLayout extends BaseLayout {
 
     // Step b: Layout each child at temp Y=0 (bottom-up: recursively lays out grandchildren first)
     for (let i = 0; i < n; i++) {
-      this.layoutNode(children[i], startX, 0, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state, localBBMap)
+      this.layoutNode(children[i], startX, 0, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state, localBBMap, undefined, false, childForceSide)
     }
 
     // Step c: Read each child's boundaryBounds from localBBMap
@@ -544,18 +581,33 @@ class MapLayout extends BaseLayout {
     }
 
     // 2) Compute positions relative to first child using two constraints
+    // 对齐 snowbrush calSidePos：
+    //   boundary 约束用子树高度（boundaryBounds）
+    //   topic 约束用节点自身高度（topicView.bounds）+ 分配的额外间距
     const yPosRelativeToFirstChild: number[] = [0]
     for (let i = 1; i < n; i++) {
-      const prevHeight = childHeights[i - 1]
+      const prevBB = childBBs[i - 1]
+      const nowBB = childBBs[i]
+      const prevSize = sizeMap.get(children[i - 1].id)
+      const nowSize = sizeMap.get(children[i].id)
+      const prevNodeH = prevSize?.height ?? prevBB.height
+      const nowNodeH = nowSize?.height ?? nowBB.height
+      // bb.y 是 topic 在子树包围盒内的偏移（通常为负）
+      const prevBbY = prevBB.y
+      const nowBbY = nowBB.y
+
+      const gap = sumTopicSpacing / (n - i)
       const boundaryConstraint =
-        yPosRelativeToFirstChild[i - 1] + prevHeight + spacingMinor
+        yPosRelativeToFirstChild[i - 1] + prevBB.height + spacingMinor
       const topicConstraint =
-        yPosRelativeToFirstChild[i - 1] + prevHeight + sumTopicSpacing / (n - i)
+        yPosRelativeToFirstChild[i - 1] - prevBbY + prevNodeH + gap + nowBbY
 
       yPosRelativeToFirstChild[i] = Math.max(boundaryConstraint, topicConstraint)
 
+      // SB: sumTopicSpacing -= (yPos[i] + now.topic.y - (yPos[i-1] + pre.topic.y + pre.topic.h))
       const usedSpacing =
-        yPosRelativeToFirstChild[i] - (yPosRelativeToFirstChild[i - 1] + prevHeight)
+        yPosRelativeToFirstChild[i] + nowBbY -
+        (yPosRelativeToFirstChild[i - 1] + prevBbY + prevNodeH)
       sumTopicSpacing -= usedSpacing
     }
 
@@ -607,11 +659,13 @@ class MapLayout extends BaseLayout {
     }
 
     // Step g: X offset alignment if boundaryBoundsMap provided
+    // 对齐 snowbrush getMapOfXOffSetByBranchIndex：按子节点各自偏移，而非整侧统一 maxOffset
     if (boundaryBoundsMap) {
-      const { maxOffset } = this.calcMaxOffset(children, nodes, boundaryBoundsMap, side)
-      if (maxOffset > 0) {
-        const dx = side === 'right' ? maxOffset : -maxOffset
-        for (let i = 0; i < n; i++) {
+      const { offsets } = this.calcMaxOffset(children, nodes, boundaryBoundsMap, side)
+      for (let i = 0; i < n; i++) {
+        const offset = offsets[i] ?? 0
+        if (offset > 0) {
+          const dx = side === 'right' ? offset : -offset
           this.shiftSubtree(children[i], dx, 0, nodes)
         }
       }

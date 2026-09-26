@@ -5,7 +5,7 @@ import { getStringStyle, getNumberStyle } from '../style-accessors'
 import type { Renderer } from './renderer'
 import { getTitleText } from '@tomind/schema'
 
-const SYSTEM_FONT_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+const SYSTEM_FONT_STACK = "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif"
 
 /** textDecoration 映射 — 样式值 → LeaferJS 值（LeaferJS 使用 'under'/'delete'） */
 const TEXT_DECORATION_MAP: Record<string, ITextDecorationType> = {
@@ -1359,6 +1359,12 @@ export class TopicRenderer implements Renderer {
       this.text.textAlign = style.textAlign as ITextAlign
     }
 
+    // 限制文本宽度，避免长标题溢出（对齐 snowbrush TITLE_MAX_WIDTH 换行）
+    const wrapWidth = layout.titleWidth > 0
+      ? Math.max(layout.titleWidth, 20)
+      : Math.max((typeof layout.width === 'number' ? layout.width : 120) - 16, 20)
+    this.text.width = wrapWidth
+
     // textDecoration：映射为 LeaferJS 的 'under'/'delete'
     if (typeof style.textDecoration === 'string') {
       const decoration = TEXT_DECORATION_MAP[style.textDecoration]
@@ -1368,11 +1374,11 @@ export class TopicRenderer implements Renderer {
     }
 
     // 文本居中（对齐 getDrawBounds 内缩后的形状区域）
+    // 用 layout 测量值定位，避免 leafer 换行后 this.text.height 滞后导致重叠
     const textAlign = getStringStyle(style, 'textAlign') ?? 'center'
-    const fontSize = getNumberStyle(style, 'fontSize') ?? 14
     const { x: drawX, y: drawY, w: drawW, h: drawH } = computeDrawBounds(layout, style)
-    const textWidth = this.text.width || layout.titleWidth || drawW
-    const textHeight = this.text.height || layout.titleHeight || fontSize
+    const textWidth = layout.titleWidth > 0 ? layout.titleWidth : (this.text.width || drawW)
+    const textHeight = layout.titleHeight > 0 ? layout.titleHeight : (this.text.height || drawH)
 
     // 水平居中
     if (textAlign === 'center' || textAlign === undefined) {

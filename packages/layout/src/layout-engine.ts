@@ -109,6 +109,42 @@ function normalizeFontWeight(fontWeight: string | number): number | string {
   return fontWeight
 }
 
+/** CJK 闭合标点不可作行首 */
+const NO_LINE_START = new Set('，。、；：？！）》」』】%…·?!,.:;)]}')
+
+/** 对齐 snowbrush resolveString：按宽度换行，避免行首出现闭合标点 */
+function wrapTextLines(
+  text: string,
+  maxWidth: number,
+  measure: (t: string) => number,
+): string[] {
+  const out: string[] = []
+  for (const rawLine of text.split('\n')) {
+    if (rawLine.length === 0 || measure(rawLine) <= maxWidth) {
+      out.push(rawLine)
+      continue
+    }
+    let line = ''
+    for (const ch of rawLine) {
+      const test = line + ch
+      if (measure(test) > maxWidth && line) {
+        if (NO_LINE_START.has(ch)) {
+          const last = line[line.length - 1]
+          out.push(line.slice(0, -1))
+          line = last + ch
+        } else {
+          out.push(line)
+          line = ch
+        }
+      } else {
+        line = test
+      }
+    }
+    if (line) out.push(line)
+  }
+  return out
+}
+
 export function measureTextSize(
   text: string,
   fontSize: number,
@@ -137,26 +173,7 @@ export function measureTextSize(
     const font = fontArr.filter(Boolean).join(' ')
 
     const measureFn = (t: string) => customMeasure(t, font)
-    const rawLines = text.split('\n')
-    const wrappedLines: string[] = []
-
-    for (const line of rawLines) {
-      if (measureFn(line) <= maxWidth) {
-        wrappedLines.push(line)
-      } else {
-        let current = ''
-        for (const char of line) {
-          const test = current + char
-          if (measureFn(test) > maxWidth && current) {
-            wrappedLines.push(current)
-            current = char
-          } else {
-            current = test
-          }
-        }
-        if (current) wrappedLines.push(current)
-      }
-    }
+    const wrappedLines = wrapTextLines(text, maxWidth, measureFn)
 
     const widthArr = wrappedLines.map(line => measureFn(line))
     const width = Math.max(...widthArr) * ratio
@@ -174,26 +191,7 @@ export function measureTextSize(
     ctx.font = fontArr.filter(Boolean).join(' ')
 
     const measureFn = (t: string) => ctx.measureText(t).width
-    const rawLines = text.split('\n')
-    const wrappedLines: string[] = []
-
-    for (const line of rawLines) {
-      if (measureFn(line) <= maxWidth) {
-        wrappedLines.push(line)
-      } else {
-        let current = ''
-        for (const char of line) {
-          const test = current + char
-          if (measureFn(test) > maxWidth && current) {
-            wrappedLines.push(current)
-            current = char
-          } else {
-            current = test
-          }
-        }
-        if (current) wrappedLines.push(current)
-      }
-    }
+    const wrappedLines = wrapTextLines(text, maxWidth, measureFn)
 
     const widthArr = wrappedLines.map(line => measureFn(line))
     const width = Math.max(...widthArr) * ratio
@@ -204,26 +202,7 @@ export function measureTextSize(
 
   const charWidth = preFontSize * options.charWidthFactor
   const measureFn = (t: string) => t.length * charWidth
-  const rawLines = text.split('\n')
-  const wrappedLines: string[] = []
-
-  for (const line of rawLines) {
-    if (measureFn(line) <= maxWidth) {
-      wrappedLines.push(line)
-    } else {
-      let current = ''
-      for (const char of line) {
-        const test = current + char
-        if (measureFn(test) > maxWidth && current) {
-          wrappedLines.push(current)
-          current = char
-        } else {
-          current = test
-        }
-      }
-      if (current) wrappedLines.push(current)
-    }
-  }
+  const wrappedLines = wrapTextLines(text, maxWidth, measureFn)
 
   const lineWidths = wrappedLines.map(line => measureFn(line))
   const width = Math.max(...lineWidths)

@@ -12,7 +12,6 @@ import { Group, Line, Path } from 'leafer-ui'
 import { ViewDesc, DirtyFlag } from './view-desc'
 import type {
   NodeDesc,
-  NodeRole,
 } from '@tomind/schema'
 import { isRelationshipNode, isBoundaryNode, isSummaryNode } from '@tomind/schema'
 import type { StyleEngine, LeaferStyle, ResolvedStyle } from '@tomind/style'
@@ -70,7 +69,7 @@ export abstract class NodeViewDesc extends ViewDesc {
   /** 视图上下文（由 SheetEditor 注入） */
   protected readonly ctx: ViewContext
 
-  constructor(node: NodeDesc, role: NodeRole, ctx: ViewContext) {
+  constructor(node: NodeDesc, role: string, ctx: ViewContext) {
     super(node, role)
     this.ctx = ctx
   }
@@ -126,6 +125,9 @@ export abstract class NodeViewDesc extends ViewDesc {
     if (newNode.type !== this.node.type) return false
 
     this.updateNode(newNode)
+
+    // 确保 element/renderer 已创建，否则 updateStyle 会因 renderer=null 提前返回并丢失样式
+    void this.element
 
     if (this.isDirty(DirtyFlag.STYLE)) this.updateStyle()
     if (this.isDirty(DirtyFlag.CONTENT)) this.updateContent()
@@ -315,11 +317,10 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       ? getLeaferStyle(this.ctx, this.node.id)
       : {}
 
-    const color = leaferStyle.lineColor ?? '#999999'
-    const multiLineColors = typeof leaferStyle.multiLineColors === 'string'
-      ? leaferStyle.multiLineColors.split(/\s+/).filter(Boolean)
-      : []
-    const width = leaferStyle.strokeWidth ?? 1.5
+    const parentLineColor = leaferStyle.lineColor ?? '#999999'
+    // snowbrush：根→主分支 3px，其余 2px
+    const rawWidth = leaferStyle.lineStrokeWidth ?? leaferStyle.strokeWidth ?? 1.5
+    const width = Math.max(Number(rawWidth) || 0, this._parent == null ? 3 : 2)
     const cornerRadius = leaferStyle.lineCornerRadius ?? leaferStyle.cornerRadius ?? 0
     const strokeDash = leaferStyle.strokeDash
     const lineClass = leaferStyle.lineClass ?? 'elbow'
@@ -329,6 +330,15 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       const child = children[i]
       const childLayout = layout.nodes.get(child.id)
       if (!childLayout) continue
+
+      // 对齐 snowbrush：连线颜色取子节点解析后的 lineColor（含 multiLineColors 分支色）
+      let strokeColor = parentLineColor
+      if (this.ctx.styleEngine && this.ctx.state) {
+        const childStyle = getLeaferStyle(this.ctx, child.id)
+        if (typeof childStyle.lineColor === 'string' && childStyle.lineColor) {
+          strokeColor = childStyle.lineColor
+        }
+      }
 
       // 连线坐标相对于当前 element（element 已定位到 myLayout.x/y）
       const dx = myLayout.x
@@ -414,7 +424,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 
       const pathElement = new Path({
         path,
-        stroke: multiLineColors.length > 0 ? multiLineColors[i % multiLineColors.length] : color,
+        stroke: strokeColor,
         strokeWidth: width,
         strokeLinecap: 'round',
         ...(strokeDash ? { dashPattern: strokeDash } : {}),
@@ -423,7 +433,7 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       this._connectionPaths.push(pathElement)
 
       if (arrowEndClass === 'triangle') {
-        const arrow = this.createArrow(endX, endY, isHorizontal, multiLineColors.length > 0 ? multiLineColors[i % multiLineColors.length] : color)
+        const arrow = this.createArrow(endX, endY, isHorizontal, strokeColor)
         group.add(arrow)
         this._connectionPaths.push(arrow)
       }
@@ -431,23 +441,40 @@ export class TopicNodeViewDesc extends NodeViewDesc {
   }
 
   private computeCurvePath(sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean): string {
+    // 对齐 snowbrush brushes.curveHorizon / rect
+    // ctrlPt 在拐点（水平：中点 X, sy），Q 控制点 = ctrl + (end-ctrl)/5
     if (isHorizontal) {
-      const ctrlX = sx + (ex - sx) * 0.2
-      return `M ${sx} ${sy} L ${ctrlX} ${sy} Q ${ctrlX} ${ey} ${ex} ${ey}`
+      const ctrlX = sx + (ex - sx) / 2
+      const qCtrlX = (ex - ctrlX) / 5 + ctrlX
+      return `M ${sx} ${sy} L ${ctrlX} ${sy} Q ${qCtrlX} ${ey} ${ex} ${ey}`
     } else {
-      const ctrlY = sy + (ey - sy) * 0.2
+      const ctrlY = sy + (ey - sy) / 2
       return `M ${sx} ${sy} L ${sx} ${ctrlY} Q ${ex} ${ctrlY} ${ex} ${ey}`
     }
   }
 
   private computeRoundedElbowPath(sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, r: number): string {
+    // 对齐 snowbrush brushes.roundedElbowHorizon：横→竖→单圆角→横
     if (isHorizontal) {
-      const midX = (sx + ex) / 2
-      return `M ${sx} ${sy} L ${midX - r} ${sy} Q ${midX} ${sy} ${midX} ${sy + r} L ${midX} ${ey - r} Q ${midX} ${ey} ${midX + r} ${ey} L ${ex} ${ey}`
-    } else {
-      const midY = (sy + ey) / 2
-      return `M ${sx} ${sy} L ${sx} ${midY - r} Q ${sx} ${midY} ${sx + r} ${midY} L ${ex - r} ${midY} Q ${ex} ${midY} ${ex} ${midY + r} L ${ex} ${ey}`
+      const ctrlX = sx + (ex - sx) / 2
+      const ver = ey > sy ? 1 : -1
+      const hor = ex > ctrlX ? 1 : -1
+      const corner = Math.min(r, Math.abs(ex - ctrlX), Math.abs(ey - sy))
+      const linear = Math.abs(ey - sy) < corner ? 0 : 1
+      const flexX = ctrlX
+      const flexY = ey
+      const bflexY = flexY - ver * corner * linear
+      const aflexX = flexX + hor * corner
+      return `M ${sx} ${sy} L ${ctrlX} ${sy} L ${flexX} ${bflexY} Q ${flexX} ${flexY} ${aflexX} ${flexY} L ${ex} ${ey}`
     }
+    const ctrlY = sy + (ey - sy) / 2
+    const hor2 = ex > sx ? 1 : -1
+    const ver2 = ey > ctrlY ? 1 : -1
+    const corner2 = Math.min(r, Math.abs(ey - ctrlY), Math.abs(ex - sx))
+    const linear2 = Math.abs(ex - sx) < corner2 ? 0 : 1
+    const flexX2 = ex
+    const bflexX = flexX2 - hor2 * corner2 * linear2
+    return `M ${sx} ${sy} L ${sx} ${ctrlY} L ${bflexX} ${ctrlY} Q ${flexX2} ${ctrlY} ${flexX2} ${ctrlY + ver2 * corner2} L ${ex} ${ey}`
   }
 
   private createArrow(x: number, y: number, isHorizontal: boolean, color: string): Path {
@@ -841,7 +868,7 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
     const style = getLeaferStyle(this.ctx, this.node.id)
-    const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
+    const layout = this.ctx.layoutEngine?.getLayoutResult?.() ?? { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
 
@@ -850,23 +877,19 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
     if (!isRelationshipNode(this.node)) return
     const { sourceId, targetId, title, controlPoints } = this.node.attrs
 
-    const sourceNode = this.ctx.state.getNode(sourceId)
-    const targetNode = this.ctx.state.getNode(targetId)
-    if (!sourceNode || !targetNode) return
-
-    const sourcePos = getAttr<{ x: number; y: number }>(sourceNode, 'position')
-    const sourceSize = getAttr<{ width: number; height: number }>(sourceNode, 'size')
-    const targetPos = getAttr<{ x: number; y: number }>(targetNode, 'position')
-    const targetSize = getAttr<{ width: number; height: number }>(targetNode, 'size')
-    if (!sourcePos || !sourceSize || !targetPos || !targetSize) return
+    // 端点优先用布局结果（topic 的 position/size 不在 attrs 里）
+    const layout = this.ctx.layoutEngine?.getLayoutResult?.()
+    const source = layout?.nodes?.get(sourceId)
+    const target = layout?.nodes?.get(targetId)
+    if (!source || !target) return
 
     const from = {
-      x: sourcePos.x + sourceSize.width / 2,
-      y: sourcePos.y + sourceSize.height / 2,
+      x: source.x + source.width / 2,
+      y: source.y + source.height / 2,
     }
     const to = {
-      x: targetPos.x + targetSize.width / 2,
-      y: targetPos.y + targetSize.height / 2,
+      x: target.x + target.width / 2,
+      y: target.y + target.height / 2,
     }
 
     this.renderer.setEndpoints(from, to, controlPoints, title)
@@ -980,24 +1003,33 @@ export class BoundaryNodeViewDesc extends NodeViewDesc {
   protected updateStyle(): void {
     if (!this.renderer || !this.ctx.styleEngine || !this.ctx.state) return
     const style = getLeaferStyle(this.ctx, this.node.id)
-    const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
+    const layout = this.ctx.layoutEngine?.getLayoutResult?.() ?? { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.renderer.render(layout, style)
   }
 
   protected updateContent(): void {
     if (!this.renderer || !this.ctx.state) return
     if (!isBoundaryNode(this.node)) return
-    const { topicIds, title } = this.node.attrs
+    const { topicIds, title, rangeStart, rangeEnd } = this.node.attrs
 
+    const layout = this.ctx.layoutEngine?.getLayoutResult?.()
     const positions: { x: number; y: number; width: number; height: number }[] = []
-    for (const topicId of topicIds) {
-      const topicNode = this.ctx.state.getNode(topicId)
-      if (topicNode) {
-        const pos = getAttr<{ x: number; y: number }>(topicNode, 'position')
-        const size = getAttr<{ width: number; height: number }>(topicNode, 'size')
-        if (pos && size) {
-          positions.push({ ...pos, ...size })
-        }
+
+    if (layout && typeof rangeStart === 'number') {
+      // 用 rangeStart/rangeEnd 覆盖的 attached 子节点范围
+      const parentId = this._parent?.node.id
+      const siblings = parentId
+        ? (this._parent?.node.children.attached ?? [])
+        : []
+      const end = typeof rangeEnd === 'number' ? rangeEnd : siblings.length - 1
+      for (let i = rangeStart; i <= end && i < siblings.length; i++) {
+        const nl = layout.nodes.get(siblings[i].id)
+        if (nl) positions.push({ x: nl.x, y: nl.y, width: nl.width, height: nl.height })
+      }
+    } else if (Array.isArray(topicIds) && topicIds.length > 0) {
+      for (const topicId of topicIds) {
+        const nl = layout?.nodes?.get(topicId)
+        if (nl) positions.push({ x: nl.x, y: nl.y, width: nl.width, height: nl.height })
       }
     }
 
@@ -1087,7 +1119,7 @@ export class SummaryNodeViewDesc extends NodeViewDesc {
   protected updateStyle(): void {
     if (!this.topicRenderer || !this.summaryRenderer || !this.ctx.styleEngine || !this.ctx.state) return
     const style = getLeaferStyle(this.ctx, this.node.id)
-    const layout = { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
+    const layout = this.ctx.layoutEngine?.getLayoutResult?.() ?? { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
     this.topicRenderer.render(layout, style)
     this.summaryRenderer.render(layout, style)
   }
@@ -1095,7 +1127,22 @@ export class SummaryNodeViewDesc extends NodeViewDesc {
   protected updateContent(): void {
     if (!this.summaryRenderer || !this.ctx.state) return
     if (!isSummaryNode(this.node)) return
-    const { topicIds } = this.node.attrs
+
+    // 优先用布局结果定位（summary 在 layoutSummaries 中已算好位置）
+    const layout = this.ctx.layoutEngine?.getLayoutResult?.()
+    const nl = layout?.nodes?.get(this.node.id)
+    if (nl) {
+      this.summaryRenderer.setBounds(
+        { x: nl.x, y: nl.y, width: nl.width, height: nl.height },
+        getTitleText(this.node.attrs),
+      )
+      this.updateStyle()
+      return
+    }
+
+    // fallback：用 topicIds 推算范围
+    const topicIds = this.node.attrs.topicIds
+    if (!Array.isArray(topicIds) || topicIds.length === 0) return
 
     const positions: { x: number; y: number; height: number }[] = []
     for (const topicId of topicIds) {

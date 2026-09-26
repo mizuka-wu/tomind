@@ -107,10 +107,13 @@ export class SummaryRenderer implements Renderer {
     const pathData = buildBracketPath(this.currentShape, height)
     this.bracketPath.path = pathData
 
-    // 应用样式
-    const _stroke = getStringStyle(style, 'stroke')
-    if (_stroke) this.bracketPath.stroke = _stroke
-    const _strokeWidth = getNumberStyle(style, 'strokeWidth')
+    // 应用样式（对齐 snowbrush summaryLineColor / summaryLineWidth）
+    const _stroke = getStringStyle(style, 'lineColor') ?? getStringStyle(style, 'stroke')
+    if (_stroke) {
+      this.bracketPath.stroke = _stroke
+      this.titleText.fill = _stroke
+    }
+    const _strokeWidth = getNumberStyle(style, 'lineStrokeWidth') ?? getNumberStyle(style, 'strokeWidth')
     if (_strokeWidth) this.bracketPath.strokeWidth = _strokeWidth
 
     // 更新标题

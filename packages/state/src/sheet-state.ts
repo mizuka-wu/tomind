@@ -18,6 +18,7 @@
 
 import type { NodeDesc, NodeInfo, NodeRole, SelectionState, Viewport } from '@tomind/schema'
 import type { Transaction } from './transaction'
+import { SetSelectionStep, SetViewportStep } from './step'
 import { DecorationSet } from './decoration'
 
 // ==================== PluginKey ====================
@@ -220,12 +221,23 @@ export class SheetState {
     // 构建新的 _nodeMap
     const { nodeMap: newNodeMap, parentMap: newParentMap } = buildNodeMapAndParentMap(tr.doc)
 
+    // 从 steps 中提取 selection / viewport（Meta Steps 不修改 doc）
+    let nextSelection = this.selection
+    let nextViewport = this.viewport
+    for (const step of tr.steps) {
+      if (step instanceof SetSelectionStep) {
+        nextSelection = { elements: step.elements, options: step.options }
+      } else if (step instanceof SetViewportStep) {
+        nextViewport = step.viewport
+      }
+    }
+
     return new SheetState(
       tr.doc,
       newNodeMap,
       newParentMap,
-      this.selection, // 选区通过 SetSelectionStep 更新
-      this.viewport,  // 视口通过 SetViewportStep 更新
+      nextSelection,
+      nextViewport,
       [...this.plugins],
       newPluginStates,
       this.decorations  // Decoration 由插件通过 setDecorations 更新

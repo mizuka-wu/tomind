@@ -1,7 +1,48 @@
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
+import type { NodeDesc } from '@tomind/schema'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import type { ILayoutEngine, LayoutResult, LayoutAlgorithm, LayoutOptions } from './layout-engine'
+
+/** XMind structureClass → 布局算法名 */
+const STRUCTURE_CLASS_TO_LAYOUT: Record<string, string> = {
+  'org.xmind.ui.map.clockwise': 'map-clockwise',
+  'org.xmind.ui.map.anticlockwise': 'map-anticlockwise',
+  'org.xmind.ui.map.unbalanced': 'map-unbalanced',
+  'org.xmind.ui.logic.right': 'logic-right',
+  'org.xmind.ui.logic.left': 'logic-left',
+  'org.xmind.ui.tree.right': 'tree',
+  'org.xmind.ui.tree.left': 'tree-left',
+  'org.xmind.ui.tree.down': 'tree-down',
+  'org.xmind.ui.tree.up': 'tree-up',
+  'org.xmind.ui.brace.right': 'brace-right',
+  'org.xmind.ui.brace.left': 'brace-left',
+  'org.xmind.ui.org': 'org-chart-down',
+  'org.xmind.ui.org.down': 'org-chart-down',
+  'org.xmind.ui.org-chart.down': 'org-chart-down',
+  'org.xmind.ui.org-chart.up': 'org-chart-up',
+  'org.xmind.ui.org.up': 'org-chart-up',
+  'org.xmind.ui.timeline.horizontal': 'timeline-horizontal',
+  'org.xmind.ui.timeline.horizontal.down': 'timeline-horizontal-down',
+  'org.xmind.ui.timeline.horizontal.up': 'timeline-horizontal-up',
+  'org.xmind.ui.timeline.horizontal-down': 'timeline-horizontal-down',
+  'org.xmind.ui.timeline.horizontal-up': 'timeline-horizontal-up',
+  'org.xmind.ui.timeline.vertical': 'timeline-vertical',
+  'org.xmind.ui.timeline.sided.horizontal': 'timeline-sided-horizontal',
+  'org.xmind.ui.timeline.through.vertical': 'timeline-through-vertical',
+  'org.xmind.ui.treetable': 'treetable',
+  'org.xmind.ui.fishbone.left': 'fishbone-leftHeaded',
+  'org.xmind.ui.fishbone.leftHeaded': 'fishbone-leftHeaded',
+  'org.xmind.ui.fishbone.right': 'fishbone-rightHeaded',
+  'org.xmind.ui.fishbone.rightHeaded': 'fishbone-rightHeaded',
+}
+
+function resolveLayoutNameFromDoc(doc: NodeDesc | null | undefined): string | null {
+  if (!doc) return null
+  const structureClass = doc.attrs?.structureClass
+  if (typeof structureClass !== 'string' || !structureClass) return null
+  return STRUCTURE_CLASS_TO_LAYOUT[structureClass] ?? null
+}
 
 export class LayoutEngine implements ILayoutEngine {
   private _styleEngine: StyleEngine | null = null
@@ -35,27 +76,32 @@ export class LayoutEngine implements ILayoutEngine {
 
   compute(state: SheetState, customOptions?: Partial<LayoutOptions>): LayoutResult {
     const options = { ...DEFAULT_LAYOUT_OPTIONS, ...customOptions }
-    const algorithm = this._registry.get(this._activeLayout)
+
+    // 优先按文档 structureClass 自动选择布局（对标 snowbrush）
+    const autoName = resolveLayoutNameFromDoc(state.doc)
+    const preferred = autoName ?? this._activeLayout
+    const algorithm = this._registry.get(preferred)
+
     if (!algorithm) {
-      const fallback = this._registry.get('tree') ?? this._registry.values().next().value
+      const fallback =
+        this._registry.get(this._activeLayout) ??
+        this._registry.get('tree') ??
+        this._registry.values().next().value
       if (!fallback) {
-        console.warn(`[LayoutEngine] No layout algorithm registered. activeLayout=${this._activeLayout} registry=[${[...this._registry.keys()].join(',')}]`)
+        console.warn(
+          `[LayoutEngine] No layout algorithm registered. preferred=${preferred} registry=[${[...this._registry.keys()].join(',')}]`,
+        )
         return { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
       }
-      this._lastResult = fallback.layout(
-        state.doc,
-        options,
-        this._styleEngine ?? null,
-        state,
-      )
+      this._lastResult = fallback.layout(state.doc, options, this._styleEngine ?? null, state)
       return this._lastResult
     }
-    this._lastResult = algorithm.layout(
-      state.doc,
-      options,
-      this._styleEngine ?? null,
-      state,
-    )
+
+    if (autoName && autoName !== this._activeLayout) {
+      this._activeLayout = autoName
+    }
+
+    this._lastResult = algorithm.layout(state.doc, options, this._styleEngine ?? null, state)
     return this._lastResult
   }
 

@@ -63,6 +63,18 @@ export interface ModelNode {
     content: string
     time?: number
   }>
+  /** 摘要子节点（children.summary） */
+  summaries?: ModelNode[]
+  /** 边界子节点（children.boundary） */
+  boundaries?: ModelNode[]
+  /** 摘要/边界覆盖的子节点下标范围 */
+  rangeStart?: number
+  rangeEnd?: number
+  /** 关联连线端点（relationship） */
+  sourceId?: string
+  targetId?: string
+  /** 关联连线列表（挂到根节点 children.relationship） */
+  relationships?: ModelNode[]
 }
 
 /** 格式解析器输出的完整树 */
@@ -72,6 +84,8 @@ export interface ModelTree {
   title?: string
   /** 主题数据（className → { id, properties }），保留 XMind 原始属性名 */
   themeData?: Record<string, { id?: string; properties: Record<string, string> }>
+  /** 关联连线（挂在根节点 children.relationship） */
+  relationships?: ModelNode[]
 }
 
 // ==================== 转换器 ====================
@@ -100,6 +114,15 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
   if (node.children.length > 0) {
     children.attached = node.children.map((child) => modelNodeToNodeDesc(child))
   }
+  if (node.summaries?.length) {
+    children.summary = node.summaries.map((s) => modelSpecialToNodeDesc(s, 'summary'))
+  }
+  if (node.boundaries?.length) {
+    children.boundary = node.boundaries.map((b) => modelSpecialToNodeDesc(b, 'boundary'))
+  }
+  if (node.relationships?.length) {
+    children.relationship = node.relationships.map((r) => modelRelToNodeDesc(r))
+  }
 
   return {
     id: node.id || genId(),
@@ -121,7 +144,43 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
   }
 }
 
+/** summary / boundary ModelNode → NodeDesc（带 range） */
+function modelSpecialToNodeDesc(node: ModelNode, type: 'summary' | 'boundary'): NodeDesc {
+  return {
+    id: node.id || genId(),
+    type,
+    attrs: {
+      title: node.title,
+      rangeStart: node.rangeStart ?? 0,
+      rangeEnd: node.rangeEnd ?? 0,
+      ...(node.style ? { style: node.style } : {}),
+    },
+    children: {},
+  }
+}
+
+/** relationship ModelNode → NodeDesc */
+function modelRelToNodeDesc(node: ModelNode): NodeDesc {
+  return {
+    id: node.id || genId(),
+    type: 'relationship',
+    attrs: {
+      title: node.title,
+      sourceId: node.sourceId,
+      targetId: node.targetId,
+    },
+    children: {},
+  }
+}
+
 /** ModelTree → NodeDesc（根节点） */
 export function modelToNodeDesc(tree: ModelTree): NodeDesc {
-  return modelNodeToNodeDesc(tree.root)
+  const root = modelNodeToNodeDesc(tree.root)
+  const rels = tree.relationships
+  if (rels?.length) {
+    const children: Record<string, readonly NodeDesc[]> = { ...root.children }
+    children.relationship = rels.map((r) => modelRelToNodeDesc(r))
+    return { ...root, children }
+  }
+  return root
 }

@@ -15,7 +15,7 @@
  */
 
 import { Group } from 'leafer-ui'
-import type { NodeDesc, NodeRole } from '@tomind/schema'
+import type { NodeDesc } from '@tomind/schema'
 import type { Decoration, WidgetDecoration } from '@tomind/state'
 import type { ViewEventType, ViewEventHandler, EventEmitter } from './view-event'
 import { DefaultEventEmitter } from './view-event'
@@ -41,8 +41,8 @@ export const enum DirtyFlag {
 export abstract class ViewDesc {
   /** 所属节点 */
   readonly node: NodeDesc
-  /** 节点角色 */
-  readonly role: NodeRole
+  /** 节点类型（node.type，如 topic/relationship/boundary/summary） */
+  readonly role: string
   /** 父 ViewDesc */
   protected _parent: ViewDesc | null = null
   /** 子 ViewDesc 列表 */
@@ -60,7 +60,7 @@ export abstract class ViewDesc {
   /** 事件发射器 */
   protected _eventEmitter: EventEmitter | null = null
 
-  constructor(node: NodeDesc, role: NodeRole) {
+  constructor(node: NodeDesc, role: string) {
     this.node = node
     this.role = role
   }

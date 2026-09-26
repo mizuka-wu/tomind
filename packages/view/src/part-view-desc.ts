@@ -13,7 +13,7 @@
 import { Group, Text, Image as LeaferImage, Rect } from 'leafer-ui'
 import { HTMLText } from '@leafer-in/html'
 import { ViewDesc } from './view-desc'
-import type { NodeDesc, NodeRole } from '@tomind/schema'
+import type { NodeDesc } from '@tomind/schema'
 import { getTitleText } from '@tomind/schema'
 import { MarkersRenderer } from './renderers/markers-renderer'
 import { LabelsRenderer } from './renderers/labels-renderer'
@@ -35,7 +35,7 @@ export abstract class PartViewDesc extends ViewDesc {
 
   constructor(
     node: NodeDesc,
-    role: NodeRole,
+    role: string,
     partType: string,
     position: 'top' | 'bottom' | 'left' | 'right' | 'outside' | 'center',
     order: number,
@@ -78,7 +78,7 @@ export abstract class PartViewDesc extends ViewDesc {
 export class TitlePartViewDesc extends PartViewDesc {
   private _text: Text | null = null
 
-  constructor(node: NodeDesc, role: NodeRole) {
+  constructor(node: NodeDesc, role: string) {
     super(node, role, 'title', 'center', 0)
   }
 
@@ -109,7 +109,7 @@ export class TitlePartViewDesc extends PartViewDesc {
 export class ImagePartViewDesc extends PartViewDesc {
   private _image: LeaferImage | null = null
 
-  constructor(node: NodeDesc, role: NodeRole) {
+  constructor(node: NodeDesc, role: string) {
     super(node, role, 'image', 'center', 10)
   }
 
@@ -141,7 +141,7 @@ export class ImagePartViewDesc extends PartViewDesc {
 export class MarkersPartViewDesc extends PartViewDesc {
   private renderer: MarkersRenderer | null = null
 
-  constructor(node: NodeDesc, role: NodeRole) {
+  constructor(node: NodeDesc, role: string) {
     super(node, role, 'markers', 'top', 20)
   }
 
@@ -174,7 +174,7 @@ export class MarkersPartViewDesc extends PartViewDesc {
 export class LabelsPartViewDesc extends PartViewDesc {
   private renderer: LabelsRenderer | null = null
 
-  constructor(node: NodeDesc, role: NodeRole) {
+  constructor(node: NodeDesc, role: string) {
     super(node, role, 'labels', 'bottom', 30)
   }
 
@@ -216,7 +216,7 @@ export class NotePartViewDesc extends PartViewDesc {
   private _htmlText: HTMLText | null = null
   private _plainText: Text | null = null
 
-  constructor(node: NodeDesc, role: NodeRole) {
+  constructor(node: NodeDesc, role: string) {
     super(node, role, 'note', 'right', 40)
   }
 
@@ -328,7 +328,7 @@ export class NotePartViewDesc extends PartViewDesc {
 export class LinkPartViewDesc extends PartViewDesc {
   private _linkIcon: Rect | null = null
 
-  constructor(node: NodeDesc, role: NodeRole) {
+  constructor(node: NodeDesc, role: string) {
     super(node, role, 'link', 'right', 5)
   }
 
@@ -368,7 +368,7 @@ export class CommentsPartViewDesc extends PartViewDesc {
   private _icon: Rect | null = null
   private _badge: Text | null = null
 
-  constructor(node: NodeDesc, role: NodeRole) {
+  constructor(node: NodeDesc, role: string) {
     super(node, role, 'comments', 'right', 45)
   }
 
@@ -427,7 +427,7 @@ export class CommentsPartViewDesc extends PartViewDesc {
 export class InformationIconPartViewDesc extends PartViewDesc {
   private _text: Text | null = null
 
-  constructor(node: NodeDesc, role: NodeRole) {
+  constructor(node: NodeDesc, role: string) {
     super(node, role, 'informationIcon', 'right', 50)
   }
 

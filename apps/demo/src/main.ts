@@ -104,6 +104,9 @@ async function init() {
     console.log('[demo] loaded xmind theme:', Object.keys(xmindThemeData))
   }
 
+  // 主题在 renderInitial 之后加载，必须强制重绘才能应用新样式
+  workbook.refreshStyles()
+
   // 暴露调试接口到 window
   window.__tomind = {
     workbook,

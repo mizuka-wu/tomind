@@ -724,10 +724,16 @@ export class StyleEngine {
     const mapEntry = theme['map']
     if (!isThemeClassEntry(mapEntry)) return result
 
-    const multiLineColors = mapEntry.properties.multiLineColors
-    if (!multiLineColors || multiLineColors === 'none') return result
+    // snowbrush DEFAULT_COLOR_THEME_ID = Rainbow-MULTI_LINE_COLORS
+    // 当主题未声明 multiLineColors 时使用 Rainbow 默认 6 色
+    const DEFAULT_MULTI_LINE_COLORS =
+      '#F9423A #F6A04D #F3D321 #00BC7B #486AFF #4D49BE'
 
-    const colors = String(multiLineColors).split(' ').filter(Boolean)
+    const multiLineColors = mapEntry.properties.multiLineColors
+    const colors =
+      multiLineColors && multiLineColors !== 'none'
+        ? String(multiLineColors).split(' ').filter(Boolean)
+        : DEFAULT_MULTI_LINE_COLORS.split(' ').filter(Boolean)
     if (colors.length === 0) return result
 
     const ancestor = getMainTopicAncestor(state.doc, topicId, (id) => {
@@ -743,34 +749,19 @@ export class StyleEngine {
 
     const fill = nodeType === 'subTopic' ? blendAlpha(color, 0.2, mapFill) : color
 
-    // fontColor 根据分支颜色计算（优先白色，其次深色分支色）
-    // 1. 先检查白色：如果白色对比度 >= 3，直接返回白色
-    // 2. 否则从候选色中找最高对比度的
+    // fontColor：
+    // - subTopic（underline 等无线条填充）：用深色分支色，底是白的
+    // - mainTopic/centralTopic（实心填充）：按填充色对比度选白/黑
     let fontColor: string | undefined
-    const fillBg = colord(fill)
-    if (fillBg.isValid()) {
-      const whiteRatio = fillBg.contrast(colord('#ffffff'))
-      if (whiteRatio >= 3) {
-        fontColor = '#ffffff'
-      } else {
-        const candidates: string[] = []
-        if (nodeType === 'subTopic') {
-          const branchHsl = colord(color).toHsl()
-          const darkBranch = hslToHex(branchHsl.h, branchHsl.s * 100, 20)
-          candidates.push(darkBranch)
-        } else {
-          candidates.push('#000000')
-        }
-        let bestColor = candidates[0]
-        let bestRatio = fillBg.contrast(colord(bestColor))
-        for (let i = 1; i < candidates.length; i++) {
-          const ratio = fillBg.contrast(colord(candidates[i]))
-          if (ratio > bestRatio) {
-            bestRatio = ratio
-            bestColor = candidates[i]
-          }
-        }
-        fontColor = bestColor
+    if (nodeType === 'subTopic') {
+      // colord.toHsl() 的 s/l 已是 0-100
+      const branchHsl = colord(color).toHsl()
+      fontColor = hslToHex(branchHsl.h, branchHsl.s, 20)
+    } else {
+      const fillBg = colord(fill)
+      if (fillBg.isValid()) {
+        const whiteRatio = fillBg.contrast(colord('#ffffff'))
+        fontColor = whiteRatio >= 3 ? '#ffffff' : '#000000'
       }
     }
 
@@ -780,13 +771,17 @@ export class StyleEngine {
       borderColor: color,
       fillColor: fill,
       fontColor,
+      // 供 ConnectionRenderer 按 mainTopic 分支索引取色
+      multiLineColors: colors.join(' '),
     }
   }
 }
 
 function blendAlpha(foreground: string, alpha: number, background: string): string {
+  // "none"/透明按白色画布混合，避免 colord("none") 变黑导致整体发暗
+  const bgSource = !background || background === 'none' || background === 'transparent' ? '#ffffff' : background
   const fg = colord(foreground).toRgb()
-  const bg = colord(background).toRgb()
+  const bg = colord(bgSource).toRgb()
   const r = Math.round(alpha * fg.r + (1 - alpha) * bg.r)
   const g = Math.round(alpha * fg.g + (1 - alpha) * bg.g)
   const b = Math.round(alpha * fg.b + (1 - alpha) * bg.b)

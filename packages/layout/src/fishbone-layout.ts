@@ -181,10 +181,18 @@ function layoutFishbone(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
+  /**
+   * 骨线侧别：
+   * - 'split'（默认，鱼头层）：子节点按 i%2 分到上下两条骨线
+   * - 'top' / 'bottom'：整条骨线同侧堆叠（对齐 snowbrush TOP/BOTTOM BONE）
+   */
+  side: 'split' | 'top' | 'bottom' = 'split',
 ): void {
   const size = sizeMap.get(node.id)!
   const children = getAttachedChildren(node)
   const lineSpacing = getSpacingMajor(node, options, styleEngine, state)
+  // snowbrush BONE_PADDING_VERTICAL=40 / SUB_BONE_PADDING_VERTICAL=20
+  const bonePad = side === 'split' ? 40 : 32
 
   // 分支高度 = 上下两组子节点的最大累积高度
   let branchHeight = size.height
@@ -192,51 +200,49 @@ function layoutFishbone(
     let topH = 0
     let bottomH = 0
     for (let i = 0; i < children.length; i++) {
-      if (i % 2 === 0) topH = Math.max(topH, subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state))
-      else bottomH = Math.max(bottomH, subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state))
+      const onTop = side === 'split' ? i % 2 === 0 : side === 'top'
+      const h = subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state)
+      if (onTop) topH = Math.max(topH, h)
+      else bottomH = Math.max(bottomH, h)
     }
-    branchHeight = topH + size.height + bottomH + getSpacingMinor(node, options, styleEngine, state) * 4
+    branchHeight = topH + size.height + bottomH + bonePad * 2
   }
 
   nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight, partBounds: size.partBounds })
 
   if (isCollapsed(node) || children.length === 0) return
 
-  // 对齐 snowbrush fishbone: 骨线沿对角线排列子节点
-  // boneX = 骨线起点（父节点边缘 + lineSpacing）
   const boneX = headLeft ? x + size.width + lineSpacing : x - lineSpacing
-  // boneBaseY = 父节点垂直中心（骨线从中线出发）
   const boneBaseY = y + size.height / 2
 
-  // 上方骨线（direction = -1）和下方骨线（direction = 1）各自维护骨线位置
+  // 上下骨线各自维护游标
   let topBoneBaseX = boneX
-  let topBoneBaseY = boneBaseY
+  let topBoneBaseY = boneBaseY + (side === 'bottom' ? 0 : -bonePad)
   let bottomBoneBaseX = boneX
-  let bottomBoneBaseY = boneBaseY
+  let bottomBoneBaseY = boneBaseY + (side === 'top' ? 0 : bonePad)
 
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
     const cs = sizeMap.get(child.id)!
-    const isTop = i % 2 === 0
+    const isTop = side === 'split' ? i % 2 === 0 : side === 'top'
     const direction = isTop ? -1 : 1
 
-    // 选择当前骨线位置
     const currentBaseX = isTop ? topBoneBaseX : bottomBoneBaseX
     const currentBaseY = isTop ? topBoneBaseY : bottomBoneBaseY
 
-    // 子节点 Y: 最近边缘贴骨线 + lineSpacing
-    const childY = currentBaseY + (isTop ? -(cs.height + lineSpacing) : lineSpacing)
-
-    // 子节点 X: SB 公式 — 沿斜线偏移
-    // childX 中心 = boneBaseX - (childHeight / 2 / BONE_TAN) * direction
+    const childSubH = subtreeTotalHeight(child, options, sizeMap, styleEngine, state)
+    // Y 步进用子树高 ×1.2，逼近 SB 鱼骨垂直展开
+    const stepY = childSubH * 1.2 + bonePad
+    const childY = currentBaseY + (isTop ? -stepY : bonePad)
+    // X 步进用 topic 高（SB 骨线紧凑），Y 累计用子树高（撑开垂直分布）
     const offsetX = -(cs.height / 2 / BONE_CONNECTION_TAN) * direction
     const childX = currentBaseX + offsetX
 
-    layoutFishbone(child, childX, childY, headLeft, options, sizeMap, nodes, styleEngine, state)
+    layoutLogicFromFishbone(child, childX, childY, headLeft, options, sizeMap, nodes, styleEngine, state)
 
-    // 更新骨线位置: 沿斜线方向推进
-    const childDistanceY = (cs.height + lineSpacing) * direction
-    const nextBaseX = currentBaseX - (Math.abs(childDistanceY) / BONE_CONNECTION_TAN) * direction
+    const childDistanceY = stepY * direction
+    // X 骨线推进用 topic 高，避免子树高度把对角拉得过宽
+    const nextBaseX = currentBaseX - ((cs.height + bonePad) / BONE_CONNECTION_TAN) * direction
     const nextBaseY = currentBaseY + childDistanceY
 
     if (isTop) {
@@ -324,4 +330,66 @@ export const fishboneRightHeadedLayoutAlgorithm: LayoutAlgorithm = {
 
     return { nodes, totalWidth: maxX, totalHeight: maxY }
   },
+}
+
+/**
+ * 鱼骨原因节点的后代布局 — 对齐 snowbrush LOGICRIGHT/LEFT
+ * 子节点全部放在同一侧，垂直堆叠，水平向外展开
+ */
+function layoutLogicFromFishbone(
+  node: NodeDesc,
+  x: number,
+  y: number,
+  headLeft: boolean,
+  options: LayoutOptions,
+  sizeMap: Map<string, NodeSize>,
+  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+): void {
+  const size = sizeMap.get(node.id)!
+  const children = getAttachedChildren(node)
+  const spacing = getNodeSpacing(node, options, styleEngine ?? null, state ?? null)
+  const minorGap = spacing.verticalGap
+  const majorGap = spacing.horizontalGap
+
+  let branchHeight = size.height
+  if (!isCollapsed(node) && children.length > 0) {
+    let total = 0
+    for (let i = 0; i < children.length; i++) {
+      total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state)
+      if (i < children.length - 1) total += minorGap
+    }
+    branchHeight = Math.max(size.height, total)
+  }
+
+  nodes.set(node.id, {
+    x, y, width: size.width, height: size.height,
+    titleWidth: size.titleWidth, titleHeight: size.titleHeight,
+    branchHeight, partBounds: size.partBounds,
+  })
+
+  if (isCollapsed(node) || children.length === 0) return
+
+  // 垂直堆叠，中心对齐父节点；水平向外
+  let childX: number
+  if (headLeft) {
+    childX = x + size.width + majorGap
+  } else {
+    // 先算子树最大宽度，从父节点左侧开始
+    let maxW = 0
+    for (const c of children) {
+      maxW = Math.max(maxW, subtreeTotalWidth(c, options, sizeMap, styleEngine, state))
+    }
+    childX = x - majorGap - maxW
+  }
+
+  let curY = y + size.height / 2 - branchHeight / 2
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+    const cs = sizeMap.get(child.id)!
+    const childH = subtreeTotalHeight(child, options, sizeMap, styleEngine, state)
+    layoutLogicFromFishbone(child, childX, curY + (childH - cs.height) / 2, headLeft, options, sizeMap, nodes, styleEngine, state)
+    curY += childH + minorGap
+  }
 }

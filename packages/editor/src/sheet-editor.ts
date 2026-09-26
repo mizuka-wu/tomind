@@ -20,8 +20,7 @@ import type { IAppConfig } from 'leafer-ui'
 
 import { SheetState, Transaction, PluginKey } from '@tomind/state'
 import type { Plugin } from '@tomind/state'
-import type { NodeDesc, NodeRole, SelectionState, Viewport } from '@tomind/schema'
-import { isNodeRole } from '@tomind/schema'
+import type { NodeDesc, SelectionState, Viewport } from '@tomind/schema'
 import { ViewDesc } from '@tomind/view'
 import { analyzeSteps, DirtyFlag } from '@tomind/view'
 import {
@@ -63,7 +62,7 @@ interface ScrollbarConfig {
 
 // ==================== 工厂函数 ====================
 
-type ViewDescClass = new (node: NodeDesc, role: NodeRole, ctx: ViewContext) => ViewDesc
+type ViewDescClass = new (node: NodeDesc, role: string, ctx: ViewContext) => ViewDesc
 
 /** 从 CustomEvent 安全提取 detail */
 /** 从 CustomEvent 安全提取 detail */
@@ -124,7 +123,7 @@ export function unregisterPartViewDesc(partType: string): void {
 function _createViewDesc(node: NodeDesc, registry: Map<string, ViewDescClass>, ctx: ViewContext): ViewDesc | null {
   const ViewDescClass = registry.get(node.type)
   if (!ViewDescClass) return null
-  return isNodeRole(node.type) ? new ViewDescClass(node, node.type, ctx) : null
+  return new ViewDescClass(node, node.type, ctx)
 }
 
 // ==================== SheetEditor ====================
@@ -660,6 +659,12 @@ export class SheetEditor {
       }
     }
 
+    // 先更新根节点自身（shape/text），再递归子节点
+    // 否则根节点会停留在初始样式，主题变更后不生效
+    if (this._docView) {
+      this._docView.update(newDoc)
+    }
+
     // 递归更新 ViewDesc 树
     this.updateChildrenViews(this._docView, newDoc)
   }
@@ -777,17 +782,11 @@ export class SheetEditor {
     }
     const tree = this.app.tree
     console.log(`[applyViewport] before: tree.x=${tree.x} tree.y=${tree.y} tree.scaleX=${tree.scaleX}`)
-    
-    // 尝试使用 scrollX/scrollY（Leafer 实例的滚动 API）
-    // 如果不存在，fallback 到 x/y（容器偏移）
-    if ('scrollX' in tree) {
-      const scrollable = tree as { scrollX: number; scrollY: number }
-      scrollable.scrollX = -viewport.x
-      scrollable.scrollY = -viewport.y
-    } else {
-      tree.x = viewport.x
-      tree.y = viewport.y
-    }
+
+    // tree 是可视区域根节点：x/y 平移画布，scale 缩放
+    // 注意：tree.scrollX 是滚动条插件属性，不是相机平移，不能用
+    tree.x = viewport.x
+    tree.y = viewport.y
     tree.scaleX = viewport.zoom
     tree.scaleY = viewport.zoom
     console.log(`[applyViewport] after: viewport=(${viewport.x},${viewport.y} zoom=${viewport.zoom}) tree.x=${tree.x} tree.y=${tree.y}`)
@@ -823,6 +822,17 @@ export class SheetEditor {
     // 触发重渲染：用当前 doc 再走一遍 updateDocView
     this.updateDocView(this._state.doc)
     this.emit('layoutChange', layoutName)
+  }
+
+  /**
+   * 主题/样式变更后强制重绘
+   * （主题常在 renderInitial 之后加载，否则元素停留在旧样式）
+   */
+  refreshStyles(): void {
+    if (!this._docView) return
+    this._docView.markAllDirty(DirtyFlag.STYLE | DirtyFlag.CONTENT | DirtyFlag.LAYOUT)
+    this.layoutEngine.compute(this._state)
+    this.updateDocView(this._state.doc)
   }
 
   // ==================== 选区管理 ====================
