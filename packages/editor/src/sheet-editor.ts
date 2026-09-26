@@ -65,9 +65,11 @@ interface ScrollbarConfig {
 type ViewDescClass = new (node: NodeDesc, role: string, ctx: ViewContext) => ViewDesc
 
 /** 从 CustomEvent 安全提取 detail */
-/** 从 CustomEvent 安全提取 detail */
 function getEventDetail<T>(e: Event): T {
-  return (e as CustomEvent<T>).detail
+  if ('detail' in e) {
+    return (e as CustomEvent<T>).detail
+  }
+  throw new Error('Event is not a CustomEvent')
 }
 
 // NodeViewDesc 默认注册表（Tiptap 风格：Extension 注册 NodeView）
@@ -351,10 +353,10 @@ export class SheetEditor {
    *
    * 将 Plugin 添加到 state 中，并触发一次空事务以初始化 plugin state。
    */
-  registerPlugin(plugin: Plugin): void {
+  registerPlugin(plugin: PluginLike): void {
     // 避免重复注册
     if (this._dynamicPlugins.some((dp) => dp.key.name === plugin.key.name)) return
-    this._dynamicPlugins.push(plugin)
+    this._dynamicPlugins.push(plugin as Plugin)
 
     // 重建 state，包含新 plugin
     const newPlugins = [...this.plugins, ...this._dynamicPlugins]
@@ -374,9 +376,8 @@ export class SheetEditor {
   /**
    * 注销 Plugin
    */
-  unregisterPlugin(plugin: unknown): void {
-    const p = plugin as Plugin
-    const idx = this._dynamicPlugins.findIndex((dp) => dp.key.name === p.key.name)
+  unregisterPlugin(plugin: PluginLike): void {
+    const idx = this._dynamicPlugins.findIndex((dp) => dp.key.name === plugin.key.name)
     if (idx === -1) return
     this._dynamicPlugins.splice(idx, 1)
 
@@ -401,9 +402,9 @@ export class SheetEditor {
    *
    * 用于 Widget Decoration 系统
    */
-  registerWidgetPlugin(plugin: ViewPlugin): void {
+  registerWidgetPlugin(plugin: WidgetPluginLike): void {
     if (this._viewPluginManager.has(plugin.name)) return
-    this._viewPluginManager = this._viewPluginManager.add(plugin)
+    this._viewPluginManager = this._viewPluginManager.add(plugin as ViewPlugin)
   }
 
   /**
@@ -441,7 +442,7 @@ export class SheetEditor {
     
     switch (widgetType) {
       case 'indicator':
-        return new IndicatorNodeViewDesc(node, 'topic' as any, this._ctx)
+        return new IndicatorNodeViewDesc(node, 'topic', this._ctx)
       default:
         return null
     }
@@ -506,7 +507,11 @@ export class SheetEditor {
       storage: {},
       getWorkbook: () => editor._workbookEditor!,
       getState: <T = unknown>(): T | null => editor._state as T | null,
-      dispatch: (tr: unknown) => editor.dispatch(tr as Transaction),
+      dispatch: (tr: unknown) => {
+        if (tr instanceof Transaction) {
+          editor.dispatch(tr)
+        }
+      },
       getView: () => editor._docView,
       executeCommand: (name: string, args?: unknown) => {
         const result = editor.executeCommand(name, args)
@@ -546,13 +551,13 @@ export class SheetEditor {
         editor.unregisterPartView(partType)
       },
       registerPlugin: (plugin: PluginLike) => {
-        editor.registerPlugin(plugin as Plugin)
+        editor.registerPlugin(plugin)
       },
       unregisterPlugin: (plugin: PluginLike) => {
-        editor.unregisterPlugin(plugin as Plugin)
+        editor.unregisterPlugin(plugin)
       },
       registerWidgetPlugin: (plugin: WidgetPluginLike) => {
-        editor.registerWidgetPlugin(plugin as ViewPlugin)
+        editor.registerWidgetPlugin(plugin)
       },
       unregisterWidgetPlugin: (name: string) => {
         editor.unregisterWidgetPlugin(name)

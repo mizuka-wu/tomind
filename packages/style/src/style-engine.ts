@@ -451,10 +451,10 @@ export class StyleEngine {
         case 'fontColor':
           // fontColor 不直接设到 result，由 TopicRenderer 从 style.fontColor 读取
           // 避免和 fillColor 的 fill 冲突
-          result.fontColor = value
+          if (typeof value === 'string') result.fontColor = value
           break
         case 'borderColor':
-          result.stroke = value  // Rect 边框色
+          if (typeof value === 'string') result.stroke = value  // Rect 边框色
           break
         case 'borderPattern':
           // "solid" → 无虚线，"dash" → [5, 3]（类似 linePattern，供 Rect 边框使用）
@@ -465,7 +465,7 @@ export class StyleEngine {
           }
           break
         case 'lineColor':
-          result.lineColor = value  // 连线颜色，由 ConnectionRenderer 使用
+          if (typeof value === 'string') result.lineColor = value  // 连线颜色，由 ConnectionRenderer 使用
           break
 
         // ── 线条映射 ──
@@ -521,10 +521,10 @@ export class StyleEngine {
           result.fontWeight = parseFontWeight(value)
           break
         case 'fontStyle':
-          result.fontStyle = value  // "italic" | "normal"，LeaferJS 直接支持
+          if (typeof value === 'string') result.fontStyle = value  // "italic" | "normal"，LeaferJS 直接支持
           break
         case 'textAlign':
-          result.textAlign = value  // "left" | "center" | "right"
+          if (typeof value === 'string') result.textAlign = value  // "left" | "center" | "right"
           break
 
         // ── 透明度 ──

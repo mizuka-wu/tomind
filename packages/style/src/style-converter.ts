@@ -141,7 +141,7 @@ const UNIT_PATTERN = /^(-?\d*\.?\d+)\s*(pt|px|%|em|rem|cm|mm|in|pc)?$/i
  * "30pt" → 30, "50%" → 50, "16" → 16
  * 返回 null 表示无法解析
  */
-export function parseUnit(value: string | number | null | undefined): number | null {
+export function parseUnit(value: unknown): number | null {
   if (value === null || value === undefined) return null
   if (typeof value === 'number') return isFinite(value) ? value : null
   if (typeof value !== 'string') return null
@@ -162,10 +162,10 @@ export function parseUnit(value: string | number | null | undefined): number | n
  * 序列化数值为带单位的字符串
  * 30, 'pt' → "30pt"
  */
-export function serializeUnit(value: number | string | null | undefined, unit: string): string {
+export function serializeUnit(value: unknown, unit: string): string {
   if (value === null || value === undefined) return ''
   if (typeof value === 'string') return value
-  if (!isFinite(value)) return ''
+  if (typeof value !== 'number' || !isFinite(value)) return ''
   return `${value}${unit}`
 }
 
@@ -175,7 +175,7 @@ export function serializeUnit(value: number | string | null | undefined, unit: s
  * 解析 strokeDash 字符串为数组
  * "5,3" → [5, 3], "5 3" → [5, 3], "none" → null
  */
-export function parseStrokeDash(value: string | number[] | null | undefined): number[] | null {
+export function parseStrokeDash(value: unknown): number[] | null {
   if (!value || value === 'none') return null
   if (Array.isArray(value)) return value
 
@@ -189,10 +189,11 @@ export function parseStrokeDash(value: string | number[] | null | undefined): nu
  * 序列化 strokeDash 数组为字符串
  * [5, 3] → "5,3"
  */
-export function serializeStrokeDash(value: number[] | string | null | undefined): string {
+export function serializeStrokeDash(value: unknown): string {
   if (!value || value === 'none') return 'none'
   if (typeof value === 'string') return value
-  return value.join(',')
+  if (Array.isArray(value)) return value.join(',')
+  return 'none'
 }
 
 // ==================== textAlign 转换 ====================
@@ -257,7 +258,7 @@ function fontWeightToKeyword(value: number): string {
  * 规范化 fontWeight
  * "bold" → 700, "normal" → 400, "700" → 700
  */
-export function normalizeFontWeight(value: string | number | null | undefined): number | null {
+export function normalizeFontWeight(value: unknown): number | null {
   if (value === null || value === undefined) return null
   if (typeof value === 'number') return isFinite(value) ? value : null
   if (typeof value === 'string') {
@@ -273,10 +274,11 @@ export function normalizeFontWeight(value: string | number | null | undefined): 
  * 序列化 fontWeight
  * 700 → "bold", 400 → "normal"
  */
-export function serializeFontWeight(value: number | string | null | undefined): string {
+export function serializeFontWeight(value: unknown): string {
   if (value === null || value === undefined) return 'normal'
   if (typeof value === 'string') return value
-  return fontWeightToKeyword(value)
+  if (typeof value === 'number') return fontWeightToKeyword(value)
+  return 'normal'
 }
 
 // ==================== opacity 转换 ====================
@@ -285,7 +287,7 @@ export function serializeFontWeight(value: number | string | null | undefined): 
  * 规范化 opacity
  * "50%" → 0.5, "0.5" → 0.5, 50 → 0.5 (>1 时视为百分比)
  */
-export function normalizeOpacity(value: string | number | null | undefined): number | null {
+export function normalizeOpacity(value: unknown): number | null {
   if (value === null || value === undefined) return null
   if (typeof value === 'number') {
     if (!isFinite(value)) return null
@@ -308,7 +310,7 @@ export function normalizeOpacity(value: string | number | null | undefined): num
  * 序列化 opacity
  * 0.5 → 0.5（LeaferJS 使用 0-1 范围）
  */
-export function serializeOpacity(value: number | string | null | undefined): number {
+export function serializeOpacity(value: unknown): number {
   if (value === null || value === undefined) return 1
   if (typeof value === 'string') {
     const num = parseFloat(value)
@@ -334,7 +336,7 @@ export interface TransformValues {
  * 解析 transform 字符串
  * "translate(10,20) rotate(45) scale(2)" → { x: 10, y: 20, rotation: 45, scaleX: 2, scaleY: 2 }
  */
-export function parseTransform(value: string | TransformValues | null | undefined): TransformValues | null {
+export function parseTransform(value: unknown): TransformValues | null {
   if (!value) return null
   if (typeof value === 'object') return value
 
@@ -368,22 +370,24 @@ export function parseTransform(value: string | TransformValues | null | undefine
  * 序列化 transform 值为字符串
  * { x: 10, y: 20, rotation: 45 } → "translate(10,20) rotate(45)"
  */
-export function serializeTransform(value: TransformValues | string | null | undefined): string {
+export function serializeTransform(value: unknown): string {
   if (!value) return ''
   if (typeof value === 'string') return value
+  if (typeof value !== 'object') return ''
 
+  const v = value as { x?: number; y?: number; rotation?: number; scaleX?: number; scaleY?: number }
   const parts: string[] = []
-  if (value.x !== undefined || value.y !== undefined) {
-    parts.push(`translate(${value.x || 0},${value.y || 0})`)
+  if (v.x !== undefined || v.y !== undefined) {
+    parts.push(`translate(${v.x || 0},${v.y || 0})`)
   }
-  if (value.rotation !== undefined) {
-    parts.push(`rotate(${value.rotation})`)
+  if (v.rotation !== undefined) {
+    parts.push(`rotate(${v.rotation})`)
   }
-  if (value.scaleX !== undefined) {
-    if (value.scaleX === value.scaleY || value.scaleY === undefined) {
-      parts.push(`scale(${value.scaleX})`)
+  if (v.scaleX !== undefined) {
+    if (v.scaleX === v.scaleY || v.scaleY === undefined) {
+      parts.push(`scale(${v.scaleX})`)
     } else {
-      parts.push(`scale(${value.scaleX},${value.scaleY})`)
+      parts.push(`scale(${v.scaleX},${v.scaleY})`)
     }
   }
   return parts.join(' ')
@@ -459,7 +463,7 @@ export function normalizeStyleObject(
 
     // 单位
     if (UNIT_KEYS.has(key)) {
-      const num = parseUnit(value as string | number)
+      const num = parseUnit(value)
       if (num !== null) {
         result[key] = num
         continue
@@ -472,7 +476,7 @@ export function normalizeStyleObject(
       if (value === 'none') {
         result[key] = 'none'
       } else {
-        result[key] = parseStrokeDash(value as string | number[])
+        result[key] = parseStrokeDash(value)
       }
       continue
     }
@@ -485,19 +489,19 @@ export function normalizeStyleObject(
 
     // fontWeight
     if (key === 'fontWeight') {
-      result[key] = normalizeFontWeight(value as string | number)
+      result[key] = normalizeFontWeight(value)
       continue
     }
 
     // opacity
     if (OPACITY_KEYS.has(key)) {
-      result[key] = normalizeOpacity(value as string | number)
+      result[key] = normalizeOpacity(value)
       continue
     }
 
     // transform
     if (key === 'transform') {
-      result[key] = parseTransform(value as string)
+      result[key] = parseTransform(value)
       continue
     }
 
@@ -537,13 +541,13 @@ export function serializeStyleObject(
 
     // 单位
     if (UNIT_KEYS.has(key)) {
-      result[key] = serializeUnit(value as number, defaultUnit)
+      result[key] = serializeUnit(value, defaultUnit)
       continue
     }
 
     // strokeDash
     if (key === 'strokeDash' || key === 'lineDash') {
-      result[key] = serializeStrokeDash(value as number[])
+      result[key] = serializeStrokeDash(value)
       continue
     }
 
@@ -555,19 +559,19 @@ export function serializeStyleObject(
 
     // fontWeight
     if (key === 'fontWeight') {
-      result[key] = serializeFontWeight(value as number | string)
+      result[key] = serializeFontWeight(value)
       continue
     }
 
     // opacity
     if (OPACITY_KEYS.has(key)) {
-      result[key] = serializeOpacity(value as number | string)
+      result[key] = serializeOpacity(value)
       continue
     }
 
     // transform
     if (key === 'transform') {
-      result[key] = serializeTransform(value as TransformValues)
+      result[key] = serializeTransform(value)
       continue
     }
 

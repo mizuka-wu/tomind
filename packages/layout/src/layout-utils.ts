@@ -85,7 +85,7 @@ export function getFontSize(node: NodeDesc, styleEngine?: StyleEngine | null, st
 }
 
 export function isCollapsed(node: NodeDesc): boolean {
-  return (node.attrs.collapsed as boolean) ?? false
+  return node.attrs.collapsed === true
 }
 
 // ─── 树遍历 ───

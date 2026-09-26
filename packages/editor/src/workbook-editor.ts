@@ -15,6 +15,7 @@
  */
 
 import type { SheetState } from '@tomind/state'
+import { Transaction } from '@tomind/state'
 import type { NodeDesc } from '@tomind/schema'
 import { ViewDesc } from '@tomind/view'
 import { SheetEditor, createNodeViewDescRegistry, createPartViewDescRegistry } from './sheet-editor'
@@ -405,7 +406,9 @@ export class WorkbookEditor implements WorkbookEditorInterface {
       dispatch: (tr: unknown) => {
         const activeSheet = workbook._requireActiveSheet('dispatch')
         if (!activeSheet) return
-        activeSheet.dispatch(tr as import('@tomind/state').Transaction)
+        if (tr instanceof Transaction) {
+          activeSheet.dispatch(tr)
+        }
       },
       getView: () => {
         const activeSheet = workbook._requireActiveSheet('getView')
@@ -430,13 +433,13 @@ export class WorkbookEditor implements WorkbookEditorInterface {
         workbook.emit(event, data)
       },
       registerNodeView: (nodeType: string, viewDesc: ViewDescConstructor) => {
-        workbook._nodeViewDescRegistry.set(nodeType, viewDesc as new (node: NodeDesc, role: string, ctx: import('@tomind/view').ViewContext) => ViewDesc)
+        workbook._nodeViewDescRegistry.set(nodeType, viewDesc)
       },
       unregisterNodeView: (nodeType: string) => {
         workbook._nodeViewDescRegistry.delete(nodeType)
       },
       registerPartView: (partType: string, viewDesc: ViewDescConstructor) => {
-        workbook._partViewDescRegistry.set(partType, viewDesc as new (node: NodeDesc, role: string) => ViewDesc)
+        workbook._partViewDescRegistry.set(partType, viewDesc)
       },
       unregisterPartView: (partType: string) => {
         workbook._partViewDescRegistry.delete(partType)

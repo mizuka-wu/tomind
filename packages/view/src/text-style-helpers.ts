@@ -24,7 +24,10 @@ const DECORATION_MAP: Record<string, TextDecoration> = {
  * 将 snowbrush textDecoration 值转为 LeaferJS 格式
  */
 export function mapTextDecoration(value: string): TextDecoration {
-  return DECORATION_MAP[value] ?? (value as TextDecoration)
+  const mapped = DECORATION_MAP[value]
+  if (mapped) return mapped
+  if (value === 'under' || value === 'delete' || value === 'none') return value
+  return 'none'
 }
 
 /**
@@ -32,7 +35,8 @@ export function mapTextDecoration(value: string): TextDecoration {
  * snowbrush 和 LeaferJS 的 textAlign 值一致（left | center | right）
  */
 export function mapTextAlign(value: string): TextAlign {
-  return value as TextAlign
+  if (value === 'left' || value === 'center' || value === 'right') return value
+  return 'left'
 }
 
 /**
@@ -40,5 +44,16 @@ export function mapTextAlign(value: string): TextAlign {
  * snowbrush 和 LeaferJS 的 fontWeight 值一致
  */
 export function mapFontWeight(value: string | number): FontWeight {
-  return value as FontWeight
+  if (typeof value === 'number') {
+    const n = Math.round(value / 100) * 100
+    if (n >= 100 && n <= 900) return n as FontWeight
+    return 400
+  }
+  switch (value) {
+    case 'thin': case 'extra-light': case 'light': case 'normal':
+    case 'medium': case 'semi-bold': case 'bold': case 'extra-bold': case 'black':
+      return value
+    default:
+      return 'normal'
+  }
 }
