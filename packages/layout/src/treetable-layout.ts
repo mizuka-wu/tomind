@@ -16,7 +16,6 @@ import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engi
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
 import { measureTitleOnlyNode } from './part-node-size'
-import { getLayoutWidth } from './spacing-utils'
 
 interface NodeSize {
   width: number
