@@ -296,9 +296,9 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
       }
       if (singleItems.length > 0) {
         cellWidths[col] = Math.max(...singleItems.map(({ node }) => {
-          // 列宽至少容纳节点实宽（含 innerSpacing/margin），避免溢出
+          // SB 列宽 = titleWidth + extendWidth（不含通用 innerSpacing，cell 自带 padding）
           const size = sizeMap.get(node.id)!
-          return size.width
+          return size.titleWidth + getExtendWidth(doc, node, styleEngine, state, options)
         }))
       }
     }
@@ -318,7 +318,7 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
               spannedWidth += cellWidths[col]
             }
           }
-          const neededWidth = getLayoutWidth(item, size.width, styleEngine, state)
+          const neededWidth = size.titleWidth + getExtendWidth(doc, item, styleEngine, state, options)
           if (spannedWidth < neededWidth) {
             // 需要额外宽度
             const extra = neededWidth - spannedWidth
