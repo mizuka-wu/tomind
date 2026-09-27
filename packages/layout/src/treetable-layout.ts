@@ -296,11 +296,9 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
       }
       if (singleItems.length > 0) {
         cellWidths[col] = Math.max(...singleItems.map(({ node }) => {
-          // SB calcTableCellWidth: topicBounds.width + extendWidth
-          // extendWidth = borderWidth + marginLeft + marginRight（居中线量法，只加一份 border）
+          // 列宽至少容纳节点实宽（含 innerSpacing/margin），避免溢出
           const size = sizeMap.get(node.id)!
-          const extendW = getExtendWidth(doc, node, styleEngine, state, options)
-          return size.titleWidth + extendW
+          return size.width
         }))
       }
     }

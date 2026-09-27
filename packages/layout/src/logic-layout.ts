@@ -136,7 +136,15 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
 }
 
 function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
-  return getNodeSpacing(node, options, styleEngine, state).horizontalGap
+  // 对齐 snowbrush calcSpacingMajor：curve/straight 线 ×2
+  const gap = getNodeSpacing(node, options, styleEngine, state).horizontalGap
+  if (styleEngine && state) {
+    const lineClass = styleEngine.getStyleValue(state, node.id, 'lineClass')
+    const s = typeof lineClass === 'string' ? lineClass : ''
+    const DOUBLE = ['curve', 'straight']
+    if (DOUBLE.some(c => s.includes(c))) return gap * 2
+  }
+  return gap
 }
 
 function getSpacingMinor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
