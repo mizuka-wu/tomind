@@ -190,7 +190,7 @@ function layoutSubtreeRight(
   if (children.length === 0) return
 
   // 大括号布局：子节点更紧凑，间距减半
-  const compactGap = getSpacingMinor(node, options, styleEngine, state) * 0.5
+  const compactGap = getSpacingMinor(node, options, styleEngine, state)
   let childY = y + (size.height - totalH) / 2
   const childX = x + size.width + getSpacingMajor(node, options, styleEngine, state)
 
@@ -235,7 +235,7 @@ function layoutSubtreeLeft(
   if (children.length === 0) return
 
   // 大括号布局：子节点更紧凑，间距减半
-  const compactGap = getSpacingMinor(node, options, styleEngine, state) * 0.5
+  const compactGap = getSpacingMinor(node, options, styleEngine, state)
   let childY = y + (size.height - totalH) / 2
   const childX = x - getSpacingMajor(node, options, styleEngine, state)
 
