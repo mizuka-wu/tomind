@@ -883,14 +883,22 @@ export class RelationshipNodeViewDesc extends NodeViewDesc {
     const target = layout?.nodes?.get(targetId)
     if (!source || !target) return
 
-    const from = {
-      x: source.x + source.width / 2,
-      y: source.y + source.height / 2,
+    // 端点锚到形状外缘（对齐 snowbrush getEndAnchorPosition：取朝向对方的那条边中点）
+    const anchorTo = (self: { x: number; y: number; width: number; height: number }, other: { x: number; y: number; width: number; height: number }) => {
+      const scx = self.x + self.width / 2
+      const scy = self.y + self.height / 2
+      const ocx = other.x + other.width / 2
+      const ocy = other.y + other.height / 2
+      const dx = ocx - scx
+      const dy = ocy - scy
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        // 水平方向占优：锚到左右边
+        return { x: dx >= 0 ? self.x + self.width : self.x, y: scy }
+      }
+      return { x: scx, y: dy >= 0 ? self.y + self.height : self.y }
     }
-    const to = {
-      x: target.x + target.width / 2,
-      y: target.y + target.height / 2,
-    }
+    const from = anchorTo(source, target)
+    const to = anchorTo(target, source)
 
     this.renderer.setEndpoints(from, to, controlPoints, title)
     this.updateStyle()
@@ -2008,14 +2016,20 @@ export class ConnectionNodeViewDesc extends NodeViewDesc {
     const sourceLayout = layout.nodes.get(sourceId)
     const targetLayout = layout.nodes.get(targetId)
     if (sourceLayout && targetLayout) {
-      const from = {
-        x: sourceLayout.x + sourceLayout.width / 2,
-        y: sourceLayout.y + sourceLayout.height / 2,
+      const anchorTo = (self: { x: number; y: number; width: number; height: number }, other: { x: number; y: number; width: number; height: number }) => {
+        const scx = self.x + self.width / 2
+        const scy = self.y + self.height / 2
+        const ocx = other.x + other.width / 2
+        const ocy = other.y + other.height / 2
+        const dx = ocx - scx
+        const dy = ocy - scy
+        if (Math.abs(dx) >= Math.abs(dy)) {
+          return { x: dx >= 0 ? self.x + self.width : self.x, y: scy }
+        }
+        return { x: scx, y: dy >= 0 ? self.y + self.height : self.y }
       }
-      const to = {
-        x: targetLayout.x + targetLayout.width / 2,
-        y: targetLayout.y + targetLayout.height / 2,
-      }
+      const from = anchorTo(sourceLayout, targetLayout)
+      const to = anchorTo(targetLayout, sourceLayout)
       this.renderer.setEndpoints(from, to)
     }
 

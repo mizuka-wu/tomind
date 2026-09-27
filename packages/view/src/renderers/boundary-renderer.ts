@@ -136,6 +136,9 @@ export class BoundaryRenderer implements Renderer {
     if (_dashPattern) this.shapePath.dashPattern = _dashPattern
     const _lineDash = getObjectStyle<number[]>(style, 'lineDash')
     if (_lineDash) this.shapePath.dashPattern = _lineDash
+    // linePattern 映射到 strokeDash
+    const _strokeDash = getObjectStyle<number[]>(style, 'strokeDash')
+    if (_strokeDash) this.shapePath.dashPattern = _strokeDash
     const _opacity = getNumberStyle(style, 'opacity')
     if (_opacity !== undefined) this.shapePath.opacity = _opacity
 
