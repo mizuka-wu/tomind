@@ -16,7 +16,7 @@ const TEXT_DECORATION_MAP: Record<string, ITextDecorationType> = {
 
 const PATTERN_TILE_SIZE = 10
 
-type PatternKind = 'hachure' | 'cross-hatch' | 'zigzag'
+type PatternKind = 'hachure' | 'cross-hatch' | 'zigzag' | 'solid-hand-drawn'
 
 /** fillPattern 值 → 图案种类；'solid' 及未知值返回 null → 纯色填充（兼容 crossing/crossing-thin/hachure-thin 等主题别名） */
 function resolvePatternKind(fillPattern: string): PatternKind | null {
@@ -30,6 +30,8 @@ function resolvePatternKind(fillPattern: string): PatternKind | null {
       return 'cross-hatch'
     case 'zigzag':
       return 'zigzag'
+    case 'solid-hand-drawn':
+      return 'solid-hand-drawn'
     default:
       return null
   }
@@ -1381,6 +1383,8 @@ export class TopicRenderer implements Renderer {
     } else if (kind === 'cross-hatch') {
       this.traceAntiDiagonal(ctx)
       this.traceMainDiagonal(ctx)
+    } else if (kind === 'solid-hand-drawn') {
+      this.traceHandShading(ctx)
     } else {
       this.traceZigzag(ctx)
     }
@@ -1398,6 +1402,17 @@ export class TopicRenderer implements Renderer {
   private traceMainDiagonal(ctx: CanvasRenderingContext2D): void {
     ctx.moveTo(0, 0)
     ctx.lineTo(PATTERN_TILE_SIZE, PATTERN_TILE_SIZE)
+  }
+
+  /** solid-hand-drawn：极淡的手绘横线纹理（模拟马克笔平涂） */
+  private traceHandShading(ctx: CanvasRenderingContext2D): void {
+    const size = PATTERN_TILE_SIZE
+    const step = 6
+    for (let y = 2; y < size; y += step) {
+      // 轻微波动的横线
+      ctx.moveTo(0, y)
+      ctx.bezierCurveTo(size * 0.3, y - 0.6, size * 0.7, y + 0.6, size, y)
+    }
   }
 
   private traceZigzag(ctx: CanvasRenderingContext2D): void {
@@ -1440,7 +1455,10 @@ export class TopicRenderer implements Renderer {
     if (isRichAttributeTitle(attrTitle) && attrTitle.length > 1) {
       this.text.text = ''
       const baseSize = typeof style.fontSize === 'number' ? style.fontSize : 14
+      const maxW = layout.titleWidth > 0 ? layout.titleWidth : Math.max(layout.width - 16, 40)
+      const lineH = Math.floor(baseSize * 1.34)
       let runX = 0
+      let runY = 0
       for (const unit of attrTitle) {
         if (!unit.text) continue
         const run = new Text({ text: unit.text })
@@ -1462,9 +1480,16 @@ export class TopicRenderer implements Renderer {
         else if (unit['fo:text-decoration'] === 'line-through') run.textDecoration = 'delete'
         this.group?.add(run)
         this.richRuns.push(run)
-        // 同一行顺序排布（换行由 width 限制处理）
+
+        const runW = run.width || unit.text.length * runSize * 0.6
+        // 超宽换行
+        if (runX > 0 && runX + runW > maxW) {
+          runX = 0
+          runY += lineH
+        }
         run.x = runX
-        runX += (run.width || unit.text.length * runSize * 0.6) + 1
+        run.y = runY
+        runX += runW + 1
       }
     }
 

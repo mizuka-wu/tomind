@@ -991,9 +991,12 @@ function parseLinePattern(value: unknown): number[] | null {
   switch (value) {
     case 'dash': return [5, 3]
     case 'dot': return [2, 2]
-    case 'dashDot': return [5, 3, 2, 3]
-    case 'dashDotDot': return [5, 3, 2, 3, 2, 3]
-    case 'solid': return null
+    case 'dash-dot': case 'dashDot': return [5, 3, 2, 3]
+    case 'dash-dot-dot': case 'dashDotDot': return [5, 3, 2, 3, 2, 3]
+    case 'round-dot': case 'roundDot': return [2, 3]
+    // 手绘线型：solid 无虚线，dash 用略不规则的虚线
+    case 'solid': case 'handdrawn-solid': return null
+    case 'handdrawn-dash': return [6, 3, 2, 3]
     default: return null
   }
 }
