@@ -23,6 +23,7 @@ export type TreeDirection = 'right' | 'left' | 'down' | 'up'
 import { computeOutsidePadding, computeMasterOutsidePadding } from './boundary-padding'
 import type { OutsidePadding } from './boundary-padding'
 import { computeChildrenTotalHeight } from './spacing-utils'
+import { layoutLogicSubtree } from './logic-layout'
 
 /** Snowbrush: PADDING * 2 = 40, 用于父子垂直间距 */
 const PARENT_GAP = 40
@@ -42,6 +43,18 @@ function getTreeLineEndPatchGap(ctx: TreeLayoutContext, node: NodeDesc): number 
   const lwRaw = ctx.styleEngine.getStyleValue(ctx.state, node.id, 'lineWidth')
   const lw = typeof lwRaw === 'number' ? lwRaw : parseFloat(String(lwRaw ?? '')) || 0
   return lw * 4 + 16
+}
+
+/** skeleton 结构样式：子层级若为 logic.* 则委派 logic 布局（对齐 snowbrush skeleton/getAvailableChildStructure） */
+function getChildLogicSide(ctx: TreeLayoutContext, depth: number, direction: 'right' | 'left'): 'right' | 'left' | null {
+  const sk = (ctx.state?.doc?.attrs as Record<string, unknown> | undefined)?.skeletonStructure as Record<string, string> | undefined
+  if (!sk) return null
+  const role = depth === 0 ? 'mainTopic' : 'subTopic'
+  const sc = sk[role] ?? sk.mainTopic
+  if (typeof sc !== 'string') return null
+  if (!sc.startsWith('org.xmind.ui.logic')) return null
+  // 方向由父结构 coerce（tree-left 的子分支只能是 logic.left），skeleton 只决定结构族
+  return direction
 }
 
 function getParentBorderWidth(ctx: TreeLayoutContext, node: NodeDesc): number {
@@ -363,13 +376,11 @@ function layoutSubtree(
 
   if (h) {
     // ── 水平布局（right/left）── 对齐 snowbrush treeleftandright.calAttachedChildrenPos
-    // childrenX = BOUNDARYGAP(10) + endPointLineOffset(非中央 15) + centerPadding(中央 30) + lineGap
-    // childrenY = parentBottom + PADDING*2(40)（特殊线型再加 triangleOffset）
-    // 堆叠步长 = boundaryBounds.height + spacingMinor + lineWidth
+    // 子树先以临时原点布局（skeleton 委派 logic 或递归 tree），再按 boundary 顶边堆叠平移
     const isCentral = depth === 0
     const lineGap = getTreeLineEndPatchGap(ctx, node)
     const childrenXOffset = TREE_BOUNDARY_GAP + (isCentral ? TREE_CENTER_PADDING : TREE_END_POINT_LINE_OFFSET) + lineGap
-    let childY = y + size.height + TREE_PADDING * 2
+    let childrenY = y + size.height + TREE_PADDING * 2
     const lineClass = ctx.styleEngine && ctx.state
       ? String(ctx.styleEngine.getStyleValue(ctx.state, node.id, 'lineClass') ?? '')
       : ''
@@ -377,26 +388,63 @@ function layoutSubtree(
       const triangleOffset = Math.tan((Math.PI * 30) / 180) * Math.abs(childrenXOffset)
       const halfOfFirstChildHeight = sizeMap.get(regularChildren[0].id)!.height / 2
       if (triangleOffset > halfOfFirstChildHeight) {
-        childY += triangleOffset - halfOfFirstChildHeight
+        childrenY += triangleOffset - halfOfFirstChildHeight
       }
     }
     const parentBw = getParentBorderWidth(ctx, node)
-    for (const child of regularChildren) {
-      const childIdx = regularChildren.indexOf(child)
-      const childNodeSize = sizeMap.get(child.id)!
-      childNodeSize.outsidePadding = { top: 0, bottom: 0, left: 0, right: 0 }
+    const logicSide = getChildLogicSide(ctx, depth, direction === 'left' ? 'left' : 'right')
 
-      // snowbrush: 子节点列起点 = 父节点右边缘 + childrenX（左向为父左边缘 - childrenX）
+    const provs: { nodes: Map<string, NodeLayoutOutput>; bbY: number; bbH: number; top: number; left: number; h: number }[] = []
+    for (const child of regularChildren) {
+      const childSize = sizeMap.get(child.id)!
+      childSize.outsidePadding = { top: 0, bottom: 0, left: 0, right: 0 }
+      const provNodes = new Map<string, NodeLayoutOutput>()
+      let bbY: number
+      let bbH: number
+      if (logicSide) {
+        const res = layoutLogicSubtree(child, 0, 0, ctx.options, ctx.styleEngine, ctx.state, logicSide)
+        for (const [id, nl] of res.nodes) provNodes.set(id, nl as unknown as NodeLayoutOutput)
+        bbY = res.bb.y
+        bbH = res.bb.height
+      } else {
+        layoutSubtree(ctx, child, 0, 0, direction, sizeMap, provNodes, depth + 1)
+        let minY = Infinity
+        let maxY = -Infinity
+        for (const nl of provNodes.values()) {
+          minY = Math.min(minY, nl.y)
+          maxY = Math.max(maxY, nl.y + nl.height)
+        }
+        bbH = maxY - minY
+        bbY = minY - childSize.height / 2
+      }
+      const own = provNodes.get(child.id)!
+      provs.push({ nodes: provNodes, bbY, bbH, top: own.y, left: own.x, h: childSize.height })
+    }
+
+    let cum = childrenY
+    let bbTop = 0
+    let bbBottom = size.height
+    for (let i = 0; i < regularChildren.length; i++) {
+      const child = regularChildren[i]
+      const pv = provs[i]
+      const center = cum - pv.bbY
+      const desiredTop = center - pv.h / 2
+      const childW = pv.nodes.get(child.id)!.width
       const childX = direction === 'right'
         ? x + size.width + childrenXOffset
-        : x - childrenXOffset - childNodeSize.width
-
-      // boundaryBounds.height = 子树垂直跨度
-      const childSubtreeH = subtreeAxisSize(ctx, child, sizeMap, direction, node, childIdx)
-
-      layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes, depth + 1)
-      childY += childSubtreeH + spacing.verticalGap + parentBw
+        : x - childrenXOffset - childW
+      const dx = childX - pv.left
+      const dy = desiredTop - pv.top
+      for (const [id, nl] of pv.nodes) {
+        nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy })
+      }
+      const relTop = desiredTop - y + pv.bbY
+      bbTop = Math.min(bbTop, relTop)
+      bbBottom = Math.max(bbBottom, relTop + pv.bbH)
+      cum += pv.bbH + spacing.verticalGap + parentBw
     }
+    const ownLayout = nodes.get(node.id)
+    if (ownLayout) ownLayout.branchHeight = bbBottom - bbTop
   } else {
     // ── 垂直布局（down/up）──
     // Apply master boundary padding to parent bounds

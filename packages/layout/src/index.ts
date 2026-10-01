@@ -24,7 +24,9 @@ export { mapClockwiseLayoutAlgorithm } from './map-layout'
 export { mapAnticlockwiseLayoutAlgorithm, mapUnbalancedLayoutAlgorithm } from './map-layout'
 
 // Logic 布局
-export { logicRightLayoutAlgorithm, logicLeftLayoutAlgorithm } from './logic-layout'
+export { logicRightLayoutAlgorithm, logicLeftLayoutAlgorithm, createLogicLikeAlgorithm, layoutLogicSubtree } from './logic-layout'
+export { getChildLogicSide, delegateLogicSubtree } from './skeleton-delegate'
+export type { DelegatedSubtree } from './skeleton-delegate'
 
 // Brace 布局
 export { braceRightLayoutAlgorithm, braceLeftLayoutAlgorithm } from './brace-layout'

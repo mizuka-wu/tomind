@@ -17,6 +17,7 @@ import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
 import { getNodeSpacing, parseStyleValue } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
+import { layoutLogicSubtree } from './logic-layout'
 
 const SNOWBRUSH_INNER_SPACING = 20
 
@@ -220,6 +221,54 @@ function getChildBBX(
   return Math.min(-subtreeW / 2, -childTopicW / 2)
 }
 
+function getOrgSpacingMajor(
+  node: NodeDesc,
+  options: LayoutOptions,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+): number {
+  const spacing = getNodeSpacing(node, options, styleEngine, state, 'vertical')
+  let gap = spacing.horizontalGap
+  if (styleEngine && state) {
+    const lc = String(styleEngine.getStyleValue(state, node.id, 'lineClass') ?? '')
+    // snowbrush orgchartupanddown.calcSpacingMajor: curve/straight/fold/roundedFold/bight ×2
+    if (['curve', 'straight', 'fold', 'bight'].some((c) => lc.includes(c))) gap *= 2
+    const arrow = String(styleEngine.getStyleValue(state, node.id, 'arrowEndClass') ?? '')
+    if (arrow && !arrow.includes('none')) {
+      const lw = parseStyleValue(styleEngine.getStyleValue(state, node.id, 'lineWidth'), 0)
+      gap += lw * 4 + 16
+    }
+  }
+  return gap
+}
+
+/** skeleton：子层级结构为 logic.* 时委派 logic 布局 */
+function getOrgChildLogicSide(state: SheetState | null, depth: number): 'right' | 'left' | null {
+  const sk = (state?.doc?.attrs as Record<string, unknown> | undefined)?.skeletonStructure as Record<string, string> | undefined
+  if (!sk) return null
+  const sc = sk[depth === 0 ? 'mainTopic' : 'subTopic'] ?? sk.mainTopic
+  if (typeof sc !== 'string' || !sc.startsWith('org.xmind.ui.logic')) return null
+  return sc.endsWith('left') ? 'left' : 'right'
+}
+
+/** snowbrush calcOutwardDistanceByAttachedChildren（org：水平方向，limit 7） */
+function calcOrgOutward(provs: { bbW: number }[], lineClass: string): number {
+  if (provs.length < 7) return 0
+  if (lineClass.includes('elbow')) return 0
+  const totalWidth = provs.reduce((s2, p) => s2 + p.bbW, 0)
+  if (totalWidth <= 1000) return 0
+  return 0.09 * (Math.min(totalWidth, 1600) - 1000)
+}
+
+interface OrgProv {
+  nodes: Map<string, NodeLayout>
+  bbX: number
+  bbW: number
+  bbY: number
+  bbH: number
+  own: NodeLayout
+}
+
 function layoutSubtreeDown(
   node: NodeDesc,
   x: number,
@@ -230,62 +279,111 @@ function layoutSubtreeDown(
   nodes: Map<string, NodeLayout>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
+  depth = 0,
 ): void {
   const size = sizeMap.get(node.id)!
+  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight: size.height, partBounds: size.partBounds })
 
-  let branchHeight = size.height
-  const children = getAttachedChildren(node)
-  if (!isCollapsed(node) && children.length > 0) {
-    for (const child of children) {
-      branchHeight = Math.max(branchHeight, subtreeHeight(child, options, sizeMap, styleEngine, state))
-    }
-  }
-
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight, partBounds: size.partBounds })
-
-  if (isCollapsed(node)) return
+  const children = isCollapsed(node) ? [] : getAttachedChildren(node)
   if (children.length === 0) return
 
-  const spacing = getNodeSpacing(node, options, styleEngine, state, 'vertical')
-  const parentCenterX = x + size.width / 2
-
-  // childrenSize: 对齐 SB getChildrenSize — 用 topicW（递归前值）
   const style = styleEngine && state ? styleEngine.computeStyle(state, node.id) : null
-  const spacingMinor = parseStyleValue(style?.spacingMinor, options.horizontalGap)
+  const spacingMinor = parseStyleValue(style?.spacingMinor, 0)
   const lineWidth = parseStyleValue(style?.borderWidth, 0)
   const childGap = spacingMinor + lineWidth
+  const spacingMajor = getOrgSpacingMajor(node, options, styleEngine, state)
+  const lineClass = styleEngine && state ? String(styleEngine.getStyleValue(state, node.id, 'lineClass') ?? '') : ''
 
-  let childrenSizeWidth = 0
-  for (let i = 0; i < children.length; i++) {
-    childrenSizeWidth += subtreeMap.get(children[i].id)!
+  // 子树 provisional 布局（skeleton 委派 logic，否则递归 org）
+  const logicSide = getOrgChildLogicSide(state, depth)
+  const provs: OrgProv[] = []
+  for (const child of children) {
+    const provNodes = new Map<string, NodeLayout>()
+    let bbX = 0
+    let bbW = 0
+    let bbY = 0
+    let bbH = 0
+    if (logicSide) {
+      const res = layoutLogicSubtree(child, 0, 0, options, styleEngine, state, logicSide)
+      for (const [id, nl] of res.nodes) provNodes.set(id, nl as unknown as NodeLayout)
+      bbY = res.bb.y
+      bbH = res.bb.height
+      bbX = res.bbX
+      bbW = res.bbW
+    } else {
+      layoutSubtreeDown(child, 0, 0, options, sizeMap, subtreeMap, provNodes, styleEngine, state, depth + 1)
+      const cs = sizeMap.get(child.id)!
+      const own = provNodes.get(child.id)!
+      let minX = Infinity
+      let maxX = -Infinity
+      let minY = Infinity
+      let maxY = -Infinity
+      for (const nl of provNodes.values()) {
+        minX = Math.min(minX, nl.x)
+        maxX = Math.max(maxX, nl.x + nl.width)
+        minY = Math.min(minY, nl.y)
+        maxY = Math.max(maxY, nl.y + nl.height)
+      }
+      bbW = maxX - minX
+      bbX = minX - (own.x + cs.width / 2)
+      bbH = maxY - minY
+      bbY = minY - own.y - cs.height / 2
+    }
+    provs.push({ nodes: provNodes, bbX, bbW, bbY, bbH, own: provNodes.get(child.id)! })
   }
-  if (children.length > 1) childrenSizeWidth += childGap * (children.length - 1)
 
-  // 对齐 SB：层间距 = spacingMajor（curve 线 ×2）+ lineEnd patch
-  // compact spacingMajor=22，×2 后 44，与 SB 实际层高更接近
-  const levelGap = spacing.verticalGap * 8
-  const childY = y + size.height + levelGap
+  // childrenSize.width = Σ bbW + gaps
+  const n = children.length
+  const childrenW = provs.reduce((s2, p) => s2 + p.bbW, 0) + (n - 1) * childGap
+  let minChildX = -childrenW / 2
+  if (n > 1) {
+    const levelWidth = childrenW + provs[0].bbX - provs[n - 1].bbW - provs[n - 1].bbX
+    minChildX = -levelWidth / 2 + provs[0].bbX
+  }
 
-  // Position children — 对齐 SB calAttachedChildrenPos
-  // levelWidth = childrenSizeWidth + firstChild.bbX - lastChild.subtreeW - lastChild.bbX
-  const firstChild = children[0]
-  const firstChildX = getChildBBX(firstChild, subtreeMap.get(firstChild.id)!, sizeMap, styleEngine, state)
-  const lastChild = children[children.length - 1]
-  const lastChildW = subtreeMap.get(lastChild.id)!
-  const lastChildX = getChildBBX(lastChild, subtreeMap.get(lastChild.id)!, sizeMap, styleEngine, state)
-  const gcW = firstChildX - lastChildW - lastChildX
-  const levelWidth = childrenSizeWidth + gcW
-  let minChildX = -levelWidth / 2 + firstChildX
-  let curX = minChildX
+  // Y：childrenY = parentBottom + spacingMajor；每个子节点再 + maxOffset + outward
+  const maxOffset = Math.max(...provs.map((p) => -p.bbY))
+  const outward = calcOrgOutward(provs, lineClass)
+  const childrenY = y + size.height + spacingMajor + maxOffset + outward
 
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i]
-    const childW = subtreeMap.get(child.id)!
-    const bbX = getChildBBX(child, childW, sizeMap, styleEngine, state)
-    const posX = curX - bbX
-    const childCenterX = parentCenterX + posX
-    layoutSubtreeDown(child, childCenterX - childW / 2, childY, options, sizeMap, subtreeMap, nodes, styleEngine, state)
-    curX += childW + childGap
+  // X 堆叠
+  let cur = minChildX
+  const posXs = provs.map((p) => {
+    const v = cur - p.bbX
+    cur += p.bbW + childGap
+    return v
+  })
+  // posXoffsetToClosestChild 重对齐（endAnchor 在 top-middle → rel x = 0）
+  let offset = 0
+  if (n >= 3) {
+    let best = posXs[0]
+    for (const v of posXs) if (Math.abs(v) < Math.abs(best)) best = v
+    if (Math.abs(best) < Math.min(30, childrenW * 0.15)) offset = best
+  }
+
+  const parentCenterX = x + size.width / 2
+  let bbTop = 0
+  let bbBottom = size.height
+  let bbLeft = 0
+  let bbRight = size.width
+  for (let i = 0; i < n; i++) {
+    const pv = provs[i]
+    const centerX = parentCenterX + posXs[i] - offset
+    const dx = centerX - (pv.own.x + pv.own.width / 2)
+    const dy = childrenY - pv.own.y
+    for (const [id, nl] of pv.nodes) {
+      nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy })
+    }
+    const relTop = childrenY - y + pv.bbY
+    bbTop = Math.min(bbTop, relTop)
+    bbBottom = Math.max(bbBottom, relTop + pv.bbH)
+    const relLeft = centerX - pv.own.width / 2 - x + pv.bbX
+    bbLeft = Math.min(bbLeft, relLeft)
+    bbRight = Math.max(bbRight, relLeft + pv.bbW)
+  }
+  const ownLayout = nodes.get(node.id)
+  if (ownLayout) {
+    ownLayout.branchHeight = bbBottom - bbTop
   }
 }
 

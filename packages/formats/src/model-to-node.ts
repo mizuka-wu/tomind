@@ -86,6 +86,8 @@ export interface ModelTree {
   themeData?: Record<string, { id?: string; properties: Record<string, string> }>
   /** 关联连线（挂在根节点 children.relationship） */
   relationships?: ModelNode[]
+  /** skeleton 结构样式（role → structureClass），来自 xmind extensions */
+  skeletonStructure?: Record<string, string>
 }
 
 // ==================== 转换器 ====================
@@ -175,7 +177,11 @@ function modelRelToNodeDesc(node: ModelNode): NodeDesc {
 
 /** ModelTree → NodeDesc（根节点） */
 export function modelToNodeDesc(tree: ModelTree): NodeDesc {
-  const root = modelNodeToNodeDesc(tree.root)
+  let root = modelNodeToNodeDesc(tree.root)
+  // skeleton 结构样式挂到根节点 attrs，供布局按层级选择子结构（对齐 snowbrush skeleton）
+  if (tree.skeletonStructure) {
+    root = { ...root, attrs: { ...(root.attrs ?? {}), skeletonStructure: tree.skeletonStructure } }
+  }
   const nodeRels = tree.root.relationships
   const treeRels = tree.relationships
   const allRels = [...(nodeRels ?? []), ...(treeRels ?? [])]

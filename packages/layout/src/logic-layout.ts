@@ -322,6 +322,47 @@ function layoutSubtree(
   }
 }
 
+export interface LogicNodeLayout {
+  x: number
+  y: number
+  width: number
+  height: number
+  titleWidth: number
+  titleHeight: number
+  branchHeight: number
+  partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
+}
+
+/**
+ * 独立布局一棵 logic 子树（供其他结构按 skeleton 委派使用）。
+ * 返回绝对坐标节点表（child 主题左上角 = (x, centerY - h/2)）与子树包围盒（相对 child 中心）。
+ */
+export function layoutLogicSubtree(
+  node: NodeDesc,
+  x: number,
+  centerY: number,
+  options: LayoutOptions,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+  side: 'right' | 'left',
+): { nodes: Map<string, LogicNodeLayout>; bb: LocalBB; bbX: number; bbW: number } {
+  const sizeMap = new Map<string, NodeSize>()
+  measureSubtree(node, options, sizeMap, styleEngine, state)
+  const placement = new Map<string, LogicPlacement>()
+  const bb = computePlacement(node, options, sizeMap, placement, styleEngine, state)
+  const nodes = new Map<string, LogicNodeLayout>()
+  layoutSubtree(node, x, centerY, options, sizeMap, placement, nodes, styleEngine, state, side)
+  let minX = Infinity
+  let maxX = -Infinity
+  const own = nodes.get(node.id)!
+  const centerX = own.x + own.width / 2
+  for (const nl of nodes.values()) {
+    minX = Math.min(minX, nl.x)
+    maxX = Math.max(maxX, nl.x + nl.width)
+  }
+  return { nodes, bb, bbX: minX - centerX, bbW: maxX - minX }
+}
+
 export function createLogicLikeAlgorithm(name: string, side: 'right' | 'left', spacingMajorExtra: number = 0): LayoutAlgorithm {
   return {
     name,

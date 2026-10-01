@@ -353,11 +353,28 @@ export async function parseXMind(
     attachComments(root, commentsXml)
   }
 
+  // 解析 skeleton 结构样式（org.xmind.ui.skeleton.structure.style）：
+  // content: { centralTopic: 'org.xmind.ui.map.clockwise', mainTopic: 'org.xmind.ui.logic.right', ... }
+  let skeletonStructure: Record<string, string> | undefined
+  const rawExts = (sheet as { extensions?: Array<{ provider?: string; content?: unknown }> }).extensions
+  if (Array.isArray(rawExts)) {
+    for (const ext of rawExts) {
+      if (ext?.provider === 'org.xmind.ui.skeleton.structure.style' && ext.content && typeof ext.content === 'object') {
+        const map: Record<string, string> = {}
+        for (const [role, sc] of Object.entries(ext.content as Record<string, unknown>)) {
+          if (typeof sc === 'string' && sc) map[role] = sc
+        }
+        if (Object.keys(map).length > 0) skeletonStructure = map
+      }
+    }
+  }
+
   return {
     root,
     title: sheet.title,
     themeData,
     ...(relationships.length ? { relationships } : {}),
+    ...(skeletonStructure ? { skeletonStructure } : {}),
   }
 }
 
