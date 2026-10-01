@@ -129,7 +129,10 @@ function createColumnMap(children: readonly NodeDesc[]): ColumnMap {
   children.forEach((child, index) => {
     const grandChildren = child.children?.attached || []
     grandChildren.forEach((gChild) => {
-      const key = getAttr<string>(gChild, 'label') || ''
+      // SB: gChild.model.getLabel() → labels[0] 文本；tomind 的 labels 是数组
+      const labels = getAttr<unknown>(gChild, 'labels')
+      const label = Array.isArray(labels) ? labels[0] : labels
+      const key = typeof label === 'string' ? label : ''
       const cell = columnMap.getCell(index, key)
       cell.items.push(gChild)
     })

@@ -33,9 +33,11 @@ const STRUCTURE_CLASS_TO_LAYOUT: Record<string, string> = {
   'org.xmind.ui.treetable': 'treetable',
   'org.xmind.ui.spreadsheet': 'matrix',
   'org.xmind.ui.spreadsheet.column': 'matrix',
-  'org.xmind.ui.fishbone.left': 'fishbone-leftHeaded',
+  // SB allstructures.getStructure: 不支持的结构类回退 LOGICRIGHT
+  // （legacy 'org.xmind.ui.fishbone.left/right' 在 SB 中不存在）
+  'org.xmind.ui.fishbone.left': 'logic-right',
+  'org.xmind.ui.fishbone.right': 'logic-right',
   'org.xmind.ui.fishbone.leftHeaded': 'fishbone-leftHeaded',
-  'org.xmind.ui.fishbone.right': 'fishbone-rightHeaded',
   'org.xmind.ui.fishbone.rightHeaded': 'fishbone-rightHeaded',
 }
 
@@ -43,7 +45,8 @@ function resolveLayoutNameFromDoc(doc: NodeDesc | null | undefined): string | nu
   if (!doc) return null
   const structureClass = doc.attrs?.structureClass
   if (typeof structureClass !== 'string' || !structureClass) return null
-  return STRUCTURE_CLASS_TO_LAYOUT[structureClass] ?? null
+  // SB: 显式 structureClass 存在但不受支持时回退 logic-right
+  return STRUCTURE_CLASS_TO_LAYOUT[structureClass] ?? 'logic-right'
 }
 
 export class LayoutEngine implements ILayoutEngine {

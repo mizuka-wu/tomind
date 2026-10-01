@@ -14,6 +14,8 @@ import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
+import { DEFAULT_STYLES, classifyNode } from '@tomind/style'
+import { delegateLogicSubtree } from './skeleton-delegate'
 
 /** snowbrush fishbone 骨线斜率 (tan 值) */
 const BONE_CONNECTION_TAN = 1.5
@@ -171,86 +173,204 @@ function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<
   return size.width + spineGap + maxChildWidth
 }
 
-function layoutFishbone(
-  node: NodeDesc,
-  x: number,
-  y: number,
-  headLeft: boolean,
+// ==================== snowbrush fishbone 精确移植 ====================
+const FISH_BONE = {
+  BONE_PADDING_HORIZON: 60,
+  BONE_PADDING_VERTICAL: 40,
+  SUB_BONE_PADDING_VERTICAL: 20,
+  FIRST_BONE_CONNECTION_DISTANCE: 30,
+  BONE_CONNECTION_DISTANCE: 30,
+  BONE_CONNECTION_TAN: Math.tan((Math.PI / 180) * 60),
+  HEAD_BONE_LINE_EXTEND_BODY_WIDTH: 60,
+}
+
+interface FBB { x: number; y: number; width: number; height: number }
+interface FBNode { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }
+
+function defaultSpacing(state: SheetState | null, node: NodeDesc, key: 'spacingMajor' | 'spacingMinor'): number {
+  if (!state) return key === 'spacingMajor' ? 26 : 8
+  const cls = classifyNode(state.doc, node.id)
+  const entry = (DEFAULT_STYLES as Record<string, Record<string, unknown>>)[cls]
+  return parseStyleValue(entry?.[key], key === 'spacingMajor' ? 26 : 8)
+}
+
+/** SB getBonePaddingVertical / getMainBonePaddingVertical：head 的 spacingMajor * 40 / default(headClass) */
+function bonePaddingVertical(head: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  const sm = styleEngine && state ? parseStyleValue(styleEngine.getStyleValue(state, head.id, 'spacingMajor'), 0) : 0
+  const def = defaultSpacing(state, head, 'spacingMajor') || 1
+  return (sm * FISH_BONE.BONE_PADDING_VERTICAL) / def
+}
+
+/** SB getBonePaddingHorizon：head 的 spacingMinor * 60 / defaultMinor(headClass) */
+function bonePaddingHorizon(head: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  const sm = styleEngine && state ? parseStyleValue(styleEngine.getStyleValue(state, head.id, 'spacingMinor'), 0) : 0
+  const def = defaultSpacing(state, head, 'spacingMinor') || 1
+  return (sm * FISH_BONE.BONE_PADDING_HORIZON) / def
+}
+
+/** SB getSubBonePaddingVertical：bone 的 spacingMinor * 20 / default(boneClass) */
+function subBonePaddingVertical(bone: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  const sm = styleEngine && state ? parseStyleValue(styleEngine.getStyleValue(state, bone.id, 'spacingMinor'), 0) : 0
+  const def = defaultSpacing(state, bone, 'spacingMinor') || 1
+  return (sm * FISH_BONE.SUB_BONE_PADDING_VERTICAL) / def
+}
+
+/** SB getMainBoneConnectionWidth */
+function boneConnectionWidth(bb: FBB, topicH: number, padV: number): number {
+  const connectionHeight = bb.height - topicH + padV
+  return connectionHeight / FISH_BONE.BONE_CONNECTION_TAN
+}
+
+/**
+ * 布局一根主骨（topbone/bottombone）：子节点（logic 子树）沿骨线斜向排列。
+ * 返回合并节点表与骨的 boundaryBounds（相对骨中心）。
+ */
+function layoutBone(
+  bone: NodeDesc,
+  left: number,
+  centerY: number,
+  sideSign: 1 | -1,
+  dirSign: 1 | -1,
+  depth: number,
+  head: NodeDesc,
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
-  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
-  /**
-   * 骨线侧别：
-   * - 'split'（默认，鱼头层）：子节点按 i%2 分到上下两条骨线
-   * - 'top' / 'bottom'：整条骨线同侧堆叠（对齐 snowbrush TOP/BOTTOM BONE）
-   */
-  side: 'split' | 'top' | 'bottom' = 'split',
-): void {
-  const size = sizeMap.get(node.id)!
-  const children = getAttachedChildren(node)
-  const lineSpacing = getSpacingMajor(node, options, styleEngine, state)
-  // snowbrush BONE_PADDING_VERTICAL=40 / SUB_BONE_PADDING_VERTICAL=20
-  const bonePad = side === 'split' ? 40 : 32
+): { nodes: Map<string, FBNode>; bb: FBB } {
+  const size = sizeMap.get(bone.id)!
+  const h = size.height
+  const w = size.width
+  const out = new Map<string, FBNode>()
+  out.set(bone.id, { x: left, y: centerY - h / 2, width: w, height: h, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight: h, partBounds: size.partBounds })
 
-  // 分支高度 = 上下两组子节点的最大累积高度
-  let branchHeight = size.height
-  if (!isCollapsed(node) && children.length > 0) {
-    let topH = 0
-    let bottomH = 0
-    for (let i = 0; i < children.length; i++) {
-      const onTop = side === 'split' ? i % 2 === 0 : side === 'top'
-      const h = subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state)
-      if (onTop) topH = Math.max(topH, h)
-      else bottomH = Math.max(bottomH, h)
-    }
-    branchHeight = topH + size.height + bottomH + bonePad * 2
+  const children = isCollapsed(bone) ? [] : getAttachedChildren(bone)
+  if (children.length === 0) {
+    return { nodes: out, bb: { x: -w / 2, y: -h / 2, width: w, height: h } }
   }
 
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight, partBounds: size.partBounds })
+  const boneCenterX = left + w / 2
+  const bonePadV = bonePaddingVertical(head, styleEngine, state)
+  const subPadV = subBonePaddingVertical(bone, styleEngine, state)
 
-  if (isCollapsed(node) || children.length === 0) return
+  let baseX = 0
+  let baseY = (h / 2 + bonePadV) * sideSign
+  let boundsMinX = -w / 2
+  let boundsMaxX = w / 2
+  let boundsHeight = h + bonePadV
 
-  const boneX = headLeft ? x + size.width + lineSpacing : x - lineSpacing
-  const boneBaseY = y + size.height / 2
-
-  // 上下骨线各自维护游标
-  let topBoneBaseX = boneX
-  let topBoneBaseY = boneBaseY + (side === 'bottom' ? 0 : -bonePad)
-  let bottomBoneBaseX = boneX
-  let bottomBoneBaseY = boneBaseY + (side === 'top' ? 0 : bonePad)
-
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i]
-    const cs = sizeMap.get(child.id)!
-    const isTop = side === 'split' ? i % 2 === 0 : side === 'top'
-    const direction = isTop ? -1 : 1
-
-    const currentBaseX = isTop ? topBoneBaseX : bottomBoneBaseX
-    const currentBaseY = isTop ? topBoneBaseY : bottomBoneBaseY
-
-    const childSubH = subtreeTotalHeight(child, options, sizeMap, styleEngine, state)
-    // Y 步进用子树高 ×1.2，逼近 SB 鱼骨垂直展开
-    const stepY = childSubH * 1.2 + bonePad
-    const childY = currentBaseY + (isTop ? -stepY : bonePad)
-    // X 步进用 topic 高（SB 骨线紧凑），Y 累计用子树高（撑开垂直分布）
-    const offsetX = -(cs.height / 2 / BONE_CONNECTION_TAN) * direction
-    const childX = currentBaseX + offsetX
-
-    layoutLogicFromFishbone(child, childX, childY, headLeft, options, sizeMap, nodes, styleEngine, state)
-
-    const childDistanceY = stepY * direction
-    // X 骨线推进用 topic 高，避免子树高度把对角拉得过宽
-    const nextBaseX = currentBaseX - ((cs.height + bonePad) / BONE_CONNECTION_TAN) * direction
-    const nextBaseY = currentBaseY + childDistanceY
-
-    if (isTop) {
-      topBoneBaseX = nextBaseX
-      topBoneBaseY = nextBaseY
+  for (const child of children) {
+    const del = delegateLogicSubtree(child, 0, 0, depth + 1, options, styleEngine, state)
+    let bb: FBB
+    let provNodes: Map<string, FBNode>
+    if (del) {
+      bb = { x: del.bb.x, y: del.bb.y, width: del.bb.width, height: del.bb.height }
+      provNodes = del.nodes as Map<string, FBNode>
     } else {
-      bottomBoneBaseX = nextBaseX
-      bottomBoneBaseY = nextBaseY
+      const cs = sizeMap.get(child.id)!
+      provNodes = new Map<string, FBNode>()
+      provNodes.set(child.id, { x: 0, y: -cs.height / 2, width: cs.width, height: cs.height, titleWidth: cs.titleWidth, titleHeight: cs.titleHeight, branchHeight: cs.height })
+      bb = { x: -cs.width / 2, y: -cs.height / 2, width: cs.width, height: cs.height }
+    }
+    const childXToBase = dirSign === 1 ? Math.abs(bb.x) : -(bb.width + bb.x)
+    const childX = baseX + childXToBase
+    const childYDist = sideSign === 1 ? Math.abs(bb.y) : Math.abs(bb.height + bb.y)
+    const childY = baseY + childYDist * sideSign
+    const dx = boneCenterX + childX - (bb.width / 2 + bb.x) - (provNodes.get(child.id)!.x + provNodes.get(child.id)!.width / 2 - (provNodes.get(child.id)!.x + provNodes.get(child.id)!.width / 2)) - 0
+    // 子节点中心目标 = 骨中心 + (childX, childY)；provisional 中心 = (own.x + w/2, own.y + h/2)
+    const own = provNodes.get(child.id)!
+    const ddx = boneCenterX + childX - (own.x + own.width / 2)
+    const ddy = centerY + childY - (own.y + own.height / 2)
+    void dx
+    for (const [id, nl] of provNodes) {
+      out.set(id, { ...nl, x: nl.x + ddx, y: nl.y + ddy })
+    }
+    const childDistanceY = (bb.height + subPadV) * sideSign
+    boundsMinX = Math.min(boundsMinX, childX - Math.abs(bb.x))
+    boundsMaxX = Math.max(boundsMaxX, childX + bb.width + bb.x)
+    boundsHeight += Math.abs(childDistanceY)
+    baseX -= (Math.abs(childDistanceY) / FISH_BONE.BONE_CONNECTION_TAN) * dirSign
+    baseY += childDistanceY
+  }
+
+  const bbWidth = Math.abs(boundsMaxX - boundsMinX)
+  const bbHeight = boundsHeight - subPadV
+  const bbY = sideSign === 1 ? -h / 2 : -(bbHeight - h / 2)
+  return { nodes: out, bb: { x: boundsMinX, y: bbY, width: bbWidth, height: bbHeight } }
+}
+
+/** SB fishbonebasehead._calcAttachedChildrenPosition */
+function layoutHead(
+  head: NodeDesc,
+  left: number,
+  centerY: number,
+  dirSign: 1 | -1,
+  options: LayoutOptions,
+  sizeMap: Map<string, NodeSize>,
+  nodes: Map<string, FBNode>,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+): void {
+  const size = sizeMap.get(head.id)!
+  const h = size.height
+  const w = size.width
+  nodes.set(head.id, { x: left, y: centerY - h / 2, width: w, height: h, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight: h, partBounds: size.partBounds })
+
+  const children = isCollapsed(head) ? [] : getAttachedChildren(head)
+  if (children.length === 0) return
+
+  const headCenterX = left + w / 2
+  const bonePadH = bonePaddingHorizon(head, styleEngine, state)
+  const padV = bonePaddingVertical(head, styleEngine, state)
+  const baseY = 0 // shape != underline → startAnchorPositionY = 0
+  let baseX = (w / 2 + bonePadH) * dirSign
+
+  for (let i = 0; i < children.length; i += 2) {
+    const top = children[i]
+    const bottom = children[i + 1]
+    const topSize = sizeMap.get(top.id)!
+    const topProv = layoutBone(top, 0, 0, 1, dirSign, 1, head, options, sizeMap, styleEngine, state)
+    const bottomProv = bottom ? layoutBone(bottom, 0, 0, -1, dirSign, 1, head, options, sizeMap, styleEngine, state) : null
+
+    const topConnW = boneConnectionWidth(topProv.bb, topSize.height, padV)
+    const topDist = Math.max(topSize.width / 2, topConnW)
+    const topY = baseY - (padV + topProv.bb.height + topProv.bb.y)
+
+    let topPos: { x: number; y: number }
+    if (!bottomProv || !bottom) {
+      topPos = { x: baseX + topDist * dirSign, y: topY }
+      if (dirSign === 1) {
+        baseX = topPos.x + topProv.bb.width + topProv.bb.x + bonePadH
+      } else {
+        baseX = topPos.x + topProv.bb.x - bonePadH
+      }
+    } else {
+      const bottomSize = sizeMap.get(bottom.id)!
+      const topTempX = topDist * dirSign
+      const bottomConnW = boneConnectionWidth(bottomProv.bb, bottomSize.height, padV)
+      const bottomTempX = topTempX + (bottomConnW + FISH_BONE.BONE_CONNECTION_DISTANCE - topConnW) * dirSign
+      const tempBaseXToRealBaseXDistance = Math.abs(bottomTempX) - bottomSize.width / 2
+      const baseXFix = tempBaseXToRealBaseXDistance < 0 ? -tempBaseXToRealBaseXDistance : 0
+      topPos = { x: baseX + baseXFix * dirSign + topTempX, y: topY }
+      const bottomPos = {
+        x: baseX + baseXFix * dirSign + bottomTempX,
+        y: baseY + padV + Math.abs(bottomProv.bb.y),
+      }
+      if (dirSign === 1) {
+        baseX = Math.max(topPos.x + topProv.bb.width + topProv.bb.x, bottomPos.x + bottomProv.bb.width + bottomProv.bb.x) + bonePadH
+      } else {
+        baseX = Math.min(topPos.x + topProv.bb.x, bottomPos.x + bottomProv.bb.x) - bonePadH
+      }
+      const bdx = headCenterX + bottomPos.x - (bottomProv.nodes.get(bottom.id)!.x + bottomProv.nodes.get(bottom.id)!.width / 2)
+      const bdy = centerY + bottomPos.y - (bottomProv.nodes.get(bottom.id)!.y + bottomProv.nodes.get(bottom.id)!.height / 2)
+      for (const [id, nl] of bottomProv.nodes) {
+        nodes.set(id, { ...nl, x: nl.x + bdx, y: nl.y + bdy })
+      }
+    }
+    const tdx = headCenterX + topPos.x - (topProv.nodes.get(top.id)!.x + topProv.nodes.get(top.id)!.width / 2)
+    const tdy = centerY + topPos.y - (topProv.nodes.get(top.id)!.y + topProv.nodes.get(top.id)!.height / 2)
+    for (const [id, nl] of topProv.nodes) {
+      nodes.set(id, { ...nl, x: nl.x + tdx, y: nl.y + tdy })
     }
   }
 }
@@ -266,7 +386,7 @@ export const fishboneLeftHeadedLayoutAlgorithm: LayoutAlgorithm = {
     measureSubtree(root, options, sizeMap, styleEngine, state)
 
     // 鱼头在左侧
-    layoutFishbone(root, options.rootOffsetX, 200, true, options, sizeMap, nodes, styleEngine, state)
+    layoutHead(root, options.rootOffsetX, 200, 1, options, sizeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {
@@ -309,7 +429,7 @@ export const fishboneRightHeadedLayoutAlgorithm: LayoutAlgorithm = {
       return w + sizeMap.get(root.id)!.width
     })()
 
-    layoutFishbone(root, totalW - sizeMap.get(root.id)!.width - options.rootOffsetX, 200, false, options, sizeMap, nodes, styleEngine, state)
+    layoutHead(root, totalW - sizeMap.get(root.id)!.width - options.rootOffsetX, 200, -1, options, sizeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {
@@ -330,66 +450,4 @@ export const fishboneRightHeadedLayoutAlgorithm: LayoutAlgorithm = {
 
     return { nodes, totalWidth: maxX, totalHeight: maxY }
   },
-}
-
-/**
- * 鱼骨原因节点的后代布局 — 对齐 snowbrush LOGICRIGHT/LEFT
- * 子节点全部放在同一侧，垂直堆叠，水平向外展开
- */
-function layoutLogicFromFishbone(
-  node: NodeDesc,
-  x: number,
-  y: number,
-  headLeft: boolean,
-  options: LayoutOptions,
-  sizeMap: Map<string, NodeSize>,
-  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>,
-  styleEngine: StyleEngine | null,
-  state: SheetState | null,
-): void {
-  const size = sizeMap.get(node.id)!
-  const children = getAttachedChildren(node)
-  const spacing = getNodeSpacing(node, options, styleEngine ?? null, state ?? null)
-  const minorGap = spacing.verticalGap
-  const majorGap = spacing.horizontalGap
-
-  let branchHeight = size.height
-  if (!isCollapsed(node) && children.length > 0) {
-    let total = 0
-    for (let i = 0; i < children.length; i++) {
-      total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state)
-      if (i < children.length - 1) total += minorGap
-    }
-    branchHeight = Math.max(size.height, total)
-  }
-
-  nodes.set(node.id, {
-    x, y, width: size.width, height: size.height,
-    titleWidth: size.titleWidth, titleHeight: size.titleHeight,
-    branchHeight, partBounds: size.partBounds,
-  })
-
-  if (isCollapsed(node) || children.length === 0) return
-
-  // 垂直堆叠，中心对齐父节点；水平向外
-  let childX: number
-  if (headLeft) {
-    childX = x + size.width + majorGap
-  } else {
-    // 先算子树最大宽度，从父节点左侧开始
-    let maxW = 0
-    for (const c of children) {
-      maxW = Math.max(maxW, subtreeTotalWidth(c, options, sizeMap, styleEngine, state))
-    }
-    childX = x - majorGap - maxW
-  }
-
-  let curY = y + size.height / 2 - branchHeight / 2
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i]
-    const cs = sizeMap.get(child.id)!
-    const childH = subtreeTotalHeight(child, options, sizeMap, styleEngine, state)
-    layoutLogicFromFishbone(child, childX, curY + (childH - cs.height) / 2, headLeft, options, sizeMap, nodes, styleEngine, state)
-    curY += childH + minorGap
-  }
 }
