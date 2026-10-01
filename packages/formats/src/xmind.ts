@@ -53,6 +53,7 @@ interface XMindTopic {
   }
   markers?: { markerId: string }[]
   labels?: string[]
+  hyperlink?: string
   image?: {
     src: string
     width: number
@@ -217,7 +218,8 @@ function convertTopic(topic: XMindTopic): ModelNode {
     ...(boundaries.length ? { boundaries } : {}),
     ...(relationships.length ? { relationships } : {}),
     ...(topic.structureClass ? { structureClass: topic.structureClass } : {}),
-    ...(topic.collapsed ? { collapsed: true } : {}),
+    // XMind 原生折叠表示为 branch: 'folded'（snowbrush topic.isCollapse 同）
+    ...((topic.collapsed || (topic as any).branch === 'folded') ? { collapsed: true } : {}),
     ...(topic.markers?.length ? { markers: topic.markers.map((m) => m.markerId) } : {}),
     ...(topic.labels?.length ? { labels: topic.labels } : {}),
     ...(topic.image ? { image: {
@@ -232,6 +234,7 @@ function convertTopic(topic: XMindTopic): ModelNode {
       ...(topic.image.lockRatio != null ? { lockRatio: topic.image.lockRatio } : {}),
       ...(topic.image.flipAndRotateRecords ? { flipAndRotateRecords: topic.image.flipAndRotateRecords } : {}),
     } } : {}),
+    ...(topic.hyperlink ? { link: topic.hyperlink } : {}),
     ...(topic.notes?.plain?.content ? { note: topic.notes.plain.content } : {}),
     ...(topic.notes?.html?.content ? { noteHtml: topic.notes.html.content } : {}),
     ...(topic.href ? { href: topic.href } : {}),
@@ -431,7 +434,10 @@ function modelToXMindTopic(node: ModelNode): XMindTopic {
   }
 
   if (node.structureClass) topic.structureClass = node.structureClass
-  if (node.collapsed) topic.collapsed = true
+  if (node.collapsed) {
+    topic.collapsed = true
+    ;(topic as any).branch = 'folded'
+  }
   if (node.markers?.length) topic.markers = node.markers.map((m) => ({ markerId: m }))
   if (node.labels?.length) topic.labels = node.labels
   if (node.image) {
