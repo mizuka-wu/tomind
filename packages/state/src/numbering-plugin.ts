@@ -129,9 +129,17 @@ function computeNumberingTexts(doc: NodeDesc): Map<string, string> {
     walkChildren(node, ancestorTexts, nodeNumbering, computedFormat, computedSeparator)
   }
 
-  // 从 doc 根节点开始遍历
-  // doc 本身没有 numbering，直接遍历其子节点
-  walkChildren(doc, '', undefined, undefined, undefined)
+  // 从 doc 根节点开始遍历：根节点自身的 numbering 配置作用于它的子节点
+  const rootNumbering = (doc.attrs?.numbering && typeof doc.attrs.numbering === 'object')
+    ? doc.attrs.numbering as NumberingData
+    : undefined
+  walkChildren(
+    doc,
+    '',
+    rootNumbering,
+    rootNumbering?.numberFormat,
+    rootNumbering?.numberSeparator,
+  )
 
   return texts
 }

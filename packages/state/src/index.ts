@@ -47,6 +47,8 @@ export {
 
 // Numbering 系统
 export { createNumberingPlugin, numberingKey } from './numbering-plugin'
+export { createBuiltinStatePlugins, createHeadlessSheetState } from './headless'
+export type { HeadlessSheetStateOptions } from './headless'
 export type { NumberingState } from './numbering-plugin'
 
 // Workbook 系统

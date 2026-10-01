@@ -254,25 +254,18 @@ function measureLink(node: NodeDesc): { width: number; height: number } {
  * 测量 numbering 尺寸
  */
 function measureNumbering(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null): { width: number; height: number } {
-  // 编号配置在父节点上，但文本显示在子节点 — 优先用插件计算好的文本
+  // 编号配置在父节点上，但文本显示在子节点 —— 显示文本由 NumberingPlugin 计算，
+  // 经 StyleEngine.numberingText 暴露；配置节点自身不显示编号，宽度为 0。
   if (styleEngine && state) {
-    try {
-      const ls = styleEngine.getLeaferStyle(state, node.id) as { numberingText?: string }
-      if (ls?.numberingText) {
-        return measureTextSize(ls.numberingText, getFontSize(node, styleEngine, state), options)
-      }
-    } catch {
-      // plugin 未注册时忽略
+    const ls = styleEngine.getLeaferStyle(state, node.id) as { numberingText?: string }
+    if (ls?.numberingText) {
+      return measureTextSize(ls.numberingText, getFontSize(node, styleEngine, state), options)
     }
+    return { width: 0, height: 0 }
   }
 
-  const numbering = getAttr<NumberingData>(node, 'numbering')
-  if (!numbering) return { width: 0, height: 0 }
-
-  const prefix = numbering.prefix ?? ''
-  const suffix = numbering.suffix ?? '.'
-  const numberingText = `${prefix}1${suffix}`
-  return measureTextSize(numberingText, getFontSize(node, styleEngine, state), options)
+  // 无 styleEngine/state 的纯函数环境：无法得知插件文本，保守返回 0
+  return { width: 0, height: 0 }
 }
 
 /**
@@ -412,7 +405,6 @@ export function hasNonTitleParts(node: NodeDesc): boolean {
     (labels && labels.length > 0) ||
     node.attrs.note ||
     node.attrs.link ||
-    node.attrs.numbering ||
     (comments && comments.length > 0)
   )
 }
