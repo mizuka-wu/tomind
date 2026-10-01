@@ -68,7 +68,7 @@ function measureNodeSize(
   state?: SheetState | null,
 ): NodeSize {
   if (hasNonTitleParts(node)) {
-    const result = measurePartAwareNode(node, options, styleEngine, state)
+    const result = measurePartAwareNode(node, options, styleEngine, state, padding)
     return {
       width: result.width,
       height: result.height,

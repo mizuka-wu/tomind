@@ -63,14 +63,16 @@ export function measurePartAwareNode(
   options: LayoutOptions,
   styleEngine?: StyleEngine | null,
   state?: SheetState | null,
+  padding?: { top: number; right: number; bottom: number; left: number },
 ): PartAwareNodeSize {
   // 第一轮：测量非 labels 的 parts，用于计算 contentWidth
   const parts = measureNodeParts(node, options, styleEngine, state)
 
+  // 主题盒 padding 跟随样式（SB getTopicMargins = margin + borderWidth）
+  const shapePadding = padding ?? { top: 5, right: 6, bottom: 5, left: 6 }
+
   // 从非 labels parts 计算 contentWidth（对齐 snowbrush parentWidth）
-  // contentWidth = max(titleWidth + padding, markersWidth, numberingWidth, ...)
   const nonLabelsParts = parts.filter(p => p.partType !== 'labels')
-  const shapePadding = { top: 5, right: 16, bottom: 5, left: 16 }
   let contentWidth = 0
   for (const part of nonLabelsParts) {
     contentWidth = Math.max(contentWidth, part.size.width)
@@ -86,13 +88,13 @@ export function measurePartAwareNode(
     parts.splice(labelsPartIndex, 1)
   }
 
-  // 构建 cell 树
-  const cellTree = buildTopicCellTree(parts)
+  // 构建 cell 树（labels 在 shape 外部，不参与主题盒尺寸）
+  const cellTree = buildTopicCellTree(parts, shapePadding)
 
-  // 计算首选尺寸
-  const preferredSize = cellTree.topicCell.getPreferredSize(-1, -1)
+  // 布局 cell：主题盒 = shapePaddingCell；labels 排在其下方
+  const topicBox = cellTree.shapePaddingCell.getPreferredSize(-1, -1)
+  const preferredSize = { width: topicBox.width, height: topicBox.height }
 
-  // 布局 cell
   cellTree.topicCell.layoutChildren({
     x: 0,
     y: 0,

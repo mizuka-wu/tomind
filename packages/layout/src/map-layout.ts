@@ -203,7 +203,7 @@ class MapLayout extends BaseLayout {
     const padding = this.getNodePadding(node, options, styleEngine, state)
 
     if (hasNonTitleParts(node)) {
-      const result = measurePartAwareNode(node, { ...options, nodePadding: padding }, styleEngine, state)
+      const result = measurePartAwareNode(node, options, styleEngine, state, padding)
       return {
         width: result.width,
         height: result.height,

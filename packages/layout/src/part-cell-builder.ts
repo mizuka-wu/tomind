@@ -111,7 +111,7 @@ function createPartCell(part: PartMeasurement): CellLayout {
 /**
  * 构建 topic cell 树
  */
-export function buildTopicCellTree(parts: PartMeasurement[]): TopicCellTree {
+export function buildTopicCellTree(parts: PartMeasurement[], shapePaddingOverride?: Margins): TopicCellTree {
   // 按 position 分组
   const groups = groupPartsByPosition(parts)
 
@@ -327,7 +327,7 @@ export function buildTopicCellTree(parts: PartMeasurement[]): TopicCellTree {
   // Shape Padding Cell (margins=shapePadding)
   const shapePaddingCell = createCell('shapePadding', {
     layout: new CellGridLayout(1, {
-      margins: DEFAULT_SHAPE_PADDING,
+      margins: shapePaddingOverride ?? DEFAULT_SHAPE_PADDING,
     }),
     data: {
       horizontalAlignment: 'fill',

@@ -178,7 +178,7 @@ function measureNodeSize(
   // 检查是否有非 title 的 part
   if (hasNonTitleParts(node)) {
     // 使用 part-aware 测量
-    const result = measurePartAwareNode(node, options, styleEngine, state)
+    const result = measurePartAwareNode(node, options, styleEngine, state, padding)
     return {
       width: result.width,
       height: result.height,
