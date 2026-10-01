@@ -35,10 +35,10 @@ function measureMinSize(node: NodeDesc, options: LayoutOptions, styleEngine?: an
   return { width: r.width, height: r.height }
 }
 
-/** 标签文本 cell 的 minSize = 文本尺寸（padding 由 MatrixCell 追加） */
+/** 标签文本 cell 的 minSize = 标签视图盒（SB: 24px 文本 + 6px 四边 margin） */
 function measureLabelMinSize(text: string): { width: number; height: number } {
-  const { width, height } = measureTextSize(text, 14, DEFAULT_LAYOUT_OPTIONS)
-  return { width, height }
+  const { width, height } = measureTextSize(text, 24, DEFAULT_LAYOUT_OPTIONS)
+  return { width: width + 12, height: height + 12 }
 }
 
 // ==================== Matrix 布局算法 ====================
@@ -63,8 +63,15 @@ export const matrixLayoutAlgorithm: LayoutAlgorithm = {
     // 创建列映射
     const columnMap = createColumnMap(children)
 
-    // 创建网格
-    const matrixGrid = createMatrixGrid(node, columnMap, false, options, styleEngine, state)
+    // 创建网格（列内 cell 的子树委派记录在 delegations）
+    const delegations: MatrixDelegation[] = []
+    const depthOf = new Map<string, number>()
+    const walkDepth = (n: NodeDesc, d: number) => {
+      depthOf.set(n.id, d)
+      for (const c of n.children?.attached || []) walkDepth(c, d + 1)
+    }
+    walkDepth(node, 0)
+    const matrixGrid = createMatrixGrid(node, columnMap, false, options, styleEngine, state, delegations, depthOf)
 
     // 初始化位置
     initGrid(matrixGrid)
@@ -76,8 +83,8 @@ export const matrixLayoutAlgorithm: LayoutAlgorithm = {
       if (cell.item && typeof cell.item === 'object' && cell.item.id) {
         const pos = cell.getAbsPos()
         const ip = cell.itemPos ?? { x: 0, y: 0 }
-        // 节点盒 = topic bounds = cell 内 itemPos 处、尺寸为 minSize（不含 cell padding）
-        const topicSize = cell._minSize ?? { width: cell.size?.width ?? 0, height: cell.size?.height ?? 0 }
+        // 节点盒 = topic bounds（cell minSize 可能是子树 bb，不能当作节点盒）
+        const topicSize = measureMinSize(cell.item, options, styleEngine, state)
         nodes.set(cell.item.id, {
           x: pos.x + ip.x,
           y: pos.y + ip.y,
@@ -90,24 +97,16 @@ export const matrixLayoutAlgorithm: LayoutAlgorithm = {
       }
     }
 
-    // cell 内嵌套子结构（SB spreadsheet 的 cell 内由子结构继续布局）：
-    // 对每个分支 cell 的子孙用 skeleton 委派（logic）布局，锚定到该节点已放置的位置
-    const depthOf = new Map<string, number>()
-    const walkDepth = (n: NodeDesc, d: number) => {
-      depthOf.set(n.id, d)
-      for (const c of n.children?.attached || []) walkDepth(c, d + 1)
-    }
-    walkDepth(node, 0)
-    for (const cell of cells) {
-      if (!(cell.item && typeof cell.item === 'object' && cell.item.id)) continue
-      const placed = nodes.get(cell.item.id)
+    // cell 内嵌套子结构：把委派子树平移到 cell 内 topic 位置（SB getAbsPos = pos + itemPos - bounds）
+    for (const del of delegations) {
+      const placed = nodes.get(del.id)
       if (!placed) continue
-      const del = delegateLogicSubtree(cell.item, placed.x, placed.y + placed.height / 2, depthOf.get(cell.item.id) ?? 0, options, styleEngine, state)
-      if (!del) continue
+      // topic 左上角 = placed；provisional 里 topic 左上角 = (0, -h/2)
+      const dx = placed.x
+      const dy = placed.y + del.topicH / 2
       for (const [id, nl] of del.nodes) {
-        // 已被表格 cell 定位的节点不覆盖（cell 优先），只补未覆盖的子孙
-        if (id === cell.item.id || nodes.has(id)) continue
-        nodes.set(id, nl)
+        if (id === del.id) continue
+        nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy })
       }
     }
 
@@ -138,7 +137,7 @@ function createColumnMap(children: readonly NodeDesc[]): ColumnMap {
   return columnMap
 }
 
-function createMatrixGrid(node: NodeDesc, columnMap: ColumnMap, isTranspose: boolean, options: LayoutOptions, styleEngine?: any, state?: any): MatrixContainer {
+function createMatrixGrid(node: NodeDesc, columnMap: ColumnMap, isTranspose: boolean, options: LayoutOptions, styleEngine?: any, state?: any, delegations: MatrixDelegation[] = [], depthOf?: Map<string, number>): MatrixContainer {
   const children = node.children?.attached || []
 
   // 主单元格
@@ -148,7 +147,7 @@ function createMatrixGrid(node: NodeDesc, columnMap: ColumnMap, isTranspose: boo
   const labelRow = createLabelRow(columnMap)
 
   // 分支行
-  const branchRows = createBranchRows(columnMap, mainCell, children, options, styleEngine, state)
+  const branchRows = createBranchRows(columnMap, mainCell, children, options, styleEngine, state, delegations, depthOf)
 
   const totalRows = [labelRow, ...branchRows]
   const matrix = new Matrix(totalRows, isTranspose)
@@ -171,7 +170,16 @@ function createLabelRow(columnMap: ColumnMap): MatrixCell[] {
   return [firstCell, ...otherCells]
 }
 
-function createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: readonly NodeDesc[], options: LayoutOptions, styleEngine?: any, state?: any): (MatrixCell | MatrixContainer)[][] {
+export interface MatrixDelegation {
+  id: string
+  nodes: Map<string, any>
+  bbX: number
+  bbY: number
+  cell: MatrixCell
+  topicH: number
+}
+
+function createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: readonly NodeDesc[], options: LayoutOptions, styleEngine?: any, state?: any, delegations: MatrixDelegation[] = [], depthOf?: Map<string, number>): (MatrixCell | MatrixContainer)[][] {
   return branches.map((branch, i) => {
     const headCell = new MatrixCell(branch, { align: LEFT, minSize: measureMinSize(branch, options, styleEngine, state) })
     headCell._parentCell = mainCell
@@ -182,8 +190,18 @@ function createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: 
       .map((column) => {
         const { items } = column.cells[i]
         const cells = items.map((item: any) => {
-          const cell = new MatrixCell(item, { align: LEFT, minSize: measureMinSize(item, options, styleEngine, state) })
+          // SB: 列内 cell 的 minSize = 子树 boundaryBounds（cell 内嵌子结构）
+          const del = delegateLogicSubtree(item, 0, 0, depthOf?.get(item.id) ?? 2, options, styleEngine, state)
+          let minSize: { width: number; height: number }
+          if (del) {
+            minSize = { width: del.bb.width, height: del.bb.height }
+            delegations.push({ id: item.id, nodes: del.nodes, bbX: del.bb.x, bbY: del.bb.y, cell: null as any, topicH: del.nodes.get(item.id)!.height })
+          } else {
+            minSize = measureMinSize(item, options, styleEngine, state)
+          }
+          const cell = new MatrixCell(item, { align: LEFT, minSize })
           cell._parentCell = headCell
+          if (del) delegations[delegations.length - 1].cell = cell
           return cell
         })
         if (cells.length === 0) {
