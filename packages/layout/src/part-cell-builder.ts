@@ -293,8 +293,8 @@ export function buildTopicCellTree(parts: PartMeasurement[], shapePaddingOverrid
     topPartsCell.add(createPartCell(part))
   }
 
-  // Bottom Parts Cell (position=bottom)
-  const bottomParts = groups.get('bottom') ?? []
+  // Bottom Parts Cell (position=bottom，labels 除外——labels 由 labelsCell 挂在 shape 外部)
+  const bottomParts = (groups.get('bottom') ?? []).filter((p) => p.partType !== 'labels')
   const bottomPartsCell = createCell('bottomParts', {
     layout: new CellGridLayout(1, {
       horizontalSpacing: 0,

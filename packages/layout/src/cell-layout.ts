@@ -80,8 +80,17 @@ export class CellGridLayout {
       this.computeChildSize(child)
     }
 
+    // 空 part（0x0）不参与网格与间距计算（对齐 SB：不存在的 part 不占位）
+    const sized = children.filter((c) => !(c.computedSize.width <= 0 && c.computedSize.height <= 0))
+    if (sized.length === 0) {
+      return {
+        width: this.margins.left + this.margins.right,
+        height: this.margins.top + this.margins.bottom,
+      }
+    }
+
     // 构建网格
-    const { grid, rowCount, columnCount } = this.buildGrid(children)
+    const { grid, rowCount, columnCount } = this.buildGrid(sized)
 
     // 计算列宽
     const widths = this.computeColumnWidths(grid, rowCount, columnCount, wHint)
