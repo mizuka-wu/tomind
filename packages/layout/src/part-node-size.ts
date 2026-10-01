@@ -151,7 +151,8 @@ export function measureTitleOnlyNode(
     try {
       const ls = styleEngine.getLeaferStyle(state, node.id) as { numberingText?: string }
       if (ls?.numberingText) {
-        extraW = measureTextSize(ls.numberingText, fontSize, options, fontFamily, fontWeight, fontStyle).width + 6
+        // 对齐 SB innerGroup horizontalSpacing = 10
+        extraW = measureTextSize(ls.numberingText, fontSize, options, fontFamily, fontWeight, fontStyle).width + 10
       }
     } catch {
       // plugin 未注册时忽略

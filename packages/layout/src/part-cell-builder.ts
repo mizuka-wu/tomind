@@ -174,7 +174,7 @@ export function buildTopicCellTree(parts: PartMeasurement[], shapePaddingOverrid
   const linkParts = groups.get('right')?.filter(p => p.partType === 'link') ?? []
   const infoCell = createCell('info', {
     layout: new CellGridLayout(1, {
-      horizontalSpacing: 4,
+      horizontalSpacing: 10,
       verticalSpacing: 0,
     }),
     data: {

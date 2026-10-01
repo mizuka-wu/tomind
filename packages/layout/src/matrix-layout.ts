@@ -81,13 +81,13 @@ export const matrixLayoutAlgorithm: LayoutAlgorithm = {
     for (const cell of cells) {
       // 只取分支 cell（标签 cell 的 item 是字符串）
       if (cell.item && typeof cell.item === 'object' && cell.item.id) {
+        // getAbsPos 已含 itemPos（= topic 左上角），不要再加一次
         const pos = cell.getAbsPos()
-        const ip = cell.itemPos ?? { x: 0, y: 0 }
         // 节点盒 = topic bounds（cell minSize 可能是子树 bb，不能当作节点盒）
         const topicSize = measureMinSize(cell.item, options, styleEngine, state)
         nodes.set(cell.item.id, {
-          x: pos.x + ip.x,
-          y: pos.y + ip.y,
+          x: pos.x,
+          y: pos.y,
           width: topicSize.width,
           height: topicSize.height,
           titleWidth: topicSize.width,

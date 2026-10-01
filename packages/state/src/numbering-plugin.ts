@@ -114,9 +114,12 @@ function computeNumberingTexts(doc: NodeDesc): Map<string, string> {
         }
 
         // 加 prefix/suffix（来自父节点的 numbering 配置）
+        // 对齐 snowbrush branchview.getNumberingText: prefix + ' ' + number + ' ' + suffix
         const prefix = parentNumbering?.prefix ?? ''
         const suffix = parentNumbering?.suffix ?? ''
-        const displayText = prefix + fullNumber + suffix
+        let displayText = fullNumber
+        if (prefix) displayText = prefix + ' ' + displayText
+        if (suffix) displayText = displayText + ' ' + suffix
         texts.set(node.id, displayText)
 
         // 递归子节点时，ancestorTexts 是不带 prefix/suffix 的纯数字部分
