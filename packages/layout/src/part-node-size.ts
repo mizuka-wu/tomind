@@ -157,8 +157,8 @@ export function measureTitleOnlyNode(
   }
 
   return {
-    // 对齐 snowbrush getSBTopicWidth: titleWidth + innerSpacing(20) + 2*borderWidth
-    width: titleWidth + padding.left + padding.right + 20 + extraW,
+    // 对齐 snowbrush topicView.bounds: titleWidth + 2*margin(+borderWidth)，无额外 innerSpacing
+    width: titleWidth + padding.left + padding.right + extraW,
     height: titleHeight + padding.top + padding.bottom,
     titleWidth,
     titleHeight,

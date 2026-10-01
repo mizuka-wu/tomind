@@ -16,6 +16,19 @@ import {
   LEFT,
   MIDDLE,
 } from './matrix'
+import { measureTextSize } from './layout-engine'
+import { getTitle, getFontSize, getFontFamily, getFontWeight, getFontStyle } from './layout-utils'
+import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
+
+function measureMinSize(node: NodeDesc, styleEngine?: any, state?: any): { width: number; height: number } {
+  const fontSize = getFontSize(node, styleEngine, state)
+  const title = getTitle(node)
+  const fontFamily = getFontFamily(node, styleEngine, state)
+  const fontWeight = getFontWeight(node, styleEngine, state)
+  const fontStyle = getFontStyle(node, styleEngine, state)
+  const { width: titleWidth, height: titleHeight } = measureTextSize(title, fontSize, DEFAULT_LAYOUT_OPTIONS, fontFamily, fontWeight, fontStyle)
+  return { width: titleWidth + 16, height: titleHeight + 8 }
+}
 
 // ==================== Matrix 布局算法 ====================
 
@@ -91,7 +104,7 @@ function createMatrixGrid(node: NodeDesc, columnMap: ColumnMap, isTranspose: boo
   const children = node.children?.attached || []
 
   // 主单元格
-  const mainCell = new MatrixCell(node, { align: LEFT })
+  const mainCell = new MatrixCell(node, { align: LEFT, minSize: measureMinSize(node) })
 
   // 标签行
   const labelRow = createLabelRow(columnMap)
@@ -121,7 +134,7 @@ function createLabelRow(columnMap: ColumnMap): MatrixCell[] {
 
 function createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: readonly NodeDesc[]): (MatrixCell | MatrixContainer)[][] {
   return branches.map((branch, i) => {
-    const headCell = new MatrixCell(branch, { align: LEFT })
+    const headCell = new MatrixCell(branch, { align: LEFT, minSize: measureMinSize(branch) })
     headCell._parentCell = mainCell
 
     const otherContainers = columnMap
@@ -130,7 +143,7 @@ function createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: 
       .map((column) => {
         const { items } = column.cells[i]
         const cells = items.map((item: any) => {
-          const cell = new MatrixCell(item, { align: LEFT })
+          const cell = new MatrixCell(item, { align: LEFT, minSize: measureMinSize(item) })
           cell._parentCell = headCell
           return cell
         })

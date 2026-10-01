@@ -156,7 +156,11 @@ export function measureLabels(node: NodeDesc, options: LayoutOptions, parentWidt
   if (!labels || labels.length === 0) return { width: 0, height: 0 }
 
   // 去重（对齐 snowbrush：Array.from(new Set(labels.map(l => l.trim())))）
-  const uniqueTexts = Array.from(new Set(labels.map(l => l.text.trim())))
+  // labels 可能是 string[]（XMind 原生）或 LabelData[]（内部格式）
+  const uniqueTexts = Array.from(new Set(labels.map((l) => {
+    const text = typeof l === 'string' ? l : l?.text
+    return (text ?? '').trim()
+  })))
   if (uniqueTexts.length === 0) return { width: 0, height: 0 }
 
   const contentWidth = Math.max(parentWidth ?? 0, LABEL_UNIT_MIN_WIDTH)

@@ -26,6 +26,30 @@ import { computeChildrenTotalHeight } from './spacing-utils'
 
 /** Snowbrush: PADDING * 2 = 40, 用于父子垂直间距 */
 const PARENT_GAP = 40
+/** snowbrush layoutConstant.BOUNDARYGAP */
+const TREE_BOUNDARY_GAP = 10
+/** snowbrush treeleftandright: centerPadding / endPointLineOffset / PADDING */
+const TREE_CENTER_PADDING = 30
+const TREE_END_POINT_LINE_OFFSET = 15
+const TREE_PADDING = 20
+const TREE_SPECIAL_LINE_CLASSES = ['straight', 'curve', 'fold', 'roundedfold']
+
+function getTreeLineEndPatchGap(ctx: TreeLayoutContext, node: NodeDesc): number {
+  if (!ctx.styleEngine || !ctx.state) return 0
+  const arrow = ctx.styleEngine.getStyleValue(ctx.state, node.id, 'arrowEndClass')
+  const hasArrow = typeof arrow === 'string' && arrow !== '' && !arrow.includes('none')
+  if (!hasArrow) return 0
+  const lwRaw = ctx.styleEngine.getStyleValue(ctx.state, node.id, 'lineWidth')
+  const lw = typeof lwRaw === 'number' ? lwRaw : parseFloat(String(lwRaw ?? '')) || 0
+  return lw * 4 + 16
+}
+
+function getParentBorderWidth(ctx: TreeLayoutContext, node: NodeDesc): number {
+  if (!ctx.styleEngine || !ctx.state) return 0
+  const v = ctx.styleEngine.getStyleValue(ctx.state, node.id, 'borderWidth')
+  const n = typeof v === 'number' ? v : parseFloat(String(v ?? ''))
+  return Number.isFinite(n) ? n : 0
+}
 
 function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value
@@ -338,31 +362,40 @@ function layoutSubtree(
   }
 
   if (h) {
-    // ── 水平布局（right/left）──
-    // 子节点从 parent 下方开始，顺序堆叠
-    // Snowbrush: childrenY = newBounds.y + newBounds.height + PADDING * 2
-    //            posY = childrenY - childBranch.boundaryBounds.y  (boundaryBounds.y = -outsidePadding.top)
-    // Apply master boundary padding to parent bounds
-    const masterPad = computeMasterOutsidePadding(node, direction)
-    let childY = y + size.height + PARENT_GAP + masterPad.top
+    // ── 水平布局（right/left）── 对齐 snowbrush treeleftandright.calAttachedChildrenPos
+    // childrenX = BOUNDARYGAP(10) + endPointLineOffset(非中央 15) + centerPadding(中央 30) + lineGap
+    // childrenY = parentBottom + PADDING*2(40)（特殊线型再加 triangleOffset）
+    // 堆叠步长 = boundaryBounds.height + spacingMinor + lineWidth
+    const isCentral = depth === 0
+    const lineGap = getTreeLineEndPatchGap(ctx, node)
+    const childrenXOffset = TREE_BOUNDARY_GAP + (isCentral ? TREE_CENTER_PADDING : TREE_END_POINT_LINE_OFFSET) + lineGap
+    let childY = y + size.height + TREE_PADDING * 2
+    const lineClass = ctx.styleEngine && ctx.state
+      ? String(ctx.styleEngine.getStyleValue(ctx.state, node.id, 'lineClass') ?? '')
+      : ''
+    if (TREE_SPECIAL_LINE_CLASSES.some((c) => lineClass.includes(c)) && regularChildren.length > 0) {
+      const triangleOffset = Math.tan((Math.PI * 30) / 180) * Math.abs(childrenXOffset)
+      const halfOfFirstChildHeight = sizeMap.get(regularChildren[0].id)!.height / 2
+      if (triangleOffset > halfOfFirstChildHeight) {
+        childY += triangleOffset - halfOfFirstChildHeight
+      }
+    }
+    const parentBw = getParentBorderWidth(ctx, node)
     for (const child of regularChildren) {
       const childIdx = regularChildren.indexOf(child)
-      const outsidePad = computeOutsidePadding(node, childIdx, direction)
       const childNodeSize = sizeMap.get(child.id)!
-      // Store the computed outsidePadding on the size
-      childNodeSize.outsidePadding = outsidePad
+      childNodeSize.outsidePadding = { top: 0, bottom: 0, left: 0, right: 0 }
 
+      // snowbrush: 子节点列起点 = 父节点右边缘 + childrenX（左向为父左边缘 - childrenX）
       const childX = direction === 'right'
-        ? x + size.width + spacing.horizontalGap
-        : x - childNodeSize.width - spacing.horizontalGap
+        ? x + size.width + childrenXOffset
+        : x - childrenXOffset - childNodeSize.width
 
-      // Use subtree height (full branch extent) for spacing, matching snowbrush boundaryBounds behavior
+      // boundaryBounds.height = 子树垂直跨度
       const childSubtreeH = subtreeAxisSize(ctx, child, sizeMap, direction, node, childIdx)
 
       layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes, depth + 1)
-      // Snowbrush: childrenY += boundaryBounds.height + spacingMinor + lineWidth
-      // boundaryBounds.height includes PADDING*2 per node, so add PARENT_GAP to gap
-      childY += childSubtreeH + spacing.verticalGap + PARENT_GAP
+      childY += childSubtreeH + spacing.verticalGap + parentBw
     }
   } else {
     // ── 垂直布局（down/up）──

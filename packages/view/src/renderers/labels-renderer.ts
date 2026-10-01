@@ -106,13 +106,19 @@ export class LabelsRenderer implements Renderer {
     }
     this.labelUnits = []
 
-    // 去重
-    const uniqueLabels = Array.from(new Set(labels.map(l => l.text.trim())))
-      .map((text, index) => ({
-        id: labels[index]?.id ?? `label-${index}`,
-        text,
-        color: labels[index]?.color,
-      }))
+    // 去重（labels 可能是 string[] 或 LabelData[]）
+    const uniqueLabels = Array.from(new Set(labels.map((l) => {
+      const text = typeof l === 'string' ? l : l?.text
+      return (text ?? '').trim()
+    })))
+      .map((text, index) => {
+        const src = labels[index]
+        return {
+          id: (src && typeof src === 'object' && src.id) ? src.id : `label-${index}`,
+          text,
+          color: (src && typeof src === 'object') ? src.color : undefined,
+        }
+      })
 
     if (uniqueLabels.length === 0) return
 

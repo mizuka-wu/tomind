@@ -31,6 +31,8 @@ const STRUCTURE_CLASS_TO_LAYOUT: Record<string, string> = {
   'org.xmind.ui.timeline.sided.horizontal': 'timeline-sided-horizontal',
   'org.xmind.ui.timeline.through.vertical': 'timeline-through-vertical',
   'org.xmind.ui.treetable': 'treetable',
+  'org.xmind.ui.spreadsheet': 'matrix',
+  'org.xmind.ui.spreadsheet.column': 'matrix',
   'org.xmind.ui.fishbone.left': 'fishbone-leftHeaded',
   'org.xmind.ui.fishbone.leftHeaded': 'fishbone-leftHeaded',
   'org.xmind.ui.fishbone.right': 'fishbone-rightHeaded',

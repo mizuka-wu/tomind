@@ -212,6 +212,7 @@ export class MatrixContainer {
 // ============== MatrixCell ==============
 export class MatrixCell {
   item: any
+  _minSize?: { width: number; height: number }
   padding: number
   align: string
   size: { width: number; height: number } | null
@@ -222,7 +223,7 @@ export class MatrixCell {
   _events: Record<string, Function>
   _isNull: boolean
 
-  constructor(item?: any, opts: { padding?: number; align?: string } = {}) {
+  constructor(item?: any, opts: { padding?: number; align?: string; minSize?: { width: number; height: number } } = {}) {
     const defaultOpts = {
       padding: CELL_PADDING,
       align: MIDDLE,
@@ -231,6 +232,7 @@ export class MatrixCell {
     this.item = item
     this.padding = o.padding
     this.align = o.align
+    this._minSize = o.minSize
     this.size = null
     this.pos = null
     this.itemPos = { x: 0, y: 0 }
@@ -240,15 +242,19 @@ export class MatrixCell {
   }
 
   getMinSize() {
+    // 优先使用布局测量的 minSize；item.bounds 是旧接口，NodeDesc 没有该字段
+    const measured = this._minSize
     const defaultBounds = {
       width: CELL_DEFAULT_WIDTH,
       height: 0,
       x: 0,
       y: 0,
     }
-    const { width, height } = this.item === undefined
-      ? defaultBounds
-      : this.item.bounds ?? defaultBounds
+    const { width, height } = measured
+      ? measured
+      : this.item === undefined
+        ? defaultBounds
+        : (this.item.bounds ?? defaultBounds)
     return {
       width: width + this.padding * 2,
       height: height + this.padding * 2,
