@@ -9,7 +9,8 @@ export const LEFT = 'LEFT'
 export const MIDDLE = 'MIDDLE'
 export const RIGHT = 'RIGHT'
 
-const CELL_PADDING = 4
+/** snowbrush matrixutils CELL_PADDING = 5 */
+const CELL_PADDING = 5
 const CELL_DEFAULT_WIDTH = 120
 
 // ============== 工具函数 ==============
