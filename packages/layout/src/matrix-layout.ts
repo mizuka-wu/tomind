@@ -197,8 +197,9 @@ function createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: 
           const del = delegateLogicSubtree(item, 0, 0, depthOf?.get(item.id) ?? 2, options, styleEngine, state)
           let minSize: { width: number; height: number }
           if (del) {
+            const own = del.nodes.get(item.id)!
             minSize = { width: del.bb.width, height: del.bb.height }
-            delegations.push({ id: item.id, nodes: del.nodes, bbX: del.bb.x, bbY: del.bb.y, cell: null as any, topicH: del.nodes.get(item.id)!.height })
+            delegations.push({ id: item.id, nodes: del.nodes, bbX: del.bb.x, bbY: del.bb.y, cell: null as any, topicH: own.height })
           } else {
             minSize = measureMinSize(item, options, styleEngine, state)
           }
