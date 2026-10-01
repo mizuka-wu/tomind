@@ -80,7 +80,8 @@ async function init() {
       if (typeof entry !== 'object' || entry === null) continue
       const skeletonProps: Record<string, unknown> = {}
       const colorProps: Record<string, unknown> = {}
-      for (const [key, value] of Object.entries(entry as Record<string, unknown>)) {
+      // entry 形如 { id, properties } —— 必须遍历 properties，否则主题完全不生效
+      for (const [key, value] of Object.entries((entry as Record<string, any>).properties ?? {})) {
         if (isSkeletonKey(key)) {
           skeletonProps[key] = value
         } else {
