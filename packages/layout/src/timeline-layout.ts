@@ -7,8 +7,10 @@
  */
 import type { NodeDesc } from '@tomind/schema'
 import type { StyleEngine } from '@tomind/style'
+import { DEFAULT_STYLES, classifyNode } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
-import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
+import type { LayoutAlgorithm, LayoutResult, LayoutOptions, NodeLayout } from './layout-engine'
+import { delegateLogicSubtree } from './skeleton-delegate'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
 import { measureStyledSubtree } from './spacing-utils'
@@ -51,6 +53,139 @@ function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<
 
 // ─── 水平时间线 ───
 
+/** 解析样式数值（'26pt' → 26） */
+function parseNum(v: unknown, fallback: number): number {
+  if (typeof v === 'number') return v
+  if (typeof v === 'string') {
+    const n = parseFloat(v)
+    if (!Number.isNaN(n)) return n
+  }
+  return fallback
+}
+
+/** snowbrush defaultStyles 的 spacingMajor（按节点 class），用于 getTopicSpacing 比例换算 */
+function getDefaultSpacingMajor(state: SheetState | null, node: NodeDesc): number {
+  if (!state) return 26
+  const cls = classifyNode(state.doc, node.id)
+  const entry = (DEFAULT_STYLES as Record<string, Record<string, unknown>>)[cls]
+  return parseNum(entry?.spacingMajor, 26)
+}
+
+function getLineEndPatch(node: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  if (!styleEngine || !state) return 0
+  const arrow = String(styleEngine.getStyleValue(state, node.id, 'arrowEndClass') ?? '')
+  if (!arrow || arrow.includes('none')) return 0
+  const lw = parseNum(styleEngine.getStyleValue(state, node.id, 'lineWidth'), 0)
+  return lw * 4 + 16
+}
+
+/** snowbrush timelinehorizontal.getTopicSpacing: styleSpacing * 100 / defaultSpacing + lineEnd */
+function getAxisSpacing(node: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  const styleSpacing = styleEngine && state ? parseNum(styleEngine.getStyleValue(state, node.id, 'spacingMajor'), 0) : 0
+  const defaultSpacing = getDefaultSpacingMajor(state, node) || 1
+  return (styleSpacing * 100) / defaultSpacing + getLineEndPatch(node, styleEngine, state)
+}
+
+/** snowbrush timelinehorizontalup/down.getTopicSpacing: styleSpacing * PADDING(20) / defaultSpacing + lineEnd */
+function getBranchSpacing(node: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null): number {
+  const styleSpacing = styleEngine && state ? parseNum(styleEngine.getStyleValue(state, node.id, 'spacingMajor'), 0) : 0
+  const defaultSpacing = getDefaultSpacingMajor(state, node) || 1
+  return (styleSpacing * 20) / defaultSpacing + getLineEndPatch(node, styleEngine, state)
+}
+
+const LINECOLPOS = 13
+
+interface TlBB { x: number; y: number; width: number; height: number }
+interface TlProv { nodes: Map<string, NodeLayout>; bb: TlBB; own: NodeLayout }
+
+/**
+ * 布局一个 axis 子分支（timeline-horizontal-up / down），对齐 snowbrush
+ * timelinehorizontalup/down.calAttachedChildrenPos：
+ * 子节点列在父中心右侧 PADDING 处垂直堆叠（up 向上 / down 向下），更深层委派 logic。
+ */
+function layoutTimelineBranch(
+  node: NodeDesc,
+  left: number,
+  centerY: number,
+  dir: 'up' | 'down',
+  depth: number,
+  nextBrotherHeight: number,
+  options: LayoutOptions,
+  sizeMap: Map<string, NodeSize>,
+  nodes: Map<string, NodeLayout>,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+): TlBB {
+  const size = sizeMap.get(node.id)!
+  const h = size.height
+  const w = size.width
+  const tt = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
+  nodes.set(node.id, { x: left, y: centerY - h / 2, width: w, height: h, titleWidth: tt.width, titleHeight: tt.height, branchHeight: h })
+
+  const children = isCollapsed(node) ? [] : getAttachedChildren(node)
+  if (children.length === 0) {
+    return { x: -w / 2, y: -h / 2, width: w, height: h }
+  }
+
+  const PAD = getBranchSpacing(node, styleEngine, state)
+  const lineCorner = styleEngine && state ? parseNum(styleEngine.getStyleValue(state, node.id, 'lineCorner'), 0) : 0
+  const ext = nextBrotherHeight > h ? (nextBrotherHeight - h) / 2 : 0
+
+  const provs: TlProv[] = []
+  for (const child of children) {
+    const del = delegateLogicSubtree(child, 0, 0, depth, options, styleEngine, state)
+    if (del) {
+      const own = del.nodes.get(child.id)!
+      provs.push({ nodes: del.nodes, bb: { x: del.bb.x, y: del.bb.y, width: del.bb.width, height: del.bb.height }, own })
+    } else {
+      const provNodes = new Map<string, NodeLayout>()
+      layoutTimelineHorizontal(child, 0, 0, node, options, sizeMap, provNodes, styleEngine, state, depth + 1)
+      const cs = sizeMap.get(child.id)!
+      const own = provNodes.get(child.id)!
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+      for (const nl of provNodes.values()) {
+        minX = Math.min(minX, nl.x); maxX = Math.max(maxX, nl.x + nl.width)
+        minY = Math.min(minY, nl.y); maxY = Math.max(maxY, nl.y + nl.height)
+      }
+      provs.push({
+        nodes: provNodes,
+        bb: { x: minX - (own.x + cs.width / 2), y: minY - (own.y + cs.height / 2), width: maxX - minX, height: maxY - minY },
+        own,
+      })
+    }
+  }
+
+  const childrenH = provs.reduce((a, p) => a + p.bb.height, 0) + (provs.length - 1) * PAD
+  const childrenW = Math.max(...provs.map((p) => p.bb.width))
+  const centerX = left + w / 2
+  const top = centerY - h / 2
+  const bottom = centerY + h / 2
+
+  // snowbrush: childrenX = 2*newBounds.x + newBounds.width + PADDING（中心坐标下即 PADDING）
+  const gcCenterX = centerX + PAD
+  let bbTop: number
+  if (dir === 'up') {
+    bbTop = top - LINECOLPOS - lineCorner - childrenH - ext
+  } else {
+    bbTop = bottom + LINECOLPOS + lineCorner + ext
+  }
+  let cum = bbTop
+  for (const p of provs) {
+    const dx = gcCenterX - p.bb.x - (p.own.x + p.own.width / 2)
+    const dy = cum - p.bb.y - (p.own.y + p.own.height / 2)
+    for (const [id, nl] of p.nodes) {
+      nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy })
+    }
+    cum += p.bb.height + PAD
+  }
+
+  const bbY = dir === 'up' ? bbTop - centerY : -h / 2
+  const bbH = h + LINECOLPOS + lineCorner + childrenH + ext
+  const bbW = w / 2 + PAD + childrenW
+  return { x: -w / 2, y: bbY, width: bbW, height: bbH }
+}
+
+/** axis 层，对齐 snowbrush timelinehorizontal.calAttachedChildrenPos */
 function layoutTimelineHorizontal(
   node: NodeDesc,
   x: number,
@@ -58,116 +193,83 @@ function layoutTimelineHorizontal(
   parent: NodeDesc | null,
   options: LayoutOptions,
   sizeMap: Map<string, NodeSize>,
-  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
+  nodes: Map<string, NodeLayout>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
-  /**
-   * 'axis'：时间轴层，子项沿水平线排（对齐 TIMELINEHORIZONTAL）
-   * 'up'/'down'：子树纵向堆叠（对齐 TIMELINEHORIZONTALUP/DOWN）
-   */
-  mode: 'axis' | 'up' | 'down' = 'axis',
+  depth = 0,
 ): void {
+  void parent
   const size = sizeMap.get(node.id)!
-  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
+  const h = size.height
+  const w = size.width
+  const tt2 = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
+  nodes.set(node.id, { x, y, width: w, height: h, titleWidth: tt2.width, titleHeight: tt2.height, branchHeight: h })
 
-  const children = getAttachedChildren(node)
-  let branchHeight = size.height
-  if (!isCollapsed(node) && children.length > 0) {
-    if (mode === 'axis') {
-      // 轴层：上下两侧交替
-      let topH = 0
-      let bottomH = 0
-      for (let i = 0; i < children.length; i++) {
-        const h = subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, 'spacingMinor')
-        if (i % 2 === 0) topH = Math.max(topH, h)
-        else bottomH = Math.max(bottomH, h)
-      }
-      branchHeight = topH + size.height + bottomH + getSpacing(node, 'spacingMinor', options.verticalGap, styleEngine, state) * 2
-    } else {
-      // 纵向堆叠：所有子项同侧
-      let total = 0
-      for (let i = 0; i < children.length; i++) {
-        total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, 'spacingMajor')
-        if (i < children.length - 1) total += getSpacing(node, 'spacingMajor', options.horizontalGap, styleEngine, state)
-      }
-      branchHeight = Math.max(size.height, total)
-    }
-  }
-
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
-
-  if (isCollapsed(node)) return
+  const children = isCollapsed(node) ? [] : getAttachedChildren(node)
   if (children.length === 0) return
 
-  const CHILDREN_PADDING = getSpacing(node, 'spacingMajor', options.horizontalGap, styleEngine, state)
+  const PAD = getAxisSpacing(node, styleEngine, state)
+  const parentCenterX = x + w / 2
+  const parentCenterY = y + h / 2
 
-  if (mode !== 'axis') {
-    // 纵向堆叠（timeline-up/down）：子项在父节点下方/上方，水平居中
-    let curY = mode === 'up'
-      ? y + size.height + CHILDREN_PADDING
-      : y - CHILDREN_PADDING
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i]
-      const cs = sizeMap.get(child.id)!
-      const childH = subtreeTotalHeight(child, options, sizeMap, styleEngine, state, 'spacingMajor')
-      const childY = mode === 'up'
-        ? curY
-        : curY - childH
-      layoutTimelineHorizontal(child, x + size.width / 2 - cs.width / 2, childY, node, options, sizeMap, nodes, styleEngine, state, mode)
-      if (mode === 'up') curY += childH + CHILDREN_PADDING
-      else curY -= childH + CHILDREN_PADDING
-    }
-    return
-  }
-
-  // 轴层：子项沿水平线，交替上下
-  let lastUpBranch: NodeDesc | null = parent
-  let lastDownBranch: NodeDesc | null = parent
-
+  const provs: TlProv[] = []
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
-    const cs = sizeMap.get(child.id)!
-    const isUp = i % 2 === 0
-    const sameDirBranch = isUp ? lastUpBranch : lastDownBranch
-
-    let posXByPrevBranchTopicShape: number
-    if (i === 0) {
-      posXByPrevBranchTopicShape = x + size.width + CHILDREN_PADDING
-    } else {
-      const prevNode = children[i - 1]
-      posXByPrevBranchTopicShape = nodes.get(prevNode.id)!.x + sizeMap.get(prevNode.id)!.width + CHILDREN_PADDING
-    }
-
-    let posXBySameDirBranch: number
-    if (sameDirBranch === null || sameDirBranch === parent) {
-      posXBySameDirBranch = x + size.width + CHILDREN_PADDING
-    } else {
-      const sameDirSubtreeW = subtreeTotalWidth(sameDirBranch, options, sizeMap, styleEngine, state, 'spacingMajor')
-      posXBySameDirBranch = nodes.get(sameDirBranch.id)!.x + sameDirSubtreeW + CHILDREN_PADDING / 2
-    }
-
-    let posXByPrevBranchBounds = 0
-    if (i > 0 && !isUp) {
-      const prevChild = children[i - 1]
-      const prevSubtreeW = subtreeTotalWidth(prevChild, options, sizeMap, styleEngine, state, 'spacingMajor')
-      posXByPrevBranchBounds = nodes.get(prevChild.id)!.x + prevSubtreeW + CHILDREN_PADDING / 2
-    }
-
-    const childX = Math.max(posXByPrevBranchTopicShape, posXBySameDirBranch, posXByPrevBranchBounds)
-    // 对齐 SB：轴层子项贴近父节点垂直中心，不交替撑开
-    const childY = y + size.height / 2 - cs.height / 2
-
-    layoutTimelineHorizontal(child, childX, childY, node, options, sizeMap, nodes, styleEngine, state, isUp ? 'up' : 'down')
-
-    if (isUp) lastUpBranch = child
-    else lastDownBranch = child
+    const dir: 'up' | 'down' = i % 2 === 0 ? 'up' : 'down'
+    const nextH = i + 1 < children.length ? sizeMap.get(children[i + 1].id)!.height : 0
+    const provNodes = new Map<string, NodeLayout>()
+    const bb = layoutTimelineBranch(child, 0, 0, dir, depth + 1, nextH, options, sizeMap, provNodes, styleEngine, state)
+    provs.push({ nodes: provNodes, bb, own: provNodes.get(child.id)! })
   }
+
+  // axis X：三个约束取 max（中心坐标；rect shape offset = ±w/2）
+  let lastUp: { centerX: number; bb: TlBB } | null = null
+  let lastDown: { centerX: number; bb: TlBB } | null = null
+  let prevCenterX = 0
+  let prevW = w
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+    const p = provs[i]
+    const cw = p.own.width
+    const isUp = i % 2 === 0
+
+    const posXByPrevTopic = prevCenterX + prevW / 2 + PAD + cw / 2
+    const sameDir: { centerX: number; bb: TlBB } | null = isUp ? lastUp : lastDown
+    const posXBySameDir: number = sameDir
+      ? sameDir.centerX + sameDir.bb.x + sameDir.bb.width + PAD / 2 - p.bb.x
+      : -w / 2 + w + PAD / 2 - p.bb.x
+    const centerX: number = parentCenterX + Math.max(posXByPrevTopic, posXBySameDir, 0)
+    const dx = centerX - (p.own.x + cw / 2)
+    const dy = parentCenterY - (p.own.y + p.own.height / 2)
+    for (const [id, nl] of p.nodes) {
+      nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy })
+    }
+    // bb 保持子节点自身坐标系（centerX 已单独记录），避免偏移重复累加
+    const relBB: TlBB = { x: p.bb.x, y: p.bb.y, width: p.bb.width, height: p.bb.height }
+    const relCenterX: number = centerX - parentCenterX
+    if (isUp) lastUp = { centerX: relCenterX, bb: relBB }
+    else lastDown = { centerX: relCenterX, bb: relBB }
+    prevCenterX = relCenterX
+    prevW = cw
+    void child
+  }
+
+  let bbTop = Infinity
+  let bbBottom = -Infinity
+  for (let i = 0; i < children.length; i++) {
+    const own = nodes.get(children[i].id)!
+    const relTop = own.y - y + provs[i].bb.y
+    bbTop = Math.min(bbTop, relTop)
+    bbBottom = Math.max(bbBottom, relTop + provs[i].bb.height)
+  }
+  const ownLayout = nodes.get(node.id)
+  if (ownLayout) ownLayout.branchHeight = Math.max(h, bbBottom) - Math.min(0, bbTop)
 }
 
 export const timelineHorizontalLayoutAlgorithm: LayoutAlgorithm = {
   name: 'timeline-horizontal',
   layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
-    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
+    const nodes = new Map<string, NodeLayout>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 

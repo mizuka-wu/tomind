@@ -16,6 +16,9 @@ import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engi
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
 import { measureTitleOnlyNode } from './part-node-size'
+import { delegateLogicSubtree } from './skeleton-delegate'
+
+type NodeLayout = import('./layout-engine').NodeLayout
 
 interface NodeSize {
   width: number
@@ -76,6 +79,7 @@ function getNodeSpacing(
       horizontalGap: options.horizontalGap,
       verticalGap: options.verticalGap,
       padding: options.nodePadding,
+      cellPad: options.nodePadding,
     }
   }
 
@@ -85,41 +89,37 @@ function getNodeSpacing(
   const rawStyle = getAttr<Record<string, unknown>>(node, 'style')
   const rawMargin = rawStyle?.margin
   const nodeType = classifyNode(doc, node.id)
+  const bw = parseStyleValue(style.borderWidth, 0)
 
-  let top: number
-  let bottom: number
-  let left: number
-  let right: number
-
+  // 主题盒 padding = 原始 margin + borderWidth（SB getTopicMargins）
+  let rawTop: number
+  let rawBottom: number
+  let rawLeft: number
+  let rawRight: number
   if (typeof rawMargin === "number" && rawMargin > 0) {
-    top = normalizeMargin(rawMargin, nodeType, "marginTop")
-    bottom = normalizeMargin(rawMargin, nodeType, "marginBottom")
-    left = normalizeMargin(rawMargin, nodeType, "marginLeft")
-    right = normalizeMargin(rawMargin, nodeType, "marginRight")
-  } else if (typeof rawMargin === "string") {
-    const parsed = parseFloat(rawMargin)
-    if (!isNaN(parsed) && parsed > 0) {
-      top = normalizeMargin(parsed, nodeType, "marginTop")
-      bottom = normalizeMargin(parsed, nodeType, "marginBottom")
-      left = normalizeMargin(parsed, nodeType, "marginLeft")
-      right = normalizeMargin(parsed, nodeType, "marginRight")
-    } else {
-      top = normalizeMargin(parseStyleValue(style.marginTop, options.nodePadding.top), nodeType, "marginTop")
-      bottom = normalizeMargin(parseStyleValue(style.marginBottom, options.nodePadding.bottom), nodeType, "marginBottom")
-      left = normalizeMargin(parseStyleValue(style.marginLeft, options.nodePadding.left), nodeType, "marginLeft")
-      right = normalizeMargin(parseStyleValue(style.marginRight, options.nodePadding.right), nodeType, "marginRight")
-    }
+    rawTop = rawBottom = rawLeft = rawRight = rawMargin
+  } else if (typeof rawMargin === "string" && !Number.isNaN(parseFloat(rawMargin)) && parseFloat(rawMargin) > 0) {
+    rawTop = rawBottom = rawLeft = rawRight = parseFloat(rawMargin)
   } else {
-    top = normalizeMargin(parseStyleValue(style.marginTop, options.nodePadding.top), nodeType, "marginTop")
-    bottom = normalizeMargin(parseStyleValue(style.marginBottom, options.nodePadding.bottom), nodeType, "marginBottom")
-    left = normalizeMargin(parseStyleValue(style.marginLeft, options.nodePadding.left), nodeType, "marginLeft")
-    right = normalizeMargin(parseStyleValue(style.marginRight, options.nodePadding.right), nodeType, "marginRight")
+    rawTop = parseStyleValue(style.marginTop, options.nodePadding.top)
+    rawBottom = parseStyleValue(style.marginBottom, options.nodePadding.bottom)
+    rawLeft = parseStyleValue(style.marginLeft, options.nodePadding.left)
+    rawRight = parseStyleValue(style.marginRight, options.nodePadding.right)
+  }
+
+  // 表格 cell extend padding = margin * preset / default（SB getPadding）
+  const cellPad = {
+    top: normalizeMargin(rawTop, nodeType, "marginTop"),
+    bottom: normalizeMargin(rawBottom, nodeType, "marginBottom"),
+    left: normalizeMargin(rawLeft, nodeType, "marginLeft"),
+    right: normalizeMargin(rawRight, nodeType, "marginRight"),
   }
 
   return {
     horizontalGap: majorGap,
     verticalGap: minorGap,
-    padding: { top, right, bottom, left },
+    padding: { top: rawTop + bw, right: rawRight + bw, bottom: rawBottom + bw, left: rawLeft + bw },
+    cellPad,
   }
 }
 
@@ -204,14 +204,13 @@ function getExtendWidth(
   options: LayoutOptions,
 ): number {
   const spacing = getNodeSpacing(doc, node, options, styleEngine, state)
-  const padding = spacing.padding
   let borderWidth = 0
   if (styleEngine && state) {
     const style = styleEngine.computeStyle(state, node.id)
     borderWidth = parseStyleValue(style.borderWidth, 0)
   }
-  // SB getExtendWidth：cell 从左边框中心线量到右边框中心线，只加一份 borderWidth
-  return padding.left + padding.right + borderWidth
+  // SB getExtendWidth = borderWidth + padL + padR（pad 为 preset 归一化值）
+  return borderWidth + spacing.cellPad.left + spacing.cellPad.right
 }
 
 function getExtendHeight(
@@ -222,18 +221,22 @@ function getExtendHeight(
   options: LayoutOptions,
 ): number {
   const spacing = getNodeSpacing(doc, node, options, styleEngine, state)
-  const padding = spacing.padding
-  return padding.top + padding.bottom
+  let borderWidth = 0
+  if (styleEngine && state) {
+    const style = styleEngine.computeStyle(state, node.id)
+    borderWidth = parseStyleValue(style.borderWidth, 0)
+  }
+  return borderWidth + spacing.cellPad.top + spacing.cellPad.bottom
 }
 
 export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
   name: 'treetable',
   layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
-    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
+    const nodes = new Map<string, NodeLayout>()
     const root = findRootTopic(doc)
     if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
-    // 测量所有节点尺寸
+    // 测量所有节点尺寸（主题盒 = title + 2*margin + bw）
     const sizeMap = new Map<string, NodeSize>()
     function measureSubtree(node: NodeDesc): void {
       const spacing = getNodeSpacing(doc, node, options, styleEngine, state)
@@ -246,223 +249,75 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
     }
     measureSubtree(root)
 
-    // 计算树的最大深度
-    function getMaxDepth(node: NodeDesc, depth = 0): number {
-      if (isCollapsed(node)) return depth
-      const children = getAttachedChildren(node)
-      if (children.length === 0) return depth
-      let maxChildDepth = 0
-      for (const child of children) {
-        maxChildDepth = Math.max(maxChildDepth, getMaxDepth(child, depth + 1))
-      }
-      return maxChildDepth
-    }
-    const maxDepth = getMaxDepth(root)
+    // snowbrush treetable = 两列表格：col0 = root（跨所有行），col1 = 每个 head 分支，
+    // head cell 内嵌其整棵子树（stopFlag，子结构由 skeleton/available child structure 决定）
+    const heads = isCollapsed(root) ? [] : getAttachedChildren(root)
+    const rootSize = sizeMap.get(root.id)!
+    const rootExtendW = getExtendWidth(doc, root, styleEngine, state, options)
+    const rootExtendH = getExtendHeight(doc, root, styleEngine, state, options)
+    const col0W = rootSize.width + rootExtendW
 
-    // 构建表格：每行 = 根到叶子的路径
-    const rows = buildTable(root, maxDepth)
-
-    // 收集所有唯一节点
-    const allNodeIds = new Set<string>()
-    for (const row of rows) {
-      for (const cell of row) {
-        if (cell) allNodeIds.add(cell.id)
+    // head 子树 provisional 布局（skeleton logic 委派，否则退回 logic 以外的自身递归不存在 → logic）
+    const provs: { nodes: Map<string, NodeLayout>; bb: { x: number; y: number; width: number; height: number }; own: NodeLayout }[] = []
+    for (const head of heads) {
+      const del = delegateLogicSubtree(head, 0, 0, 0, options, styleEngine, state)
+      if (del) {
+        provs.push({ nodes: del.nodes, bb: { x: del.bb.x, y: del.bb.y, width: del.bb.width, height: del.bb.height }, own: del.nodes.get(head.id)! })
+      } else {
+        const provNodes = new Map<string, NodeLayout>()
+        const hs = sizeMap.get(head.id)!
+        provNodes.set(head.id, { x: 0, y: 0, width: hs.width, height: hs.height, titleWidth: hs.titleWidth, titleHeight: hs.titleHeight, branchHeight: hs.height })
+        provs.push({ nodes: provNodes, bb: { x: 0, y: 0, width: hs.width, height: hs.height }, own: provNodes.get(head.id)! })
       }
     }
 
-    // SB: calcTableCellWidth - 对齐每列
-    // 单行项：max(topicBounds.width + extendWidth)
-    // 跨行项：累加
-    const colCount = maxDepth + 1
-    const cellWidths: number[] = new Array(colCount).fill(0)
+    // 列宽 = max(stop? bounds.width : topicBounds.width) + extendWidth
+    let col1W = 0
+    heads.forEach((head, i) => {
+      const extendW = getExtendWidth(doc, head, styleEngine, state, options)
+      col1W = Math.max(col1W, provs[i].bb.width + extendW)
+    })
 
-    // 先计算每列单行项的最大宽度
-    for (let col = 0; col < colCount; col++) {
-      const singleItems: { node: NodeDesc; extendW: number }[] = []
-      for (const row of rows) {
-        const item = row[col]
-        if (!item) continue
-        // 检查是否是跨行项（同一行中多次出现）
-        // SB 的 isExpandItem 是针对同一行的，但 TM 的表格每列只有一个节点
-        // 所以我们用不同方式判断：如果节点在多行中出现，它是跨行项
-        const firstRow = getFirstRow(rows, item.id)
-        const lastRow = getLastRow(rows, item.id)
-        if (firstRow === lastRow) {
-          // 单行项
-          const extendW = getExtendWidth(doc, item, styleEngine, state, options)
-          singleItems.push({ node: item, extendW })
-        }
+    // 行高 = 子树高度 + extendHeight
+    const rowH: number[] = heads.map((head, i) => provs[i].bb.height + getExtendHeight(doc, head, styleEngine, state, options))
+    const totalH = rowH.reduce((a, b) => a + b, 0)
+
+    // root 主题：col0 内左对齐 + 垂直居中（getItemCellXY）
+    nodes.set(root.id, {
+      x: rootExtendW / 2,
+      y: (totalH - rootSize.height) / 2,
+      width: rootSize.width,
+      height: rootSize.height,
+      titleWidth: rootSize.titleWidth,
+      titleHeight: rootSize.titleHeight,
+      branchHeight: totalH,
+    })
+
+    // head 行：cell 内容区 = cellH - extendH；子树 bb 顶边对齐内容区顶边
+    let rowY = 0
+    heads.forEach((head, i) => {
+      const p = provs[i]
+      const extendW = getExtendWidth(doc, head, styleEngine, state, options)
+      const extendH = getExtendHeight(doc, head, styleEngine, state, options)
+      const contentTop = rowY + extendH / 2
+      const contentLeft = col0W + extendW / 2
+      // bb 左边缘对齐内容区左边缘
+      const dx = contentLeft - p.bb.x - (p.own.x + p.own.width / 2) + p.own.width / 2 - p.own.width / 2
+      const dxFinal = contentLeft - (p.own.x + p.own.width / 2 + p.bb.x)
+      const dyFinal = contentTop - (p.own.y + p.own.height / 2 + p.bb.y)
+      void dx
+      for (const [id, nl] of p.nodes) {
+        nodes.set(id, { ...nl, x: nl.x + dxFinal, y: nl.y + dyFinal })
       }
-      if (singleItems.length > 0) {
-        cellWidths[col] = Math.max(...singleItems.map(({ node }) => {
-          // SB 列宽 = titleWidth + extendWidth（不含通用 innerSpacing，cell 自带 padding）
-          const size = sizeMap.get(node.id)!
-          return size.titleWidth + getExtendWidth(doc, node, styleEngine, state, options)
-        }))
-      }
-    }
+      rowY += rowH[i]
+    })
 
-    // 计算跨行项的宽度
-    for (const nodeId of allNodeIds) {
-      const firstRow = getFirstRow(rows, nodeId)
-      const lastRow = getLastRow(rows, nodeId)
-      if (firstRow < lastRow) {
-        // 跨行项：宽度 = sum(跨越的列宽)
-        const item = rows[firstRow].find(n => n?.id === nodeId)
-        if (item) {
-          const size = sizeMap.get(nodeId)!
-          let spannedWidth = 0
-          for (let col = 0; col < colCount; col++) {
-            if (rows[firstRow][col]?.id === nodeId) {
-              spannedWidth += cellWidths[col]
-            }
-          }
-          const neededWidth = size.titleWidth + getExtendWidth(doc, item, styleEngine, state, options)
-          if (spannedWidth < neededWidth) {
-            // 需要额外宽度
-            const extra = neededWidth - spannedWidth
-            // 找到最后一个相关列
-            for (let col = colCount - 1; col >= 0; col--) {
-              if (rows[firstRow][col]?.id === nodeId) {
-                cellWidths[col] += extra
-                break
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // SB: calcTableCellHeight - 对齐每行
-    // 单列项：max(topicBounds.height + extendHeight)
-    const cellHeights: number[] = new Array(rows.length).fill(0)
-    for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
-      let maxH = 0
-      for (let col = 0; col < colCount; col++) {
-        const item = rows[rowIdx][col]
-        if (!item) continue
-        const firstRow = getFirstRow(rows, item.id)
-        const lastRow = getLastRow(rows, item.id)
-        if (firstRow === lastRow) {
-          // 单行项
-          const size = sizeMap.get(item.id)!
-          const extendH = getExtendHeight(doc, item, styleEngine, state, options)
-          maxH = Math.max(maxH, size.height + extendH)
-        }
-      }
-      cellHeights[rowIdx] = maxH || (rows[rowIdx].find(n => n !== null) ? sizeMap.get(rows[rowIdx].find(n => n !== null)!.id)!.height : 40)
-    }
-
-    // 计算跨行项的高度调整
-    for (const nodeId of allNodeIds) {
-      const firstRow = getFirstRow(rows, nodeId)
-      const lastRow = getLastRow(rows, nodeId)
-      if (firstRow < lastRow) {
-        // 跨行项：高度 = sum(跨越的行高)
-        const item = rows[firstRow].find(n => n?.id === nodeId)
-        if (item) {
-          const size = sizeMap.get(nodeId)!
-          const extendH = getExtendHeight(doc, item, styleEngine, state, options)
-          let spannedHeight = 0
-          for (let r = firstRow; r <= lastRow; r++) {
-            spannedHeight += cellHeights[r]
-          }
-          const neededHeight = size.height + extendH
-          if (spannedHeight < neededHeight) {
-            const extra = (neededHeight - spannedHeight) / (lastRow - firstRow + 1)
-            for (let r = firstRow; r <= lastRow; r++) {
-              cellHeights[r] += extra
-            }
-          }
-        }
-      }
-    }
-
-    // SB: calcTableCellPosition - 累加列宽/行高
-    const cellXPositions: number[] = new Array(colCount).fill(0)
-    let accX = 0
-    for (let col = 0; col < colCount; col++) {
-      cellXPositions[col] = accX
-      accX += cellWidths[col]
-    }
-
-    const cellYPositions: number[] = new Array(rows.length).fill(0)
-    let accY = 0
-    for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
-      cellYPositions[rowIdx] = accY
-      accY += cellHeights[rowIdx]
-    }
-
-    // SB: calcTableCellItemPosition + calcTableBounds
-    // 节点在单元格内左对齐（默认 textAlign=left），垂直居中
-    const nodePositions = new Map<string, { x: number; y: number; cellWidth: number; cellHeight: number }>()
-
-    for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
-      for (let col = 0; col < colCount; col++) {
-        const item = rows[rowIdx][col]
-        if (!item) continue
-
-        const existing = nodePositions.get(item.id)
-        if (existing) continue // 已经定位过（跨行项只定位一次）
-
-        const firstRow = getFirstRow(rows, item.id)
-        const lastRow = getLastRow(rows, item.id)
-
-        // 计算跨行项的单元格高度
-        let totalCellHeight = 0
-        for (let r = firstRow; r <= lastRow; r++) {
-          totalCellHeight += cellHeights[r]
-        }
-
-        // 计算跨列的单元格宽度
-        let totalCellWidth = 0
-        for (let c = 0; c < colCount; c++) {
-          if (rows[firstRow][c]?.id === item.id) {
-            totalCellWidth += cellWidths[c]
-          }
-        }
-
-        nodePositions.set(item.id, {
-          x: cellXPositions[col],
-          y: cellYPositions[firstRow],
-          cellWidth: totalCellWidth,
-          cellHeight: totalCellHeight,
-        })
-      }
-    }
-
-    // 设置最终位置
-    for (const [nodeId, pos] of nodePositions) {
-      const size = sizeMap.get(nodeId)!
-      // SB: getItemCellXY - 左对齐（默认），垂直居中
-      let nodeRef: NodeDesc | undefined
-      for (const row of rows) {
-        const found = row.find(n => n?.id === nodeId)
-        if (found) { nodeRef = found; break }
-      }
-      const extendW = nodeRef ? getExtendWidth(doc, nodeRef, styleEngine, state, options) : 0
-      const x = pos.x + extendW / 2
-      const y = pos.y + (pos.cellHeight - size.height) / 2
-
-      nodes.set(nodeId, {
-        x,
-        y,
-        width: size.width,
-        height: size.height,
-        titleWidth: size.titleWidth,
-        titleHeight: size.titleHeight,
-        branchHeight: pos.cellHeight,
-      })
-    }
-
-    // 计算总尺寸
     let totalWidth = 0
     let totalHeight = 0
     for (const layout of nodes.values()) {
       totalWidth = Math.max(totalWidth, layout.x + layout.width)
       totalHeight = Math.max(totalHeight, layout.y + layout.height)
     }
-
     return { nodes, totalWidth, totalHeight }
   },
 }
