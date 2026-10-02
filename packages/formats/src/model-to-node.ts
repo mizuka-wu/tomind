@@ -49,6 +49,7 @@ export interface ModelNode {
   structureClass?: string
   /** 折叠状态 */
   collapsed?: boolean
+  position?: { x: number; y: number }
   /** 编号配置 */
   numbering?: {
     numberFormat: string
@@ -88,6 +89,8 @@ export interface ModelTree {
   relationships?: ModelNode[]
   /** skeleton 结构样式（role → structureClass），来自 xmind extensions */
   skeletonStructure?: Record<string, string>
+  /** sheet 级 topicPositioning（'free' 时尊重 topic.position） */
+  topicPositioning?: 'free' | 'fixed'
 }
 
 // ==================== 转换器 ====================
@@ -139,6 +142,7 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
       ...(node.href ? { href: node.href } : {}),
       ...(node.structureClass ? { structureClass: node.structureClass } : {}),
       ...(node.collapsed ? { collapsed: true } : {}),
+      ...(node.position ? { position: node.position } : {}),
       ...(node.numbering ? { numbering: node.numbering } : {}),
       ...(node.comments?.length ? { comments: node.comments } : {}),
     },
@@ -178,6 +182,9 @@ function modelRelToNodeDesc(node: ModelNode): NodeDesc {
 /** ModelTree → NodeDesc（根节点） */
 export function modelToNodeDesc(tree: ModelTree): NodeDesc {
   let root = modelNodeToNodeDesc(tree.root)
+  if (tree.topicPositioning) {
+    root = { ...root, attrs: { ...(root.attrs ?? {}), topicPositioning: tree.topicPositioning } }
+  }
   // skeleton 结构样式挂到根节点 attrs，供布局按层级选择子结构（对齐 snowbrush skeleton）
   if (tree.skeletonStructure) {
     root = { ...root, attrs: { ...(root.attrs ?? {}), skeletonStructure: tree.skeletonStructure } }

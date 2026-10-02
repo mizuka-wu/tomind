@@ -54,6 +54,8 @@ interface XMindTopic {
   markers?: { markerId: string }[]
   labels?: string[]
   hyperlink?: string
+  /** free positioning 下拖拽写回的位置 */
+  position?: { x: number; y: number }
   image?: {
     src: string
     width: number
@@ -81,6 +83,8 @@ interface XMindSheet {
   id: string
   class: string
   title: string
+  /** 'free' | 'fixed' —— free 时 mainTopic 可携带 position 自由定位（SB isFreePositionEnabled） */
+  topicPositioning?: 'free' | 'fixed'
   rootTopic: XMindTopic
   theme?: {
     id?: string
@@ -235,6 +239,7 @@ function convertTopic(topic: XMindTopic): ModelNode {
       ...(topic.image.flipAndRotateRecords ? { flipAndRotateRecords: topic.image.flipAndRotateRecords } : {}),
     } } : {}),
     ...(topic.hyperlink ? { link: topic.hyperlink } : {}),
+    ...(topic.position && typeof topic.position.x === 'number' ? { position: { x: topic.position.x, y: topic.position.y } } : {}),
     ...(topic.notes?.plain?.content ? { note: topic.notes.plain.content } : {}),
     ...(topic.notes?.html?.content ? { noteHtml: topic.notes.html.content } : {}),
     ...(topic.href ? { href: topic.href } : {}),
@@ -378,6 +383,7 @@ export async function parseXMind(
     themeData,
     ...(relationships.length ? { relationships } : {}),
     ...(skeletonStructure ? { skeletonStructure } : {}),
+    ...(sheet.topicPositioning ? { topicPositioning: sheet.topicPositioning } : {}),
   }
 }
 

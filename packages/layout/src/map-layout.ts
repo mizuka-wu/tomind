@@ -631,6 +631,7 @@ class MapLayout extends BaseLayout {
     }
 
     // Step e2: posYoffsetToClosestChild 重对齐（两种结构共用）
+    let realignOffset = 0
     let childrenHeight = 0
     for (let i = 0; i < n; i++) childrenHeight += spans[i] + (i < n - 1 ? spacingMinor : 0)
     const maxRealignOffset = Math.min(MAX_BRANCH_POSITION_REALIGN_OFFSET, childrenHeight * BRANCH_POSITION_REALIGN_RATIO)
@@ -638,6 +639,7 @@ class MapLayout extends BaseLayout {
       let offset = centers[0]
       for (const c of centers) if (Math.abs(c) < Math.abs(offset)) offset = c
       if (Math.abs(offset) < maxRealignOffset) {
+        realignOffset = offset
         for (let i = 0; i < n; i++) centers[i] -= offset
       }
     }
@@ -650,15 +652,24 @@ class MapLayout extends BaseLayout {
     const spanMap = new Map<string, number>()
     for (let i = 0; i < n; i++) spanMap.set(children[i].id, spans[i])
     const outward = this.calcOutwardDistance(children, sizeMap, spanMap, parent.id, styleEngine ?? null, state ?? null)
+    // SB isFreePositionBranch: topicPositioning=free 且 mainTopic 且父结构为 map 时尊重存储 position
+    const freePositioning = (state?.doc?.attrs as Record<string, unknown> | undefined)?.topicPositioning === 'free'
     for (let i = 0; i < n; i++) {
       const child = children[i]
       const nl = nodes.get(child.id)
       if (!nl) continue
       const childW = sizeMap.get(child.id)?.width ?? nl.width
-      const desiredCenterY = parentCenterY + centers[i]
+      const freePos = (freePositioning && isMapRoot)
+        ? (child.attrs as Record<string, unknown> | undefined)?.position as { x?: number; y?: number } | undefined
+        : undefined
+      const desiredCenterY = (freePos && typeof freePos.y === 'number')
+        ? parentCenterY + freePos.y - realignOffset
+        : parentCenterY + centers[i]
       const dy = desiredCenterY - (nl.y + nl.height / 2)
       let desiredLeft: number
-      if (side === 'right') {
+      if (freePos && typeof freePos.x === 'number') {
+        desiredLeft = parentLeft + parentWidth / 2 + freePos.x - childW / 2
+      } else if (side === 'right') {
         desiredLeft = parentLeft + parentWidth + this.getSideSpacingMajor(parent, options, styleEngine ?? null, state ?? null, isMapRoot) + outward
       } else {
         desiredLeft = parentLeft - this.getSideSpacingMajor(parent, options, styleEngine ?? null, state ?? null, isMapRoot) - outward - childW
