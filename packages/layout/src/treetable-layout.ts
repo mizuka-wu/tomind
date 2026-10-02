@@ -144,56 +144,6 @@ function measureNodeSize(
  * 每个路径 = 一行，列 = 深度层级
  * 父节点在多行中出现 = 跨行
  */
-type TableRow = (NodeDesc | null)[]
-
-function buildTable(root: NodeDesc, maxDepth: number): TableRow[] {
-  const rows: TableRow[] = []
-
-  function walk(node: NodeDesc, path: (NodeDesc | null)[], depth: number) {
-    const newPath = [...path]
-    // 填充 null 到之前缺失的深度
-    while (newPath.length < depth) {
-      newPath.push(null)
-    }
-    newPath.push(node)
-
-    const children = isCollapsed(node) ? [] : getAttachedChildren(node)
-    if (children.length === 0) {
-      // 叶子节点 = 一行
-      while (newPath.length <= maxDepth) {
-        newPath.push(null)
-      }
-      rows.push(newPath)
-    } else {
-      for (const child of children) {
-        walk(child, newPath, depth + 1)
-      }
-    }
-  }
-
-  walk(root, [], 0)
-  return rows
-}
-
-/** 获取节点在表格中首次出现的行索引 */
-function getFirstRow(rows: TableRow[], nodeId: string): number {
-  for (let i = 0; i < rows.length; i++) {
-    for (let j = 0; j < rows[i].length; j++) {
-      if (rows[i][j]?.id === nodeId) return i
-    }
-  }
-  return -1
-}
-
-/** 获取节点在表格中最后出现的行索引 */
-function getLastRow(rows: TableRow[], nodeId: string): number {
-  for (let i = rows.length - 1; i >= 0; i--) {
-    for (let j = 0; j < rows[i].length; j++) {
-      if (rows[i][j]?.id === nodeId) return i
-    }
-  }
-  return -1
-}
 
 /** 获取节点的扩展宽度（padding + border）对齐 SB getExtendWidth */
 function getExtendWidth(
@@ -254,7 +204,6 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
     const heads = isCollapsed(root) ? [] : getAttachedChildren(root)
     const rootSize = sizeMap.get(root.id)!
     const rootExtendW = getExtendWidth(doc, root, styleEngine, state, options)
-    const rootExtendH = getExtendHeight(doc, root, styleEngine, state, options)
     const col0W = rootSize.width + rootExtendW
 
     // head 子树 provisional 布局（skeleton logic 委派，否则退回 logic 以外的自身递归不存在 → logic）

@@ -17,9 +17,6 @@ import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 import { DEFAULT_STYLES, classifyNode } from '@tomind/style'
 import { delegateLogicSubtree } from './skeleton-delegate'
 
-/** snowbrush fishbone 骨线斜率 (tan 值) */
-const BONE_CONNECTION_TAN = 1.5
-
 function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value
   if (typeof value === 'string') {
@@ -139,24 +136,6 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
 
 function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
   return getNodeSpacing(node, options, styleEngine, state).horizontalGap
-}
-
-function getSpacingMinor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
-  return getNodeSpacing(node, options, styleEngine, state).verticalGap
-}
-
-/** 递归计算子树总高度（垂直方向的总跨度） */
-function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine: StyleEngine | null, state: SheetState | null): number {
-  const size = sizeMap.get(node.id)!
-  if (isCollapsed(node)) return size.height
-  const children = getAttachedChildren(node)
-  if (children.length === 0) return size.height
-  let total = 0
-  for (let i = 0; i < children.length; i++) {
-    total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state)
-    if (i < children.length - 1) total += getSpacingMinor(node, options, styleEngine, state)
-  }
-  return Math.max(size.height, total)
 }
 
 /** 递归计算子树总宽度（水平方向的总跨度），沿主脊方向使用 spineGap */

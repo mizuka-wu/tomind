@@ -13,7 +13,7 @@
 import type { NodeDesc } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
-import { DEFAULT_STYLES, classifyNode, findById } from '@tomind/style'
+import { findById } from '@tomind/style'
 import type { LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { BaseLayout } from './base-layout'
@@ -71,7 +71,7 @@ class MapLayout extends BaseLayout {
     this.name = config.name
   }
 
-  private getNodeSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null, isRootLevel: boolean = false): number {
+  private getNodeSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine?: StyleEngine | null, state?: SheetState | null, _isRootLevel: boolean = false): number {
     if (options.getSpacingMajor) return options.getSpacingMajor(node)
 
     // 对齐 snowbrush calcSpacingMajor 逻辑

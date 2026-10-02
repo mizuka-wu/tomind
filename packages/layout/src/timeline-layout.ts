@@ -38,19 +38,6 @@ function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map
   return Math.max(size.height, total)
 }
 
-/** 递归计算子树总宽度（水平方向的总跨度） */
-function subtreeTotalWidth(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine: StyleEngine | null, state: SheetState | null, gapKey: 'spacingMajor' | 'spacingMinor'): number {
-  const size = sizeMap.get(node.id)!
-  if (isCollapsed(node)) return size.width
-  const children = getAttachedChildren(node)
-  if (children.length === 0) return size.width
-  let maxChildWidth = 0
-  for (const child of children) {
-    maxChildWidth = Math.max(maxChildWidth, subtreeTotalWidth(child, options, sizeMap, styleEngine, state, gapKey))
-  }
-  return size.width + getSpacing(node, gapKey, options.horizontalGap, styleEngine, state) + maxChildWidth
-}
-
 // ─── 水平时间线 ───
 
 /** 解析样式数值（'26pt' → 26） */

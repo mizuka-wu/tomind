@@ -394,7 +394,6 @@ function runLogicLayout(
   const placement = new Map<string, LogicPlacement>()
   computePlacement(root, options, sizeMap, placement, styleEngine, state)
 
-  const rootSize = sizeMap.get(root.id)!
   const rootX = side === 'right' ? options.rootOffsetX : 0
   layoutSubtree(root, rootX, 0, options, sizeMap, placement, nodes, styleEngine, state, side, spacingMajorExtra)
 

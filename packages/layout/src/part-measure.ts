@@ -76,14 +76,6 @@ interface LinkData {
   readonly title?: string
 }
 
-interface NumberingData {
-  readonly numberFormat: string
-  readonly prefix?: string
-  readonly suffix?: string
-  readonly numberSeparator?: string
-  readonly prependingNumbers?: string
-}
-
 interface CommentData {
   readonly author: string
   readonly content: string

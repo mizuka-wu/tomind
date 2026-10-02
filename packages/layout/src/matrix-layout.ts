@@ -19,7 +19,6 @@ import {
   MIDDLE,
 } from './matrix'
 import { measureTextSize } from './layout-engine'
-import { getTitle, getFontSize } from './layout-utils'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { getNodeSpacing } from './spacing-utils'
 import { delegateLogicSubtree } from './skeleton-delegate'
