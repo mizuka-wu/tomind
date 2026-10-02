@@ -49,6 +49,7 @@ interface XMindTopic {
     attached?: XMindTopic[]
     summary?: XMindTopic[]
     boundary?: XMindTopic[]
+    callout?: XMindTopic[]
     relationship?: XMindTopic[]
   }
   markers?: { markerId: string }[]
@@ -201,6 +202,12 @@ function convertTopic(topic: XMindTopic): ModelNode {
       })
     }
   }
+  const callouts: ModelNode[] = []
+  if (topic.children?.callout) {
+    for (const c of topic.children.callout) {
+      callouts.push(convertTopic(c))
+    }
+  }
   const relationships: ModelNode[] = []
   if (topic.children?.relationship) {
     for (const r of topic.children.relationship) {
@@ -219,6 +226,7 @@ function convertTopic(topic: XMindTopic): ModelNode {
     title: topic.title || '',
     children,
     ...(summaries.length ? { summaries } : {}),
+    ...(callouts.length ? { callouts } : {}),
     ...(boundaries.length ? { boundaries } : {}),
     ...(relationships.length ? { relationships } : {}),
     ...(topic.structureClass ? { structureClass: topic.structureClass } : {}),

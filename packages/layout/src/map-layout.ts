@@ -487,6 +487,9 @@ class MapLayout extends BaseLayout {
       this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, localBBMap, 'left', isMapRoot)
     }
 
+    // callout 子节点：SB 用 model position（sheet 坐标，原点=中央主题中心）直接放置
+    this.placeCallouts(node, x, y, size, options, sizeMap, nodes, styleEngine ?? null, state ?? null)
+
     // Compute boundaryBounds (SB mergeBounds: topic merged with children's actual extents)
     let bbMinX = 0
     let bbMaxX = size.width
@@ -689,6 +692,45 @@ class MapLayout extends BaseLayout {
           this.shiftSubtree(children[i], dx, 0, nodes)
         }
       }
+    }
+  }
+
+  /** 放置 callout 子节点（递归）：position 相对父主题中心（sheet 坐标原点=根中心） */
+  private placeCallouts(
+    node: NodeDesc,
+    parentLeft: number,
+    parentTop: number,
+    parentSize: { width: number; height: number },
+    options: LayoutOptions,
+    sizeMap: Map<string, NodeSize>,
+    nodes: Map<string, import('./layout-engine').NodeLayout>,
+    styleEngine: StyleEngine | null,
+    state: SheetState | null,
+  ): void {
+    const callouts = (node.children as Record<string, readonly NodeDesc[]> | undefined)?.callout ?? []
+    const pcx = parentLeft + parentSize.width / 2
+    const pcy = parentTop + parentSize.height / 2
+    for (const co of callouts) {
+      const pos = (co.attrs as Record<string, unknown> | undefined)?.position as { x?: number; y?: number } | undefined
+      if (!pos || typeof pos.x !== 'number' || typeof pos.y !== 'number') continue
+      let cs = sizeMap.get(co.id)
+      if (!cs) {
+        const padding = this.getNodePadding(co, options, styleEngine ?? null, state ?? null)
+        const m = measureTitleOnlyNode(co, padding, options, styleEngine ?? null, state ?? null)
+        cs = { width: m.width, height: m.height, titleWidth: m.titleWidth, titleHeight: m.titleHeight, partBounds: m.partBounds, outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 }, subtreeHeight: m.height }
+        sizeMap.set(co.id, cs)
+      }
+      nodes.set(co.id, {
+        x: pcx + pos.x - cs.width / 2,
+        y: pcy + pos.y - cs.height / 2,
+        width: cs.width,
+        height: cs.height,
+        titleWidth: cs.titleWidth,
+        titleHeight: cs.titleHeight,
+        branchHeight: cs.height,
+        partBounds: cs.partBounds,
+      })
+      this.placeCallouts(co, pcx + pos.x - cs.width / 2, pcy + pos.y - cs.height / 2, cs, options, sizeMap, nodes, styleEngine, state)
     }
   }
 

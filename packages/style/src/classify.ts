@@ -33,6 +33,9 @@ export function classifyNode(
   if (node.type === NODE_TYPES.BOUNDARY) return 'boundary'
   if (node.type === NODE_TYPES.SUMMARY) return 'summary'
   if (node.type === NODE_TYPES.RELATIONSHIP) return 'relationship'
+  // NodeDesc.type 直接携带的特殊类型（formats 解析 callout/detached 时写入）
+  if (node.type === ('callout' as any)) return 'calloutTopic'
+  if (node.type === ('detached' as any)) return 'floatingTopic'
 
   // Topic 类型：根据层级和 topicType 推断
   const topicType = typeof node.attrs.topicType === 'string' ? node.attrs.topicType : undefined

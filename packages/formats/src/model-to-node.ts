@@ -66,6 +66,7 @@ export interface ModelNode {
   }>
   /** 摘要子节点（children.summary） */
   summaries?: ModelNode[]
+  callouts?: ModelNode[]
   /** 边界子节点（children.boundary） */
   boundaries?: ModelNode[]
   /** 摘要/边界覆盖的子节点下标范围 */
@@ -119,6 +120,9 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
   if (node.children.length > 0) {
     children.attached = node.children.map((child) => modelNodeToNodeDesc(child))
   }
+  if (node.callouts?.length) {
+    children.callout = node.callouts.map((c) => modelSpecialToNodeDesc(c, 'callout'))
+  }
   if (node.summaries?.length) {
     children.summary = node.summaries.map((s) => modelSpecialToNodeDesc(s, 'summary'))
   }
@@ -151,7 +155,7 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
 }
 
 /** summary / boundary ModelNode → NodeDesc（带 range） */
-function modelSpecialToNodeDesc(node: ModelNode, type: 'summary' | 'boundary'): NodeDesc {
+function modelSpecialToNodeDesc(node: ModelNode, type: 'summary' | 'boundary' | 'callout'): NodeDesc {
   return {
     id: node.id || genId(),
     type,
@@ -160,6 +164,8 @@ function modelSpecialToNodeDesc(node: ModelNode, type: 'summary' | 'boundary'): 
       rangeStart: node.rangeStart ?? 0,
       rangeEnd: node.rangeEnd ?? 0,
       ...(node.style ? { style: node.style } : {}),
+      // callout/detached 携带自由位置（SB 用 model position 放置）
+      ...(node.position ? { position: node.position } : {}),
     },
     children: {},
   }

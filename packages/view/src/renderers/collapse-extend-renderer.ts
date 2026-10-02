@@ -1,13 +1,12 @@
 import { Group, Ellipse, Path, Text, Line } from 'leafer-ui'
+import { computeCollapseButtonPos, COLLAPSE_CHROME } from './collapse-geometry'
+
+const { EXT_RADIUS, COL_RADIUS } = COLLAPSE_CHROME
 import type { LayoutResult } from '@tomind/layout'
 import type { Renderer } from './renderer'
 import { getStringStyle, getNumberStyle, getBoolStyle, getObjectStyle } from '../style-accessors'
 
 /** 常量 — 对齐 snowbrush layoutConstant */
-const EXT_RADIUS = 8
-const COL_RADIUS = 6
-const EXT_GAP = 14
-const COL_GAP = 13
 const SYMBOLGAP = 2
 const RADIUS = Math.max(EXT_RADIUS, COL_RADIUS)
 const EXT_STROKE_WIDTH = 1
@@ -123,29 +122,7 @@ export class CollapseExtendRenderer implements Renderer {
     descendantCount: number,
   ): void {
     if (!this.group) return
-    const gap = collapsed ? EXT_GAP : COL_GAP
-    const r = collapsed ? EXT_RADIUS : COL_RADIUS
-
-    let x: number
-    let y: number
-    switch (side) {
-      case 'right':
-        x = bounds.x + bounds.width + gap - r
-        y = bounds.y + bounds.height / 2 - r
-        break
-      case 'left':
-        x = bounds.x - gap - r
-        y = bounds.y + bounds.height / 2 - r
-        break
-      case 'down':
-        x = bounds.x + bounds.width / 2 - r
-        y = bounds.y + bounds.height + gap - r
-        break
-      case 'up':
-        x = bounds.x + bounds.width / 2 - r
-        y = bounds.y - gap - r
-        break
-    }
+    const { x, y, r, gap } = computeCollapseButtonPos(bounds, side, collapsed)
     this.group.x = x
     this.group.y = y
 

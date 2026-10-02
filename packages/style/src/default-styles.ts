@@ -147,13 +147,13 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     lineCorner: '8pt',
     linePattern: 'solid',
     arrowEndClass: 'none',
-    // 对齐 snowbrush stableStyles: calloutTopic
-    marginLeft: '4pt',
-    marginRight: '4pt',
-    marginTop: '4pt',
-    marginBottom: '4pt',
-    spacingMajor: '22pt',
-    spacingMinor: '5pt',
+    // 对齐 snowbrush defaultStyles: calloutTopic（margin 6pt、spacing 26/8）
+    marginLeft: '6pt',
+    marginRight: '6pt',
+    marginTop: '6pt',
+    marginBottom: '6pt',
+    spacingMajor: '26pt',
+    spacingMinor: '8pt',
   },
   summaryTopic: {
     fontWeight: 'normal',
