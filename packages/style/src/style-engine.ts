@@ -88,6 +88,32 @@ const BRACE_STRUCTURE_CLASSES: readonly string[] = [
   'org.xmind.ui.brace.right',
 ]
 
+/** snowbrush DEAFULT_FONT_FAMILT */
+const DEFAULT_FONT_FAMILY_CHAIN: readonly string[] = [
+  'NeverMind',
+  'Microsoft YaHei',
+  'PingFang SC',
+  'Microsoft JhengHei',
+]
+
+/**
+ * 对齐 snowbrush mindmapstyleselector 的 fo:font-family 特殊处理：
+ * 级联出来的值不是最终值，还要拼上 CJK 回退链 + 'sans-serif'，逐项去重并加引号。
+ *
+ * 缺了这一步，主题里写的裸字体名（如 "NeverMind"，本机未安装）会让浏览器
+ * 逐字回退到系统默认字体，中日韩混排的 ASCII/数字部分宽度偏窄
+ * （实测 "范围-50～150摄氏度" 14px：裸值 123.66 vs SB 链 131.106）。
+ */
+function buildFontFamilyChain(value: string): string {
+  const parts = [value, ...DEFAULT_FONT_FAMILY_CHAIN]
+    .flatMap((v) => v.split(','))
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0 && v !== '$system$')
+    .map((v) => (v[0] === "'" || v[0] === '"' ? v : `'${v}'`))
+  parts.push('sans-serif')
+  return Array.from(new Set(parts)).join(',')
+}
+
 const LINE_CLASS_BRACE = 'org.xmind.branchConnection.brace'
 const LINE_CLASS_ROUNDED_ELBOW = 'org.xmind.branchConnection.roundedElbow'
 
@@ -390,7 +416,13 @@ export class StyleEngine {
     result = this.resolveColorVarsInStyle(result, theme.colorFieldsMap)
 
     // 规范化所有值：解析单位、处理 NaN、过滤无效值
-    return toResolvedStyle(normalizeStyleObject(result, this.defaultUnit))
+    const normalized = toResolvedStyle(normalizeStyleObject(result, this.defaultUnit))
+
+    // fontFamily 走 SB 的特殊处理：拼接 CJK 回退链（布局测宽与渲染都依赖它）
+    if (typeof normalized.fontFamily === 'string' && normalized.fontFamily.length > 0) {
+      return { ...normalized, fontFamily: buildFontFamilyChain(normalized.fontFamily) }
+    }
+    return normalized
   }
 
   /**

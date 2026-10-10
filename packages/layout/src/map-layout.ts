@@ -381,7 +381,10 @@ class MapLayout extends BaseLayout {
     forceSide: 'left' | 'right' | null = null,
   ): { width: number; height: number; boundaryBounds: BoundaryBounds } {
     const size = sizeMap.get(node.id)!
-    const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
+    // titleWidth/titleHeight 直接取测量结果：measureNode 已按主题 fontFamily/fontWeight
+    // 测过一遍，这里再用默认字体重算会和 size.width 用的值不一致（同一节点两套标题宽）
+    const titleWidth = size.titleWidth
+    const titleHeight = size.titleHeight
 
     // Leaf or collapsed: boundaryBounds = node's own size
     if (isCollapsed(node)) {
