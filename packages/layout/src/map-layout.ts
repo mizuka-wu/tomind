@@ -125,21 +125,7 @@ class MapLayout extends BaseLayout {
 
     // First pass: compute positions and localBBMap (position-independent boundaryBounds)
     const localBBMap = new Map<string, BoundaryBounds>()
-    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes, undefined, styleEngine, state, localBBMap, undefined, true)
-
-    // Convert localBBMap to absolute boundaryBoundsMap for X offset alignment
-    const boundaryBoundsMap = new Map<string, BoundaryBounds>()
-    for (const [id, bb] of localBBMap) {
-      const nl = nodes.get(id)
-      if (nl) {
-        boundaryBoundsMap.set(id, {
-          x: nl.x + bb.x,
-          y: nl.y + bb.y,
-          width: bb.width,
-          height: bb.height,
-        })
-      }
-    }
+    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes, styleEngine, state, localBBMap, undefined, true)
 
     // Derive subtreeHeightMap from localBBMap for calcOutwardDistance
     const subtreeHeightMap = new Map<string, number>()
@@ -147,9 +133,9 @@ class MapLayout extends BaseLayout {
       subtreeHeightMap.set(id, bb.height)
     }
 
-    // Second pass: with boundaryBoundsMap for X offset alignment
+    // Second pass: subtreeHeightMap 已知，calcOutwardDistance 得到最终值
     const nodes2 = new Map<string, import('./layout-engine').NodeLayout>()
-    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes2, boundaryBoundsMap, styleEngine, state, new Map(), subtreeHeightMap, true)
+    this.layoutNode(root, rootX, rootY, options, sizeMap, nodes2, styleEngine, state, new Map(), subtreeHeightMap, true)
 
     let totalWidth = 0
     let totalHeight = 0
@@ -386,7 +372,6 @@ class MapLayout extends BaseLayout {
     options: LayoutOptions,
     sizeMap: Map<string, NodeSize>,
     nodes: Map<string, import('./layout-engine').NodeLayout>,
-    boundaryBoundsMap: Map<string, BoundaryBounds> | undefined,
     styleEngine?: StyleEngine | null,
     state?: SheetState | null,
     localBBMap: Map<string, BoundaryBounds> = new Map(),
@@ -477,14 +462,14 @@ class MapLayout extends BaseLayout {
       const childX = x + size.width + spacingMajor + outwardOffsetRight
       const childY = y + size.height / 2
       // 子树方向：中央节点的右侧子树继续向右（LOGICRIGHT），左侧向左（LOGICLEFT）
-      this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, localBBMap, 'right', isMapRoot)
+      this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, node, styleEngine, state, localBBMap, 'right', isMapRoot)
     }
 
     // Layout left side: recursively lay out all left children, then position them
     if (leftChildren.length > 0) {
       const childX = x - spacingMajor - outwardOffsetLeft
       const childY = y + size.height / 2
-      this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, boundaryBoundsMap, node, styleEngine, state, localBBMap, 'left', isMapRoot)
+      this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, node, styleEngine, state, localBBMap, 'left', isMapRoot)
     }
 
     // callout 子节点：SB 用 model position（sheet 坐标，原点=中央主题中心）直接放置
@@ -532,7 +517,7 @@ class MapLayout extends BaseLayout {
    * 2. Reads children's boundaryBounds from localBBMap
    * 3. Computes positions using SB-style cumulative centering
    * 4. Shifts each subtree to its final position
-   * 5. Applies X offset alignment if boundaryBoundsMap is provided
+   * 5. Applies X offset alignment (SB getOffsetForChildBranchView)
    */
   private layoutSide(
     children: readonly NodeDesc[],
@@ -543,7 +528,6 @@ class MapLayout extends BaseLayout {
     options: LayoutOptions,
     sizeMap: Map<string, NodeSize>,
     nodes: Map<string, import('./layout-engine').NodeLayout>,
-    boundaryBoundsMap: Map<string, BoundaryBounds> | undefined,
     parent: NodeDesc,
     styleEngine?: StyleEngine | null,
     state?: SheetState | null,
@@ -569,7 +553,7 @@ class MapLayout extends BaseLayout {
 
     // Step b: Layout each child at temp Y=0 (bottom-up: recursively lays out grandchildren first)
     for (let i = 0; i < n; i++) {
-      this.layoutNode(children[i], startX, 0, options, sizeMap, nodes, boundaryBoundsMap, styleEngine, state, localBBMap, undefined, false, childForceSide)
+      this.layoutNode(children[i], startX, 0, options, sizeMap, nodes, styleEngine, state, localBBMap, undefined, false, childForceSide)
     }
 
     // Step c: Read each child's boundaryBounds from localBBMap
@@ -681,10 +665,12 @@ class MapLayout extends BaseLayout {
       if (dx !== 0 || dy !== 0) this.shiftSubtree(child, dx, dy, nodes)
     }
 
-    // Step g: X offset alignment if boundaryBoundsMap provided
-    // 对齐 snowbrush getMapOfXOffSetByBranchIndex：按子节点各自偏移，而非整侧统一 maxOffset
-    if (boundaryBoundsMap) {
-      const { offsets } = this.calcMaxOffset(children, nodes, boundaryBoundsMap, side)
+    // Step g: X offset alignment
+    // 对齐 snowbrush getMapOfXOffSetByBranchIndexFromBranchList + getOffsetForChildBranchView：
+    // xOffset 是 branch 局部量（topicView.bounds 与 boundaryBounds 同帧相减），
+    // 与绝对坐标无关；普通分支统一取同侧 max。
+    {
+      const { offsets } = this.calcSideXOffsets(children, localBBMap, sizeMap, side)
       for (let i = 0; i < n; i++) {
         const offset = offsets[i] ?? 0
         if (offset > 0) {

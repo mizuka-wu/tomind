@@ -203,42 +203,53 @@ export abstract class BaseLayout implements LayoutAlgorithm {
   // ── maxOffset 对齐 ──
 
   /**
-   * 计算同侧子节点中 boundaryBounds 与 topicView 的最大偏移量。
-   * 用于 X offset 对齐：使所有子节点的内边缘对齐。
+   * 对齐 snowbrush abstractstructure.getMapOfXOffSetByBranchIndexFromBranchList
+   * + getOffsetForChildBranchView。
+   *
+   * SB 的 xOffset 是 branch 局部量：topicView.bounds 与 boundaryBounds 在同一坐标系
+   * 相减，与绝对坐标无关：
+   *   isRight : topicView.bounds.x - boundaryBounds.x
+   *   isLeft  : boundaryBounds.x + boundaryBounds.width
+   *             - topicView.bounds.x - topicView.bounds.width
+   * TM 的 localBBMap 存的正是「相对子节点自身原点」的包围盒（子节点主题盒左上角 = 0,0），
+   * 因此直接用 localBBMap 计算，不再依赖上一趟布局的绝对坐标。
+   *
+   * ⚠️ 之前用「pass1 绝对 boundaryBounds - pass2 当前 x」计算，自由定位分支
+   * （topicPositioning=free）在 Step f 才整体平移，pass1/pass2 坐标不一致，
+   * 每层递归都会叠加一份虚假偏移（实测每层 +635px，逐层累加）。
+   *
+   * SB getOffsetForChildBranchView：
+   * - 特殊分支（matrix 主分支 / treetable 头分支）用自身 xOffset
+   * - 普通分支统一用同侧所有普通分支的 max xOffset
+   * map 布局下不存在这两类特殊分支，故全部按普通分支处理。
    *
    * @param children 子节点列表
-   * @param nodes 已布局的节点映射
-   * @param boundaryBoundsMap boundaryBounds 映射
+   * @param localBBMap 相对子节点原点的 boundaryBounds（须已由 bottom-up 递归填好）
+   * @param sizeMap 子节点尺寸（left 侧需要主题盒宽度）
    * @param side 'right' 或 'left'
-   * @returns 每个子节点的偏移量数组和最大偏移量
+   * @returns 每个子节点应叠加的偏移量数组和同侧最大值
    */
-  protected calcMaxOffset(
+  protected calcSideXOffsets(
     children: readonly NodeDesc[],
-    nodes: Map<string, NodeLayout>,
-    boundaryBoundsMap: Map<string, BoundaryBounds>,
+    localBBMap: Map<string, BoundaryBounds>,
+    sizeMap: Map<string, { width: number }>,
     side: 'right' | 'left',
   ): { offsets: number[]; maxOffset: number } {
-    const offsets: number[] = []
+    const xOffset: number[] = children.map((child) => {
+      const bb = localBBMap.get(child.id)
+      if (!bb) return 0
+      const raw = side === 'right'
+        // 右侧：boundary 向左延伸的距离
+        ? -bb.x
+        // 左侧：boundary 向右延伸的距离
+        : bb.x + bb.width - (sizeMap.get(child.id)?.width ?? 0)
+      return Math.max(0, raw)
+    })
+
     let maxOffset = 0
+    for (const o of xOffset) maxOffset = Math.max(maxOffset, o)
 
-    for (const child of children) {
-      const nl = nodes.get(child.id)
-      const bb = boundaryBoundsMap.get(child.id)
-      if (!nl || !bb) { offsets.push(0); continue }
-
-      let offset: number
-      if (side === 'right') {
-        // 右侧子节点：boundary 向左延伸的距离
-        offset = nl.x - bb.x
-      } else {
-        // 左侧子节点：boundary 向右延伸的距离
-        offset = (bb.x + bb.width) - (nl.x + nl.width)
-      }
-      offsets.push(Math.max(0, offset))
-      maxOffset = Math.max(maxOffset, Math.max(0, offset))
-    }
-
-    return { offsets, maxOffset }
+    return { offsets: xOffset.map(() => maxOffset), maxOffset }
   }
 
   // ── boundaryBounds 计算 ──
