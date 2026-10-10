@@ -11,7 +11,7 @@ import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
-import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
+import { isCollapsed, getAttachedChildren, findRootTopic, getAttr, getEffectiveStructureClass } from './layout-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 
@@ -24,6 +24,24 @@ const OUTWARD_K = 0.15
 const OUTWARD_MIN = 400
 const OUTWARD_MAX = 800
 const NON_OUTWARD_LINE_CLASSES = ['elbow']
+
+/**
+ * snowbrush MAP_LIKE_STRUCTURES + LOGIC_CHART_STRUCTURES + ORG_CHART_STRUCTURES。
+ * calcOutwardDistanceByAttachedChildren 只在这三类结构下生效。
+ */
+const OUTWARD_STRUCTURE_CLASSES: readonly string[] = [
+  'org.xmind.ui.map',
+  'org.xmind.ui.map.unbalanced',
+  'org.xmind.ui.map.anticlockwise',
+  'org.xmind.ui.map.clockwise',
+  'org.xmind.ui.map.floating',
+  'org.xmind.ui.map.floating.clockwise',
+  'org.xmind.ui.map.floating.anticlockwise',
+  'org.xmind.ui.logic.left',
+  'org.xmind.ui.logic.right',
+  'org.xmind.ui.org-chart.up',
+  'org.xmind.ui.org-chart.down',
+]
 
 function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value
@@ -176,7 +194,18 @@ function usesOutwardOffset(node: NodeDesc, styleEngine: StyleEngine | null, stat
   const s = typeof v === 'string' ? v : ''
   // snowbrush calcOutwardDistanceByAttachedChildren 仅 map/logic/org 结构生效；brace 不外扩
   if (s.includes('brace')) return false
-  return !NON_OUTWARD_LINE_CLASSES.some(c => s.includes(c))
+  if (!NON_OUTWARD_LINE_CLASSES.some(c => s.includes(c))) {
+    // 结构类不在白名单里也不外扩：SB 判据是 parentBranch.getStructureClass()，
+    // 与走哪个布局算法无关。例如 legacy 'org.xmind.ui.fishbone.left' 在 SB 里
+    // 回退成 logic 布局，但结构类不属于这三类 → outward=0；
+    // TM 之前只看 lineClass，多算了 60px（root 12 个子节点 → 0.15*(800-400)）。
+    if (state) {
+      const sc = getEffectiveStructureClass(state.doc, node)
+      if (sc !== null && !OUTWARD_STRUCTURE_CLASSES.includes(sc)) return false
+    }
+    return true
+  }
+  return false
 }
 
 function calcOutwardDistance(

@@ -4,6 +4,7 @@
  */
 import type { NodeDesc } from '@tomind/schema'
 import type { StyleEngine } from '@tomind/style'
+import { classifyNode } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutOptions } from './layout-engine'
 import { measureTextSize } from './layout-engine'
@@ -25,6 +26,22 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 /** 类型安全的 attrs 访问器 */
 export function getAttr<T>(node: NodeDesc, key: string): T | undefined {
   return node.attrs[key] as T | undefined
+}
+
+/**
+ * 解析节点的生效 structureClass —— 对齐 snowbrush branchView.getStructureClass()：
+ * 自身 attrs.structureClass 优先；否则按 sheet 的 skeleton structure style
+ * （extensions provider=org.xmind.ui.skeleton.structure.style）按角色取值，
+ * subTopic 缺省时回落 mainTopic。都拿不到返回 null。
+ */
+export function getEffectiveStructureClass(doc: NodeDesc, node: NodeDesc): string | null {
+  const own = getAttr<unknown>(node, 'structureClass')
+  if (typeof own === 'string' && own) return own
+  const sk = getAttr<Record<string, unknown>>(doc, 'skeletonStructure')
+  if (!sk) return null
+  const role = classifyNode(doc, node.id)
+  const sc = sk[role] ?? sk.mainTopic
+  return typeof sc === 'string' && sc ? sc : null
 }
 
 /** 类型安全的 style 属性访问器 */
