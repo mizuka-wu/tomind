@@ -96,16 +96,24 @@ export const matrixLayoutAlgorithm: LayoutAlgorithm = {
       }
     }
 
-    // cell 内嵌套子结构：把委派子树平移到 cell 内 topic 位置（SB getAbsPos = pos + itemPos - bounds）
+    // cell 内嵌套子结构
+    //
+    // SB matrixcreateutils.createCell(CHILD_CELL) 的 item 是 branchView（HEAD_CELL/MAIN_CELL
+    // 才是 topicView），所以 cell 的 minSize / getAbsPos 针对的是**整棵子树的 bounds**：
+    //   getAbsPos = cellPos + itemPos - bounds{x,y}  →  子树包围盒左上角
+    // 主题盒要在子树包围盒内居中，而不是贴着包围盒左上角。
+    //委派子树的 provisional 坐标里主题盒左上角 = (0,0)，bb{X,Y} 相对主题盒中心，
+    // 故 topicCenter = subtreeTopLeft - bb{X,Y}，topicTopLeft = topicCenter - topicSize/2。
     for (const del of delegations) {
       const placed = nodes.get(del.id)
       if (!placed) continue
-      // topic 左上角 = placed；provisional 里 topic 左上角 = (0, -h/2)
-      const dx = placed.x
-      const dy = placed.y + del.topicH / 2
+      const topicLeft = placed.x - del.bbX - del.topicW / 2
+      const topicTop = placed.y - del.bbY - del.topicH / 2
+      placed.x = topicLeft
+      placed.y = topicTop
       for (const [id, nl] of del.nodes) {
         if (id === del.id) continue
-        nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy })
+        nodes.set(id, { ...nl, x: nl.x + topicLeft, y: nl.y + topicTop })
       }
     }
 
@@ -178,6 +186,7 @@ export interface MatrixDelegation {
   bbX: number
   bbY: number
   cell: MatrixCell
+  topicW: number
   topicH: number
 }
 
@@ -198,7 +207,7 @@ function createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: 
           if (del) {
             const own = del.nodes.get(item.id)!
             minSize = { width: del.bb.width, height: del.bb.height }
-            delegations.push({ id: item.id, nodes: del.nodes, bbX: del.bb.x, bbY: del.bb.y, cell: null as any, topicH: own.height })
+            delegations.push({ id: item.id, nodes: del.nodes, bbX: del.bb.x, bbY: del.bb.y, cell: null as any, topicW: own.width, topicH: own.height })
           } else {
             minSize = measureMinSize(item, options, styleEngine, state)
           }
