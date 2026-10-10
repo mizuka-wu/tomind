@@ -79,11 +79,38 @@ const TREETABLE_STRUCTURE_CLASSES: readonly string[] = [
   'org.xmind.ui.treetable.toptitle',
 ]
 
+/** snowbrush BRACE_BRANCH_CONNECTION（normalizeClassName 后的短名） */
+const BRACE_LINE_CLASSES: readonly string[] = ['brace', 'brace2', 'brace3', 'brace4', 'brace5']
+
+/** snowbrush STRUCTURECLASS.BRACELEFT / BRACERIGHT */
+const BRACE_STRUCTURE_CLASSES: readonly string[] = [
+  'org.xmind.ui.brace.left',
+  'org.xmind.ui.brace.right',
+]
+
+const LINE_CLASS_BRACE = 'org.xmind.branchConnection.brace'
+const LINE_CLASS_ROUNDED_ELBOW = 'org.xmind.branchConnection.roundedElbow'
+
 function structureClassOf(doc: NodeDesc, topicId: string): string | undefined {
   const node = findById(doc, topicId)
   if (!node) return undefined
   const sc = getAttr<unknown>(node.attrs, 'structureClass')
   return typeof sc === 'string' ? sc : undefined
+}
+
+/**
+ * 解析节点的生效 structureClass：
+ * 自身 attrs.structureClass 优先，否则按 skeleton structure style
+ * （centralTopic / mainTopic / subTopic）推导 —— 对齐 SB branchView.getStructureClass()。
+ */
+function resolveStructureClass(doc: NodeDesc, topicId: string, depth: number): string | null {
+  const own = structureClassOf(doc, topicId)
+  if (own) return own
+  const sk = getAttr<Record<string, unknown>>(doc.attrs ?? {}, 'skeletonStructure')
+  if (!sk) return null
+  const role = depth === 0 ? 'centralTopic' : depth === 1 ? 'mainTopic' : 'subTopic'
+  const sc = sk[role] ?? sk.mainTopic
+  return typeof sc === 'string' && sc ? sc : null
 }
 
 /**
@@ -323,6 +350,26 @@ export class StyleEngine {
 
     // 最终清理：处理 User 层可能引入的 inherit/initial 值
     result = this.resolveSpecialValues(result, state, topicId, options)
+
+    // 层 0: Structure Override（对齐 snowbrush structureDescriptor[STYLE_LAYER.BEFORE_USER]）
+    // brace 结构强制用 brace 连接线；反过来，brace 连接线只能出现在 brace 结构里，
+    // 否则回落 roundedElbow。该层优先级最高（SB BEFORE_USER 在 user style 之前命中）。
+    // 布局侧依赖它：logic/brace 的 calcSpacingMajor 只对 curve/straight/fold/bight 翻倍，
+    // brace 线不翻倍（brace-right 中央分支 spacingMajor = 50 + 16 = 66，而非 50*2 + 16）。
+    if (!options.ignoreUser) {
+      const lineClass = result.lineClass
+      if (typeof lineClass === 'string') {
+        const sc = resolveStructureClass(state.doc, topicId, getDepthFromDoc(state, topicId))
+        const isBraceStructure = sc !== null && BRACE_STRUCTURE_CLASSES.includes(sc)
+        // 主题里可能是完整 URI，DEFAULT_STYLES 里是短名，统一归一化后比较
+        const isBraceLine = BRACE_LINE_CLASSES.includes(normalizeClassName(lineClass) ?? lineClass)
+        if (isBraceStructure && !isBraceLine) {
+          result = { ...result, lineClass: LINE_CLASS_BRACE }
+        } else if (!isBraceStructure && isBraceLine) {
+          result = { ...result, lineClass: LINE_CLASS_ROUNDED_ELBOW }
+        }
+      }
+    }
 
     // borderColor 回退到 lineColor
     if ((!result.borderColor || result.borderColor === 'none') && result.lineColor) {
