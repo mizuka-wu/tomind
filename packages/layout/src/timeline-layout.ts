@@ -150,11 +150,19 @@ function layoutTimelineBranch(
 
   // snowbrush: childrenX = 2*newBounds.x + newBounds.width + PADDING（中心坐标下即 PADDING）
   const gcCenterX = centerX + PAD
+  // SB 两个方向的「父盒 → 子列」间距口径不同，别混用：
+  //   timelinehorizontalup.calAttachedChildrenPos:
+  //     childrenY = newBounds.y - LINECOLPOS - lineCorner - childrenSize.height - ext
+  //   timelinehorizontaldown.calAttachedChildrenPos:
+  //     childrenY = newBounds.y + newBounds.height + PADDING + ext
+  // PADDING = getTopicSpacing = spacingMajor * 20 / defaultSpacingMajor（本 fixture = 20），
+  // 而 LINECOLPOS + lineCorner = 13 + 8 = 21 —— 之前 down 也用了 21，
+  // 导致下侧分支整棵子树低 1px（timeline-horizontal avgΔY 0.5）。
   let bbTop: number
   if (dir === 'up') {
     bbTop = top - LINECOLPOS - lineCorner - childrenH - ext
   } else {
-    bbTop = bottom + LINECOLPOS + lineCorner + ext
+    bbTop = bottom + PAD + ext
   }
   let cum = bbTop
   for (const p of provs) {
@@ -167,7 +175,11 @@ function layoutTimelineBranch(
   }
 
   const bbY = dir === 'up' ? bbTop - centerY : -h / 2
-  const bbH = h + LINECOLPOS + lineCorner + childrenH + ext
+  // SB down: newBounds.height = maxBottom - newBounds.y + ext = h + PADDING + childrenH + 2*ext
+  // SB up:   newBounds.height += childrenSize.height + LINECOLPOS + lineCorner + ext
+  const bbH = dir === 'up'
+    ? h + LINECOLPOS + lineCorner + childrenH + ext
+    : h + PAD + childrenH + 2 * ext
   const bbW = w / 2 + PAD + childrenW
   return { x: -w / 2, y: bbY, width: bbW, height: bbH }
 }
