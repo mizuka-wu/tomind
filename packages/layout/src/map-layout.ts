@@ -584,6 +584,11 @@ class MapLayout extends BaseLayout {
 
     // Step e: 子节点中心相对父节点中心的 Y —— 移植 snowbrush 公式
     const centers: number[] = []
+    // SB isNeedRedolayout 的 childrenSize 两套结构口径不同，各自算好：
+    //   basemap.calSidePos        → Σ(bbH + spacingMinor) - spacingMinor
+    //   logicleftandright         → 循环后的 currentChildY - spacingMinor - lineWidth
+    //                               = childrenY + totalH（含起点，通常约为 totalH/2）
+    let realignChildrenHeight = 0
     if (isMapRoot) {
       // snowbrush basemap.calSidePos（仅中央分支）
       const minTopBottomSpacing = 80
@@ -608,6 +613,7 @@ class MapLayout extends BaseLayout {
       }
       const parentPosRelativeToFirstChild = (yPos[0] + yPos[n - 1]) / 2
       for (let i = 0; i < n; i++) centers.push(yPos[i] - parentPosRelativeToFirstChild)
+      realignChildrenHeight = spans.reduce((a, b, i) => a + b + (i < n - 1 ? spacingMinor : 0), 0)
     } else {
       // snowbrush logicleftandright.calAttachedChildrenPos（非中央层级）
       const ms = spacingMinor + this.getParentBorderWidth(parent, styleEngine ?? null, state ?? null)
@@ -618,13 +624,12 @@ class MapLayout extends BaseLayout {
         centers.push(cum - bbYc[i])
         cum += spans[i] + ms
       }
+      realignChildrenHeight = childrenY + totalH
     }
 
-    // Step e2: posYoffsetToClosestChild 重对齐（两种结构共用）
+    // Step e2: posYoffsetToClosestChild 重对齐（两种结构共用，阈值口径按结构区分）
     let realignOffset = 0
-    let childrenHeight = 0
-    for (let i = 0; i < n; i++) childrenHeight += spans[i] + (i < n - 1 ? spacingMinor : 0)
-    const maxRealignOffset = Math.min(MAX_BRANCH_POSITION_REALIGN_OFFSET, childrenHeight * BRANCH_POSITION_REALIGN_RATIO)
+    const maxRealignOffset = Math.min(MAX_BRANCH_POSITION_REALIGN_OFFSET, realignChildrenHeight * BRANCH_POSITION_REALIGN_RATIO)
     if (n >= 3) {
       let offset = centers[0]
       for (const c of centers) if (Math.abs(c) < Math.abs(offset)) offset = c
