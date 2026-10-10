@@ -430,9 +430,14 @@ function layoutSubtree(
       const center = cum - pv.bbY
       const desiredTop = center - pv.h / 2
       const childW = pv.nodes.get(child.id)!.width
+      // SB treeleftandright: childBranch.setPosition(posX, …) 的 posX 是相对**父分支原点
+      // （= 主题盒中心）**的偏移，posX = childrenX - topicView.bounds.x + maxOffset，
+      // 故子主题盒左边缘 = 父中心 + childrenX（右侧）/ 父中心 - childrenX - 子宽（左侧）。
+      // 之前按父主题盒右边缘起算，整棵子树多偏移了 父宽/2（root 208 → 偏 104px）。
+      const parentCenterX = x + size.width / 2
       const childX = direction === 'right'
-        ? x + size.width + childrenXOffset
-        : x - childrenXOffset - childW
+        ? parentCenterX + childrenXOffset
+        : parentCenterX - childrenXOffset - childW
       const dx = childX - pv.left
       const dy = desiredTop - pv.top
       for (const [id, nl] of pv.nodes) {
