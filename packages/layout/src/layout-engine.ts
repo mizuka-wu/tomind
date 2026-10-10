@@ -145,6 +145,15 @@ function wrapTextLines(
   return out
 }
 
+/**
+ * 测量文本尺寸。
+ *
+ * @param ceilWidth 是否对宽度向上取整（默认 true）。
+ *   SB 的 titleView 文本宽是取整的（如 124.567 → topicBounds 用 125），
+ *   但 numberingView.bounds.width 保留小数（如 "10.1.1.1" → 51.16015625），
+ *   topicBounds.width = ceil(titleWidth) + numberingWidth + spacing + margin，
+ *   所以编号宽度必须以 ceilWidth=false 测量。
+ */
 export function measureTextSize(
   text: string,
   fontSize: number,
@@ -152,7 +161,9 @@ export function measureTextSize(
   fontFamily: string = options.fontFamily ?? SNOWBRUSH_FONT_FAMILY,
   fontWeight: string | number = options.fontWeight ?? 'normal',
   fontStyle: string = 'normal',
+  ceilWidth: boolean = true,
 ): { width: number; height: number } {
+  const roundW = (w: number) => (ceilWidth ? Math.ceil(w) : w)
   if (!text) return { width: 0, height: 0 }
 
   const preFontSize = fontSize
@@ -179,7 +190,7 @@ export function measureTextSize(
     const width = Math.max(...widthArr) * ratio
     const height = wrappedLines.length * Math.floor(preFontSize * (options.lineHeight || 1.34))
 
-    return { width: Math.ceil(width), height: Math.ceil(height) }
+    return { width: roundW(width), height: Math.ceil(height) }
   }
 
   const ctx = getCanvasContext()
@@ -197,7 +208,7 @@ export function measureTextSize(
     const width = Math.max(...widthArr) * ratio
     const height = wrappedLines.length * Math.floor(preFontSize * (options.lineHeight || 1.34))
 
-    return { width: Math.ceil(width), height: Math.ceil(height) }
+    return { width: roundW(width), height: Math.ceil(height) }
   }
 
   const charWidth = preFontSize * options.charWidthFactor
@@ -208,5 +219,5 @@ export function measureTextSize(
   const width = Math.max(...lineWidths)
   const height = wrappedLines.length * Math.floor(preFontSize * (options.lineHeight || 1.34))
 
-  return { width: Math.ceil(width), height: Math.ceil(height) }
+  return { width: roundW(width), height: Math.ceil(height) }
 }

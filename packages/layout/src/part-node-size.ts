@@ -151,8 +151,11 @@ export function measureTitleOnlyNode(
     try {
       const ls = styleEngine.getLeaferStyle(state, node.id) as { numberingText?: string }
       if (ls?.numberingText) {
-        // 对齐 SB innerGroup horizontalSpacing = 10
-        extraW = measureTextSize(ls.numberingText, fontSize, options, fontFamily, fontWeight, fontStyle).width + 10
+        // 对齐 SB：topicBounds.width = ceil(titleWidth) + numberingView.bounds.width
+        //   + innerGroup horizontalSpacing(10) + marginLeft + marginRight
+        // 其中 numberingView.bounds.width 是小数（探针实测 "10.1.1.1" = 51.16015625），
+        // 取整会让每个带编号的主题宽 1px，在左向分支上逐层放大成 2px 位移。
+        extraW = measureTextSize(ls.numberingText, fontSize, options, fontFamily, fontWeight, fontStyle, false).width + 10
       }
     } catch {
       // plugin 未注册时忽略
