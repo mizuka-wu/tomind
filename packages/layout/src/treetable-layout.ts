@@ -58,7 +58,9 @@ function normalizeMargin(
   const defaultValue = parseStyleValue(defaultRaw, 0)
   if (defaultValue <= 0) return rawValue
   const preset = (key === "marginLeft" || key === "marginRight") ? presetH : presetV
-  return Math.round((rawValue * preset) / defaultValue)
+  // SB getPadding 直接相除不取整：mainTopic 在 treetable 下 margin 被覆盖为 subTopic 的 6pt，
+  // (6 * 10) / 18 = 3.333…，取整会丢掉小数并让整列错位（实测每列 0.667px）
+  return (rawValue * preset) / defaultValue
 }
 
 

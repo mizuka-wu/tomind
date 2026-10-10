@@ -33,6 +33,7 @@
  */
 
 import type { SheetState } from '@tomind/state'
+import type { NodeDesc } from '@tomind/schema'
 import { numberingKey } from '@tomind/state'
 import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue, LeaferStyle } from './style-types'
 import { isThemeClassEntry, resolveColorVariables } from './style-types'
@@ -70,6 +71,32 @@ function toResolvedStyle(value: unknown): ResolvedStyle {
 function getAttr<T>(attrs: Readonly<Record<string, unknown>>, key: string): T | undefined {
   const val = attrs[key]
   return val !== undefined ? val as T : undefined
+}
+
+/** snowbrush TREE_TABLE_GROUP_LIST */
+const TREETABLE_STRUCTURE_CLASSES: readonly string[] = [
+  'org.xmind.ui.treetable',
+  'org.xmind.ui.treetable.toptitle',
+]
+
+function structureClassOf(doc: NodeDesc, topicId: string): string | undefined {
+  const node = findById(doc, topicId)
+  if (!node) return undefined
+  const sc = getAttr<unknown>(node.attrs, 'structureClass')
+  return typeof sc === 'string' ? sc : undefined
+}
+
+/**
+ * 对齐 snowbrush js_utils.isTreeTableCell：
+ * 自身结构属于 treetable 组，或直接父级属于 treetable 组（SB 只向上看一层）。
+ */
+function isTreeTableCellNode(doc: NodeDesc, topicId: string): boolean {
+  const own = structureClassOf(doc, topicId)
+  if (own && TREETABLE_STRUCTURE_CLASSES.includes(own)) return true
+  const parentId = getParentId(doc, topicId)
+  if (!parentId) return false
+  const parentSc = structureClassOf(doc, parentId)
+  return parentSc !== undefined && TREETABLE_STRUCTURE_CLASSES.includes(parentSc)
 }
 
 /**
@@ -228,6 +255,19 @@ export class StyleEngine {
         }
       }
 
+    }
+
+    // 层 5.5: Structure Override
+    // 对齐 snowbrush modules/overridedstyle/structuredescriptor.beforeTheme：
+    // treetable 单元格里的 mainTopic，margin-left/right 改用 subTopic 的值
+    // （主题优先，回退 default 6pt）；margin-top/bottom 不覆盖（仍为 mainTopic 的 10pt）。
+    // 该层优先级高于主题/默认，低于 sheet/userClass/user style（SB beforeTheme 语义）。
+    if (!options.ignoreTheme && nodeType === 'mainTopic' && isTreeTableCellNode(state.doc, topicId)) {
+      const subStyle = this.getClassStyle(theme, 'subTopic')
+      const subLeft = subStyle?.marginLeft ?? getDefaultStyle('subTopic', 'marginLeft')
+      const subRight = subStyle?.marginRight ?? getDefaultStyle('subTopic', 'marginRight')
+      if (subLeft !== undefined) result = { ...result, marginLeft: subLeft }
+      if (subRight !== undefined) result = { ...result, marginRight: subRight }
     }
 
     // 层 4.5: Layout Mode（布局模式覆盖，如 compact/loose）
