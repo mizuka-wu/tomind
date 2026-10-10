@@ -227,12 +227,16 @@ function getOrgSpacingMajor(
   styleEngine: StyleEngine | null,
   state: SheetState | null,
 ): number {
-  const spacing = getNodeSpacing(node, options, styleEngine, state, 'vertical')
+  // SB orgchartupanddown.calcSpacingMajor → AbstractStructure.calcSpacingMajor 读的是
+  // branchView.figure.majorSpacing（style 的 spacing-major），与排列轴无关。
+  // 之前传 majorAxis='vertical' 再取 .horizontalGap，拿到的是 spacing-minor（35 而非 50），
+  // 翻倍后 70 vs SB 100，整棵子树上移 30px。
+  const spacing = getNodeSpacing(node, options, styleEngine, state)
   let gap = spacing.horizontalGap
   if (styleEngine && state) {
     const lc = String(styleEngine.getStyleValue(state, node.id, 'lineClass') ?? '')
     // snowbrush orgchartupanddown.calcSpacingMajor: curve/straight/fold/roundedFold/bight ×2
-    if (['curve', 'straight', 'fold', 'bight'].some((c) => lc.includes(c))) gap *= 2
+    if (['curve', 'straight', 'fold', 'roundedfold', 'bight'].some((c) => lc.toLowerCase().includes(c))) gap *= 2
     const arrow = String(styleEngine.getStyleValue(state, node.id, 'arrowEndClass') ?? '')
     if (arrow && !arrow.includes('none')) {
       const lw = parseStyleValue(styleEngine.getStyleValue(state, node.id, 'lineWidth'), 0)
@@ -342,7 +346,11 @@ function layoutSubtreeDown(
   }
 
   // Y：childrenY = parentBottom + spacingMajor；每个子节点再 + maxOffset + outward
-  const maxOffset = Math.max(...provs.map((p) => -p.bbY))
+  // SB: maxOffset = max(child.topicView.bounds.y - child.boundaryBounds.y)
+  //   topicView.bounds.y = -topicHeight/2（主题盒相对分支原点居中），bbY 相对主题盒中心，
+  //   即 maxOffset = max(-h/2 - bbY) = 「子树顶边到主题盒顶边的最大距离」。
+  // 之前漏了 -h/2 项，多算 22px（本 fixture 子节点高 44）。
+  const maxOffset = Math.max(...provs.map((p) => -p.own.height / 2 - p.bbY))
   const outward = calcOrgOutward(provs, lineClass)
   const childrenY = y + size.height + spacingMajor + maxOffset + outward
 
