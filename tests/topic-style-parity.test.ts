@@ -162,6 +162,31 @@ describe('matrix / treetable 私有 shape-class（SB privateStyleDescriptor BEFO
   })
 })
 
+describe('callout 主题（SB className = calloutTopic + protectedHandleKey）', () => {
+  const doc = node('root', 'root', { title: 'R' }, {
+    attached: [node('m', 'topic', { title: 'M' })],
+    callout: [node('co', 'topic', { title: 'CO' })],
+  })
+  const state = buildState(doc)
+  const engine = new StyleEngine()
+
+  it('children.callout 槽里的节点按 calloutTopic 取样式（不是 subTopic）', () => {
+    // SB getSuggestedClassName：isCalloutBranch → CLASS_TYPE.CALLOUT_TOPIC
+    const style = engine.computeStyle(state, 'co')
+    expect(style.shapeCorner).toBe('5pt')      // SB defaultstyles.CALLOUT_TOPIC
+    expect(style.fillColor).toBe('#333333')
+    expect(style.marginLeft).toBe(6) // normalizeStyleObject 会把 margin 的 pt 剥成数字
+  })
+
+  it('shape-class 被改写成 callout-shape-class（SB protectedHandleKey）', () => {
+    const style = engine.computeStyle(state, 'co')
+    expect(style.calloutShapeClass).toBe('org.xmind.calloutTopicShape.balloon.roundedRect')
+    expect(style.shapeClass).toBe('org.xmind.calloutTopicShape.balloon.roundedRect')
+    // 渲染层归一化后落到默认 roundedRect 分支（SB getTopicShape 对未注册的 callout 形状同样回退）
+    expect(engine.getLeaferStyle(state, 'co').shapeClass).toBe('balloon.roundedRect')
+  })
+})
+
 describe('shape 盒（SB topicView.shapeBounds）', () => {
   const base: NodeLayout = {
     x: 10, y: 20, width: 100, height: 54,

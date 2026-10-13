@@ -455,6 +455,15 @@ export class StyleEngine {
       }
     }
 
+    // 层 0.6: callout 主题的 shape-class（对齐 SB topicstyleselector.protectedHandleKey：
+    // className === calloutTopic 时，读取 shape-class 会被改写成 callout-shape-class）
+    if (nodeType === 'calloutTopic') {
+      const calloutShape = result.calloutShapeClass ?? getDefaultStyle('calloutTopic', 'calloutShapeClass')
+      if (typeof calloutShape === 'string' && calloutShape) {
+        result = { ...result, shapeClass: calloutShape }
+      }
+    }
+
     // 层 0.5: Private Shape（对齐 SB privateStyleDescriptor[STYLE_LAYER.BEFORE_USER]）
     // matrix 单元格 → matrixMain、treetable 单元格 → treetable.main。
     // 两者在 SB 里都是 NoBorderTopicShape：不画边框、方角填充

@@ -43,6 +43,23 @@ export function classifyNode(
   if (topicType === 'callout') return 'calloutTopic'
   if (topicType === 'summary') return 'summaryTopic'
 
+  // 槽位判定（对齐 SB isCalloutBranch / isDetachedBranch：看的是父分支的 children 槽，
+  // 不是模型属性）。xmind 解析出来的 callout 子节点只有 id/title/position，
+  // 没有 topicType，缺了这一步 callout 会被当成 subTopic：
+  // 主题取错类（calloutTopic 的 shape-corner 5pt / callout-shape-class 全丢），
+  // shape-class 也不会被改写成 callout-shape-class（SB protectedHandleKey）。
+  const parentId = getParentId(doc, nodeId)
+  if (parentId) {
+    const parent = findById(doc, parentId)
+    if (parent) {
+      const inSlot = (slot: string): boolean =>
+        (parent.children[slot] ?? []).some((child) => child.id === nodeId)
+      if (inSlot('callout')) return 'calloutTopic'
+      if (inSlot('detached')) return 'floatingTopic'
+      if (inSlot('summary')) return 'summaryTopic'
+    }
+  }
+
   const depth = getDepth(doc, nodeId)
   if (depth <= 0) return 'centralTopic'
   if (depth === 1) return 'mainTopic'

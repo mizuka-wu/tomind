@@ -134,9 +134,11 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     fontSize: '14pt',
     textDecoration: 'none',
     textTransform: 'manual',
-    shapeClass: 'callout',
-    shapeCorner: '8pt',
-    fillColor: '#FF6B35',
+    // SB defaultstyles.CALLOUT_TOPIC：不定义 shape-class（读取时被改写成 callout-shape-class），
+    // shape-corner 5pt、svg:fill #333333
+    calloutShapeClass: 'org.xmind.calloutTopicShape.balloon.roundedRect',
+    shapeCorner: '5pt',
+    fillColor: '#333333',
     fillPattern: 'solid',
     lineClass: 'curve',
     lineColor: '#333333',

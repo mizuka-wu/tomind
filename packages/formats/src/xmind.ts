@@ -128,7 +128,38 @@ const XMIND_PROP_MAP: Record<string, string> = {
   'shape-class': 'shapeClass',
   'shape-corner': 'shapeCorner',
   'arrow-end-class': 'arrowEndClass',
+  'arrow-begin-class': 'arrowBeginClass',
   'multi-line-colors': 'multiLineColors',
+  // callout 家族（SB STYLE_KEYS.CALLOUT_*）：漏映射会让主题里的 callout-shape-class
+  // 以原始 kebab 键留在 theme properties 里，StyleEngine 永远读不到 calloutShapeClass
+  'callout-shape-class': 'calloutShapeClass',
+  'callout-fill-color': 'calloutFillColor',
+  'callout-line-color': 'calloutLineColor',
+  'callout-line-class': 'calloutLineClass',
+  'callout-line-corner': 'calloutLineCorner',
+  'callout-line-pattern': 'calloutLinePattern',
+  'callout-line-width': 'calloutLineWidth',
+  // 其余 SB STYLE_KEYS（此前全部以原始键透传，StyleEngine 读不到）
+  'line-tapered': 'lineTapered',
+  'svg:opacity': 'opacity',
+  'fo:background-color': 'textBackgroundColor',
+  'fo:text-bullet': 'textBullet',
+  'fo:margin-left': 'marginLeft',
+  'fo:margin-right': 'marginRight',
+  'fo:margin-top': 'marginTop',
+  'fo:margin-bottom': 'marginBottom',
+  'spacing-major': 'spacingMajor',
+  'spacing-minor': 'spacingMinor',
+  'structure-class': 'structureClass',
+  'alignment-by-level': 'alignmentByLevel',
+  'color-list': 'colorList',
+  'color-gradient': 'gradientColor',
+  'fill-gradient': 'fillGradient',
+  'border-gradient': 'borderGradient',
+  'cjk-font-family': 'cjkFontFamily',
+  'allow-overlap': 'allowOverlap',
+  'allow-free-position': 'allowFreePosition',
+  'background': 'background',
 }
 
 /** 将 XMind 属性对象转为 camelCase（供 style engine / view 层调用） */
