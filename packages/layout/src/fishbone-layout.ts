@@ -91,6 +91,12 @@ function getNodeSpacing(
 interface NodeSize {
   width: number
   height: number
+  /**
+   * 主题盒原点（SB branch position = **shape 中心**）到盒顶的距离 = shapeHeight/2。
+   * SB 的 topicView.bounds.y / boundaryBounds.y 都以原点为参考（bounds.y = -originY），
+   * 有 labels 时 height > shapeHeight，原点不在盒中心。
+   */
+  originY: number
   titleWidth: number
   titleHeight: number
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
@@ -108,6 +114,7 @@ function measureNodeSize(
     return {
       width: result.width,
       height: result.height,
+      originY: result.shapeHeight / 2,
       titleWidth: result.titleWidth,
       titleHeight: result.titleHeight,
       partBounds: result.partBounds,
@@ -118,6 +125,7 @@ function measureNodeSize(
   return {
     width: result.width,
     height: result.height,
+    originY: result.shapeHeight / 2,
     titleWidth: result.titleWidth,
     titleHeight: result.titleHeight,
     partBounds: result.partBounds,
@@ -221,11 +229,12 @@ function layoutBone(
   const h = size.height
   const w = size.width
   const out = new Map<string, FBNode>()
-  out.set(bone.id, { x: left, y: centerY - h / 2, width: w, height: h, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight: h, partBounds: size.partBounds })
+  // centerY 是骨的主题盒原点（shape 中心），盒顶 = 原点 - originY
+  out.set(bone.id, { x: left, y: centerY - size.originY, width: w, height: h, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight: h, partBounds: size.partBounds })
 
   const children = isCollapsed(bone) ? [] : getAttachedChildren(bone)
   if (children.length === 0) {
-    return { nodes: out, bb: { x: -w / 2, y: -h / 2, width: w, height: h } }
+    return { nodes: out, bb: { x: -w / 2, y: -size.originY, width: w, height: h } }
   }
 
   const boneCenterX = left + w / 2
@@ -248,8 +257,8 @@ function layoutBone(
     } else {
       const cs = sizeMap.get(child.id)!
       provNodes = new Map<string, FBNode>()
-      provNodes.set(child.id, { x: 0, y: -cs.height / 2, width: cs.width, height: cs.height, titleWidth: cs.titleWidth, titleHeight: cs.titleHeight, branchHeight: cs.height })
-      bb = { x: -cs.width / 2, y: -cs.height / 2, width: cs.width, height: cs.height }
+      provNodes.set(child.id, { x: 0, y: -cs.originY, width: cs.width, height: cs.height, titleWidth: cs.titleWidth, titleHeight: cs.titleHeight, branchHeight: cs.height })
+      bb = { x: -cs.width / 2, y: -cs.originY, width: cs.width, height: cs.height }
     }
     const childXToBase = dirSign === 1 ? Math.abs(bb.x) : -(bb.width + bb.x)
     const childX = baseX + childXToBase
@@ -259,7 +268,8 @@ function layoutBone(
     // 子节点中心目标 = 骨中心 + (childX, childY)；provisional 中心 = (own.x + w/2, own.y + h/2)
     const own = provNodes.get(child.id)!
     const ddx = boneCenterX + childX - (own.x + own.width / 2)
-    const ddy = centerY + childY - (own.y + own.height / 2)
+    // 目标位置是子分支**原点**：盒顶 = 原点 - originY
+    const ddy = centerY + childY - (own.y + sizeMap.get(child.id)!.originY)
     void dx
     for (const [id, nl] of provNodes) {
       out.set(id, { ...nl, x: nl.x + ddx, y: nl.y + ddy })
@@ -341,13 +351,13 @@ function layoutHead(
         baseX = Math.min(topPos.x + topProv.bb.x, bottomPos.x + bottomProv.bb.x) - bonePadH
       }
       const bdx = headCenterX + bottomPos.x - (bottomProv.nodes.get(bottom.id)!.x + bottomProv.nodes.get(bottom.id)!.width / 2)
-      const bdy = centerY + bottomPos.y - (bottomProv.nodes.get(bottom.id)!.y + bottomProv.nodes.get(bottom.id)!.height / 2)
+      const bdy = centerY + bottomPos.y - (bottomProv.nodes.get(bottom.id)!.y + bottomSize.originY)
       for (const [id, nl] of bottomProv.nodes) {
         nodes.set(id, { ...nl, x: nl.x + bdx, y: nl.y + bdy })
       }
     }
     const tdx = headCenterX + topPos.x - (topProv.nodes.get(top.id)!.x + topProv.nodes.get(top.id)!.width / 2)
-    const tdy = centerY + topPos.y - (topProv.nodes.get(top.id)!.y + topProv.nodes.get(top.id)!.height / 2)
+    const tdy = centerY + topPos.y - (topProv.nodes.get(top.id)!.y + sizeMap.get(top.id)!.originY)
     for (const [id, nl] of topProv.nodes) {
       nodes.set(id, { ...nl, x: nl.x + tdx, y: nl.y + tdy })
     }

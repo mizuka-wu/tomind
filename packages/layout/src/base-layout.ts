@@ -165,41 +165,6 @@ export abstract class BaseLayout implements LayoutAlgorithm {
     return (childrenTotalSize - parentSize) / 2
   }
 
-  // ── posYoffsetToClosestChild ──
-
-  /**
-   * 计算父节点 Y 偏移，使父节点尽可能靠近最近的子节点（snowbrush 对齐）。
-   * 在 snowbrush 中用于 map 布局的 calSidePos，使连接线最短。
-   *
-   * @param children 子节点列表
-   * @param nodes 已布局的节点映射
-   * @param parentCenterY 父节点的 Y 中心点
-   * @returns Y 偏移量（正值=向下移动）
-   */
-  protected calcPosYOffsetToClosestChild(
-    children: readonly NodeDesc[],
-    nodes: Map<string, NodeLayout>,
-    parentCenterY: number,
-  ): number {
-    if (children.length === 0) return 0
-
-    let minDistance = Infinity
-    let closestOffset = 0
-
-    for (const child of children) {
-      const nl = nodes.get(child.id)
-      if (!nl) continue
-      const childCenterY = nl.y + nl.height / 2
-      const offset = childCenterY - parentCenterY
-      if (Math.abs(offset) < Math.abs(minDistance)) {
-        minDistance = Math.abs(offset)
-        closestOffset = offset
-      }
-    }
-
-    return closestOffset
-  }
-
   // ── maxOffset 对齐 ──
 
   /**

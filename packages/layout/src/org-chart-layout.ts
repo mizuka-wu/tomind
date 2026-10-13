@@ -22,6 +22,12 @@ import { layoutLogicSubtree } from './logic-layout'
 interface NodeSize {
   width: number
   height: number
+  /**
+   * 主题盒原点（SB branch position = **shape 中心**）到盒顶的距离 = shapeHeight/2。
+   * SB 的 topicView.bounds.y / boundaryBounds.y 都以原点为参考（bounds.y = -originY），
+   * 有 labels 时 height > shapeHeight，原点不在盒中心。
+   */
+  originY: number
   titleWidth: number
   titleHeight: number
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
@@ -39,6 +45,7 @@ function measureNodeSize(
     return {
       width: result.width,
       height: result.height,
+      originY: result.shapeHeight / 2,
       titleWidth: result.titleWidth,
       titleHeight: result.titleHeight,
       partBounds: result.partBounds,
@@ -49,6 +56,7 @@ function measureNodeSize(
   return {
     width: result.width,
     height: result.height,
+    originY: result.shapeHeight / 2,
     titleWidth: result.titleWidth,
     titleHeight: result.titleHeight,
     partBounds: result.partBounds,
@@ -137,6 +145,8 @@ interface OrgBB {
 interface OrgProv extends OrgBB {
   nodes: Map<string, NodeLayout>
   own: NodeLayout
+  /** 子节点主题盒原点到盒顶的距离（SB child.topicView.bounds.y = -originY） */
+  originY: number
   /** SB getStartDirection(child) 为 LEFT/RIGHT（子分支水平生长）；仅上侧 currentAllHeight 用 */
   horizontal?: boolean
 }
@@ -198,9 +208,10 @@ function layoutSubtreeDown(
       bbW = maxX - minX
       bbX = minX - (own.x + cs.width / 2)
       bbH = maxY - minY
-      bbY = minY - own.y - cs.height / 2
+      // bb 相对**主题盒原点**（shape 中心）= 盒顶 + originY
+      bbY = minY - own.y - cs.originY
     }
-    provs.push({ nodes: provNodes, bbX, bbW, bbY, bbH, own: provNodes.get(child.id)! })
+    provs.push({ nodes: provNodes, bbX, bbW, bbY, bbH, originY: sizeMap.get(child.id)!.originY, own: provNodes.get(child.id)! })
   }
 
   // childrenSize.width = Σ bbW + gaps
@@ -214,10 +225,10 @@ function layoutSubtreeDown(
 
   // Y：childrenY = parentBottom + spacingMajor；每个子节点再 + maxOffset + outward
   // SB: maxOffset = max(child.topicView.bounds.y - child.boundaryBounds.y)
-  //   topicView.bounds.y = -topicHeight/2（主题盒相对分支原点居中），bbY 相对主题盒中心，
-  //   即 maxOffset = max(-h/2 - bbY) = 「子树顶边到主题盒顶边的最大距离」。
-  // 之前漏了 -h/2 项，多算 22px（本 fixture 子节点高 44）。
-  const maxOffset = Math.max(...provs.map((p) => -p.own.height / 2 - p.bbY))
+  //   topicView.bounds.y = -originY（原点 = shape 中心，无 labels 时 = -h/2），bbY 同帧，
+  //   即 maxOffset = max(-originY - bbY) = 「子树顶边到主题盒顶边的最大距离」。
+  // 之前漏了 topicView.bounds.y 项，多算 22px（本 fixture 子节点高 44）。
+  const maxOffset = Math.max(...provs.map((p) => -p.originY - p.bbY))
   const outward = calcOrgOutward(provs, lineClass)
   const childrenY = y + size.height + spacingMajor + maxOffset + outward
 
@@ -298,12 +309,13 @@ function layoutSubtreeUp(
 ): OrgBB {
   const size = sizeMap.get(node.id)!
   const halfW = size.width / 2
-  const halfH = size.height / 2
+  // 主题盒原点 = shape 中心：SB 的 newBounds.y / boundaryBounds.y 都是 -originY
+  const originY = size.originY
   nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight: size.height, partBounds: size.partBounds })
 
   const children = isCollapsed(node) ? [] : getAttachedChildren(node)
   // 无子节点时 SB 不进 calAttachedChildrenPos 主体，newBounds 就是 topicView.bounds
-  if (children.length === 0) return { bbX: -halfW, bbW: size.width, bbY: -halfH, bbH: size.height }
+  if (children.length === 0) return { bbX: -halfW, bbW: size.width, bbY: -originY, bbH: size.height }
 
   const style = styleEngine && state ? styleEngine.computeStyle(state, node.id) : null
   const spacingMinor = parseStyleValue(style?.spacingMinor, 0)
@@ -329,7 +341,7 @@ function layoutSubtreeUp(
       bb = layoutSubtreeUp(child, 0, 0, options, sizeMap, provNodes, styleEngine, state, depth + 1)
       horizontal = false // org-chart.up → getStartDirection = UP
     }
-    provs.push({ nodes: provNodes, own: provNodes.get(child.id)!, horizontal, ...bb })
+    provs.push({ nodes: provNodes, own: provNodes.get(child.id)!, originY: sizeMap.get(child.id)!.originY, horizontal, ...bb })
   }
 
   // childrenSize.width = Σ child.bb.width + gaps
@@ -341,9 +353,11 @@ function layoutSubtreeUp(
     minChildX = -levelWidth / 2 + provs[0].bbX
   }
 
-  const maxOffset = Math.max(...provs.map((p) => p.bbY + p.bbH - p.own.height / 2))
+  // SB: maxOffset = max(bb.y + bb.height - topicView.bounds.y - topicView.bounds.height)
+  //               = max(bbY + bbH + originY - height)
+  const maxOffset = Math.max(...provs.map((p) => p.bbY + p.bbH + p.originY - p.own.height))
   const outward = calcOrgOutward(provs, lineClass)
-  const childrenY = -halfH - spacingMajor
+  const childrenY = -originY - spacingMajor
 
   // X 堆叠 + posXoffsetToClosestChild 重对齐（与 down 侧同一份 SB 代码）
   let cur = minChildX
@@ -360,8 +374,9 @@ function layoutSubtreeUp(
   }
 
   const parentCenterX = x + halfW
-  // 子主题盒顶边（绝对）= y + childrenY + h/2 - maxOffset - outward - childH
-  const childTopBase = y + childrenY + halfH - maxOffset - outward
+  // 子主题盒顶边（绝对）= y + childrenY + originY - maxOffset - outward - childH
+  //（childrenY 在「父原点」帧，换算回「父盒顶」帧要 + originY）
+  const childTopBase = y + childrenY + originY - maxOffset - outward
   for (let i = 0; i < n; i++) {
     const pv = provs[i]
     const centerX = parentCenterX + posXs[i] - offset
@@ -374,6 +389,7 @@ function layoutSubtreeUp(
 
   // 本分支的 boundaryBounds（SB 上侧口径，非子节点真实并集）
   const childrenSizeHeight = Math.max(...provs.map((p) => p.bbH))
+  // SB: halfOfTopicHeight = topicBounds.height / 2（**盒高**的一半，不是 originY）
   const currentAllHeight = Math.max(
     ...provs.map((p) => maxOffset + (p.horizontal ? p.own.height / 2 + Math.abs(p.bbY) : p.bbH)),
   )
@@ -385,7 +401,7 @@ function layoutSubtreeUp(
   return {
     bbX: Math.min(minChildX, -halfW) - offset,
     bbW: Math.max(childrenW, size.width),
-    bbY: Math.min(-halfH, childrenY - childrenSizeHeight),
+    bbY: Math.min(-originY, childrenY - childrenSizeHeight),
     bbH,
   }
 }

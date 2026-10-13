@@ -48,6 +48,12 @@ interface MapLayoutConfig {
 interface NodeSize {
   width: number
   height: number
+  /**
+   * 主题盒原点（SB branch position = **shape 中心**）到盒顶的距离 = shapeHeight/2。
+   * SB 的 boundaryBounds / topicView.bounds.y 都以原点为参考（bounds.y = -originY），
+   * 有 labels 时 height > shapeHeight，原点不在盒中心。
+   */
+  originY: number
   titleWidth: number
   titleHeight: number
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
@@ -193,6 +199,7 @@ class MapLayout extends BaseLayout {
       return {
         width: result.width,
         height: result.height,
+        originY: result.shapeHeight / 2,
         titleWidth: result.titleWidth,
         titleHeight: result.titleHeight,
         partBounds: result.partBounds,
@@ -204,6 +211,7 @@ class MapLayout extends BaseLayout {
     return {
       width: result.width,
       height: result.height,
+      originY: result.shapeHeight / 2,
       titleWidth: result.titleWidth,
       titleHeight: result.titleHeight,
       partBounds: result.partBounds,
@@ -463,7 +471,7 @@ class MapLayout extends BaseLayout {
     // Layout right side: recursively lay out all right children, then position them
     if (rightChildren.length > 0) {
       const childX = x + size.width + spacingMajor + outwardOffsetRight
-      const childY = y + size.height / 2
+      const childY = y + size.originY
       // 子树方向：中央节点的右侧子树继续向右（LOGICRIGHT），左侧向左（LOGICLEFT）
       this.layoutSide(rightChildren, childX, childY, size.height, 'right', options, sizeMap, nodes, node, styleEngine, state, localBBMap, 'right', isMapRoot)
     }
@@ -471,7 +479,7 @@ class MapLayout extends BaseLayout {
     // Layout left side: recursively lay out all left children, then position them
     if (leftChildren.length > 0) {
       const childX = x - spacingMajor - outwardOffsetLeft
-      const childY = y + size.height / 2
+      const childY = y + size.originY
       this.layoutSide(leftChildren, childX, childY, size.height, 'left', options, sizeMap, nodes, node, styleEngine, state, localBBMap, 'left', isMapRoot)
     }
 
@@ -575,10 +583,16 @@ class MapLayout extends BaseLayout {
     const bbYc: number[] = []
     const spans: number[] = []
     const heights: number[] = []
+    /** SB child.topicView.bounds.y = -originY（shape 中心为原点，有 labels 时 ≠ -height/2） */
+    const topicYs: number[] = []
     for (let i = 0; i < n; i++) {
-      const h = sizeMap.get(children[i].id)?.height ?? childBBs[i].height
+      const cs = sizeMap.get(children[i].id)
+      const h = cs?.height ?? childBBs[i].height
+      const oy = cs?.originY ?? h / 2
       heights.push(h)
-      bbYc.push(childBBs[i].y - h / 2)
+      topicYs.push(-oy)
+      // localBBMap 的 bb 相对**盒顶**，SB 的 boundaryBounds 相对**原点** → 减 originY
+      bbYc.push(childBBs[i].y - oy)
       spans.push(childBBs[i].height)
     }
 
@@ -604,8 +618,8 @@ class MapLayout extends BaseLayout {
       }
       const yPos: number[] = [0]
       for (let i = 1; i < n; i++) {
-        const preTopicY = -heights[i - 1] / 2
-        const nowTopicY = -heights[i] / 2
+        const preTopicY = topicYs[i - 1]
+        const nowTopicY = topicYs[i]
         const boundaryConstraint = yPos[i - 1] + bbYc[i - 1] + spans[i - 1] + spacingMinor - bbYc[i]
         const topicConstraint = yPos[i - 1] + preTopicY + heights[i - 1] + sumTopicSpacing / (n - i) - nowTopicY
         yPos[i] = Math.max(boundaryConstraint, topicConstraint)
@@ -641,7 +655,7 @@ class MapLayout extends BaseLayout {
 
     // Step f: 移动到最终位置（Y 由 centers 决定，X 按列对齐）
     const parentNL = nodes.get(parent.id)
-    const parentCenterY = parentNL ? parentNL.y + parentNL.height / 2 : startY
+    const parentCenterY = parentNL ? parentNL.y + (sizeMap.get(parent.id)?.originY ?? parentNL.height / 2) : startY
     const parentLeft = parentNL ? parentNL.x : startX
     const parentWidth = parentNL ? parentNL.width : 0
     const spanMap = new Map<string, number>()
@@ -660,7 +674,7 @@ class MapLayout extends BaseLayout {
       const desiredCenterY = (freePos && typeof freePos.y === 'number')
         ? parentCenterY + freePos.y - realignOffset
         : parentCenterY + centers[i]
-      const dy = desiredCenterY - (nl.y + nl.height / 2)
+      const dy = desiredCenterY - (nl.y + (sizeMap.get(child.id)?.originY ?? nl.height / 2))
       let desiredLeft: number
       if (freePos && typeof freePos.x === 'number') {
         desiredLeft = parentLeft + parentWidth / 2 + freePos.x - childW / 2
@@ -694,7 +708,7 @@ class MapLayout extends BaseLayout {
     node: NodeDesc,
     parentLeft: number,
     parentTop: number,
-    parentSize: { width: number; height: number },
+    parentSize: { width: number; height: number; originY: number },
     options: LayoutOptions,
     sizeMap: Map<string, NodeSize>,
     nodes: Map<string, import('./layout-engine').NodeLayout>,
@@ -703,7 +717,8 @@ class MapLayout extends BaseLayout {
   ): void {
     const callouts = (node.children as Record<string, readonly NodeDesc[]> | undefined)?.callout ?? []
     const pcx = parentLeft + parentSize.width / 2
-    const pcy = parentTop + parentSize.height / 2
+    // 父主题盒原点（shape 中心）：callout 的 model.position 相对它
+    const pcy = parentTop + parentSize.originY
     for (const co of callouts) {
       const pos = (co.attrs as Record<string, unknown> | undefined)?.position as { x?: number; y?: number } | undefined
       if (!pos || typeof pos.x !== 'number' || typeof pos.y !== 'number') continue
@@ -711,12 +726,15 @@ class MapLayout extends BaseLayout {
       if (!cs) {
         const padding = this.getNodePadding(co, options, styleEngine ?? null, state ?? null)
         const m = measureTitleOnlyNode(co, padding, options, styleEngine ?? null, state ?? null)
-        cs = { width: m.width, height: m.height, titleWidth: m.titleWidth, titleHeight: m.titleHeight, partBounds: m.partBounds, outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 }, subtreeHeight: m.height }
+        cs = { width: m.width, height: m.height, originY: m.shapeHeight / 2, titleWidth: m.titleWidth, titleHeight: m.titleHeight, partBounds: m.partBounds, outsidePadding: { top: 0, bottom: 0, left: 0, right: 0 }, subtreeHeight: m.height }
         sizeMap.set(co.id, cs)
       }
+      // callout 盒顶 = 原点 - originY（SB setPosition 定位的是 shape 中心）
+      const coLeft = pcx + pos.x - cs.width / 2
+      const coTop = pcy + pos.y - cs.originY
       nodes.set(co.id, {
-        x: pcx + pos.x - cs.width / 2,
-        y: pcy + pos.y - cs.height / 2,
+        x: coLeft,
+        y: coTop,
         width: cs.width,
         height: cs.height,
         titleWidth: cs.titleWidth,
@@ -724,7 +742,7 @@ class MapLayout extends BaseLayout {
         branchHeight: cs.height,
         partBounds: cs.partBounds,
       })
-      this.placeCallouts(co, pcx + pos.x - cs.width / 2, pcy + pos.y - cs.height / 2, cs, options, sizeMap, nodes, styleEngine, state)
+      this.placeCallouts(co, coLeft, coTop, cs, options, sizeMap, nodes, styleEngine, state)
     }
   }
 

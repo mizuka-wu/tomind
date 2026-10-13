@@ -117,6 +117,11 @@ function getNodeSpacing(
 interface NodeSize {
   width: number
   height: number
+  /**
+   * 主题盒原点（SB branch position = **shape 中心**）到盒顶的距离 = shapeHeight/2。
+   * 有 labels 时 height > shapeHeight，原点不在盒中心，所有「盒顶 ↔ 原点」换算必须用它。
+   */
+  originY: number
   titleWidth: number
   titleHeight: number
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
@@ -134,6 +139,7 @@ function measureNodeSize(
     return {
       width: result.width,
       height: result.height,
+      originY: result.shapeHeight / 2,
       titleWidth: result.titleWidth,
       titleHeight: result.titleHeight,
       partBounds: result.partBounds,
@@ -144,6 +150,7 @@ function measureNodeSize(
   return {
     width: result.width,
     height: result.height,
+    originY: result.shapeHeight / 2,
     titleWidth: result.titleWidth,
     titleHeight: result.titleHeight,
     partBounds: result.partBounds,
@@ -254,9 +261,12 @@ function computePlacement(
 ): LocalBB {
   const size = sizeMap.get(node.id)!
   const h = size.height
+  // SB 的 boundaryBounds / topicView.bounds 都以**主题盒原点（shape 中心）**为参考，
+  // 原点 = 盒顶 + originY（有 labels 时 originY = shapeHeight/2 ≠ height/2）
+  const oy = size.originY
   const children = isCollapsed(node) ? [] : getAttachedChildren(node)
   if (children.length === 0) {
-    const bb = { y: -h / 2, height: h }
+    const bb = { y: -oy, height: h }
     placement.set(node.id, { centers: [], bb })
     return bb
   }
@@ -287,8 +297,8 @@ function computePlacement(
   }
   for (let i = 0; i < centers.length; i++) centers[i] -= offset
 
-  let bbTop = -h / 2
-  let bbBottom = h / 2
+  let bbTop = -oy
+  let bbBottom = -oy + h
   for (let i = 0; i < children.length; i++) {
     bbTop = Math.min(bbTop, centers[i] + childBBs[i].y)
     bbBottom = Math.max(bbBottom, centers[i] + childBBs[i].y + childBBs[i].height)
@@ -316,7 +326,8 @@ function layoutSubtree(
 
   nodes.set(node.id, {
     x,
-    y: centerY - size.height / 2,
+    // centerY 是主题盒原点（shape 中心），盒顶 = 原点 - originY
+    y: centerY - size.originY,
     width: size.width,
     height: size.height,
     titleWidth: size.titleWidth,

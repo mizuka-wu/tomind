@@ -162,6 +162,12 @@ function getNodeSpacingCached(ctx: TreeLayoutContext, nodeId: string, direction:
 interface NodeSize {
   width: number
   height: number
+  /**
+   * 主题盒原点（SB branch position = **shape 中心**）到盒顶的距离 = shapeHeight/2。
+   * SB 的 topicView.bounds.y / boundaryBounds.y 都以原点为参考（bounds.y = -originY），
+   * 有 labels 时 height > shapeHeight，原点不在盒中心。
+   */
+  originY: number
   titleWidth: number
   titleHeight: number
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
@@ -182,6 +188,7 @@ function measureNodeSize(
     return {
       width: result.width,
       height: result.height,
+      originY: result.shapeHeight / 2,
       titleWidth: result.titleWidth,
       titleHeight: result.titleHeight,
       partBounds: result.partBounds,
@@ -194,6 +201,7 @@ function measureNodeSize(
   return {
     width: result.width,
     height: result.height,
+    originY: result.shapeHeight / 2,
     titleWidth: result.titleWidth,
     titleHeight: result.titleHeight,
     partBounds: result.partBounds,
@@ -394,7 +402,7 @@ function layoutSubtree(
     const parentBw = getParentBorderWidth(ctx, node)
     const logicSide = getChildLogicSide(ctx, depth, direction === 'left' ? 'left' : 'right')
 
-    const provs: { nodes: Map<string, NodeLayoutOutput>; bbY: number; bbH: number; top: number; left: number; h: number }[] = []
+    const provs: { nodes: Map<string, NodeLayoutOutput>; bbY: number; bbH: number; top: number; left: number; h: number; originY: number }[] = []
     for (const child of regularChildren) {
       const childSize = sizeMap.get(child.id)!
       childSize.outsidePadding = { top: 0, bottom: 0, left: 0, right: 0 }
@@ -415,10 +423,11 @@ function layoutSubtree(
           maxY = Math.max(maxY, nl.y + nl.height)
         }
         bbH = maxY - minY
-        bbY = minY - childSize.height / 2
+        // bb 相对**主题盒原点**（shape 中心）= 盒顶 + originY
+        bbY = minY - childSize.originY
       }
       const own = provNodes.get(child.id)!
-      provs.push({ nodes: provNodes, bbY, bbH, top: own.y, left: own.x, h: childSize.height })
+      provs.push({ nodes: provNodes, bbY, bbH, top: own.y, left: own.x, h: childSize.height, originY: childSize.originY })
     }
 
     let cum = childrenY
@@ -427,8 +436,10 @@ function layoutSubtree(
     for (let i = 0; i < regularChildren.length; i++) {
       const child = regularChildren[i]
       const pv = provs[i]
+      // SB posY = childrenY - child.boundaryBounds.y 定位的是子分支**原点**，
+      // 盒顶 = 原点 - originY（有 labels 时 ≠ 原点 - h/2）
       const center = cum - pv.bbY
-      const desiredTop = center - pv.h / 2
+      const desiredTop = center - pv.originY
       const childW = pv.nodes.get(child.id)!.width
       // SB treeleftandright: childBranch.setPosition(posX, …) 的 posX 是相对**父分支原点
       // （= 主题盒中心）**的偏移，posX = childrenX - topicView.bounds.x + maxOffset，
