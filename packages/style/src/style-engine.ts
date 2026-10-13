@@ -115,6 +115,15 @@ function buildFontFamilyChain(value: string): string {
 }
 
 const LINE_CLASS_BRACE = 'org.xmind.branchConnection.brace'
+
+/** SB common/constants/styles.PRIVATE_TOPICSHAPE */
+const SHAPE_CLASS_MATRIX_MAIN = 'org.xmind.topicShape.matrixMain'
+const SHAPE_CLASS_TREETABLE_MAIN = 'org.xmind.topicShape.treetable.main'
+/** SB MATRIX_GROUP_LIST */
+const MATRIX_STRUCTURE_CLASSES: readonly string[] = [
+  'org.xmind.ui.spreadsheet',
+  'org.xmind.ui.spreadsheet.column',
+]
 const LINE_CLASS_ROUNDED_ELBOW = 'org.xmind.branchConnection.roundedElbow'
 
 function structureClassOf(doc: NodeDesc, topicId: string): string | undefined {
@@ -150,6 +159,55 @@ function isTreeTableCellNode(doc: NodeDesc, topicId: string): boolean {
   if (!parentId) return false
   const parentSc = structureClassOf(doc, parentId)
   return parentSc !== undefined && TREETABLE_STRUCTURE_CLASSES.includes(parentSc)
+}
+
+/**
+ * 对齐 snowbrush utils/branch.isMatrixCell（iter(target, 2)）：
+ * 自己 / 父 / 祖父里最近的一个 matrix 分支（spreadsheet | spreadsheet.column）决定是否为单元格，
+ * 且距离 0/1 时要看该分支有没有折叠，距离 2（父是 row/column 头）恒为真。
+ *
+ * 结构类只看 attrs.structureClass 与 skeleton（centralTopic），
+ * 因为 matrix 的根一定带显式 structureClass；row/column 是 SB getChildStructure 推出来的，
+ * 这里用「祖父是 matrix 分支」等价表达。
+ */
+function matrixBranchDistance(state: SheetState, topicId: string): number | null {
+  let id: string | null = topicId
+  for (let distance = 0; distance <= 2 && id; distance++) {
+    const node = findById(state.doc, id)
+    if (!node) return null
+    const sc = resolveStructureClass(state.doc, id, getDepthFromDoc(state, id))
+    if (typeof sc === 'string' && MATRIX_STRUCTURE_CLASSES.includes(sc)) return distance
+    id = getParentId(state.doc, id)
+  }
+  return null
+}
+
+function isMatrixCellNode(state: SheetState, topicId: string): boolean {
+  const distance = matrixBranchDistance(state, topicId)
+  if (distance === null) return false
+  if (distance === 0) {
+    const node = findById(state.doc, topicId)
+    return node?.attrs.collapsed !== true
+  }
+  if (distance === 1) {
+    const parentId = getParentId(state.doc, topicId)
+    const parent = parentId ? findById(state.doc, parentId) : null
+    return parent?.attrs.collapsed !== true
+  }
+  return true
+}
+
+/**
+ * 对齐 snowbrush modules/overridedstyle/privatestyledescriptor 的 isOverrideStyleTreeTableCell：
+ * treetable 单元格；其中 head 分支（自身就是 treetable 结构）折叠时不覆盖。
+ */
+function isOverrideStyleTreeTableCellNode(state: SheetState, topicId: string): boolean {
+  if (!isTreeTableCellNode(state.doc, topicId)) return false
+  const own = structureClassOf(state.doc, topicId)
+  const isHead = typeof own === 'string' && TREETABLE_STRUCTURE_CLASSES.includes(own)
+  if (!isHead) return true
+  const node = findById(state.doc, topicId)
+  return node?.attrs.collapsed !== true
 }
 
 /**
@@ -397,6 +455,18 @@ export class StyleEngine {
       }
     }
 
+    // 层 0.5: Private Shape（对齐 SB privateStyleDescriptor[STYLE_LAYER.BEFORE_USER]）
+    // matrix 单元格 → matrixMain、treetable 单元格 → treetable.main。
+    // 两者在 SB 里都是 NoBorderTopicShape：不画边框、方角填充
+    // （旧实现按主题解析成 roundedRect → 63 个 matrix + 13 个 treetable 单元格多画了 8px 圆角）。
+    if (!options.ignoreUser) {
+      if (isMatrixCellNode(state, topicId)) {
+        result = { ...result, shapeClass: SHAPE_CLASS_MATRIX_MAIN }
+      } else if (isOverrideStyleTreeTableCellNode(state, topicId)) {
+        result = { ...result, shapeClass: SHAPE_CLASS_TREETABLE_MAIN }
+      }
+    }
+
     // borderColor 回退到 lineColor
     if ((!result.borderColor || result.borderColor === 'none') && result.lineColor) {
       result.borderColor = result.lineColor
@@ -454,6 +524,17 @@ export class StyleEngine {
   ): LeaferStyle {
     const style = this.computeStyle(state, topicId, options)
     const leaferStyle = this.toLeaferStyle(style)
+
+    // SB view/topicview.refreshFillColor：treetable 单元格（未折叠）的 figure.fillColor 强制 'none'
+    // （单元格底色由 treetable 视图自己画；originalFillColor 仍保留样式解析值）。
+    // 旧实现直接用样式里的分支色填充 → test-treetable 有 13 个节点（中央主题 + 12 个 head）
+    // 多画了一层彩色底。
+    if (isTreeTableCellNode(state.doc, topicId)) {
+      const cellNode = findById(state.doc, topicId)
+      if (cellNode && cellNode.attrs.collapsed !== true) {
+        leaferStyle.fill = null
+      }
+    }
 
     // 从 node.attrs.image 读取图片属性
     const node = findById(state.doc, topicId)
@@ -868,20 +949,19 @@ export class StyleEngine {
 
     const fill = nodeType === 'subTopic' ? blendAlpha(color, 0.2, mapFill) : color
 
-    // fontColor：
-    // - subTopic（underline 等无线条填充）：用深色分支色，底是白的
-    // - mainTopic/centralTopic（实心填充）：按填充色对比度选白/黑
+    // fontColor —— 对齐 SB modules/overridedstyle/smartcolordescriptor：
+    //   subTopic：blackTextColor = hsl(分支色 h/s, l=20)，再走 getSmartTextColor(fill, [white, black])
+    //   mainTopic：getSmartTextColor(fill, [white, #000000])
+    // ⚠️ 不能用 colord(...).toHsl()：colord 把 h/s/l 四舍五入成整数，
+    //    SB 的 rgbObjectToHslObject 全程浮点 → 每个通道会差 ±1
+    //    （实测 20 个 fixture × 127 个 subTopic：#605205 vs #605305 等 3 组）。
     let fontColor: string | undefined
     if (nodeType === 'subTopic') {
-      // colord.toHsl() 的 s/l 已是 0-100
-      const branchHsl = colord(color).toHsl()
-      fontColor = hslToHex(branchHsl.h, branchHsl.s, 20)
+      const branchHsl = hexToHslSb(color)
+      const dark = branchHsl ? hslToHex(branchHsl.h, branchHsl.s, 20) : SMART_TEXT_BLACK
+      fontColor = getSmartTextColorSb(fill, [SMART_TEXT_WHITE, dark])
     } else {
-      const fillBg = colord(fill)
-      if (fillBg.isValid()) {
-        const whiteRatio = fillBg.contrast(colord('#ffffff'))
-        fontColor = whiteRatio >= 3 ? '#ffffff' : '#000000'
-      }
+      fontColor = getSmartTextColorSb(fill, [SMART_TEXT_WHITE, '#000000'])
     }
 
     return {
@@ -942,6 +1022,99 @@ function hslToHex(h: number, s: number, l: number): string {
     rgb[i] = parseInt(`${val * 255}`, 10)
   }
   return '#' + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1)
+}
+
+// ==================== SB snowball 色彩工具（精确对齐，禁止用 colord 的取整结果） ====================
+
+/** SB snowball constant.TEXT_MIN_RATIO */
+const TEXT_MIN_RATIO = 3
+/** SB snowball constant.SMART_TEXT_FALLBACK_COLOR */
+const SMART_TEXT_WHITE = '#ffffff'
+const SMART_TEXT_BLACK = '#101010'
+
+interface SbRgb { r: number; g: number; b: number }
+
+/** SB snowballUtil.hexStringToRgbObject（解析失败按白色） */
+function hexToRgbSb(hex: string): SbRgb {
+  const shorthand = /^#?([a-f\d])([a-f\d])([a-f\d])([a-f\d])?$/i
+  const expanded = hex.replace(shorthand, (_m, r: string, g: string, b: string) => r + r + g + g + b + b)
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})?$/i.exec(expanded)
+  if (!m) return { r: 255, g: 255, b: 255 }
+  return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) }
+}
+
+/** SB snowballUtil.rgbObjectToHslObject —— h/s/l 全程浮点（s、l 为 0-100） */
+function rgbToHslSb({ r, g, b }: SbRgb): { h: number; s: number; l: number } {
+  const rn = r / 255
+  const gn = g / 255
+  const bn = b / 255
+  const min = Math.min(rn, gn, bn)
+  const max = Math.max(rn, gn, bn)
+  const delta = max - min
+  let h = 0
+  let s = 0
+  if (max === min) {
+    h = 0
+  } else if (rn === max) {
+    h = (gn - bn) / delta
+  } else if (gn === max) {
+    h = 2 + (bn - rn) / delta
+  } else if (bn === max) {
+    h = 4 + (rn - gn) / delta
+  }
+  h = Math.min(h * 60, 360)
+  if (h < 0) h += 360
+  const l = (min + max) / 2
+  if (max === min) {
+    s = 0
+  } else if (l <= 0.5) {
+    s = delta / (max + min)
+  } else {
+    s = delta / (2 - max - min)
+  }
+  return { h, s: s * 100, l: l * 100 }
+}
+
+/** SB snowballUtil.hexStringToHSLObject */
+function hexToHslSb(hex: string): { h: number; s: number; l: number } | null {
+  if (typeof hex !== 'string' || !hex) return null
+  if (!/^#?[a-f\d]{3,8}$/i.test(hex)) return null
+  return rgbToHslSb(hexToRgbSb(hex))
+}
+
+/** SB snowballUtil.calculateRatio —— WCAG 对比度 */
+function calculateRatioSb(hex1: string, hex2: string): number {
+  const luminance = (hex: string): number => {
+    const { r, g, b } = hexToRgbSb(hex)
+    const channel = (v: number): number => {
+      const s = v / 255
+      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+    }
+    return channel(r) * 0.2126 + channel(g) * 0.7152 + channel(b) * 0.0722
+  }
+  const l1 = luminance(hex1)
+  const l2 = luminance(hex2)
+  return l1 > l2 ? (l1 + 0.05) / (l2 + 0.05) : (l2 + 0.05) / (l1 + 0.05)
+}
+
+/** SB snowball getMaxRatioColorFromList */
+function maxRatioColorFromListSb(baseColor: string, colorList: string[]): string {
+  const ratios = colorList.map((c) => calculateRatioSb(baseColor, c))
+  return colorList[ratios.indexOf(Math.max(...ratios))]
+}
+
+/**
+ * SB snowball/lib/manager/color.getSmartTextColor
+ * （smartcolordescriptor 传入的 backColor 是 figure.visualFillColor 与 #FFFFFF 混合后的值，
+ *   不透明色混合后等于自身，"none" 已在调用前换成 sheet 背景色）
+ */
+function getSmartTextColorSb(backColor: string, colorList: string[]): string {
+  const bg = !backColor || backColor === 'none' || backColor === 'transparent' ? '#ffffff' : backColor
+  if (calculateRatioSb(bg, SMART_TEXT_WHITE) > TEXT_MIN_RATIO) return SMART_TEXT_WHITE
+  const target = maxRatioColorFromListSb(bg, colorList)
+  if (calculateRatioSb(bg, target) > TEXT_MIN_RATIO) return target
+  if (calculateRatioSb(bg, SMART_TEXT_WHITE) > TEXT_MIN_RATIO) return SMART_TEXT_WHITE
+  return SMART_TEXT_BLACK
 }
 
 /** 按类型合并主题数据：skeleton 合并结构键和颜色键，color 只合并颜色键 */

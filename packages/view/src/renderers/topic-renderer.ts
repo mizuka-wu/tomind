@@ -1,7 +1,7 @@
 import { Group, Rect, Text, Line, Ellipse, Path } from 'leafer-ui'
 import type { ITextDecorationType, IImagePaint } from 'leafer-ui'
 import type { LayoutResult, NodeLayout } from '@tomind/layout'
-import { getStringStyle } from '../style-accessors'
+import {getStringStyle, getNumberStyle } from '../style-accessors'
 import { mapFontWeight, mapTextAlign } from '../text-style-helpers'
 import type { Renderer } from './renderer'
 import { getTitleText, isRichAttributeTitle, getAttributeTitle } from '@tomind/schema'
@@ -373,6 +373,9 @@ function computeEllipseExtraMargins(
   }
 }
 
+/** SB figures/renderengine/svg/topicshapes/roundedrecttopicshape.ts 的 `const corner = 8` */
+const ROUNDED_RECT_CORNER = 8
+
 // ─── 形状路由表 ───────────────────────────────────────────────────────────────
 
 /** 所有支持的 shapeClass 名称 */
@@ -418,6 +421,9 @@ export class TopicRenderer implements Renderer {
     // 默认形状：roundedRect
     this.shape = new Rect()
     this.text = new Text()
+    // 命名便于 parity 工具 / 调试按节点定位渲染元素
+    this.shape.name = `topic-shape:${this.nodeId}`
+    this.text.name = `topic-title:${this.nodeId}`
 
     this.group.add(this.shape)
     this.group.add(this.text)
@@ -578,6 +584,10 @@ export class TopicRenderer implements Renderer {
       case 'curlyBracket':
         this.renderCurlyBracket(layout, style)
         break
+      // SB PRIVATE_TOPICSHAPE（matrixMain / treetable.main）→ NoBorderTopicShape：
+      // topicShapePath = ''（不画边框），只按方角画填充
+      case 'matrixMain':
+      case 'treetable.main':
       case 'matrixMainTopicShape':
         this.renderMatrixMainTopicShape(layout, style)
         break
@@ -605,7 +615,11 @@ export class TopicRenderer implements Renderer {
 
     this.applyFill(rect, style)
     this.applyStroke(rect, style)
-    if (typeof style.cornerRadius === 'number') rect.cornerRadius = style.cornerRadius
+    // SB roundedrecttopicshape.ts: `const corner = 8` —— 圆角是形状常量，
+    // 与 shape-corner / line-corner 样式无关（SB 全库没有任何一处消费 shape-corner）。
+    // 旧实现用 style.cornerRadius（shapeCorner 5pt→7、lineCorner 8pt→11、16pt→21），
+    // 实测 20 个 fixture × 4629 个节点全部与 SB 的 8 不一致。
+    rect.cornerRadius = ROUNDED_RECT_CORNER
   }
 
   /** rect：无圆角矩形 */
@@ -1074,7 +1088,8 @@ export class TopicRenderer implements Renderer {
   /** handDrawnRoundedRect：手绘圆角矩形 */
   private renderHandDrawnRoundedRect(layout: NodeLayout, style: Record<string, unknown>): void {
     const { x, y, w, h } = computeDrawBounds(layout, style)
-    const r = typeof style.cornerRadius === 'number' ? style.cornerRadius : 8
+    // SB topicshapes/index.ts: HANDDRAWNROUNDEDRECT 复用 RoundedRectTopicShape（corner = 8）
+    const r = ROUNDED_RECT_CORNER
     this.ensurePath(handDrawnRoundedRectPath(x, y, w, h, r))
     applyPathInset(this.shape!, style)
     this.applyPathFillAndStroke(style)
@@ -1333,6 +1348,7 @@ export class TopicRenderer implements Renderer {
       this.group?.remove(this.shape)
       this.shape.destroy()
     }
+    newShape.name = `topic-shape:${this.nodeId}`
     this.shape = newShape
     this.group?.addAt(newShape, 0)
   }
@@ -1526,13 +1542,22 @@ export class TopicRenderer implements Renderer {
     const textWidth = layout.titleWidth > 0 ? layout.titleWidth : (this.text.width || drawW)
     const textHeight = layout.titleHeight > 0 ? layout.titleHeight : (this.text.height || drawH)
 
-    // 水平居中
-    if (textAlign === 'center' || textAlign === undefined) {
+    // 水平定位：优先用布局算好的 title part 位置（= SB topicView.figure.topicContentPosition），
+    // 否则按 margin 摆（SB 的标题左边缘 = 盒左边缘 + margin-left）。
+    // 旧的硬编码 left → drawX + 8：subTopic(margin 6) 偏 +2px、mainTopic(margin 18) 偏 -10px，
+    // 实测 demo 234/235 个节点的标题 x 都不对。
+    const titlePart = layout.partBounds?.get('title')
+    const marginLeft = getNumberStyle(style, 'marginLeft') ?? 0
+    const marginRight = getNumberStyle(style, 'marginRight') ?? 0
+    if (titlePart) {
+      this.text.x = titlePart.x
+    } else if (textAlign === 'center' || textAlign === undefined) {
+      // SB 居中是把标题摆在 shape 中心（topicContentPosition.x = -titleWidth/2），与 margin 无关
       this.text.x = drawX + (drawW - textWidth) / 2
     } else if (textAlign === 'right') {
-      this.text.x = drawX + drawW - textWidth - 8
+      this.text.x = drawX + drawW - textWidth - marginRight
     } else {
-      this.text.x = drawX + 8
+      this.text.x = drawX + marginLeft
     }
 
     // 垂直居中

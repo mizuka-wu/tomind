@@ -18,6 +18,7 @@ import type { StyleEngine, LeaferStyle, ResolvedStyle } from '@tomind/style'
 import { classifyNode } from '@tomind/style'
 import type { LayoutEngine, LayoutResult } from '@tomind/layout'
 import { getAttr, getEffectiveStructureClass } from '@tomind/layout'
+import { getShapeBox, getShapeHeight, withShapeHeight } from './shape-box'
 import {
   computeConnectionGeometry,
   normalizeStructureClass,
@@ -197,7 +198,7 @@ export function getConnectionStructureMap(doc: NodeDesc, layout: LayoutResult): 
 
   const boxOf = (id: string): ConnBox => {
     const nl = layout.nodes.get(id)
-    return nl ? { x: nl.x, y: nl.y, width: nl.width, height: nl.height } : EMPTY_BOX
+    return nl ? getShapeBox(nl) : EMPTY_BOX
   }
   const map = new Map<string, string>()
   // SB: 中央分支 = 自身 structure-class，否则 DEFAULT_STRUCTURE（org.xmind.ui.map）
@@ -335,7 +336,13 @@ export class TopicNodeViewDesc extends NodeViewDesc {
       console.warn(`[updateStyle] ${this.node.type}#${this.node.id} NO LAYOUT — nodeLayout=${!!nodeLayout} element=${!!this.element} layoutNodes=${layout.nodes.size}`)
     }
 
-    this.renderer.render(layout, style, this.node.attrs)
+    // 形状与标题都按 shape 盒画（SB topicView.shapeBounds）：
+    // 主题盒高含 labels，直接用 layout.height 会把带 labels 的主题画高 24px、标题下移 12px。
+    // 只有带 labels 的节点才需要替换（避免每次渲染都复制整张 nodes Map）
+    const shapedLayout = nodeLayout && getShapeHeight(nodeLayout) !== nodeLayout.height
+      ? { ...layout, nodes: new Map(layout.nodes).set(this.node.id, withShapeHeight(nodeLayout)) }
+      : layout
+    this.renderer.render(shapedLayout, style, this.node.attrs)
 
     // 绘制父子连线
     this.renderConnections(layout)
@@ -373,7 +380,9 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     if (!doc) return
 
     const parentLeafer = getLeaferStyle(this.ctx, this.node.id)
-    const parentBox: ConnBox = { x: 0, y: 0, width: myLayout.width, height: myLayout.height }
+    // 锚点基于 shape 盒（SB getJointPosition(topicView.shapeBounds, dir)），不是含 labels 的主题盒
+    const parentShape = getShapeBox(myLayout)
+    const parentBox: ConnBox = { x: 0, y: 0, width: parentShape.width, height: parentShape.height }
     const structureMap = getConnectionStructureMap(doc, layout)
     const parentStyle: ConnSideStyle = {
       structureClass: structureMap.get(this.node.id) ?? getEffectiveStructureClass(doc, this.node),
@@ -393,10 +402,11 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     for (const child of children) {
       const nl = layout.nodes.get(child.id)
       if (!nl) continue
+      const cs = getShapeBox(nl)
       entries.push({
         child,
         index: entries.length,
-        box: { x: nl.x - myLayout.x, y: nl.y - myLayout.y, width: nl.width, height: nl.height },
+        box: { x: cs.x - myLayout.x, y: cs.y - myLayout.y, width: cs.width, height: cs.height },
       })
     }
     const siblingBoxes = entries.map((e) => e.box)
