@@ -24,8 +24,20 @@ import type { CellLayout } from './cell-layout'
 // ==================== 类型定义 ====================
 
 export interface PartAwareNodeSize {
+  /** SB topicView.bounds.width —— 布局用的主题盒宽 */
   width: number
+  /** SB topicView.bounds.height —— 布局用的主题盒高（含 shape 下方的 labels） */
   height: number
+  /**
+   * SB topicView.shapeBounds.height —— shape（不含 labels）的高。
+   *
+   * 主题盒原点（SB 的 branch position / realPosition）是 **shape 中心**，不是主题盒中心：
+   * `topicView.bounds = { x: shapeBounds.x, y: shapeBounds.y, ...topicCell.getSize() }`，
+   * 即 bounds.y = -shapeHeight/2。没有 labels 时 shapeHeight === height，两者重合；
+   * 有 labels 时主题盒向下多出 (height - shapeHeight)，布局里所有「盒顶 ↔ 原点」
+   * 的换算都必须用 shapeHeight/2 而不是 height/2。
+   */
+  shapeHeight: number
   titleWidth: number
   titleHeight: number
   partBounds: Map<string, { x: number; y: number; width: number; height: number }>
@@ -88,12 +100,17 @@ export function measurePartAwareNode(
     parts.splice(labelsPartIndex, 1)
   }
 
-  // 构建 cell 树（labels 在 shape 外部，不参与主题盒尺寸）
+  // 构建 cell 树
   const cellTree = buildTopicCellTree(parts, shapePadding)
 
-  // 布局 cell：主题盒 = shapePaddingCell；labels 排在其下方
-  const topicBox = cellTree.shapePaddingCell.getPreferredSize(-1, -1)
+  // 主题盒 = topicCell（= shapePaddingCell + verticalSpacing(4) + labelsCell）
+  // SB topicLayoutWorker：topicView.bounds = { x/y: shapeBounds.x/y, ...topicCell.getSize() }
+  // —— labels 在 shape 下方但**计入主题盒高度**（探针实测带 1 个 label 的子主题：
+  //    shapeBounds 97.79×30、bounds 97.79×54 = 30 + 4 + labels 20，bounds.y 仍是 -15 = -shapeH/2）。
+  // 旧实现取 shapePaddingCell，主题盒少 24px，子树高度/层间距随之全错。
+  const topicBox = cellTree.topicCell.getPreferredSize(-1, -1)
   const preferredSize = { width: topicBox.width, height: topicBox.height }
+  const shapeBox = cellTree.shapePaddingCell.getPreferredSize(-1, -1)
 
   cellTree.topicCell.layoutChildren({
     x: 0,
@@ -114,6 +131,7 @@ export function measurePartAwareNode(
   return {
     width: preferredSize.width,
     height: preferredSize.height,
+    shapeHeight: shapeBox.height,
     titleWidth,
     titleHeight,
     partBounds,
@@ -162,10 +180,13 @@ export function measureTitleOnlyNode(
     }
   }
 
+  const height = titleHeight + padding.top + padding.bottom
   return {
     // 对齐 snowbrush topicView.bounds: titleWidth + 2*margin(+borderWidth)，无额外 innerSpacing
     width: titleWidth + padding.left + padding.right + extraW,
-    height: titleHeight + padding.top + padding.bottom,
+    height,
+    // 无 labels → shape 就是整个主题盒
+    shapeHeight: height,
     titleWidth,
     titleHeight,
     partBounds: new Map(),

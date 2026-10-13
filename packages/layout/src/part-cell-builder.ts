@@ -15,7 +15,8 @@
  * │       │   │   └── infoCell (note+link)
  * │       │   └── rightPartsCell (1-col vertical) ← position=right
  * │       └── bottomPartsCell (1-col horizontal) ← position=bottom
- * └── labelsCell (1-col vertical) ← labels（在 shape 外部）
+ * └── labelsCell (1-col vertical) ← labels（在 shape 下方，但**计入主题盒高度**：
+ *                                    SB topicView.bounds = {...topicCell.getSize()}）
  */
 
 import type { PartMeasurement, PartPosition } from './part-measure'
@@ -169,9 +170,10 @@ export function buildTopicCellTree(parts: PartMeasurement[], shapePaddingOverrid
   })
   titleGroupCell.add(titleCell)
 
-  // Info Cell (note + link)
-  const noteParts = groups.get('right')?.filter(p => p.partType === 'note') ?? []
-  const linkParts = groups.get('right')?.filter(p => p.partType === 'link') ?? []
+  // Info Cell — SB innerGroupCell.add(inforCell)：note / link / comments 共用
+  // **同一个** informationIconView（尺寸 font-size + 2），所以这里最多只有一格
+  const INFO_PART_TYPES: readonly string[] = ['note', 'link', 'comments']
+  const infoParts = (groups.get('right') ?? []).filter(p => INFO_PART_TYPES.includes(p.partType))
   const infoCell = createCell('info', {
     layout: new CellGridLayout(1, {
       horizontalSpacing: 10,
@@ -183,14 +185,8 @@ export function buildTopicCellTree(parts: PartMeasurement[], shapePaddingOverrid
     },
   })
 
-  // 添加 note 和 link 到 info cell
-  if (noteParts.length > 0) {
-    const noteCell = createPartCell(noteParts[0])
-    infoCell.add(noteCell)
-  }
-  if (linkParts.length > 0) {
-    const linkCell = createPartCell(linkParts[0])
-    infoCell.add(linkCell)
+  if (infoParts.length > 0) {
+    infoCell.add(createPartCell(infoParts[0]))
   }
 
   // Center Image Cell — position=center 的 image 与 title 水平并排
@@ -246,8 +242,8 @@ export function buildTopicCellTree(parts: PartMeasurement[], shapePaddingOverrid
     leftPartsCell.add(createPartCell(part))
   }
 
-  // Right Parts Cell (position=right, 除去 note 和 link)
-  const rightParts = (groups.get('right') ?? []).filter(p => p.partType !== 'note' && p.partType !== 'link')
+  // Right Parts Cell (position=right, 除去进 infoCell 的 note / link / comments)
+  const rightParts = (groups.get('right') ?? []).filter(p => !INFO_PART_TYPES.includes(p.partType))
   const rightPartsCell = createCell('rightParts', {
     layout: new CellGridLayout(1, {
       horizontalSpacing: 0,

@@ -38,8 +38,10 @@ const DEFAULT_PART_CONFIG: Record<PartType, { position: PartPosition; order: num
   comments: { position: 'right', order: 45 },
 }
 
-const MARKER_SIZE = 16
-const INFO_ICON_SIZE = 16
+/** SB view/informationiconview.refreshSize：iconSize = getTopicFontSize(parent) + 2 */
+const INFO_ICON_EXTRA = 2
+/** SB figures/layoutengine/markerslayoutworker：相邻 marker 只前进 iconSize × 5/6（重叠） */
+const MARKER_OVERLAP_SCALE = 5 / 6
 
 // ==================== 工具函数 ====================
 interface MarkerData {
@@ -111,16 +113,23 @@ function measureImage(node: NodeDesc): { width: number; height: number } {
 }
 
 /**
- * 测量 markers 尺寸
+ * 测量 markers 尺寸 — 对齐 SB markersLayoutWorker
+ *
+ * 单个 marker 的 iconSize = 主题 font-size（`view/marker/markerview.afterAncestorChange`
+ * 里 `setIconSize({width: iconSize, height: iconSize})`，iconSize = getTopicFontSize），
+ * 多个 marker 水平排列时**只有最后一个占满宽度**，前面的每个只前进 iconSize × 5/6：
+ *   width = (n-1) × iconSize × 5/6 + iconSize，height = iconSize
+ * 探针实测（test-numbering-parts.xmind「热电偶测温基本定律」，14pt 子主题 + 1 个 marker）：
+ *   markersView.bounds = 14×14（旧实现按常量 16 算，主题盒宽多 2px）
  */
-function measureMarkers(node: NodeDesc): { width: number; height: number } {
+function measureMarkers(node: NodeDesc, styleEngine?: StyleEngine | null, state?: SheetState | null): { width: number; height: number } {
   const markers = getAttr<MarkerData[]>(node, 'markers')
   if (!markers || markers.length === 0) return { width: 0, height: 0 }
 
-  // 每个 marker 16×16，水平排列
-  const width = markers.length * MARKER_SIZE
-  const height = MARKER_SIZE
-  return { width, height }
+  const iconSize = Math.trunc(getFontSize(node, styleEngine, state))
+  if (iconSize <= 0) return { width: 0, height: 0 }
+  const width = (markers.length - 1) * iconSize * MARKER_OVERLAP_SCALE + iconSize
+  return { width, height: iconSize }
 }
 
 // ==================== Labels 流式布局常量（对齐 snowbrush） ====================
@@ -207,39 +216,28 @@ export function measureLabels(node: NodeDesc, options: LayoutOptions, parentWidt
 }
 
 /**
- * 测量 note 尺寸
+ * 测量 information icon 尺寸 — 对齐 SB view/informationiconview.refreshSize
+ *
+ * SB 每个 topic **只有一个** informationIconView（topicview._initFashionInformationIcons
+ * 用 getInformationData() 建一个），iconSize = 主题 font-size + 2；
+ * note / href / comments / task / audio 同时存在时只是图标字形变成 INFO_MORE，尺寸不叠加。
+ * 旧实现给 note 估了一个 280×(4+内容行高) 的内容盒、note/link/comments 各占一格，
+ * 与 SB 完全不符（带 note 的主题盒会宽出 200+px）。
  */
-function measureNote(node: NodeDesc): { width: number; height: number } {
-  const note = getAttr<NoteData>(node, 'note')
-  if (!note) return { width: 0, height: 0 }
-
-  // 图标 + 内容区域
-  const hasContent = !!note.htmlContent || !!note.content
-  if (!hasContent) return { width: INFO_ICON_SIZE, height: INFO_ICON_SIZE }
-
-  // 估算内容高度：每行约 20px，每行约 40 字符
-  const content = note.htmlContent || note.content || ''
-  const maxWidth = 280
-  const charsPerLine = 40
-  const lineHeight = 20
-  const estimatedLines = Math.max(1, Math.ceil(content.length / charsPerLine))
-  const contentHeight = Math.min(estimatedLines * lineHeight, 400) // 最大 400px
-
-  return {
-    width: Math.max(INFO_ICON_SIZE, maxWidth),
-    height: INFO_ICON_SIZE + 4 + contentHeight, // 图标 + 间距 + 内容
-  }
+function measureInformationIcon(node: NodeDesc, styleEngine?: StyleEngine | null, state?: SheetState | null): { width: number; height: number } {
+  const iconSize = Math.trunc(getFontSize(node, styleEngine, state)) + INFO_ICON_EXTRA
+  return { width: iconSize, height: iconSize }
 }
 
-/**
- * 测量 link 尺寸
- */
-function measureLink(node: NodeDesc): { width: number; height: number } {
+/** 该节点有哪些 information（SB getInformationData 的键），按 note > link > comments 取一个 */
+function getInformationPartType(node: NodeDesc): 'note' | 'link' | 'comments' | null {
+  const note = getAttr<NoteData>(node, 'note')
+  if (note && (!!note.content || !!note.htmlContent)) return 'note'
   const link = getAttr<LinkData>(node, 'link')
-  if (!link) return { width: 0, height: 0 }
-
-  // 固定 16×16
-  return { width: INFO_ICON_SIZE, height: INFO_ICON_SIZE }
+  if (link && !!link.url) return 'link'
+  const comments = getAttr<CommentData[]>(node, 'comments')
+  if (comments && comments.length > 0) return 'comments'
+  return null
 }
 
 /**
@@ -251,24 +249,24 @@ function measureNumbering(node: NodeDesc, options: LayoutOptions, styleEngine?: 
   if (styleEngine && state) {
     const ls = styleEngine.getLeaferStyle(state, node.id) as { numberingText?: string }
     if (ls?.numberingText) {
-      return measureTextSize(ls.numberingText, getFontSize(node, styleEngine, state), options)
+      // 与 part-node-size.measureTitleOnlyNode 同口径：主题字体族 + 不取整。
+      // SB 的 numberingView.bounds.width 是小数（探针实测 "1.1" = 19.7900390625），
+      // 取整会让带编号的主题盒宽多 ~1px（本 fixture 实测 dw 0.21）。
+      return measureTextSize(
+        ls.numberingText,
+        getFontSize(node, styleEngine, state),
+        options,
+        getFontFamily(node, styleEngine, state),
+        getFontWeight(node, styleEngine, state),
+        getFontStyle(node, styleEngine, state),
+        false,
+      )
     }
     return { width: 0, height: 0 }
   }
 
   // 无 styleEngine/state 的纯函数环境：无法得知插件文本，保守返回 0
   return { width: 0, height: 0 }
-}
-
-/**
- * 测量 comments 尺寸
- */
-function measureComments(node: NodeDesc): { width: number; height: number } {
-  const comments = getAttr<CommentData[]>(node, 'comments')
-  if (!comments || comments.length === 0) return { width: 0, height: 0 }
-
-  // 图标 16×16 + 角标数字占位
-  return { width: INFO_ICON_SIZE, height: INFO_ICON_SIZE }
 }
 
 // ==================== 主函数 ====================
@@ -307,7 +305,7 @@ export function measureNodeParts(
   }
 
   // 测量 markers
-  const markersSize = measureMarkers(node)
+  const markersSize = measureMarkers(node, styleEngine, state)
   if (markersSize.width > 0 || markersSize.height > 0) {
     parts.push({
       partType: 'markers',
@@ -348,36 +346,14 @@ export function measureNodeParts(
     })
   }
 
-  // 测量 note
-  const noteSize = measureNote(node)
-  if (noteSize.width > 0 || noteSize.height > 0) {
+  // 测量 information icon（note / link / comments 共用同一个图标，只占一格）
+  const infoPartType = getInformationPartType(node)
+  if (infoPartType) {
     parts.push({
-      partType: 'note',
-      position: DEFAULT_PART_CONFIG.note.position,
-      order: DEFAULT_PART_CONFIG.note.order,
-      size: noteSize,
-    })
-  }
-
-  // 测量 link
-  const linkSize = measureLink(node)
-  if (linkSize.width > 0 || linkSize.height > 0) {
-    parts.push({
-      partType: 'link',
-      position: DEFAULT_PART_CONFIG.link.position,
-      order: DEFAULT_PART_CONFIG.link.order,
-      size: linkSize,
-    })
-  }
-
-  // 测量 comments
-  const commentsSize = measureComments(node)
-  if (commentsSize.width > 0 || commentsSize.height > 0) {
-    parts.push({
-      partType: 'comments',
-      position: DEFAULT_PART_CONFIG.comments.position,
-      order: DEFAULT_PART_CONFIG.comments.order,
-      size: commentsSize,
+      partType: infoPartType,
+      position: DEFAULT_PART_CONFIG[infoPartType].position,
+      order: DEFAULT_PART_CONFIG[infoPartType].order,
+      size: measureInformationIcon(node, styleEngine, state),
     })
   }
 

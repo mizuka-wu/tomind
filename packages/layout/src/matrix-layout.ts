@@ -190,6 +190,20 @@ export interface MatrixDelegation {
   topicH: number
 }
 
+/**
+ * 矩阵 cell 自身不渲染 labels —— SB `topicview._initFashionLabelsUnitCard` 里
+ * `if (this._isMatrixItem()) return`（父分支结构为 spreadsheet.row/column 时不建 labelsView）：
+ * 矩阵中的 label 已经被当成列归属消费掉了，不会再在主题下方画标签卡，
+ * 所以主题盒高度不含 labels（探针实测 test-matrix「比较法」：labels=null、bounds 54×30）。
+ * 只有 cell 自身受影响（父分支是行分支），cell 子树里的后代仍保留 labels。
+ */
+function withoutLabels(node: NodeDesc): NodeDesc {
+  if (!getAttr(node, 'labels')) return node
+  const attrs: Record<string, unknown> = { ...node.attrs }
+  delete attrs.labels
+  return { id: node.id, type: node.type, attrs, children: node.children }
+}
+
 function createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: readonly NodeDesc[], options: LayoutOptions, styleEngine?: any, state?: any, delegations: MatrixDelegation[] = [], depthOf?: Map<string, number>): (MatrixCell | MatrixContainer)[][] {
   return branches.map((branch, i) => {
     const headCell = new MatrixCell(branch, { align: LEFT, minSize: measureMinSize(branch, options, styleEngine, state) })
@@ -202,7 +216,7 @@ function createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: 
         const { items } = column.cells[i]
         const cells = items.map((item: any) => {
           // SB: 列内 cell 的 minSize = 子树 boundaryBounds（cell 内嵌子结构）
-          const del = delegateLogicSubtree(item, 0, 0, depthOf?.get(item.id) ?? 2, options, styleEngine, state)
+          const del = delegateLogicSubtree(withoutLabels(item), 0, 0, depthOf?.get(item.id) ?? 2, options, styleEngine, state)
           let minSize: { width: number; height: number }
           if (del) {
             const own = del.nodes.get(item.id)!
