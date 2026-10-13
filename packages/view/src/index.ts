@@ -35,7 +35,29 @@ export {
   LegendNodeViewDesc,
   MarkerNodeViewDesc
 } from './node-view-desc'
+export { getConnectionStructureMap } from './node-view-desc'
 export type { ViewContext } from './node-view-desc'
+
+// 父子连线的锚点/路径纯函数（对齐 snowbrush），也供 parity 工具与单测直接调用
+export {
+  computeConnectionGeometry,
+  computeConnectionAnchors,
+  resolveChildStructureClass,
+  normalizeStructureClass,
+  normalizeLineClass,
+  normalizeShapeClass,
+  getStartDirection,
+  getEndDirection,
+  getLineFocusType,
+} from './connection-geometry'
+export type {
+  ConnBox,
+  ConnPoint,
+  ConnDirection,
+  ConnSideStyle,
+  ConnectionGeometry,
+  ConnectionGeometryInput,
+} from './connection-geometry'
 
 export { MatrixNodeViewDesc } from './matrix-node-view'
 

@@ -15,8 +15,18 @@ import type {
 } from '@tomind/schema'
 import { isRelationshipNode, isBoundaryNode, isSummaryNode } from '@tomind/schema'
 import type { StyleEngine, LeaferStyle, ResolvedStyle } from '@tomind/style'
+import { classifyNode } from '@tomind/style'
 import type { LayoutEngine, LayoutResult } from '@tomind/layout'
-import { getAttr } from '@tomind/layout'
+import { getAttr, getEffectiveStructureClass } from '@tomind/layout'
+import {
+  computeConnectionGeometry,
+  normalizeStructureClass,
+  resolveChildStructureClass,
+  type ConnBox,
+  type ConnDirection,
+  type ConnPoint,
+  type ConnSideStyle,
+} from './connection-geometry'
 import { getTitleText } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { NodeDecoration } from '@tomind/state'
@@ -168,6 +178,52 @@ export class RootViewDesc extends NodeViewDesc {
   protected updateContent(): void {}
 }
 
+/**
+ * 生效结构类推导（对齐 SB utils/branch.getStructureClass）
+ *
+ * 连线的出线/入线方向、拐点、线型全部依赖**每个节点自己的生效结构类**，
+ * 而 tomind 的 style 层只按角色（centralTopic/mainTopic/subTopic）查 skeleton，
+ * 拿不到「map 左侧主分支及其子树 = logic.left」这种继承结果
+ * （实测 demo：SB 有 6 个 logic.left 主分支 + 106 个 logic.left 子节点，TM 全给 logic.right）。
+ * 这里从根开始按 SB 的 getChildStructure 规则推导一次并缓存。
+ */
+const structureMapCache = new WeakMap<object, { layout: LayoutResult; map: Map<string, string> }>()
+
+const EMPTY_BOX: ConnBox = { x: 0, y: 0, width: 0, height: 0 }
+
+export function getConnectionStructureMap(doc: NodeDesc, layout: LayoutResult): Map<string, string> {
+  const cached = structureMapCache.get(doc)
+  if (cached && cached.layout === layout) return cached.map
+
+  const boxOf = (id: string): ConnBox => {
+    const nl = layout.nodes.get(id)
+    return nl ? { x: nl.x, y: nl.y, width: nl.width, height: nl.height } : EMPTY_BOX
+  }
+  const map = new Map<string, string>()
+  // SB: 中央分支 = 自身 structure-class，否则 DEFAULT_STRUCTURE（org.xmind.ui.map）
+  const rootStructure = normalizeStructureClass(getEffectiveStructureClass(doc, doc)) || 'map'
+
+  const walk = (node: NodeDesc, structure: string): void => {
+    map.set(node.id, structure)
+    const box = boxOf(node.id)
+    for (const slot of ['attached', 'callout', 'detached'] as const) {
+      const list = node.children?.[slot] ?? []
+      for (let i = 0; i < list.length; i++) {
+        const child = list[i]
+        // SB model.getStructureClass() = 模型属性 ?? 样式级联（含主题 skeleton 的 structure style）
+        const own = getEffectiveStructureClass(doc, child)
+        // callout：SB getCalloutStructure 用 index 0；detached：SB 按 position 符号（等价于几何判定）
+        const index = slot === 'attached' ? i : 0
+        walk(child, resolveChildStructureClass(structure, own, box, boxOf(child.id), index))
+      }
+    }
+  }
+  walk(doc, rootStructure)
+
+  structureMapCache.set(doc, { layout, map })
+  return map
+}
+
 // ==================== TopicNodeViewDesc ====================
 
 export class TopicNodeViewDesc extends NodeViewDesc {
@@ -275,7 +331,6 @@ export class TopicNodeViewDesc extends NodeViewDesc {
         this.element.x = nodeLayout.x
         this.element.y = nodeLayout.y
       }
-      console.log(`[updateStyle] ${this.node.type}#${this.node.id} layout=(${nodeLayout.x},${nodeLayout.y} ${nodeLayout.width}x${nodeLayout.height}) element=(${this.element.x},${this.element.y}) parent=${parentViewDesc?.node.id ?? 'none'} group=(${this.element.width ?? '?'},${this.element.height ?? '?'})`)
     } else {
       console.warn(`[updateStyle] ${this.node.type}#${this.node.id} NO LAYOUT — nodeLayout=${!!nodeLayout} element=${!!this.element} layoutNodes=${layout.nodes.size}`)
     }
@@ -287,8 +342,16 @@ export class TopicNodeViewDesc extends NodeViewDesc {
   }
 
   /**
-   * 渲染子节点连接线（elbow/curve/line 等）
-   * 使用 Line + points，样式从 StyleEngine 的 LeaferJS 映射读取
+   * 渲染子节点连接线
+   *
+   * 锚点与 path 公式全部走 `connection-geometry`（snowbrush 精确移植版）：
+   * - 出线点 = 父盒在 startDirection 上的关节点（map 结构再叠加 diver/order 偏移）
+   * - 拐点   = 关节点沿方向外推 LINECOLPOS(13)；map 的 diver/order 与 bight 例外（= 出线点）
+   * - 终点   = 子盒在 endDirection 上的关节点回退 1（END_OFFSET）
+   * - 线型   = 父的 line-class（lineWidth 0 → 不画），org-chart up/down 走 vertical brush
+   *
+   * 坐标以父 element 原点（= 父布局盒左上角）为参考：几何公式对平移不变，
+   * 所以直接把「子盒减去父盒左上角」喂进去即可，无需再平移 path。
    */
   private renderConnections(layout: LayoutResult): void {
     const group = this.element
@@ -300,422 +363,118 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     }
     this._connectionPaths = []
 
-    // 获取自己的布局位置
     const myLayout = layout.nodes.get(this.node.id)
     if (!myLayout) return
 
-    // 遍历子节点（attached slot）
     const children = this.node.children['attached'] ?? []
-    if (children.length === 0) {
-      console.log(`[renderConnections] ${this.node.type}#${this.node.id} — no attached children`)
-      return
+    if (children.length === 0) return
+
+    const doc = this.ctx.state?.doc
+    if (!doc) return
+
+    const parentLeafer = getLeaferStyle(this.ctx, this.node.id)
+    const parentBox: ConnBox = { x: 0, y: 0, width: myLayout.width, height: myLayout.height }
+    const structureMap = getConnectionStructureMap(doc, layout)
+    const parentStyle: ConnSideStyle = {
+      structureClass: structureMap.get(this.node.id) ?? getEffectiveStructureClass(doc, this.node),
+      shapeClass: parentLeafer.shapeClass,
+      lineClass: parentLeafer.lineClass,
+      // SB connectionview: setLineWidth(startBranchView.figure.lineWidth) = parseInt(父的 line-width)
+      lineWidth: parentLeafer.lineStrokeWidth,
+      // SB getLineEndSpacingPatchPoint：有箭头时线尾要回缩 lineWidth*4 + 16
+      arrowEndClass: parentLeafer.arrowEndClass,
     }
+    const parentIsCentral = classifyNode(doc, this.node.id) === 'centralTopic'
+    // SB arrowSelector: endArrowClass 取父分支的 arrow-end-class（锥形线时强制 none）
+    const arrowEndClass = parentLeafer.arrowEndClass
 
-    console.log(`[renderConnections] ${this.node.type}#${this.node.id} — ${children.length} children: [${children.map(c => c.id).join(',')}]`)
+    // 兄弟盒与 childIndex 用同一套下标（只算有布局结果的 attached 子节点）
+    const entries: Array<{ child: NodeDesc; index: number; box: ConnBox }> = []
+    for (const child of children) {
+      const nl = layout.nodes.get(child.id)
+      if (!nl) continue
+      entries.push({
+        child,
+        index: entries.length,
+        box: { x: nl.x - myLayout.x, y: nl.y - myLayout.y, width: nl.width, height: nl.height },
+      })
+    }
+    const siblingBoxes = entries.map((e) => e.box)
 
-    const leaferStyle = this.ctx.styleEngine && this.ctx.state
-      ? getLeaferStyle(this.ctx, this.node.id)
-      : {}
+    for (const entry of entries) {
+      const childLeafer = getLeaferStyle(this.ctx, entry.child.id)
+      const geo = computeConnectionGeometry({
+        parentBox,
+        childBox: entry.box,
+        parentStyle,
+        // SB roundedelbow: corner = parseInt(child.topicView.figure.lineCorner || 0)
+        childStyle: { lineCorner: childLeafer.lineCornerRadius },
+        siblingBoxes,
+        childIndex: entry.index,
+        parentIsCentral,
+      })
+      if (!geo.path) continue
 
-    const parentLineColor = leaferStyle.lineColor ?? '#999999'
-    // snowbrush：根→主分支 3px，其余 2px
-    const rawWidth = leaferStyle.lineStrokeWidth ?? leaferStyle.strokeWidth ?? 1.5
-    const width = Math.max(Number(rawWidth) || 0, this._parent == null ? 3 : 2)
-    const cornerRadius = leaferStyle.lineCornerRadius ?? leaferStyle.cornerRadius ?? 0
-    const strokeDash = leaferStyle.strokeDash
-    const lineClass = leaferStyle.lineClass ?? 'elbow'
-    const arrowEndClass = leaferStyle.arrowEndClass
-
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i]
-      const childLayout = layout.nodes.get(child.id)
-      if (!childLayout) continue
-
-      // 对齐 snowbrush：连线颜色取子节点解析后的 lineColor（含 multiLineColors 分支色）
-      let strokeColor = parentLineColor
-      if (this.ctx.styleEngine && this.ctx.state) {
-        const childStyle = getLeaferStyle(this.ctx, child.id)
-        if (typeof childStyle.lineColor === 'string' && childStyle.lineColor) {
-          strokeColor = childStyle.lineColor
-        }
-      }
-
-      // 连线坐标相对于当前 element（element 已定位到 myLayout.x/y）
-      const dx = myLayout.x
-      const dy = myLayout.y
-      const parentCX = myLayout.width / 2
-      const parentCY = myLayout.height / 2
-      // 子节点中心在父 element 坐标系下
-      const childCX = childLayout.x - dx + childLayout.width / 2
-      const childCY = childLayout.y - dy + childLayout.height / 2
-
-      const isHorizontal = Math.abs(childCX - parentCX) > Math.abs(childCY - parentCY)
-      let startX: number, startY: number, endX: number, endY: number
-
-      if (isHorizontal) {
-        if (childCX > parentCX) {
-          startX = myLayout.width
-          startY = parentCY
-          endX = childLayout.x - dx
-          endY = childCY
-        } else {
-          startX = 0
-          startY = parentCY
-          endX = childLayout.x - dx + childLayout.width
-          endY = childCY
-        }
-      } else {
-        if (childCY > parentCY) {
-          startX = parentCX
-          startY = myLayout.height
-          endX = childCX
-          endY = childLayout.y - dy
-        } else {
-          startX = parentCX
-          startY = 0
-          endX = childCX
-          endY = childLayout.y - dy + childLayout.height
-        }
-      }
-
-      let path: string
-      if (lineClass === 'none') {
-        path = ''
-      } else if (lineClass === 'curve') {
-        path = this.computeCurvePath(startX, startY, endX, endY, isHorizontal)
-      } else if (lineClass === 'roundedElbow') {
-        const r = cornerRadius > 0 ? cornerRadius : 8
-        path = this.computeRoundedElbowPath(startX, startY, endX, endY, isHorizontal, r)
-      } else if (lineClass === 'straight') {
-        path = this.computeStraightPath(startX, startY, endX, endY, isHorizontal)
-      } else if (lineClass === 'fold') {
-        path = this.computeFoldPath(startX, startY, endX, endY, isHorizontal)
-      } else if (lineClass === 'fold2') {
-        path = this.computeFold2Path(startX, startY, endX, endY, isHorizontal)
-      } else if (lineClass === 'roundedfold') {
-        const r = cornerRadius > 0 ? cornerRadius : 8
-        path = this.computeRoundedFoldPath(startX, startY, endX, endY, isHorizontal, r)
-      } else if (lineClass === 'bight') {
-        path = this.computeBightPath(startX, startY, endX, endY, isHorizontal)
-      } else if (lineClass === 'horizontal') {
-        path = this.computeHorizontalPath(startX, startY, endX, endY)
-      } else if (lineClass === 'brace') {
-        path = this.computeBracePath(startX, startY, endX, endY, isHorizontal)
-      } else if (lineClass === 'brace2') {
-        path = this.computeBrace2Path(startX, startY, endX, endY, isHorizontal)
-      } else if (lineClass === 'brace3') {
-        path = this.computeBrace3Path(startX, startY, endX, endY, isHorizontal)
-      } else if (lineClass === 'brace4') {
-        path = this.computeBrace4Path(startX, startY, endX, endY, isHorizontal, width)
-      } else if (lineClass === 'brace5') {
-        path = this.computeBrace5Path(startX, startY, endX, endY, isHorizontal, width)
-      } else if (lineClass === 'calloutLine') {
-        path = this.computeCalloutLinePath(startX, startY, endX, endY, isHorizontal)
-      } else {
-        // default: elbow (right-angle with midpoint)
-        if (isHorizontal) {
-          const midX = (startX + endX) / 2
-          path = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`
-        } else {
-          const midY = (startY + endY) / 2
-          path = `M ${startX} ${startY} L ${startX} ${midY} L ${endX} ${midY} L ${endX} ${endY}`
-        }
-      }
+      // 连线颜色取子节点解析后的 lineColor（含 multiLineColors 分支色），对齐 SB
+      // connectionview.initNormalConnectionEventListener: setLineColor(parentBranchView.figure.lineColor)
+      const strokeColor = childLeafer.lineColor || parentLeafer.lineColor || '#999999'
+      const width = parentStyle.lineWidth ?? 1
+      const strokeDash = parentLeafer.dashPattern ?? parentLeafer.strokeDash
 
       const pathElement = new Path({
-        path,
+        name: `connection:${entry.child.id}`,
+        path: geo.path,
         stroke: strokeColor,
         strokeWidth: width,
         strokeLinecap: 'round',
-        ...(strokeDash ? { dashPattern: strokeDash } : {}),
+        ...(Array.isArray(strokeDash) && strokeDash.length > 0 ? { dashPattern: strokeDash } : {}),
       })
       group.add(pathElement)
       this._connectionPaths.push(pathElement)
 
-      if (arrowEndClass === 'triangle') {
-        const arrow = this.createArrow(endX, endY, isHorizontal, strokeColor)
-        group.add(arrow)
-        this._connectionPaths.push(arrow)
-      }
-    }
-  }
-
-  private computeCurvePath(sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean): string {
-    // 对齐 snowbrush brushes.curveHorizon / rect
-    // ctrlPt 在拐点（水平：中点 X, sy），Q 控制点 = ctrl + (end-ctrl)/5
-    if (isHorizontal) {
-      const ctrlX = sx + (ex - sx) / 2
-      const qCtrlX = (ex - ctrlX) / 5 + ctrlX
-      return `M ${sx} ${sy} L ${ctrlX} ${sy} Q ${qCtrlX} ${ey} ${ex} ${ey}`
-    } else {
-      const ctrlY = sy + (ey - sy) / 2
-      return `M ${sx} ${sy} L ${sx} ${ctrlY} Q ${ex} ${ctrlY} ${ex} ${ey}`
-    }
-  }
-
-  private computeRoundedElbowPath(sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, r: number): string {
-    // 对齐 snowbrush brushes.roundedElbowHorizon：横→竖→单圆角→横
-    if (isHorizontal) {
-      const ctrlX = sx + (ex - sx) / 2
-      const ver = ey > sy ? 1 : -1
-      const hor = ex > ctrlX ? 1 : -1
-      const corner = Math.min(r, Math.abs(ex - ctrlX), Math.abs(ey - sy))
-      const linear = Math.abs(ey - sy) < corner ? 0 : 1
-      const flexX = ctrlX
-      const flexY = ey
-      const bflexY = flexY - ver * corner * linear
-      const aflexX = flexX + hor * corner
-      return `M ${sx} ${sy} L ${ctrlX} ${sy} L ${flexX} ${bflexY} Q ${flexX} ${flexY} ${aflexX} ${flexY} L ${ex} ${ey}`
-    }
-    const ctrlY = sy + (ey - sy) / 2
-    const hor2 = ex > sx ? 1 : -1
-    const ver2 = ey > ctrlY ? 1 : -1
-    const corner2 = Math.min(r, Math.abs(ey - ctrlY), Math.abs(ex - sx))
-    const linear2 = Math.abs(ex - sx) < corner2 ? 0 : 1
-    const flexX2 = ex
-    const bflexX = flexX2 - hor2 * corner2 * linear2
-    return `M ${sx} ${sy} L ${sx} ${ctrlY} L ${bflexX} ${ctrlY} Q ${flexX2} ${ctrlY} ${flexX2} ${ctrlY + ver2 * corner2} L ${ex} ${ey}`
-  }
-
-  private createArrow(x: number, y: number, isHorizontal: boolean, color: string): Path {
-    const size = 8
-    let path: string
-    if (isHorizontal) {
-      path = `M ${x} ${y} L ${x - size} ${y - size / 2} L ${x - size} ${y + size / 2} Z`
-    } else {
-      path = `M ${x} ${y} L ${x - size / 2} ${y - size} L ${x + size / 2} ${y - size} Z`
-    }
-    return new Path({ path, fill: color })
-  }
-
-  // ==================== Connection path computation methods ====================
-
-  /**
-   * 直线 — start → ctrl → end（三段折线，但 ctrl 在中点使前两段为一条直线）
-   */
-  private computeStraightPath(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
-  ): string {
-    if (isHorizontal) {
-      const midX = (sx + ex) / 2
-      return `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${ey} L ${ex} ${ey}`
-    } else {
-      const midY = (sy + ey) / 2
-      return `M ${sx} ${sy} L ${sx} ${midY} L ${ex} ${midY} L ${ex} ${ey}`
-    }
-  }
-
-  /**
-   * 折线（fold / skewElbow）— ctrl 处走一段，flex 处拐向 end
-   * ratio 控制 flex 在 ctrl→end 间的比例（snowbrush TREE_SE_RATIO=0.5）
-   */
-  private computeFoldPath(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, ratio = 0.5
-  ): string {
-    if (isHorizontal) {
-      const midX = (sx + ex) / 2
-      const flexX = midX + (ex - midX) * ratio
-      return `M ${sx} ${sy} L ${midX} ${sy} L ${flexX} ${ey} L ${ex} ${ey}`
-    } else {
-      const midY = (sy + ey) / 2
-      const flexY = midY + (ey - midY) * ratio
-      return `M ${sx} ${sy} L ${sx} ${midY} L ${ex} ${flexY} L ${ex} ${ey}`
-    }
-  }
-
-  /**
-   * 折线变体（fold2）— 与 fold 相同比例，统一使用默认 ratio
-   */
-  private computeFold2Path(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
-  ): string {
-    return this.computeFoldPath(sx, sy, ex, ey, isHorizontal)
-  }
-
-  /**
-   * 圆角折线（roundedfold / horn）— flex 处用 Q 圆角
-   * cornerRadius 控制圆角半径
-   */
-  private computeRoundedFoldPath(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, r: number
-  ): string {
-    if (isHorizontal) {
-      const midX = (sx + ex) / 2
-      const dx = Math.abs(ex - midX)
-      const dy = Math.abs(ey - sy)
-      const corner = Math.min(dx, dy) / 4
-      const c = corner > 0 ? corner : Math.min(r, Math.abs(ey - sy) / 2)
-      if (ey > sy) {
-        const beforeY = sy + c
-        const afterX = midX + c
-        return `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${beforeY} Q ${midX} ${ey} ${afterX} ${ey} L ${ex} ${ey}`
-      } else {
-        const beforeY = sy - c
-        const afterX = midX + c
-        return `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${beforeY} Q ${midX} ${ey} ${afterX} ${ey} L ${ex} ${ey}`
-      }
-    } else {
-      const midY = (sy + ey) / 2
-      const dx = Math.abs(ex - sx)
-      const dy = Math.abs(ey - midY)
-      const corner = Math.min(dx, dy) / 4
-      const c = corner > 0 ? corner : Math.min(r, Math.abs(ex - sx) / 2)
-      if (ex > sx) {
-        const beforeX = sx + c
-        const afterY = midY + c
-        return `M ${sx} ${sy} L ${sx} ${midY} L ${beforeX} ${midY} Q ${ex} ${midY} ${ex} ${afterY} L ${ex} ${ey}`
-      } else {
-        const beforeX = sx - c
-        const afterY = midY + c
-        return `M ${sx} ${sy} L ${sx} ${midY} L ${beforeX} ${midY} Q ${ex} ${midY} ${ex} ${afterY} L ${ex} ${ey}`
+      if (arrowEndClass && arrowEndClass !== 'none') {
+        const arrow = this.createArrow(geo.endPt, geo.endDirection, arrowEndClass, width, strokeColor)
+        if (arrow) {
+          group.add(arrow)
+          this._connectionPaths.push(arrow)
+        }
       }
     }
   }
 
   /**
-   * 弯曲线（bight / sinus）— ctrl 处直走，然后 cubic bezier 拐向 end
+   * 连线末端箭头（对齐 SB utils/linearrow.ts 的 marker 语义）
+   *
+   * SB 用 SVG marker（markerUnits 默认 = strokeWidth），TRIANGLE 的 endD = "M 0 0 L 4 2 L 0 4 Z"、
+   * refX/refY = (0, 2) → 尖端在路径终点**前方 4 个单位**、半宽 2 个单位，
+   * 1 单位 = lineWidth px（这也是布局侧 arrowSizeRatio = 4 的来源）。
+   * 其余箭头形状（spearhead/dot/square/diamond/herringbone/doublearrow/ring/eye…）尚未实现。
    */
-  private computeBightPath(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
-  ): string {
-    if (isHorizontal) {
-      const midX = (sx + ex) / 2
-      const dx = ex - midX
-      const flexX = (ex + midX) / 2
-      return `M ${sx} ${sy} L ${midX} ${sy} C ${ex - dx / 4} ${sy} ${flexX} ${ey} ${ex} ${ey}`
-    } else {
-      const midY = (sy + ey) / 2
-      const dy = ey - midY
-      const flexY = (ey + midY) / 2
-      return `M ${sx} ${sy} L ${sx} ${midY} C ${sx} ${ey - dy / 4} ${ex} ${flexY} ${ex} ${ey}`
-    }
-  }
-
-  /**
-   * 水平线 — 始终走水平直线
-   */
-  private computeHorizontalPath(
-    sx: number, sy: number, ex: number, ey: number
-  ): string {
-    return `M ${sx} ${sy} L ${ex} ${ey}`
-  }
-
-  /**
-   * 大括号线（brace）— 对称 S 曲线，Q 在水平中点转弯
-   */
-  private computeBracePath(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
-  ): string {
-    if (isHorizontal) {
-      const midX = (sx + ex) / 2
-      return `M ${sx} ${sy} Q ${midX} ${sy} ${midX} ${(sy + ey) / 2} L ${midX} ${(sy + ey) / 2} Q ${midX} ${ey} ${ex} ${ey}`
-    } else {
-      const midY = (sy + ey) / 2
-      return `M ${sx} ${sy} Q ${sx} ${midY} ${(sx + ex) / 2} ${midY} L ${(sx + ex) / 2} ${midY} Q ${ex} ${midY} ${ex} ${ey}`
-    }
-  }
-
-  /**
-   * brace2 — ctrl 处直走，然后直线拐到中点，再直走拐向 end
-   */
-  private computeBrace2Path(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
-  ): string {
-    if (isHorizontal) {
-      const midX = (sx + ex) / 2
-      const dy = ey - sy
-      const a = Math.abs(dy) * 0.3
-      const ver = dy >= 0 ? 1 : -1
-      return `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${sy + ver * a} L ${midX} ${ey - ver * a} L ${midX} ${ey} L ${ex} ${ey}`
-    } else {
-      const midY = (sy + ey) / 2
-      const dx = ex - sx
-      const a = Math.abs(dx) * 0.3
-      const hor = dx >= 0 ? 1 : -1
-      return `M ${sx} ${sy} L ${sx} ${midY} L ${sx + hor * a} ${midY} L ${ex - hor * a} ${midY} L ${ex} ${midY} L ${ex} ${ey}`
-    }
-  }
-
-  /**
-   * brace3 — ctrl 直走，带25°角的斜线到中点，竖直到 end
-   */
-  private computeBrace3Path(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
-  ): string {
-    if (isHorizontal) {
-      const midX = (sx + ex) / 2
-      const dx = Math.abs(ex - sx)
-      const ver = ey >= sy ? 1 : -1
-      const angleDy = Math.tan(25 * Math.PI / 180) * dx / 2
-      return `M ${sx} ${sy} L ${midX} ${sy + ver * angleDy} L ${midX} ${ey} L ${ex} ${ey}`
-    } else {
-      const midY = (sy + ey) / 2
-      const dy = Math.abs(ey - sy)
-      const hor = ex >= sx ? 1 : -1
-      const angleDx = Math.tan(25 * Math.PI / 180) * dy / 2
-      return `M ${sx} ${sy} L ${sx + hor * angleDx} ${midY} L ${ex} ${midY} L ${ex} ${ey}`
-    }
-  }
-
-  /**
-   * brace4 — ctrl 直走，竖直到 end 附近，带 Q 尾巴返回
-   */
-  private computeBrace4Path(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, lineWidth: number
-  ): string {
-    if (isHorizontal) {
-      const midX = (sx + ex) / 2
-      const hw = lineWidth / 2
-      const ver = ey >= sy ? 1 : -1
-      return `M ${midX - hw} ${sy} L ${midX - hw} ${ey - ver * hw} L ${ex} ${ey - ver * hw} L ${ex} ${ey + ver * hw} L ${midX + hw} ${ey + ver * hw * 1.2} Q ${midX + hw * 2} ${ey * 0.6 + sy * 0.4} ${midX + hw * 2} ${sy}`
-    } else {
-      const midY = (sy + ey) / 2
-      const hw = lineWidth / 2
-      const hor = ex >= sx ? 1 : -1
-      return `M ${sx} ${midY - hw} L ${ex - hor * hw} ${midY - hw} L ${ex - hor * hw} ${ey} L ${ex + hor * hw} ${ey} L ${ex + hor * hw * 1.2} ${midY + hw} Q ${ex * 0.6 + sx * 0.4} ${midY + hw * 2} ${sx} ${midY + hw * 2}`
-    }
-  }
-
-  /**
-   * brace5 — ctrl 直走，Q 圆角拐向 end，再 Q 圆角尾巴返回
-   */
-  private computeBrace5Path(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean, lineWidth: number
-  ): string {
-    if (isHorizontal) {
-      const midX = (sx + ex) / 2
-      const hw = lineWidth / 2
-      const dy = Math.abs(ey - sy)
-      const corner = Math.min(Math.abs(ex - sx), dy / 2) / 4
-      return `M ${midX - hw} ${sy} L ${midX - hw} ${ey - corner} Q ${midX - hw} ${ey} ${ex} ${ey} Q ${midX + hw} ${ey} ${midX + hw} ${ey - corner} Q ${midX + hw + corner} ${ey * 0.6 + sy * 0.4} ${midX + hw + corner} ${sy}`
-    } else {
-      const midY = (sy + ey) / 2
-      const hw = lineWidth / 2
-      const dx = Math.abs(ex - sx)
-      const corner = Math.min(dx, Math.abs(ey - sy) / 2) / 4
-      return `M ${sx} ${midY - hw} L ${ex - corner} ${midY - hw} Q ${ex} ${midY - hw} ${ex} ${ey} Q ${ex} ${midY + hw} ${ex - corner} ${midY + hw} Q ${ex * 0.6 + sx * 0.4} ${midY + hw + corner} ${sx} ${midY + hw + corner}`
-    }
-  }
-
-  /**
-   * 气泡线（calloutLine）— ctrl 处直走，然后两段斜线到 end 左右偏移点
-   */
-  private computeCalloutLinePath(
-    sx: number, sy: number, ex: number, ey: number, isHorizontal: boolean
-  ): string {
-    // calloutLine: V 形线，从子节点两侧偏移点出发，汇聚到父节点出口点
-    // snowbrush: crossPtA → parentInsectPt → crossPtB
-    const dx = ex - sx
-    const dy = ey - sy
-    const dist = Math.hypot(dx, dy)
-    const offset = Math.max(dist * 0.06, 8)
-    if (isHorizontal) {
-      const ver = dy >= 0 ? 1 : -1
-      return `M ${ex} ${ey - ver * offset} L ${sx} ${sy} L ${ex} ${ey + ver * offset}`
-    } else {
-      const hor = dx >= 0 ? 1 : -1
-      return `M ${ex - hor * offset} ${ey} L ${sx} ${sy} L ${ex + hor * offset} ${ey}`
-    }
+  private createArrow(
+    endPt: { x: number; y: number },
+    endDirection: ConnDirection,
+    arrowClass: string,
+    lineWidth: number,
+    color: string,
+  ): Path | null {
+    const shape = arrowClass.replace(/^org\.xmind\.arrowShape\./, '')
+    if (shape !== 'triangle') return null
+    const unit = lineWidth
+    const tipLen = 4 * unit
+    const halfWidth = 2 * unit
+    const dir: ConnPoint =
+      endDirection === 'left' ? { x: -1, y: 0 }
+        : endDirection === 'right' ? { x: 1, y: 0 }
+          : endDirection === 'up' ? { x: 0, y: -1 }
+            : { x: 0, y: 1 }
+    const tip = { x: endPt.x + dir.x * tipLen, y: endPt.y + dir.y * tipLen }
+    const perp = { x: -dir.y, y: dir.x }
+    const b1 = { x: endPt.x + perp.x * halfWidth, y: endPt.y + perp.y * halfWidth }
+    const b2 = { x: endPt.x - perp.x * halfWidth, y: endPt.y - perp.y * halfWidth }
+    return new Path({
+      path: `M ${tip.x} ${tip.y} L ${b1.x} ${b1.y} L ${b2.x} ${b2.y} Z`,
+      fill: color,
+    })
   }
 
   protected updateContent(): void {
