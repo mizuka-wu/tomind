@@ -42,6 +42,12 @@ import { DEFAULT_STYLES, getDefaultStyle } from './default-styles'
 import { normalizeStyleObject, serializeStyleObject, normalizeClassName } from './style-converter'
 import { parseClassList, getClassStyles } from '@tomind/state'
 import { SKELETON_KEY_SET, COLOR_KEY_SET } from './style-keys'
+
+/**
+ * SB `topicstyleselector.protectedParentStyleValue`（BEFORE_THEME_GROUP）里特殊处理的键：
+ * 父值压过本节点的默认值。见 applyParentProtectedKeys。
+ */
+const PARENT_PROTECTED_KEYS = ['lineColor', 'lineWidth', 'linePattern', 'arrowEndClass'] as const
 import { colord, extend } from 'colord'
 import a11yPlugin from 'colord/plugins/a11y'
 
@@ -405,6 +411,7 @@ export class StyleEngine {
           ignoreParent: false,
         })
         result = { ...parentStyle, ...result }
+        result = this.applyParentProtectedKeys(state, topicId, nodeType, parentId, parentStyle, result, options)
       }
     }
 
@@ -838,6 +845,66 @@ export class StyleEngine {
   }
 
   /** 处理 "inherit" 和 "initial" 特殊值 */
+  /**
+   * SB `topicstyleselector.protectedParentStyleValue` 的 BEFORE_THEME_GROUP 层。
+   *
+   * 这几个键的优先级与 TM 的通用 cascade **相反**：
+   *   本节点的主题显式值（≠ 'inherited'） > 父的值（**排除父的默认层**） > 本节点的默认值
+   * 即「父值压过本节点的默认值」。TM 的 `{ ...parentStyle, ...result }` 里 result 已经含
+   * DEFAULT_STYLES，默认值反而盖住父值 —— 只有当节点自己**没有**主题值时才看得出差别，
+   * 实测就是 callout：calloutTopic 的默认 line-width 1pt / line-color #333333，主题不给值，
+   * 挂在 line-width 3pt / line-color #000229 的中央主题下 →
+   * SB 3pt/#000229，TM 1pt/#232323（callout 子树里 18 条连线全是错的线宽/线色）。
+   *
+   * SB 的 LINE_COLOR 链首位是 `getMultiLineColor(target)`，TM 的 multiLineColors 在层 4.6
+   * 已经写进 result，所以「本节点主题显式值」这一路用 `ignoreDefault + ignoreParent`
+   * 再算一次（非递归，代价可控）就能覆盖。
+   *
+   * 未覆盖：SB 的 border-line-color / border-line-width / border-line-pattern 走的是
+   * 「回退到 line-* 同名键」的交叉链，且 alignment-by-level 直接取父值（无主题回退）——
+   * TM 的 ResolvedStyle 没有这几个 border-line 键（用 borderColor/borderWidth），
+   * calloutTopic 的 borderColor 又是 'none'（不画边框）→ 视觉影响 0，未实现。
+   */
+  private applyParentProtectedKeys(
+    state: SheetState,
+    topicId: string,
+    nodeType: NodeType,
+    parentId: string,
+    parentStyle: ResolvedStyle,
+    result: ResolvedStyle,
+    options: StyleComputeOptions,
+  ): ResolvedStyle {
+    // 本节点「排除默认层、排除父继承」的显式值（主题类 / level / structure override /
+    // layout mode / multiLineColors 都还在里面）
+    const own = this.computeStyle(state, topicId, {
+      ...options,
+      ignoreDefault: true,
+      ignoreParent: true,
+    })
+    const parentType = classifyNode(state.doc, parentId)
+    const out: ResolvedStyle = { ...result }
+    const rec = out as Record<string, StyleValue | undefined>
+    const ownRec = own as Record<string, StyleValue | undefined>
+    const parentRec = parentStyle as Record<string, StyleValue | undefined>
+    for (const key of PARENT_PROTECTED_KEYS) {
+      const ownValue = ownRec[key]
+      if (ownValue !== undefined && ownValue !== null && ownValue !== 'inherited') {
+        rec[key] = ownValue
+        continue
+      }
+      // SB 取父值时用 ignoreDefault：父值恰好等于父的默认值就视作「父没给」
+      const parentValue = parentRec[key]
+      const parentDefault = getDefaultStyle(parentType, key)
+      if (parentValue !== undefined && parentValue !== null && parentValue !== parentDefault) {
+        rec[key] = parentValue
+        continue
+      }
+      // 都没给 → 保留 result 里已有的值（= 本节点默认值或继承来的父默认值）
+      void nodeType
+    }
+    return out
+  }
+
   private resolveSpecialValues(
     style: ResolvedStyle,
     state: SheetState,
