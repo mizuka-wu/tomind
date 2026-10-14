@@ -131,6 +131,15 @@ export { measureTextSize }
 export interface SimpleNodeSize {
   width: number
   height: number
+  /**
+   * 主题盒原点（SB branch position = **shape 中心**）到盒顶的距离 = shapeHeight/2。
+   * 只有 part-aware 的测量（measureStyledSubtree）会填；无 labels 时恒等于 height/2。
+   * 宿主布局用它把「盒顶 ↔ 原点」换算对齐到 SB 的 boundaryBounds 帧。
+   */
+  originY?: number
+  titleWidth?: number
+  titleHeight?: number
+  partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
 }
 
 /** 简单节点测量（title + padding），适用于不需要 part-aware 的布局 */

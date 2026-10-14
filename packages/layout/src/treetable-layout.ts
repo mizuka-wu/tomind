@@ -15,7 +15,8 @@ import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layout-utils'
-import { measureTitleOnlyNode } from './part-node-size'
+import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
+import { hasNonTitleParts } from './part-measure'
 import { delegateLogicSubtree } from './skeleton-delegate'
 
 type NodeLayout = import('./layout-engine').NodeLayout
@@ -25,6 +26,9 @@ interface NodeSize {
   height: number
   titleWidth: number
   titleHeight: number
+  /** 主题盒原点（shape 中心）到盒顶的距离 = shapeHeight/2；无 labels 时 = height/2 */
+  originY: number
+  partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
 }
 
 function parseStyleValue(value: unknown, fallback: number): number {
@@ -132,12 +136,20 @@ function measureNodeSize(
   styleEngine?: StyleEngine | null,
   state?: SheetState | null,
 ): NodeSize {
-  const result = measureTitleOnlyNode(node, padding, options, styleEngine, state)
+  // part-aware：labels/markers/image 计入主题盒，并透出 originY 与 partBounds。
+  // 旧实现只走 measureTitleOnlyNode（part-blind），而 head 子树是委派给 part-aware 的
+  // logic 布局的 → 两套「主题盒 ↔ 原点」口径混帧（实测 labels 挂在 head 分支上时
+  // 234/235 个节点整体 dy = -12 = labels 24 的一半）。
+  const result = hasNonTitleParts(node)
+    ? measurePartAwareNode(node, options, styleEngine, state, padding)
+    : measureTitleOnlyNode(node, padding, options, styleEngine, state)
   return {
     width: result.width,
     height: result.height,
     titleWidth: result.titleWidth,
     titleHeight: result.titleHeight,
+    originY: result.shapeHeight / 2,
+    partBounds: result.partBounds,
   }
 }
 
@@ -209,16 +221,16 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
     const col0W = rootSize.width + rootExtendW
 
     // head 子树 provisional 布局（skeleton logic 委派，否则退回 logic 以外的自身递归不存在 → logic）
-    const provs: { nodes: Map<string, NodeLayout>; bb: { x: number; y: number; width: number; height: number }; own: NodeLayout }[] = []
+    const provs: { nodes: Map<string, NodeLayout>; bb: { x: number; y: number; width: number; height: number }; own: NodeLayout; originY: number }[] = []
     for (const head of heads) {
       const del = delegateLogicSubtree(head, 0, 0, 0, options, styleEngine, state)
       if (del) {
-        provs.push({ nodes: del.nodes, bb: { x: del.bb.x, y: del.bb.y, width: del.bb.width, height: del.bb.height }, own: del.nodes.get(head.id)! })
+        provs.push({ nodes: del.nodes, bb: { x: del.bb.x, y: del.bb.y, width: del.bb.width, height: del.bb.height }, own: del.nodes.get(head.id)!, originY: del.originY })
       } else {
         const provNodes = new Map<string, NodeLayout>()
         const hs = sizeMap.get(head.id)!
-        provNodes.set(head.id, { x: 0, y: 0, width: hs.width, height: hs.height, titleWidth: hs.titleWidth, titleHeight: hs.titleHeight, branchHeight: hs.height })
-        provs.push({ nodes: provNodes, bb: { x: 0, y: 0, width: hs.width, height: hs.height }, own: provNodes.get(head.id)! })
+        provNodes.set(head.id, { x: 0, y: 0, width: hs.width, height: hs.height, titleWidth: hs.titleWidth, titleHeight: hs.titleHeight, branchHeight: hs.height, partBounds: hs.partBounds })
+        provs.push({ nodes: provNodes, bb: { x: 0, y: 0, width: hs.width, height: hs.height }, own: provNodes.get(head.id)!, originY: hs.originY })
       }
     }
 
@@ -242,6 +254,7 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
       titleWidth: rootSize.titleWidth,
       titleHeight: rootSize.titleHeight,
       branchHeight: totalH,
+      partBounds: rootSize.partBounds,
     })
 
     // head 行：cell 内容区 = cellH - extendH；子树 bb 顶边对齐内容区顶边
@@ -255,7 +268,8 @@ export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
       // bb 左边缘对齐内容区左边缘
       const dx = contentLeft - p.bb.x - (p.own.x + p.own.width / 2) + p.own.width / 2 - p.own.width / 2
       const dxFinal = contentLeft - (p.own.x + p.own.width / 2 + p.bb.x)
-      const dyFinal = contentTop - (p.own.y + p.own.height / 2 + p.bb.y)
+      // bb.y 相对**原点**（shape 中心）→ 原点 = own.y + originY，不是 own.y + height/2
+      const dyFinal = contentTop - (p.own.y + p.originY + p.bb.y)
       void dx
       for (const [id, nl] of p.nodes) {
         nodes.set(id, { ...nl, x: nl.x + dxFinal, y: nl.y + dyFinal })

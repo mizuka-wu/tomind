@@ -385,7 +385,7 @@ export function layoutLogicSubtree(
   styleEngine: StyleEngine | null,
   state: SheetState | null,
   side: 'right' | 'left',
-): { nodes: Map<string, LogicNodeLayout>; bb: LocalBB; bbX: number; bbW: number } {
+): { nodes: Map<string, LogicNodeLayout>; bb: LocalBB; bbX: number; bbW: number; originY: number } {
   const sizeMap = new Map<string, NodeSize>()
   measureSubtree(node, options, sizeMap, styleEngine, state)
   const placement = new Map<string, LogicPlacement>()
@@ -400,7 +400,10 @@ export function layoutLogicSubtree(
     minX = Math.min(minX, nl.x)
     maxX = Math.max(maxX, nl.x + nl.width)
   }
-  return { nodes, bb, bbX: minX - centerX, bbW: maxX - minX }
+  // originY = 根节点主题盒原点（shape 中心）到盒顶的距离 = shapeHeight/2。
+  // 宿主布局（timeline / treetable / matrix / org-chart / tree）把委派子树接到自己的
+  // 坐标系时要按**原点**对齐，不能用 height/2 —— 有 labels 时两者差 (boxH-shapeH)/2 = 12。
+  return { nodes, bb, bbX: minX - centerX, bbW: maxX - minX, originY: sizeMap.get(node.id)!.originY }
 }
 
 export function createLogicLikeAlgorithm(name: string, side: 'right' | 'left', spacingMajorExtra: number = 0): LayoutAlgorithm {

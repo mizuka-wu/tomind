@@ -8,18 +8,14 @@ import type { NodeDesc } from '@tomind/schema'
 import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutOptions } from './layout-engine'
-import { measureTextSize } from './layout-engine'
 import {
   getAttr,
-  getFontSize,
-  getFontFamily,
-  getFontWeight,
-  getFontStyle,
-  getTitle,
   isCollapsed,
   getAttachedChildren,
 } from './layout-utils'
 import type { SimpleNodeSize } from './layout-utils'
+import { hasNonTitleParts } from './part-measure'
+import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 
 export function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value
@@ -109,16 +105,21 @@ export function measureStyledSubtree(
   styleEngine?: StyleEngine | null,
   state?: SheetState | null,
 ): void {
-  const fontSize = getFontSize(node, styleEngine, state)
-  const title = getTitle(node)
-  const fontFamily = getFontFamily(node, styleEngine, state)
-  const fontWeight = getFontWeight(node, styleEngine, state)
-  const fontStyle = getFontStyle(node, styleEngine, state)
   const spacing = getNodeSpacing(node, options, styleEngine ?? null, state ?? null, majorAxis)
-  const { width, height } = measureTextSize(title, fontSize, options, fontFamily, fontWeight, fontStyle)
+  // part-aware：labels / markers / image / 编号都计入主题盒，且透出 originY(=shapeHeight/2)
+  // 与 partBounds。旧实现只测 title + padding（SimpleNodeSize），而 timeline 委派出去的
+  // logic 子树是 part-aware 的 → 同一棵树两套「主题盒 ↔ 原点」口径混帧
+  // （实测 labels 挂在 timeline 轴分支上时 100/235 个节点 dy = -24、12 个节点 ΔH = -24）。
+  const r = hasNonTitleParts(node)
+    ? measurePartAwareNode(node, options, styleEngine, state, spacing.padding)
+    : measureTitleOnlyNode(node, spacing.padding, options, styleEngine, state)
   sizeMap.set(node.id, {
-    width: width + spacing.padding.left + spacing.padding.right,
-    height: height + spacing.padding.top + spacing.padding.bottom,
+    width: r.width,
+    height: r.height,
+    originY: r.shapeHeight / 2,
+    titleWidth: r.titleWidth,
+    titleHeight: r.titleHeight,
+    partBounds: r.partBounds,
   })
   if (!isCollapsed(node)) {
     for (const child of getAttachedChildren(node)) {

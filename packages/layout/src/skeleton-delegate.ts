@@ -28,8 +28,15 @@ export function getChildLogicSide(state: SheetState | null, parentDepth: number)
 export interface DelegatedSubtree {
   /** 绝对坐标节点表（child 主题左上角位于 (x, y)） */
   nodes: Map<string, NodeLayout>
-  /** 子树包围盒（相对 child 中心） */
+  /** 子树包围盒（相对 child **原点**：X 相对盒中心、Y 相对 shape 中心） */
   bb: { y: number; height: number; x: number; width: number }
+  /**
+   * child 主题盒原点（shape 中心）到盒顶的距离 = shapeHeight/2。
+   * 宿主布局若自己是 part-blind（SimpleNodeSize，只有 height/2 可用），
+   * 接委派子树时**必须**用这个值对齐原点，否则带 labels 的子树会整体上移
+   * (boxH - shapeH)/2 = 12px（实测 test-timeline-labels：222/235 个节点 dy = -12）。
+   */
+  originY: number
 }
 
 /**
@@ -58,5 +65,5 @@ export function delegateLogicSubtree(
   for (const [id, nl] of res.nodes) {
     nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy } as NodeLayout)
   }
-  return { nodes, bb: { y: res.bb.y, height: res.bb.height, x: res.bbX, width: res.bbW } }
+  return { nodes, bb: { y: res.bb.y, height: res.bb.height, x: res.bbX, width: res.bbW }, originY: res.originY }
 }

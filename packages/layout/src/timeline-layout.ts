@@ -83,7 +83,21 @@ function getBranchSpacing(node: NodeDesc, styleEngine: StyleEngine | null, state
 const LINECOLPOS = 13
 
 interface TlBB { x: number; y: number; width: number; height: number }
-interface TlProv { nodes: Map<string, NodeLayout>; bb: TlBB; own: NodeLayout }
+
+/**
+ * 主题盒原点（shape 中心）到盒顶的距离。measureStyledSubtree 现在是 part-aware 的，
+ * 会填 originY = shapeHeight/2；无 labels 时恒等于 height/2（所以老 fixture 不受影响）。
+ * SB 的 boundaryBounds.y / newBounds.y 都以原点为参考，所有「盒顶 ↔ 原点」换算都要用它。
+ */
+const originYOf = (s: NodeSize): number => s.originY ?? s.height / 2
+interface TlProv {
+  nodes: Map<string, NodeLayout>
+  bb: TlBB
+  own: NodeLayout
+  /** 子树根的主题盒原点偏移（shapeHeight/2）。委派子树是 part-aware 的，必须用它；
+   *  timeline 自己的递归是 part-blind（SimpleNodeSize），仍用 height/2 */
+  originY: number
+}
 
 /**
  * 布局一个 axis 子分支（timeline-horizontal-up / down），对齐 snowbrush
@@ -106,12 +120,17 @@ function layoutTimelineBranch(
   const size = sizeMap.get(node.id)!
   const h = size.height
   const w = size.width
+  const originY = originYOf(size)
   const tt = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
-  nodes.set(node.id, { x: left, y: centerY - h / 2, width: w, height: h, titleWidth: tt.width, titleHeight: tt.height, branchHeight: h })
+  nodes.set(node.id, {
+    x: left, y: centerY - originY, width: w, height: h,
+    titleWidth: size.titleWidth ?? tt.width, titleHeight: size.titleHeight ?? tt.height,
+    branchHeight: h, partBounds: size.partBounds,
+  })
 
   const children = isCollapsed(node) ? [] : getAttachedChildren(node)
   if (children.length === 0) {
-    return { x: -w / 2, y: -h / 2, width: w, height: h }
+    return { x: -w / 2, y: -originY, width: w, height: h }
   }
 
   const PAD = getBranchSpacing(node, styleEngine, state)
@@ -123,7 +142,7 @@ function layoutTimelineBranch(
     const del = delegateLogicSubtree(child, 0, 0, depth, options, styleEngine, state)
     if (del) {
       const own = del.nodes.get(child.id)!
-      provs.push({ nodes: del.nodes, bb: { x: del.bb.x, y: del.bb.y, width: del.bb.width, height: del.bb.height }, own })
+      provs.push({ nodes: del.nodes, bb: { x: del.bb.x, y: del.bb.y, width: del.bb.width, height: del.bb.height }, own, originY: del.originY })
     } else {
       const provNodes = new Map<string, NodeLayout>()
       layoutTimelineHorizontal(child, 0, 0, node, options, sizeMap, provNodes, styleEngine, state, depth + 1)
@@ -136,8 +155,9 @@ function layoutTimelineBranch(
       }
       provs.push({
         nodes: provNodes,
-        bb: { x: minX - (own.x + cs.width / 2), y: minY - (own.y + cs.height / 2), width: maxX - minX, height: maxY - minY },
+        bb: { x: minX - (own.x + cs.width / 2), y: minY - (own.y + originYOf(cs)), width: maxX - minX, height: maxY - minY },
         own,
+        originY: originYOf(cs),
       })
     }
   }
@@ -145,8 +165,9 @@ function layoutTimelineBranch(
   const childrenH = provs.reduce((a, p) => a + p.bb.height, 0) + (provs.length - 1) * PAD
   const childrenW = Math.max(...provs.map((p) => p.bb.width))
   const centerX = left + w / 2
-  const top = centerY - h / 2
-  const bottom = centerY + h / 2
+  // SB newBounds.y = -originY、newBounds.height = 主题盒高（含 labels）
+  const top = centerY - originY
+  const bottom = top + h
 
   // snowbrush: childrenX = 2*newBounds.x + newBounds.width + PADDING（中心坐标下即 PADDING）
   const gcCenterX = centerX + PAD
@@ -167,14 +188,15 @@ function layoutTimelineBranch(
   let cum = bbTop
   for (const p of provs) {
     const dx = gcCenterX - p.bb.x - (p.own.x + p.own.width / 2)
-    const dy = cum - p.bb.y - (p.own.y + p.own.height / 2)
+    // 子树原点落到 cum - bb.y：bb.y 相对**原点**，所以这里要减 originY 而不是 height/2
+    const dy = cum - p.bb.y - (p.own.y + p.originY)
     for (const [id, nl] of p.nodes) {
       nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy })
     }
     cum += p.bb.height + PAD
   }
 
-  const bbY = dir === 'up' ? bbTop - centerY : -h / 2
+  const bbY = dir === 'up' ? bbTop - centerY : -originY
   // SB down: newBounds.height = maxBottom - newBounds.y + ext = h + PADDING + childrenH + 2*ext
   // SB up:   newBounds.height += childrenSize.height + LINECOLPOS + lineCorner + ext
   const bbH = dir === 'up'
@@ -202,14 +224,19 @@ function layoutTimelineHorizontal(
   const h = size.height
   const w = size.width
   const tt2 = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
-  nodes.set(node.id, { x, y, width: w, height: h, titleWidth: tt2.width, titleHeight: tt2.height, branchHeight: h })
+  nodes.set(node.id, {
+    x, y, width: w, height: h,
+    titleWidth: size.titleWidth ?? tt2.width, titleHeight: size.titleHeight ?? tt2.height,
+    branchHeight: h, partBounds: size.partBounds,
+  })
 
   const children = isCollapsed(node) ? [] : getAttachedChildren(node)
   if (children.length === 0) return
 
   const PAD = getAxisSpacing(node, styleEngine, state)
   const parentCenterX = x + w / 2
-  const parentCenterY = y + h / 2
+  // 轴上子分支对齐的是父主题的**原点**（shape 中心），不是主题盒中心
+  const parentCenterY = y + originYOf(size)
 
   const provs: TlProv[] = []
   for (let i = 0; i < children.length; i++) {
@@ -218,7 +245,9 @@ function layoutTimelineHorizontal(
     const nextH = i + 1 < children.length ? sizeMap.get(children[i + 1].id)!.height : 0
     const provNodes = new Map<string, NodeLayout>()
     const bb = layoutTimelineBranch(child, 0, 0, dir, depth + 1, nextH, options, sizeMap, provNodes, styleEngine, state)
-    provs.push({ nodes: provNodes, bb, own: provNodes.get(child.id)! })
+    // 这一层的 own 来自 layoutTimelineBranch（part-blind 的 SimpleNodeSize 帧），
+    // 原点就是 height/2；真正的 part-aware 衔接在 layoutTimelineBranch 内部（见 TlProv.originY）
+    provs.push({ nodes: provNodes, bb, own: provNodes.get(child.id)!, originY: originYOf(sizeMap.get(child.id)!) })
   }
 
   // axis X：三个约束取 max（中心坐标；rect shape offset = ±w/2）
@@ -239,7 +268,7 @@ function layoutTimelineHorizontal(
       : -w / 2 + w + PAD / 2 - p.bb.x
     const centerX: number = parentCenterX + Math.max(posXByPrevTopic, posXBySameDir, 0)
     const dx = centerX - (p.own.x + cw / 2)
-    const dy = parentCenterY - (p.own.y + p.own.height / 2)
+    const dy = parentCenterY - (p.own.y + p.originY)
     for (const [id, nl] of p.nodes) {
       nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy })
     }
