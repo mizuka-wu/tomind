@@ -2,7 +2,7 @@ export { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 export type { ILayoutEngine, NodeLayout, LayoutResult, LayoutOptions, LayoutAlgorithm } from './layout-engine'
 
 // 公共工具函数
-export { getTitle, getFontSize, getAttr, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleNode, measureSimpleSubtree, getEffectiveStructureClass } from './layout-utils'
+export { getTitle, getFontSize, getAttr, isCollapsed, getAttachedChildren, findRootTopic, measureSimpleNode, measureSimpleSubtree, getEffectiveStructureClass, isElbowLineClass } from './layout-utils'
 export type { SimpleNodeSize } from './layout-utils'
 
 export { LayoutEngine } from './default-layout-engine'
@@ -32,7 +32,7 @@ export type { DelegatedSubtree } from './skeleton-delegate'
 export { braceRightLayoutAlgorithm, braceLeftLayoutAlgorithm } from './brace-layout'
 
 // Org Chart 布局
-export { orgChartDownLayoutAlgorithm, orgChartUpLayoutAlgorithm } from './org-chart-layout'
+export { orgChartDownLayoutAlgorithm, orgChartUpLayoutAlgorithm, orgRealignOffset } from './org-chart-layout'
 
 // Timeline 布局
 export { timelineHorizontalLayoutAlgorithm, timelineVerticalLayoutAlgorithm } from './timeline-layout'

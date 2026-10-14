@@ -13,7 +13,7 @@ import type { StyleEngine } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
-import { isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
+import { isCollapsed, getAttachedChildren, findRootTopic, getAttr, isElbowLineClass } from './layout-utils'
 import { getNodeSpacing, parseStyleValue } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
@@ -116,19 +116,80 @@ function getOrgSpacingMajor(
   return gap
 }
 
-/** skeleton：子层级结构为 logic.* 时委派 logic 布局 */
-function getOrgChildLogicSide(state: SheetState | null, depth: number): 'right' | 'left' | null {
+/** skeleton 结构样式里该层级（mainTopic / subTopic）声明的结构类 */
+function skeletonStructureAt(state: SheetState | null, depth: number): string | null {
   const sk = (state?.doc?.attrs as Record<string, unknown> | undefined)?.skeletonStructure as Record<string, string> | undefined
   if (!sk) return null
   const sc = sk[depth === 0 ? 'mainTopic' : 'subTopic'] ?? sk.mainTopic
-  if (typeof sc !== 'string' || !sc.startsWith('org.xmind.ui.logic')) return null
-  return sc.endsWith('left') ? 'left' : 'right'
+  return typeof sc === 'string' && sc ? sc : null
 }
 
-/** snowbrush calcOutwardDistanceByAttachedChildren（org：水平方向，limit 7） */
+/** 结构类 → logic 侧向（URI 与短名都认）；非 logic.* 返回 null */
+function logicSideOf(structureClass: string | null): 'right' | 'left' | null {
+  if (!structureClass) return null
+  if (structureClass === 'org.xmind.ui.logic.right' || structureClass === 'logic-right') return 'right'
+  if (structureClass === 'org.xmind.ui.logic.left' || structureClass === 'logic-left') return 'left'
+  return null
+}
+
+/**
+ * 子层级结构为 logic.* 时委派 logic 布局 —— **逐个子节点**判定。
+ *
+ * SB `utils/branch.getViewStructure` 对 attached 子分支：
+ *   preset = 节点自己的 structure-class || skeleton[getActivedClassName(view)]
+ *   preset ∈ parentStruct.getAvailableChildStructure(parent, view) → 用 preset
+ *   否则试 SIMILAR_STRUCTURE_MAP 镜像，再否则 getChildStructure(= 父结构)
+ * 而 `orgchartupanddown` **没有**覆写 getAvailableChildStructure / getChildStructure，
+ * 继承 AbstractStructure 的：available = ATTACHED_EXPOSED_STRUCTURE（**含 logic.left/right**）、
+ * getChildStructure = parentStructure。
+ * ⇒ org-chart 下单个分支显式声明 logic.right，它整棵子树就该横向长。
+ *
+ * 旧实现只读 skeleton、而且按层取**一个**值套给全部子节点，忽略节点自身显式声明的
+ * structureClass（探针实测 test-org-mixed：SB 给 mains[1] eff=logic.right、
+ * 它的 4 个后代也跟着 logic.right；TM 全按 org-chart.down 递归 → avgΔX 188.4 / avgΔY 84.3）。
+ *
+ * 只识别 logic.*：TM 的 org-chart 目前只能委派 logic 子树。显式声明 tree.* /
+ * org-chart.up 等其它 available 结构时仍退回 org 递归（已知差距，见 skill）。
+ */
+function getOrgChildLogicSide(child: NodeDesc, state: SheetState | null, depth: number): 'right' | 'left' | null {
+  const own = getAttr<string>(child, 'structureClass')
+  const preset = (typeof own === 'string' && own) ? own : skeletonStructureAt(state, depth)
+  return logicSideOf(preset)
+}
+
+/**
+ * SB `orgchartupanddown.calAttachedChildrenPos` 的 posXoffsetToClosestChild 重对齐
+ * （up/down 共用同一段代码）：
+ *
+ *   posXoffsetToClosestChild = argmin |posX|                      // 离父原点最近的那个子节点
+ *   childrenWidth = currentChildX - spacingMinor - lineWidth       // **循环之后**的值
+ *                 = minChildX + childrenSize.width
+ *   if (isNeedRedolayout(children, posXoffsetToClosestChild, childrenWidth))
+ *     → 所有子节点 x -= posXoffsetToClosestChild（把最近的那个吸到父节点正下/正上方）
+ *   isNeedRedolayout = children.length >= 3
+ *                   && |offset| < min(MAX_BRANCH_POSITION_REALIGN_OFFSET(30),
+ *                                     childrenSize * BRANCH_POSITION_REALIGN_RATIO(0.15))
+ *
+ * ⚠️ 阈值里的 childrenSize 是 `childrenWidth`（含负的 minChildX），**不是**
+ * `childrenSize.width` —— 比后者小，所以 SB 触发重对齐的条件更严。
+ * 旧实现用 childrenW，多做了一次重对齐：实测嵌套 org-chart 里一组 4 个子分支被整体
+ * 平移 36.5px，最近的那个子节点被吸到父节点正下方（fixture test-org-nested）。
+ */
+export function orgRealignOffset(
+  posXs: readonly number[],
+  childrenWidth: number,
+  childCount: number,
+): number {
+  if (childCount < 3 || posXs.length === 0) return 0
+  let best = posXs[0]
+  for (const v of posXs) if (Math.abs(v) < Math.abs(best)) best = v
+  return Math.abs(best) < Math.min(30, childrenWidth * 0.15) ? best : 0
+}
+
+/** snowbrush calcOutwardDistanceByAttachedChildren（org：水平方向，limit 7，K/MIN/MAX = 0.09/1000/1600） */
 function calcOrgOutward(provs: { bbW: number }[], lineClass: string): number {
   if (provs.length < 7) return 0
-  if (lineClass.includes('elbow')) return 0
+  if (isElbowLineClass(lineClass)) return 0
   const totalWidth = provs.reduce((s2, p) => s2 + p.bbW, 0)
   if (totalWidth <= 1000) return 0
   return 0.09 * (Math.min(totalWidth, 1600) - 1000)
@@ -175,10 +236,10 @@ function layoutSubtreeDown(
   const spacingMajor = getOrgSpacingMajor(node, options, styleEngine, state)
   const lineClass = styleEngine && state ? String(styleEngine.getStyleValue(state, node.id, 'lineClass') ?? '') : ''
 
-  // 子树 provisional 布局（skeleton 委派 logic，否则递归 org）
-  const logicSide = getOrgChildLogicSide(state, depth)
+  // 子树 provisional 布局（子节点自身结构 / skeleton 委派 logic，否则递归 org）
   const provs: OrgProv[] = []
   for (const child of children) {
+    const logicSide = getOrgChildLogicSide(child, state, depth)
     const provNodes = new Map<string, NodeLayout>()
     let bbX = 0
     let bbW = 0
@@ -231,7 +292,6 @@ function layoutSubtreeDown(
   const maxOffset = Math.max(...provs.map((p) => -p.originY - p.bbY))
   const outward = calcOrgOutward(provs, lineClass)
   const childrenY = y + size.height + spacingMajor + maxOffset + outward
-
   // X 堆叠
   let cur = minChildX
   const posXs = provs.map((p) => {
@@ -240,12 +300,7 @@ function layoutSubtreeDown(
     return v
   })
   // posXoffsetToClosestChild 重对齐（endAnchor 在 top-middle → rel x = 0）
-  let offset = 0
-  if (n >= 3) {
-    let best = posXs[0]
-    for (const v of posXs) if (Math.abs(v) < Math.abs(best)) best = v
-    if (Math.abs(best) < Math.min(30, childrenW * 0.15)) offset = best
-  }
+  const offset = orgRealignOffset(posXs, cur - childGap, n)
 
   const parentCenterX = x + size.width / 2
   let bbTop = 0
@@ -324,10 +379,10 @@ function layoutSubtreeUp(
   const spacingMajor = getOrgSpacingMajor(node, options, styleEngine, state)
   const lineClass = styleEngine && state ? String(styleEngine.getStyleValue(state, node.id, 'lineClass') ?? '') : ''
 
-  // 子树 provisional 布局（skeleton 委派 logic，否则递归 org-up）
-  const logicSide = getOrgChildLogicSide(state, depth)
+  // 子树 provisional 布局（子节点自身结构 / skeleton 委派 logic，否则递归 org-up）
   const provs: OrgProv[] = []
   for (const child of children) {
+    const logicSide = getOrgChildLogicSide(child, state, depth)
     const provNodes = new Map<string, NodeLayout>()
     let bb: OrgBB
     /** SB getStartDirection(child)：LEFT/RIGHT → 水平生长，currentAllHeight 走 restSize 口径 */
@@ -366,12 +421,8 @@ function layoutSubtreeUp(
     cur += p.bbW + childGap
     return v
   })
-  let offset = 0
-  if (n >= 3) {
-    let best = posXs[0]
-    for (const v of posXs) if (Math.abs(v) < Math.abs(best)) best = v
-    if (Math.abs(best) < Math.min(30, childrenW * 0.15)) offset = best
-  }
+  // 阈值口径同 down 侧（SB up/down 共用 calAttachedChildrenPos 这一段）
+  const offset = orgRealignOffset(posXs, cur - childGap, n)
 
   const parentCenterX = x + halfW
   // 子主题盒顶边（绝对）= y + childrenY + originY - maxOffset - outward - childH

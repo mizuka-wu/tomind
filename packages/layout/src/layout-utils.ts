@@ -167,3 +167,27 @@ export function measureSimpleSubtree(
     }
   }
 }
+
+/** SB BRANCHCONNECTION.ROUNDEDELBOW / ELBOW 的短名（小写比对用） */
+const ELBOW_LINE_CLASS_NAMES = ['roundedelbow', 'elbow']
+const BRANCH_CONNECTION_PREFIX = 'org.xmind.branchConnection.'
+
+/**
+ * SB `structures/helper/layoutstyleoptimization.calcOutwardDistanceByAttachedChildren` 的
+ *   isLineStyleNeedsProcess = lineStyle !== BRANCHCONNECTION.ROUNDEDELBOW
+ *                            && lineStyle !== BRANCHCONNECTION.ELBOW
+ * —— **精确相等**（不是子串匹配），URI 与短名都要认。
+ *
+ * 旧实现三处（map / logic / org-chart）都写成 `lineClass.includes('elbow')`：
+ * 主题给的是 `org.xmind.branchConnection.roundedElbow`（大写 E）→ 判不出来，
+ * 本该返回 0 的 outward 被算成 `0.09 * (ΣbbW - 1000)`。
+ * 实测嵌套 org-chart 的 7 子分支（ΣbbW 1489）多算 **44.01px**，整棵子树往下掉 44。
+ * （SKEWELBOW / SKEWELBOW2 在 SB 的 BRANCHCONNECTION 里是注释掉的，不参与排除。）
+ */
+export function isElbowLineClass(lineClass: unknown): boolean {
+  if (typeof lineClass !== 'string' || !lineClass) return false
+  const short = lineClass.startsWith(BRANCH_CONNECTION_PREFIX)
+    ? lineClass.slice(BRANCH_CONNECTION_PREFIX.length)
+    : lineClass
+  return ELBOW_LINE_CLASS_NAMES.includes(short.toLowerCase())
+}

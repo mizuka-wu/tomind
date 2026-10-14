@@ -27,6 +27,7 @@ import {
   getAttachedChildren,
   findRootTopic,
   getAttr,
+  isElbowLineClass,
 } from './layout-utils'
 import { computeOutsidePadding } from './boundary-padding'
 import type { OutsidePadding } from './boundary-padding'
@@ -206,7 +207,7 @@ class MapLayout extends BaseLayout {
     if (styleEngine && state) {
       const v = styleEngine.getStyleValue(state, parentId ?? '', 'lineClass')
       const ls = typeof v === 'string' ? v : ''
-      if (ls.includes('elbow')) return 0
+      if (isElbowLineClass(ls)) return 0
     }
     // snowbrush 用 boundaryBounds.height（子树高度）
     const totalHeight = children.reduce(
