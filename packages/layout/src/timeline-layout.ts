@@ -13,7 +13,7 @@ import type { LayoutAlgorithm, LayoutResult, LayoutOptions, NodeLayout } from '.
 import { delegateLogicSubtree } from './skeleton-delegate'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
-import { measureStyledSubtree } from './spacing-utils'
+import { measureStyledSubtree, getLineEndSpacingPatchGap, hasLineEndArrow } from './spacing-utils'
 type NodeSize = import('./layout-utils').SimpleNodeSize
 
 function getSpacing(node: NodeDesc, key: 'spacingMajor' | 'spacingMinor', fallback: number, styleEngine: StyleEngine | null, state: SheetState | null): number {
@@ -58,26 +58,34 @@ function getDefaultSpacingMajor(state: SheetState | null, node: NodeDesc): numbe
   return parseNum(entry?.spacingMajor, 26)
 }
 
-function getLineEndPatch(node: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null): number {
+/**
+ * SB `getLineEndSpacingPatchGap(node)`。`isTimelineThrough` 按**这个节点自己的结构类**判：
+ * timeline.horizontal 的轴节点 → true（LINE_TIMELINE_THROUGH_SPACING = 4），
+ * 它的 up/down 子分支（timeline.horizontal.up/down）→ false（LINE_SPACING = 16）。
+ */
+function getLineEndPatch(node: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null, isTimelineThrough: boolean): number {
   if (!styleEngine || !state) return 0
-  const arrow = String(styleEngine.getStyleValue(state, node.id, 'arrowEndClass') ?? '')
-  if (!arrow || arrow.includes('none')) return 0
-  const lw = parseNum(styleEngine.getStyleValue(state, node.id, 'lineWidth'), 0)
-  return lw * 4 + 16
+  return getLineEndSpacingPatchGap({
+    isTimelineThrough,
+    hasArrow: hasLineEndArrow(styleEngine.getStyleValue(state, node.id, 'arrowEndClass')),
+    lineWidth: parseNum(styleEngine.getStyleValue(state, node.id, 'lineWidth'), 0),
+  })
 }
 
 /** snowbrush timelinehorizontal.getTopicSpacing: styleSpacing * 100 / defaultSpacing + lineEnd */
 function getAxisSpacing(node: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null): number {
   const styleSpacing = styleEngine && state ? parseNum(styleEngine.getStyleValue(state, node.id, 'spacingMajor'), 0) : 0
   const defaultSpacing = getDefaultSpacingMajor(state, node) || 1
-  return (styleSpacing * 100) / defaultSpacing + getLineEndPatch(node, styleEngine, state)
+  // 轴节点的生效结构类 = timeline.horizontal → isTimelineThroughStructure 为真 → 补丁用 4
+  return (styleSpacing * 100) / defaultSpacing + getLineEndPatch(node, styleEngine, state, true)
 }
 
 /** snowbrush timelinehorizontalup/down.getTopicSpacing: styleSpacing * PADDING(20) / defaultSpacing + lineEnd */
 function getBranchSpacing(node: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null): number {
   const styleSpacing = styleEngine && state ? parseNum(styleEngine.getStyleValue(state, node.id, 'spacingMajor'), 0) : 0
   const defaultSpacing = getDefaultSpacingMajor(state, node) || 1
-  return (styleSpacing * 20) / defaultSpacing + getLineEndPatch(node, styleEngine, state)
+  // up/down 分支的结构类是 timeline.horizontal.up/down → 不是 through → 补丁用 16
+  return (styleSpacing * 20) / defaultSpacing + getLineEndPatch(node, styleEngine, state, false)
 }
 
 const LINECOLPOS = 13

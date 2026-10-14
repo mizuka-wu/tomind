@@ -195,3 +195,53 @@ export function getBoundaryWidth(
   const rightPad = isLastChild ? BOUNDARYGAP * 2 : BOUNDARYGAP
   return topicBoundsWidth + leftPad + rightPad
 }
+
+// ─── 线尾回缩 / 层间距补丁（SB utils/line.ts）───
+
+/** SB layoutConstant.LINE.LINE_SPACING */
+export const LINE_SPACING = 16
+/** SB layoutConstant.LINE.LINE_TIMELINE_THROUGH_SPACING */
+export const LINE_TIMELINE_THROUGH_SPACING = 4
+/** SB utils/linearrow.BaseArrow.arrowSizeRatio（全库只定义这一次，没有任何箭头覆盖它） */
+export const ARROW_SIZE_RATIO = 4
+
+/**
+ * SB `utils/line.getLineEndSpacingPatchGap(startBranchView)`
+ * = `shouldPatchLineSpacing(v) ? getLineEndSpacing(v) : 0`，展开后：
+ *
+ *   hasArrow = endArrowClass && endArrowClass !== ARROW_CLASS.NONE
+ *   shouldPatch = isBraceStructure(v) || hasArrow
+ *   getLineEndSpacing:
+ *     isBrace && !hasArrow        → LINE_SPACING(16)
+ *     !hasArrow                   → 0
+ *     否则 → lineWidth * arrowSizeRatio(4)
+ *            + (isTimelineThroughStructure(v) ? LINE_TIMELINE_THROUGH_SPACING(4) : LINE_SPACING(16))
+ *
+ * `isTimelineThroughStructure(v)` = v.getStructureClass() === TIMELINEHORIZONTAL
+ *                                || === TIMELINETHROUGHVERTICAL
+ * —— **按分支自己的结构类判**，所以 timeline.horizontal 的轴节点是 4，
+ * 而它的 up/down 子分支（timeline.horizontal.up/down）是 16。
+ * 旧实现 timeline-layout 两处都写死 `lw*4+16` → 轴间距每层多 12px
+ * （实测 test-arrow-timeline avgΔX 82.5）。
+ */
+export function getLineEndSpacingPatchGap(input: {
+  isBrace?: boolean
+  isTimelineThrough?: boolean
+  hasArrow?: boolean
+  lineWidth?: number
+}): number {
+  const isBrace = input.isBrace === true
+  const hasArrow = input.hasArrow === true
+  if (!isBrace && !hasArrow) return 0
+  if (!hasArrow) return LINE_SPACING
+  const lineWidth = typeof input.lineWidth === 'number' ? input.lineWidth : 0
+  const lineSpacing = input.isTimelineThrough === true ? LINE_TIMELINE_THROUGH_SPACING : LINE_SPACING
+  return lineWidth * ARROW_SIZE_RATIO + lineSpacing
+}
+
+/** arrow-end-class 是否算「有箭头」（SB ARROW_CLASS.NONE = 'org.xmind.arrowShape.none'） */
+export function hasLineEndArrow(arrowEndClass: unknown): boolean {
+  if (typeof arrowEndClass !== 'string' || !arrowEndClass) return false
+  const short = arrowEndClass.replace(/^org\.xmind\.arrowShape\./, '')
+  return short !== 'none' && short !== ''
+}

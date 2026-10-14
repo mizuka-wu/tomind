@@ -14,6 +14,7 @@ import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { isCollapsed, getAttachedChildren, findRootTopic, getAttr, getEffectiveStructureClass, isElbowLineClass } from './layout-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
+import { getLineEndSpacingPatchGap, hasLineEndArrow } from './spacing-utils'
 
 /**
  * 对齐 snowbrush calcOutwardDistanceByAttachedChildren：
@@ -167,17 +168,42 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
   }
 }
 
+/**
+ * SB `AbstractStructure.calcSpacingMajor(branchView)`
+ *   = parseInt(branchView.figure.majorSpacing) + getLineEndSpacingPatchGap(branchView)
+ * figure.majorSpacing 已经含 curve/straight/fold/bight 的 ×2（refreshSpacingMajor）。
+ *
+ * 第二项此前**完全缺失**：只有 brace 通过 `spacingMajorExtra = 16` 硬编码补了一份
+ * （= SB 的「isBrace && !hasArrow → LINE_SPACING」那一支）。有箭头时 SB 是
+ * `lineWidth * arrowSizeRatio(4) + (isTimelineThrough ? 4 : 16)`，
+ * 实测 logic.right 的 d2 节点（lineWidth 2 + triangle）SB calcSpacingMajor = 26 + 24 = **50**，
+ * TM 只有 26 → 委派子树每层窄 24px，在 timeline 轴上累积成 -48 / -96 / -192。
+ *
+ * `extra > 0` 就是 brace 路径（createLogicLikeAlgorithm 传的 BRACE_LINE_SPACING=16，
+ * 且只作用于中央分支自身 —— 与 SB 一致：只有结构类是 brace.* 的那一层
+ * shouldPatchLineSpacing 才恒真，更深层是 logic.right）。所以直接把它当 isBrace 交给
+ * 共享 helper：无箭头时 helper 返回 16（与旧行为逐字相同），有箭头时返回 lw*4+16。
+ */
 function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null, extra: number = 0): number {
   // 对齐 snowbrush calcSpacingMajor：curve/straight 线 ×2
   const gap = getNodeSpacing(node, options, styleEngine, state).horizontalGap
+  const DOUBLE = ['curve', 'straight', 'fold', 'bight']
+  let base = gap
   if (styleEngine && state) {
     const lineClass = styleEngine.getStyleValue(state, node.id, 'lineClass')
     const s = typeof lineClass === 'string' ? lineClass : ''
-    const DOUBLE = ['curve', 'straight', 'fold', 'bight']
-    if (DOUBLE.some(c => s.includes(c))) return gap * 2 + extra
-    return gap + extra
+    if (DOUBLE.some(c => s.includes(c))) base = gap * 2
   }
-  return gap + extra
+  const patch = styleEngine && state
+    ? getLineEndSpacingPatchGap({
+      isBrace: extra > 0,
+      // logic/brace 结构的分支永远不是 timeline.horizontal / timeline.through.vertical
+      isTimelineThrough: false,
+      hasArrow: hasLineEndArrow(styleEngine.getStyleValue(state, node.id, 'arrowEndClass')),
+      lineWidth: parseStyleValue(styleEngine.getStyleValue(state, node.id, 'lineWidth'), 0),
+    })
+    : extra
+  return base + patch
 }
 
 function getSpacingMinor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null): number {
