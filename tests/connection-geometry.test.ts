@@ -22,6 +22,8 @@ import {
   computeConnectionGeometry,
   computeConnectionAnchors,
   resolveChildStructureClass,
+  resolveCalloutStructureClass,
+  resolveDetachedStructureClass,
   getChildTargetOrientation,
   normalizeStructureClass,
   type ConnBox,
@@ -303,5 +305,61 @@ describe('connection-geometry：生效结构类（SB getViewStructure）', () =>
     expect(normalizeStructureClass('org.xmind.ui.map.clockwise')).toBe('map-clockwise')
     expect(normalizeStructureClass('map-clockwise')).toBe('map-clockwise')
     expect(normalizeStructureClass('org.xmind.ui.fishbone.left')).toBe('org.xmind.ui.fishbone.left')
+  })
+})
+
+describe('connection-geometry：callout / detached 的生效结构类（SB getCalloutStructure）', () => {
+  const parentBox = box(0, 0, 100, 40)
+  const right = box(300, 0, 60, 30)
+  const left = box(-200, 0, 60, 30)
+  /** 与父盒同心的盒子：几何判定会说「右侧」，只有 model.position 能分出 x=0 归左 */
+  const centered = box(20, 5, 60, 30)
+
+  it('map 系：position.x > 0 → logic-right，x < 0 → logic-left', () => {
+    expect(resolveCalloutStructureClass('map-clockwise', parentBox, right, { x: 320, y: -60 })).toBe('logic-right')
+    expect(resolveCalloutStructureClass('map-clockwise', parentBox, left, { x: -320, y: 80 })).toBe('logic-left')
+  })
+
+  it('map 系：position.x === 0 → logic-left（SB basemap 是 <=，几何判定会误判成右）', () => {
+    expect(resolveCalloutStructureClass('map-clockwise', parentBox, centered, { x: 0, y: 0 })).toBe('logic-left')
+    // 没有 position 时才退回几何判定（centered 与父盒同心 → dx=0，仍按 <= 归左）
+    expect(resolveCalloutStructureClass('map-clockwise', parentBox, right, null)).toBe('logic-right')
+    expect(resolveCalloutStructureClass('map-clockwise', parentBox, left, null)).toBe('logic-left')
+  })
+
+  it('map 系全家（含 unbalanced / floating）都走 position 符号', () => {
+    for (const s of ['map', 'map-clockwise', 'map-anticlockwise', 'map-unbalanced',
+      'map-floating', 'map-floating-clockwise', 'map-floating-anticlockwise']) {
+      expect(resolveCalloutStructureClass(s, parentBox, centered, { x: 0, y: 0 }), s).toBe('logic-left')
+      expect(resolveCalloutStructureClass(s, parentBox, centered, { x: 1, y: 0 }), s).toBe('logic-right')
+    }
+  })
+
+  it('timeline.horizontal / timeline.vertical：callout 用结构自身（不是 up/down 子结构）', () => {
+    expect(resolveCalloutStructureClass('timeline-horizontal', parentBox, right, { x: 10, y: 0 })).toBe('timeline-horizontal')
+    expect(resolveCalloutStructureClass('tree-sided', parentBox, right, { x: 10, y: 0 })).toBe('tree-sided')
+    // 对比：attached 子节点在 timeline-horizontal 下是 up/down
+    expect(resolveChildStructureClass('timeline-horizontal', null, parentBox, right, 0)).toBe('timeline-horizontal-up')
+  })
+
+  it('其余结构：继承父结构（logic.left 父分支上的 callout 即使 x>0 也是 logic.left）', () => {
+    expect(resolveCalloutStructureClass('logic-left', parentBox, right, { x: 260, y: 0 })).toBe('logic-left')
+    expect(resolveCalloutStructureClass('logic-right', parentBox, left, { x: -300, y: 0 })).toBe('logic-right')
+    expect(resolveCalloutStructureClass('org-chart-down', parentBox, right, { x: 10, y: 0 })).toBe('org-chart-down')
+  })
+
+  it('callout 不看自己显式声明的 structure-class（SB 只有 detached 才看）', () => {
+    // resolveCalloutStructureClass 没有 own 参数——签名本身就是这条规则的体现；
+    // 这里验证 logic.left 父分支上「几何在右、position 也在右」的 callout 仍然继承父结构
+    expect(resolveCalloutStructureClass('logic-left', parentBox, right, { x: 300, y: 0 })).toBe('logic-left')
+  })
+
+  it('detached：显式 structure-class 优先，否则 position.x < 0 判左（严格 <，与父结构无关）', () => {
+    expect(resolveDetachedStructureClass('org.xmind.ui.tree.left', parentBox, right, { x: 300, y: 0 })).toBe('tree-left')
+    expect(resolveDetachedStructureClass(null, parentBox, right, { x: 300, y: 0 })).toBe('logic-right')
+    expect(resolveDetachedStructureClass(null, parentBox, left, { x: -300, y: 0 })).toBe('logic-left')
+    expect(resolveDetachedStructureClass(null, parentBox, centered, { x: 0, y: 0 })).toBe('logic-right')
+    // map 系也一样（不像 callout 那样按 basemap 规则）
+    expect(resolveDetachedStructureClass(null, parentBox, centered, { x: 0, y: 0 })).toBe('logic-right')
   })
 })

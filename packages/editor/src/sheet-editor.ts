@@ -77,6 +77,11 @@ function createDefaultNodeViewDescRegistry(): Map<string, ViewDescClass> {
   const registry = new Map<string, ViewDescClass>()
   registry.set('root', RootViewDesc)
   registry.set('topic', TopicNodeViewDesc)
+  // callout 在 SB 里是一条正常 branchView（balloon shape + 自己的 attached 子树），
+  // 主题渲染与 topic 完全同一套；不注册的话 buildChildrenViews 拿不到 ViewDesc 就
+  // `continue`，连**递归都跳过** → callout 及其整棵子树一个元素都不画
+  // （实测 test-callout-branch：244 个节点只渲染出 235 个）。
+  registry.set('callout', TopicNodeViewDesc)
   registry.set('relationship', RelationshipNodeViewDesc)
   registry.set('boundary', BoundaryNodeViewDesc)
   registry.set('summary', SummaryNodeViewDesc)

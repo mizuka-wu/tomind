@@ -1137,6 +1137,64 @@ export function resolveChildStructureClass(
   }
 }
 
+/**
+ * SB `utils/branch.getStructureClass` / `getViewStructure` 对 **callout** 的分支：
+ *   `AllStructures(parentStructureClass).getCalloutStructure(parent, callout)`
+ * 注意 callout **不看**自己显式声明的 structure-class、也不看 skeleton
+ * （只有 detached 才 `if (isDefined(structureClass)) return structureClass`）。
+ *
+ * 各结构的 getCalloutStructure 实现：
+ * - basemap 系（map / map.clockwise / map.anticlockwise / map.unbalanced，
+ *   mapunbalanced 继承 mapClockWise，floating 系同属 MAP_LIKE_STRUCTURES）
+ *   → `position.x <= 0 ? LOGICLEFT : LOGICRIGHT`（**<=**，x=0 归左）
+ * - timeline.horizontal / timeline.vertical → `this.STRUCTURECLASS`（结构自身，不是 up/down 子结构）
+ * - 其余（AbstractStructure 默认）→ `getChildStructure(STRUCTURECLASS, 0, parent)`；
+ *   logic.left/right 的 getChildStructure 直接返回 parentStructure ⇒ **继承父分支的侧**
+ *   （探针实测：挂在 logic.right 主分支上、position.x = -300 的 callout 仍是 logic.right）
+ *
+ * 没有 model.position 时退回几何判定（childBox 相对 parentBox 的左右）。
+ */
+export function resolveCalloutStructureClass(
+  parentStructure: string,
+  parentBox: ConnBox,
+  childBox: ConnBox,
+  position?: { x?: number; y?: number } | null,
+): string {
+  const dx = typeof position?.x === 'number'
+    ? position.x
+    : boxCenter(childBox).x - boxCenter(parentBox).x
+  if (MAP_LIKE_STRUCTURES.has(parentStructure)) {
+    return dx <= 0 ? 'logic-left' : 'logic-right'
+  }
+  // SB timelinehorizontal.ts / timelinevertical.ts：return this.STRUCTURECLASS
+  // （org.xmind.ui.timeline.vertical 在 TM 里归一化成 tree-sided，两个名字都认）
+  if (parentStructure === 'timeline-horizontal'
+    || parentStructure === 'timeline-vertical'
+    || parentStructure === 'tree-sided') {
+    return parentStructure
+  }
+  return resolveChildStructureClass(parentStructure, null, parentBox, childBox, 0)
+}
+
+/**
+ * SB `utils/branch.getStructureClass` 对 **detached** 的分支：
+ *   自己显式的 structure-class 优先，否则 `position.x < 0 ? LOGICLEFT : LOGICRIGHT`
+ *   （**严格 <**，与 callout 的 `<=` 不同；且与父结构无关，map 系也一样）
+ */
+export function resolveDetachedStructureClass(
+  ownStructureClass: string | null | undefined,
+  parentBox: ConnBox,
+  childBox: ConnBox,
+  position?: { x?: number; y?: number } | null,
+): string {
+  const own = normalizeStructureClass(ownStructureClass)
+  if (own) return own
+  const dx = typeof position?.x === 'number'
+    ? position.x
+    : boxCenter(childBox).x - boxCenter(parentBox).x
+  return dx < 0 ? 'logic-left' : 'logic-right'
+}
+
 // ==================== 结构级连线差异（SB 各 structure 的 drawAttachedConnectLine） ====================
 
 /**

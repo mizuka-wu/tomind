@@ -23,6 +23,8 @@ import {
   computeConnectionGeometry,
   normalizeStructureClass,
   resolveChildStructureClass,
+  resolveCalloutStructureClass,
+  resolveDetachedStructureClass,
   type ConnBox,
   type ConnDirection,
   type ConnPoint,
@@ -213,9 +215,17 @@ export function getConnectionStructureMap(doc: NodeDesc, layout: LayoutResult): 
         const child = list[i]
         // SB model.getStructureClass() = 模型属性 ?? 样式级联（含主题 skeleton 的 structure style）
         const own = getEffectiveStructureClass(doc, child)
-        // callout：SB getCalloutStructure 用 index 0；detached：SB 按 position 符号（等价于几何判定）
-        const index = slot === 'attached' ? i : 0
-        walk(child, resolveChildStructureClass(structure, own, box, boxOf(child.id), index))
+        const childBox = boxOf(child.id)
+        // callout / detached 各有自己的规则（SB utils/branch.getStructureClass）：
+        // callout 走父结构的 getCalloutStructure（map 系按 position.x<=0 判左、其余继承父侧），
+        // detached 按自己的显式 structure-class 或 position.x<0
+        const position = getAttr<{ x?: number; y?: number }>(child, 'position')
+        const childStructure = slot === 'callout'
+          ? resolveCalloutStructureClass(structure, box, childBox, position)
+          : slot === 'detached'
+            ? resolveDetachedStructureClass(own, box, childBox, position)
+            : resolveChildStructureClass(structure, own, box, childBox, i)
+        walk(child, childStructure)
       }
     }
   }
