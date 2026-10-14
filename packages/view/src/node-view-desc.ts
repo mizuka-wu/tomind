@@ -17,7 +17,7 @@ import { isRelationshipNode, isBoundaryNode, isSummaryNode } from '@tomind/schem
 import type { StyleEngine, LeaferStyle, ResolvedStyle } from '@tomind/style'
 import { classifyNode } from '@tomind/style'
 import type { LayoutEngine, LayoutResult } from '@tomind/layout'
-import { getAttr, getEffectiveStructureClass } from '@tomind/layout'
+import { getAttr, getEffectiveStructureClass, getStructurePreset } from '@tomind/layout'
 import { getShapeBox, getShapeHeight, withShapeHeight } from './shape-box'
 import {
   computeConnectionGeometry,
@@ -203,8 +203,9 @@ export function getConnectionStructureMap(doc: NodeDesc, layout: LayoutResult): 
     return nl ? getShapeBox(nl) : EMPTY_BOX
   }
   const map = new Map<string, string>()
-  // SB: 中央分支 = 自身 structure-class，否则 DEFAULT_STRUCTURE（org.xmind.ui.map）
-  const rootStructure = normalizeStructureClass(getEffectiveStructureClass(doc, doc)) || 'map'
+  // SB: 中央分支 = presetStructure（自身 structure-class || skeleton['centralTopic']），
+  // 否则 DEFAULT_STRUCTURE（org.xmind.ui.map）
+  const rootStructure = normalizeStructureClass(getStructurePreset(doc, doc)) || 'map'
 
   const walk = (node: NodeDesc, structure: string): void => {
     map.set(node.id, structure)
@@ -213,8 +214,9 @@ export function getConnectionStructureMap(doc: NodeDesc, layout: LayoutResult): 
       const list = node.children?.[slot] ?? []
       for (let i = 0; i < list.length; i++) {
         const child = list[i]
-        // SB model.getStructureClass() = 模型属性 ?? 样式级联（含主题 skeleton 的 structure style）
-        const own = getEffectiveStructureClass(doc, child)
+        // SB getViewStructure 的 presetStructure = 模型属性 || skeleton[className]（**精确取**，
+        // 不退回 mainTopic）；取不到就交给 resolveChildStructureClass 走 getChildStructure
+        const own = getStructurePreset(doc, child)
         const childBox = boxOf(child.id)
         // callout / detached 各有自己的规则（SB utils/branch.getStructureClass）：
         // callout 走父结构的 getCalloutStructure（map 系按 position.x<=0 判左、其余继承父侧），

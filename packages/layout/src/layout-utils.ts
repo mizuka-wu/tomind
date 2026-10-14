@@ -44,6 +44,28 @@ export function getEffectiveStructureClass(doc: NodeDesc, node: NodeDesc): strin
   return typeof sc === 'string' && sc ? sc : null
 }
 
+/**
+ * SB `utils/branch.getViewStructure` 的 presetStructure：
+ *   `modelStructure || skeletonStructureStyle[styleManager.getActivedClassName(view)]`
+ * —— skeleton 是**按 className 精确取**的，没有「subTopic 缺失就退回 mainTopic」这回事；
+ * 取不到就是 undefined，接着走 `getChildStructure(parentStructure, index, parent)`（= 继承父结构）。
+ *
+ * `getEffectiveStructureClass` 的 `?? sk.mainTopic` 兜底在「父分支被显式改成别的结构」时
+ * 会污染后代：实测 test-org-mixed（skeleton 两层都写 org-chart.down、mains[1] 显式 logic.right），
+ * SB 给 mains[1] 的 26 个后代 eff = logic.right（preset 缺失 → 继承父结构），
+ * TM 用 sk.mainTopic 兜底拿到 org-chart.down，而它恰好在 RIGHT_EXPOSED 里 → 判成 org-chart-down，
+ * 连线几何 mean 3.32 / max 71.47。
+ */
+export function getStructurePreset(doc: NodeDesc, node: NodeDesc): string | null {
+  const own = getAttr<unknown>(node, 'structureClass')
+  if (typeof own === 'string' && own) return own
+  const sk = getAttr<Record<string, unknown>>(doc, 'skeletonStructure')
+  if (!sk) return null
+  const role = classifyNode(doc, node.id)
+  const sc = sk[role]
+  return typeof sc === 'string' && sc ? sc : null
+}
+
 /** 类型安全的 style 属性访问器 */
 export function getStyleAttr<T>(node: NodeDesc, key: string): T | undefined {
   const style = getNodeStyle(node)

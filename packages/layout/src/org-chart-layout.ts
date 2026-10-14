@@ -116,11 +116,14 @@ function getOrgSpacingMajor(
   return gap
 }
 
-/** skeleton 结构样式里该层级（mainTopic / subTopic）声明的结构类 */
+/**
+ * skeleton 结构样式里该层级声明的结构类 —— **按 className 精确取**（SB getViewStructure
+ * 的 `skeletonStructureStyle[getActivedClassName(view)]`，没有 subTopic→mainTopic 的兜底）。
+ */
 function skeletonStructureAt(state: SheetState | null, depth: number): string | null {
   const sk = (state?.doc?.attrs as Record<string, unknown> | undefined)?.skeletonStructure as Record<string, string> | undefined
   if (!sk) return null
-  const sc = sk[depth === 0 ? 'mainTopic' : 'subTopic'] ?? sk.mainTopic
+  const sc = sk[depth === 0 ? 'mainTopic' : 'subTopic']
   return typeof sc === 'string' && sc ? sc : null
 }
 
