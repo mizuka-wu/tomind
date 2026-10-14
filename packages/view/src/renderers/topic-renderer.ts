@@ -3,6 +3,7 @@ import type { ITextDecorationType, IImagePaint } from 'leafer-ui'
 import type { LayoutResult, NodeLayout } from '@tomind/layout'
 import {getStringStyle, getNumberStyle } from '../style-accessors'
 import { mapFontWeight, mapTextAlign } from '../text-style-helpers'
+import { computeTitleWrapWidth } from './text-wrap'
 import type { Renderer } from './renderer'
 import { getTitleText, isRichAttributeTitle, getAttributeTitle } from '@tomind/schema'
 
@@ -1522,10 +1523,8 @@ export class TopicRenderer implements Renderer {
     }
 
     // 限制文本宽度，避免长标题溢出（对齐 snowbrush TITLE_MAX_WIDTH 换行）
-    const wrapWidth = layout.titleWidth > 0
-      ? Math.max(layout.titleWidth, 20)
-      : Math.max((typeof layout.width === 'number' ? layout.width : 120) - 16, 20)
-    this.text.width = wrapWidth
+    // 单行标题不约束宽度，理由见 renderers/text-wrap.ts
+    this.text.width = computeTitleWrapWidth(layout, style)
 
     // textDecoration：映射为 LeaferJS 的 'under'/'delete'
     if (typeof style.textDecoration === 'string') {

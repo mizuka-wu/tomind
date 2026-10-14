@@ -23,15 +23,20 @@ import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { getNodeSpacing } from './spacing-utils'
 import { delegateLogicSubtree } from './skeleton-delegate'
 import { measureTitleOnlyNode } from './part-node-size'
+import type { PartAwareNodeSize } from './part-node-size'
 
 /**
  * snowbrush matrix cell 的 minSize = topicBounds（title + 2*margin + bw）；
  * MatrixCell.getMinSize 会再加 padding*2（CELL_PADDING=5）。
+ *
+ * 返回**完整的** PartAwareNodeSize（不是只挑 width/height）：渲染层还要用
+ * titleWidth/titleHeight 摆标题 —— 缺了它 topic-renderer 会退回
+ * `layout.width - 16` 当换行宽度，把单元格标题挤成两行
+ * （实测「测量方法」text 52×42 而不是 56×18）。
  */
-function measureMinSize(node: NodeDesc, options: LayoutOptions, styleEngine?: any, state?: any): { width: number; height: number } {
+function measureMinSize(node: NodeDesc, options: LayoutOptions, styleEngine?: any, state?: any): PartAwareNodeSize {
   const spacing = getNodeSpacing(node, options, styleEngine ?? null, state ?? null)
-  const r = measureTitleOnlyNode(node, spacing.padding, options, styleEngine ?? null, state ?? null)
-  return { width: r.width, height: r.height }
+  return measureTitleOnlyNode(node, spacing.padding, options, styleEngine ?? null, state ?? null)
 }
 
 /** 标签文本 cell 的 minSize = 标签视图盒（SB: 24px 文本 + 6px 四边 margin） */
@@ -83,14 +88,19 @@ export const matrixLayoutAlgorithm: LayoutAlgorithm = {
         // getAbsPos 已含 itemPos（= topic 左上角），不要再加一次
         const pos = cell.getAbsPos()
         // 节点盒 = topic bounds（cell minSize 可能是子树 bb，不能当作节点盒）
-        const topicSize = measureMinSize(cell.item, options, styleEngine, state)
+        const topicSize = measureMinSize(withoutLabels(cell.item), options, styleEngine, state)
         nodes.set(cell.item.id, {
           x: pos.x,
           y: pos.y,
           width: topicSize.width,
           height: topicSize.height,
-          titleWidth: topicSize.width,
-          titleHeight: topicSize.height,
+          // titleWidth/titleHeight 是**标题文本盒**（SB titleView.bounds = 纯文本尺寸，
+          // topicContentPosition = (-titleW/2, -titleH/2)），不是主题盒。
+          // 旧代码写的是 topicSize.width/height（= 标题 + 2*margin），渲染层因此把
+          // 标题画宽 12px（subTopic margin 6pt×2）、上移 6px（(30-30)/2 vs (30-18)/2），
+          // 中央主题那格（margin 29pt/15pt）text.x 偏 -29、text.y 偏 -15。
+          titleWidth: topicSize.titleWidth,
+          titleHeight: topicSize.titleHeight,
           branchHeight: topicSize.height,
         })
       }
