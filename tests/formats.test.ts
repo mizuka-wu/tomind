@@ -34,6 +34,68 @@ describe('modelToNodeDesc', () => {
     expect(nodeDesc.children.attached[1].children.attached).toHaveLength(1)
   })
 
+  it('callout 保留完整子树与 part（SB 里 callout 是正常 branchView）', () => {
+    // 旧实现把 callout 和 summary/boundary 一起走「只留 title/range/position」的轻量转换，
+    // children: {} → callout 的整棵子树在解析阶段就被丢掉
+    // （test-callout-children.xmind：SB 256 个节点，TM 只解析出 238）
+    const tree: ModelTree = {
+      root: {
+        id: 'root-1',
+        title: 'Central Topic',
+        children: [],
+        callouts: [{
+          id: 'co-1',
+          title: '标注',
+          children: [
+            { id: 'co-1-1', title: '标注子 1', children: [
+              { id: 'co-1-1-1', title: '标注孙', children: [] },
+            ] },
+            { id: 'co-1-2', title: '标注子 2', children: [] },
+          ],
+          position: { x: 320, y: -60 },
+          labels: ['L1'],
+          markers: [{ markerId: 'priority-1' }],
+          note: 'N',
+        }],
+      },
+      title: 'Test',
+    }
+
+    const nodeDesc = modelToNodeDesc(tree)
+    const callouts = nodeDesc.children.callout
+    expect(callouts).toHaveLength(1)
+    const co = callouts[0]
+    expect(co.type).toBe('callout')
+    // 自由位置仍然保留（布局要用 model.position 放置）
+    expect(co.attrs.position).toEqual({ x: 320, y: -60 })
+    // 子树完整
+    expect(co.children.attached).toHaveLength(2)
+    expect(co.children.attached[0].children.attached).toHaveLength(1)
+    expect(co.children.attached[0].children.attached[0].id).toBe('co-1-1-1')
+    // part 不被丢（callout 也可以有 labels / markers / note）
+    expect(co.attrs.labels).toEqual(['L1'])
+    expect(co.attrs.markers).toEqual([{ markerId: 'priority-1' }])
+    expect(co.attrs.note).toBeTruthy()
+  })
+
+  it('summary / boundary 仍然是轻量节点（带 range，不带子树）', () => {
+    const tree: ModelTree = {
+      root: {
+        id: 'root-1',
+        title: 'Central Topic',
+        children: [{ id: 'c1', title: 'C1', children: [] }],
+        summaries: [{ id: 's1', title: 'S1', children: [], rangeStart: 0, rangeEnd: 1 }],
+        boundaries: [{ id: 'b1', title: 'B1', children: [], rangeStart: 0, rangeEnd: 1 }],
+      },
+      title: 'Test',
+    }
+    const nodeDesc = modelToNodeDesc(tree)
+    expect(nodeDesc.children.summary[0].type).toBe('summary')
+    expect(nodeDesc.children.summary[0].attrs.rangeStart).toBe(0)
+    expect(nodeDesc.children.summary[0].attrs.rangeEnd).toBe(1)
+    expect(nodeDesc.children.boundary[0].type).toBe('boundary')
+  })
+
   it('should convert note with HTML content', () => {
     const tree: ModelTree = {
       root: {

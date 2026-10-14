@@ -156,6 +156,14 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
 
 /** summary / boundary ModelNode → NodeDesc（带 range） */
 function modelSpecialToNodeDesc(node: ModelNode, type: 'summary' | 'boundary' | 'callout'): NodeDesc {
+  // callout 在 SB 里是一条**正常 branchView**：可以有自己的 attached 子树、labels/markers/
+  // note/image/structureClass，getViewStructure 还会给它派生结构类（basemap 系按
+  // model.position.x 符号定 logic 左右侧）。旧实现和 summary/boundary 一样只留
+  // title/range/position、children: {} → callout 的整棵子树在解析阶段就被丢掉
+  // （test-callout-children：SB 256 个节点，TM 只解析出 238）。
+  if (type === 'callout') {
+    return { ...modelNodeToNodeDesc(node), type: 'callout' }
+  }
   return {
     id: node.id || genId(),
     type,
