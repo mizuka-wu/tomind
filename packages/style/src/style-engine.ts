@@ -131,6 +131,10 @@ const MATRIX_STRUCTURE_CLASSES: readonly string[] = [
   'org.xmind.ui.spreadsheet.column',
 ]
 const LINE_CLASS_ROUNDED_ELBOW = 'org.xmind.branchConnection.roundedElbow'
+const LINE_CLASS_STRAIGHT = 'org.xmind.branchConnection.straight'
+
+/** snowbrush STRUCTURECLASS.TIMELINETHROUGHVERTICAL */
+const TIMELINE_THROUGH_VERTICAL_STRUCTURE_CLASS = 'org.xmind.ui.timeline.through.vertical'
 
 function structureClassOf(doc: NodeDesc, topicId: string): string | undefined {
   const node = findById(doc, topicId)
@@ -449,8 +453,8 @@ export class StyleEngine {
     // brace 线不翻倍（brace-right 中央分支 spacingMajor = 50 + 16 = 66，而非 50*2 + 16）。
     if (!options.ignoreUser) {
       const lineClass = result.lineClass
+      const sc = resolveStructureClass(state.doc, topicId, getDepthFromDoc(state, topicId))
       if (typeof lineClass === 'string') {
-        const sc = resolveStructureClass(state.doc, topicId, getDepthFromDoc(state, topicId))
         const isBraceStructure = sc !== null && BRACE_STRUCTURE_CLASSES.includes(sc)
         // 主题里可能是完整 URI，DEFAULT_STYLES 里是短名，统一归一化后比较
         const isBraceLine = BRACE_LINE_CLASSES.includes(normalizeClassName(lineClass) ?? lineClass)
@@ -459,6 +463,14 @@ export class StyleEngine {
         } else if (!isBraceStructure && isBraceLine) {
           result = { ...result, lineClass: LINE_CLASS_ROUNDED_ELBOW }
         }
+      }
+      // SB 同一个 BEFORE_USER 数组的最后一条（顺序在 brace 两条之后 → 命中时覆盖上面的结果）：
+      //   { type: LINE_CLASS, value: BRANCHCONNECTION.STRAIGHT,
+      //     test: structureClassIs(STRUCTURECLASS.TIMELINETHROUGHVERTICAL) }
+      // 生效结构类是 timeline.through.vertical 的分支（穿透时间线的轴头）轴线强制直线。
+      // 实测 test-arrow-through-vertical：12 条轴边 SB straight / TM curve。
+      if (sc === TIMELINE_THROUGH_VERTICAL_STRUCTURE_CLASS) {
+        result = { ...result, lineClass: LINE_CLASS_STRAIGHT }
       }
     }
 

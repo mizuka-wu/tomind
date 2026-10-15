@@ -1,9 +1,14 @@
 /**
- * brace 连接线结构覆盖回归测试
+ * structuredescriptor[STYLE_LAYER.BEFORE_USER] 的 lineClass 结构覆盖回归测试
  *
  * 对齐 snowbrush modules/overridedstyle/structuredescriptor[STYLE_LAYER.BEFORE_USER]：
  * - brace 结构（brace-left / brace-right）强制 lineClass = branchConnection.brace
  * - 反之 brace 连接线只能出现在 brace 结构里，否则回落 roundedElbow
+ * - timeline.through.vertical 结构强制 lineClass = branchConnection.straight
+ *   （数组最后一条，命中时覆盖前两条；实测 test-arrow-through-vertical 12 条轴边
+ *    SB straight / TM curve）
+ * BEFORE_USER 层在 mindmapstyleselector.getStyleValue 里排在 getUserStyleValue **之前**
+ * → 优先级高于用户显式样式。
  *
  * 布局侧依赖这条覆盖：logic/brace 的 calcSpacingMajor 只对
  * curve/straight/fold/roundedFold/bight 翻倍，brace 线不翻倍。
@@ -17,6 +22,8 @@ import { StyleEngine } from '@tomind/style'
 import type { NodeDesc } from '@tomind/schema'
 
 const BRACE = 'org.xmind.branchConnection.brace'
+const STRAIGHT = 'org.xmind.branchConnection.straight'
+const THROUGH_VERTICAL = 'org.xmind.ui.timeline.through.vertical'
 const CURVE_SHORT = 'curve'
 const ELBOW = 'org.xmind.branchConnection.roundedElbow'
 
@@ -77,5 +84,37 @@ describe('brace lineClass 结构覆盖', () => {
       style: { lineClass: 'org.xmind.branchConnection.brace2' },
     })
     expect(root.lineClass).toBe('org.xmind.branchConnection.brace2')
+  })
+})
+
+describe('timeline.through.vertical 强制 straight 连接线', () => {
+  it('轴头（生效结构类 = through.vertical）的 lineClass 被改成 straight', () => {
+    const { root } = resolve({ structureClass: THROUGH_VERTICAL })
+    expect(root.lineClass).toBe(STRAIGHT)
+  })
+
+  it('skeleton centralTopic 为 through.vertical 时同样生效', () => {
+    const { root } = resolve({
+      skeletonStructure: { centralTopic: THROUGH_VERTICAL, mainTopic: 'org.xmind.ui.logic.right' },
+    })
+    expect(root.lineClass).toBe(STRAIGHT)
+  })
+
+  it('BEFORE_USER 优先级高于用户显式样式（用户设 curve 仍被改成 straight）', () => {
+    const { root } = resolve({
+      structureClass: THROUGH_VERTICAL,
+      style: { lineClass: 'org.xmind.branchConnection.curve' },
+    })
+    expect(root.lineClass).toBe(STRAIGHT)
+  })
+
+  it('轴子节点（生效结构类 logic.left/right）不受影响', () => {
+    const { main } = resolve({ structureClass: THROUGH_VERTICAL })
+    expect(main.lineClass).not.toBe(STRAIGHT)
+  })
+
+  it('timeline.horizontal 不命中这条规则（SB 只写了 TIMELINETHROUGHVERTICAL）', () => {
+    const { root } = resolve({ structureClass: 'org.xmind.ui.timeline.horizontal' })
+    expect(root.lineClass).toBe(CURVE_SHORT)
   })
 })
