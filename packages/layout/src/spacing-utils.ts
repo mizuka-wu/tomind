@@ -129,6 +129,26 @@ export function measureStyledSubtree(
 }
 
 /**
+ * 单个节点的「主题盒原点（shape 中心）→ 盒顶」距离 = shapeHeight/2。
+ *
+ * measureStyledSubtree 会把它填进 SimpleNodeSize.originY，但宿主布局（例如
+ * LayoutEngine 的后置遍历）手上只有 LayoutResult 时拿不到 sizeMap —— 这时用这个函数
+ * 现算一次，口径与 measureStyledSubtree 完全一致（part-aware）。
+ */
+export function measureNodeOriginY(
+  node: NodeDesc,
+  options: LayoutOptions,
+  styleEngine?: StyleEngine | null,
+  state?: SheetState | null,
+): number {
+  const spacing = getNodeSpacing(node, options, styleEngine ?? null, state ?? null, 'horizontal')
+  const r = hasNonTitleParts(node)
+    ? measurePartAwareNode(node, options, styleEngine, state, spacing.padding)
+    : measureTitleOnlyNode(node, spacing.padding, options, styleEngine, state)
+  return r.shapeHeight / 2
+}
+
+/**
  * 计算子节点总高度（累加子树高度 + 间距）
  * @param children 子节点列表
  * @param getHeight 获取单个子节点高度的函数

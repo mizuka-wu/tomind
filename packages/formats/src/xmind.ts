@@ -50,6 +50,8 @@ interface XMindTopic {
     summary?: XMindTopic[]
     boundary?: XMindTopic[]
     callout?: XMindTopic[]
+    /** 自由主题（floating topic）—— 带 position，只挂在中央主题下 */
+    detached?: XMindTopic[]
     relationship?: XMindTopic[]
   }
   markers?: { markerId: string }[]
@@ -239,6 +241,14 @@ function convertTopic(topic: XMindTopic): ModelNode {
       callouts.push(convertTopic(c))
     }
   }
+  // detached 与 callout 一样是**正常 topic**（有自己的子树），要走 convertTopic 递归；
+  // 只读 title/position 会把整棵子树丢掉
+  const detached: ModelNode[] = []
+  if (topic.children?.detached) {
+    for (const d of topic.children.detached) {
+      detached.push(convertTopic(d))
+    }
+  }
   const relationships: ModelNode[] = []
   if (topic.children?.relationship) {
     for (const r of topic.children.relationship) {
@@ -258,6 +268,7 @@ function convertTopic(topic: XMindTopic): ModelNode {
     children,
     ...(summaries.length ? { summaries } : {}),
     ...(callouts.length ? { callouts } : {}),
+    ...(detached.length ? { detached } : {}),
     ...(boundaries.length ? { boundaries } : {}),
     ...(relationships.length ? { relationships } : {}),
     ...(topic.structureClass ? { structureClass: topic.structureClass } : {}),

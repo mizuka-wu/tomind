@@ -385,8 +385,13 @@ export class TopicNodeViewDesc extends NodeViewDesc {
     const myLayout = layout.nodes.get(this.node.id)
     if (!myLayout) return
 
-    const children = this.node.children['attached'] ?? []
-    if (children.length === 0) return
+    const attachedChildren = this.node.children['attached'] ?? []
+    // SB abstractstructure.drawConnectLine：detached 子分支不是 callout → 走同一条
+    // `drawAttachedConnectLine(parentBranch, childBranch)`（父结构的），
+    // 所以「中央主题 → 自由主题」也画线，锚点/线型与 attached 完全同一套。
+    // conn-parity 实测 test-detached：SB 243 条边 = 234 attached + 3 (root→detached) + 6 (detached→子)。
+    const detachedChildren = this.node.children['detached'] ?? []
+    if (attachedChildren.length === 0 && detachedChildren.length === 0) return
 
     const doc = this.ctx.state?.doc
     if (!doc) return
@@ -411,17 +416,22 @@ export class TopicNodeViewDesc extends NodeViewDesc {
 
     // 兄弟盒与 childIndex 用同一套下标（只算有布局结果的 attached 子节点）
     const entries: Array<{ child: NodeDesc; index: number; box: ConnBox }> = []
-    for (const child of children) {
+    const pushEntry = (child: NodeDesc, index: number): void => {
       const nl = layout.nodes.get(child.id)
-      if (!nl) continue
+      if (!nl) return
       const cs = getShapeBox(nl)
       entries.push({
         child,
-        index: entries.length,
+        index,
         box: { x: cs.x - myLayout.x, y: cs.y - myLayout.y, width: cs.width, height: cs.height },
       })
     }
+    for (const child of attachedChildren) pushEntry(child, entries.length)
+    // siblingBoxes 只含 attached：SB 的兄弟干线共享（horizon）与 order 线下标
+    // （calcSinusStartYPoint 的 `attached.indexOf(child)`）都只看 attached 子节点
     const siblingBoxes = entries.map((e) => e.box)
+    // detached 不在 attached 列表里 → SB 的 indexOf 给 -1（diver 线不用下标，order 线才用）
+    for (const child of detachedChildren) pushEntry(child, -1)
 
     for (const entry of entries) {
       const childLeafer = getLeaferStyle(this.ctx, entry.child.id)

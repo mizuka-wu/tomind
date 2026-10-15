@@ -78,6 +78,47 @@ describe('modelToNodeDesc', () => {
     expect(co.attrs.note).toBeTruthy()
   })
 
+  it('detached（自由主题）保留完整子树与 position（SB 里也是正常 branchView）', () => {
+    // 旧实现连 `children.detached` 槽都不读（modelNodeToNodeDesc 只处理
+    // children/callouts/summaries/boundaries/relationships）→ 自由主题整棵子树在解析阶段就没了。
+    // test-detached.xmind：SB 244 个节点、TM 只有 235，而四项 Δ 全 0（假象）。
+    const tree: ModelTree = {
+      root: {
+        id: 'root-1',
+        title: 'Central Topic',
+        children: [{ id: 'c1', title: 'C1', children: [] }],
+        detached: [{
+          id: 'det-1',
+          title: '自由主题',
+          children: [
+            { id: 'det-1-1', title: '自由子 1', children: [
+              { id: 'det-1-1-1', title: '自由孙', children: [] },
+            ] },
+            { id: 'det-1-2', title: '自由子 2', children: [] },
+          ],
+          position: { x: 1600, y: -1000 },
+          labels: ['L1'],
+        }],
+      },
+      title: 'Test',
+    }
+
+    const nodeDesc = modelToNodeDesc(tree)
+    const detached = nodeDesc.children.detached
+    expect(detached).toHaveLength(1)
+    const det = detached[0]
+    expect(det.type).toBe('detached')
+    // model.position 是 SB calDetachedChildrenPos 的落位依据，必须保留
+    expect(det.attrs.position).toEqual({ x: 1600, y: -1000 })
+    // 子树完整（3 个后代一个都不能少）
+    expect(det.children.attached).toHaveLength(2)
+    expect(det.children.attached[0].children.attached).toHaveLength(1)
+    expect(det.children.attached[0].children.attached[0].id).toBe('det-1-1-1')
+    expect(det.attrs.labels).toEqual(['L1'])
+    // attached 槽不受影响
+    expect(nodeDesc.children.attached).toHaveLength(1)
+  })
+
   it('summary / boundary 仍然是轻量节点（带 range，不带子树）', () => {
     const tree: ModelTree = {
       root: {

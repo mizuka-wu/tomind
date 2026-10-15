@@ -2,6 +2,8 @@ import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
 import type { NodeDesc } from '@tomind/schema'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
+import { findRootTopic } from './layout-utils'
+import { getDetachedChildren, placeDetachedChildren } from './detached-placement'
 import type { ILayoutEngine, LayoutResult, LayoutAlgorithm, LayoutOptions } from './layout-engine'
 
 /** XMind structureClass → 布局算法名 */
@@ -98,7 +100,7 @@ export class LayoutEngine implements ILayoutEngine {
         )
         return { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
       }
-      this._lastResult = fallback.layout(state.doc, options, this._styleEngine ?? null, state)
+      this._lastResult = this.placeDetached(fallback.layout(state.doc, options, this._styleEngine ?? null, state), state, options)
       return this._lastResult
     }
 
@@ -106,8 +108,47 @@ export class LayoutEngine implements ILayoutEngine {
       this._activeLayout = autoName
     }
 
-    this._lastResult = algorithm.layout(state.doc, options, this._styleEngine ?? null, state)
+    this._lastResult = this.placeDetached(algorithm.layout(state.doc, options, this._styleEngine ?? null, state), state, options)
     return this._lastResult
+  }
+
+  /**
+   * 后置遍历：自由主题（`children.detached`）落位 —— SB `abstractstructure.calDetachedChildrenPos`。
+   *
+   * 挂在 AbstractStructure 上 ⇒ 对**所有**结构的中央分支生效，而且结果只依赖
+   * 「中央分支的原点 + detached 的 model.position」（子树整棵委派 logic），与宿主结构无关
+   * → 在引擎里统一做一次，不用去改 12 个布局算法（也就不会碰到它们的共享常量）。
+   *
+   * 没有 detached 时**原样返回**（对象都不换），所以对现有 fixture 零影响。
+   */
+  private placeDetached(result: LayoutResult, state: SheetState, options: LayoutOptions): LayoutResult {
+    const root = findRootTopic(state.doc)
+    if (!root || getDetachedChildren(root).length === 0) return result
+    const placed = placeDetachedChildren(state.doc, root, result.nodes, options, this._styleEngine ?? null, state)
+    if (!placed) return result
+
+    // 与各布局算法一致的归一化：整体平移到正数区 + totalWidth/Height = 全节点包围盒。
+    // detached 的 model.position 常是负数（自由主题可以放在中央主题左上方）。
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    for (const l of result.nodes.values()) {
+      minX = Math.min(minX, l.x)
+      minY = Math.min(minY, l.y)
+      maxX = Math.max(maxX, l.x + l.width)
+      maxY = Math.max(maxY, l.y + l.height)
+    }
+    if (!Number.isFinite(minX)) return result
+    const ox = minX < 0 ? -minX : 0
+    const oy = minY < 0 ? -minY : 0
+    if (ox !== 0 || oy !== 0) {
+      for (const l of result.nodes.values()) {
+        l.x += ox
+        l.y += oy
+      }
+    }
+    return { nodes: result.nodes, totalWidth: maxX + ox, totalHeight: maxY + oy }
   }
 
   getLayoutResult(): LayoutResult {

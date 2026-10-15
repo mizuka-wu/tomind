@@ -112,19 +112,23 @@ export const DEFAULT_STYLES: Record<NodeType, ResolvedStyle> = {
     lineClass: 'roundedElbow',
     lineColor: '#333333',
     lineWidth: '1pt',
-    borderColor: 'none',
+    // SB stableStyles FLOATING_TOPIC 的 BORDER_LINE_COLOR = #333333（BORDER_LINE_WIDTH 0pt → 不画边框）
+    borderColor: '#333333',
     borderWidth: '0pt',
     borderPattern: 'solid',
     lineCorner: '8pt',
     linePattern: 'solid',
     arrowEndClass: 'none',
     // 对齐 snowbrush stableStyles: floatingTopic
-    marginLeft: '9pt',
-    marginRight: '9pt',
-    marginTop: '9pt',
-    marginBottom: '9pt',
-    spacingMajor: '24pt',
-    spacingMinor: '5pt',
+    // （旧值 9pt/9pt/9pt/9pt/24pt/5pt 是从 COMPACT_LAYOUT_PARAMS.floatingTopic 抄来的 ——
+    //   那是紧凑布局的覆盖值，不是 stableStyles。实测 test-detached：主题盒窄 4px、
+    //   detached 的子节点层间距少 2px、兄弟间距少 3px，9 个节点全错）
+    marginLeft: '11pt',
+    marginRight: '11pt',
+    marginTop: '11pt',
+    marginBottom: '11pt',
+    spacingMajor: '26pt',
+    spacingMinor: '8pt',
   },
   calloutTopic: {
     fontWeight: 'normal',

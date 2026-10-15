@@ -67,6 +67,8 @@ export interface ModelNode {
   /** 摘要子节点（children.summary） */
   summaries?: ModelNode[]
   callouts?: ModelNode[]
+  /** 自由主题（children.detached）—— SB calDetachedChildrenPos 只对中央分支生效 */
+  detached?: ModelNode[]
   /** 边界子节点（children.boundary） */
   boundaries?: ModelNode[]
   /** 摘要/边界覆盖的子节点下标范围 */
@@ -123,6 +125,9 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
   if (node.callouts?.length) {
     children.callout = node.callouts.map((c) => modelSpecialToNodeDesc(c, 'callout'))
   }
+  if (node.detached?.length) {
+    children.detached = node.detached.map((d) => modelSpecialToNodeDesc(d, 'detached'))
+  }
   if (node.summaries?.length) {
     children.summary = node.summaries.map((s) => modelSpecialToNodeDesc(s, 'summary'))
   }
@@ -155,7 +160,7 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
 }
 
 /** summary / boundary ModelNode → NodeDesc（带 range） */
-function modelSpecialToNodeDesc(node: ModelNode, type: 'summary' | 'boundary' | 'callout'): NodeDesc {
+function modelSpecialToNodeDesc(node: ModelNode, type: 'summary' | 'boundary' | 'callout' | 'detached'): NodeDesc {
   // callout 在 SB 里是一条**正常 branchView**：可以有自己的 attached 子树、labels/markers/
   // note/image/structureClass，getViewStructure 还会给它派生结构类（basemap 系按
   // model.position.x 符号定 logic 左右侧）。旧实现和 summary/boundary 一样只留
@@ -163,6 +168,13 @@ function modelSpecialToNodeDesc(node: ModelNode, type: 'summary' | 'boundary' | 
   // （test-callout-children：SB 256 个节点，TM 只解析出 238）。
   if (type === 'callout') {
     return { ...modelNodeToNodeDesc(node), type: 'callout' }
+  }
+  // detached（自由主题）同理：SB 里也是一条正常 branchView，有自己的 attached 子树、
+  // position、structure-class。旧实现连 `children.detached` 槽都不读
+  // （test-detached：SB 244 个节点，TM 只有 235 —— 3 个 detached + 6 个后代完全不存在，
+  //   四项 Δ 全 0 是「两边都只算了能对上的那部分」的假象）。
+  if (type === 'detached') {
+    return { ...modelNodeToNodeDesc(node), type: 'detached' }
   }
   return {
     id: node.id || genId(),

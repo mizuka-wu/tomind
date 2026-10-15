@@ -82,6 +82,10 @@ function createDefaultNodeViewDescRegistry(): Map<string, ViewDescClass> {
   // `continue`，连**递归都跳过** → callout 及其整棵子树一个元素都不画
   // （实测 test-callout-branch：244 个节点只渲染出 235 个）。
   registry.set('callout', TopicNodeViewDesc)
+  // detached（自由主题）与 callout 同理：SB 里是一条正常 branchView（floatingTopic 主题类 +
+  // 自己的 attached 子树 + 一条连到中央主题的线）。不注册的话 buildChildrenViews 拿不到
+  // ViewDesc 就 `continue`，连递归都跳过 → 整棵子树一个元素都不画。
+  registry.set('detached', TopicNodeViewDesc)
   registry.set('relationship', RelationshipNodeViewDesc)
   registry.set('boundary', BoundaryNodeViewDesc)
   registry.set('summary', SummaryNodeViewDesc)
