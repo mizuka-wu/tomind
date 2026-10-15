@@ -120,6 +120,35 @@ export function getChildIndex(doc: NodeDesc, nodeId: string): number {
   return -1
 }
 
+/**
+ * SB `modules/overridedstyle/smartcolordescriptor.isAncestorFloating`：
+ * ```
+ * if (!isType(SUB_TOPIC)(branchView)) return false
+ * const parent = branchView.parent()
+ * if (!(parent instanceof BranchView)) return false
+ * const parentClassType = getClassName(parent)
+ * if (parentClassType === FLOATING_TOPIC) return true
+ * if (parentClassType === MAIN_TOPIC) return false
+ * return isAncestorFloating(parent)          // ← 递归第一行又要求 parent 是 subTopic
+ * ```
+ * 即「往上走，遇到的第一个非 subTopic 祖先是不是 floatingTopic」。
+ * 注意 callout 子树**不算** floating：calloutTopic 不是 subTopic → 递归立刻 false
+ * （所以 callout 后代走 smartcolordescriptor 的 rule 4 = hsl(分支色, l=20)，
+ *   而 detached 后代走 rule 2 = 主题 color-list；实测 #000466 vs #000229 的差别就来自这里）。
+ */
+export function isAncestorFloating(doc: NodeDesc, nodeId: string): boolean {
+  if (classifyNode(doc, nodeId) !== 'subTopic') return false
+  let currentId = nodeId
+  for (;;) {
+    const parentId = getParentId(doc, currentId)
+    if (!parentId) return false
+    const parentType = classifyNode(doc, parentId)
+    if (parentType === 'floatingTopic') return true
+    if (parentType !== 'subTopic') return false
+    currentId = parentId
+  }
+}
+
 export interface MainTopicAncestor {
   id: string
   index: number

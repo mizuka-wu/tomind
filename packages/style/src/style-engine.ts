@@ -37,7 +37,7 @@ import type { NodeDesc } from '@tomind/schema'
 import { numberingKey } from '@tomind/state'
 import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue, LeaferStyle } from './style-types'
 import { isThemeClassEntry, resolveColorVariables } from './style-types'
-import { classifyNode, getParentId, findById, getMainTopicAncestor } from './classify'
+import { classifyNode, getParentId, findById, getMainTopicAncestor, isAncestorFloating } from './classify'
 import { DEFAULT_STYLES, getDefaultStyle } from './default-styles'
 import { normalizeStyleObject, serializeStyleObject, normalizeClassName } from './style-converter'
 import { parseClassList, getClassStyles } from '@tomind/state'
@@ -121,6 +121,20 @@ function buildFontFamilyChain(value: string): string {
 }
 
 const LINE_CLASS_BRACE = 'org.xmind.branchConnection.brace'
+
+/**
+ * 参与 smart color 派生的主题类（SB smartcolordescriptor 的 `utils.isBranch`）。
+ * boundary / summary / relationship 不是 BranchView：SB 只给它们派生 TEXT_COLOR（rule 2），
+ * fill 走各自的 figure.lineColor —— TM 这三类零 fixture 覆盖，本轮不实现。
+ */
+const SMART_COLOR_TOPIC_CLASSES: ReadonlySet<string> = new Set([
+  'centralTopic',
+  'mainTopic',
+  'subTopic',
+  'floatingTopic',
+  'calloutTopic',
+  'summaryTopic',
+])
 
 /** SB common/constants/styles.PRIVATE_TOPICSHAPE */
 const SHAPE_CLASS_MATRIX_MAIN = 'org.xmind.topicShape.matrixMain'
@@ -414,9 +428,27 @@ export class StyleEngine {
           ...options,
           ignoreParent: false,
         })
-        result = { ...parentStyle, ...result }
+        // SB 的父继承只覆盖 protectedParentStyleValue 里那几个键（line-* / border-line-* /
+        // alignment-by-level），**类专属**键不会从父节点漏下来。TM 的 `{...parentStyle, ...result}`
+        // 对 result 里没有的键会直接透传父值 → callout 的 calloutShapeClass 泄漏给它的所有后代
+        // （style-parity 实测 test-callout-children 18 个后代 / test-callout-branch 6 个：
+        //   SB calloutShapeClass = null，TM = balloon.roundedRect）。
+        const inheritableParentStyle: ResolvedStyle = { ...parentStyle }
+        delete inheritableParentStyle.calloutShapeClass
+        result = { ...inheritableParentStyle, ...result }
         result = this.applyParentProtectedKeys(state, topicId, nodeType, parentId, parentStyle, result, options)
       }
+    }
+
+    // 层 4.7: Smart Colors（没有 mainTopic 祖先的分支）
+    // 层 4.6 的 resolveMultiLineColors 在 getMainTopicAncestor 返回 null 时整个早退，
+    // 而 SB 的 smartcolordescriptor 是**按 figure.lineColor 派生**的，与有没有 mainTopic 祖先无关：
+    // 挂在中央主题上的 callout 子树、detached（自由主题）自己及其子树都拿「继承到的 line-color」
+    // 当分支色（实测 test-callout-children：line-color #000229 → fill #ccccd4 =
+    // blendAlpha(#000229, 0.2, #FFFFFF)、border #000229、fontColor #000466）。
+    // 必须放在层 4（parent-inherit）之后，否则拿不到继承来的 lineColor。
+    if (!options.ignoreTheme) {
+      result = this.applyOrphanBranchColors(result, state, topicId, theme, nodeType, options)
     }
 
     // 处理显式 "inherit" 和 "initial" 值
@@ -1033,34 +1065,124 @@ export class StyleEngine {
     const color = colors[ancestor.index % colors.length]
     if (!color) return result
 
-    const mapFill = String(mapEntry.properties.fillColor ?? '#ffffff')
-
-    const fill = nodeType === 'subTopic' ? blendAlpha(color, 0.2, mapFill) : color
-
-    // fontColor —— 对齐 SB modules/overridedstyle/smartcolordescriptor：
-    //   subTopic：blackTextColor = hsl(分支色 h/s, l=20)，再走 getSmartTextColor(fill, [white, black])
-    //   mainTopic：getSmartTextColor(fill, [white, #000000])
-    // ⚠️ 不能用 colord(...).toHsl()：colord 把 h/s/l 四舍五入成整数，
-    //    SB 的 rgbObjectToHslObject 全程浮点 → 每个通道会差 ±1
-    //    （实测 20 个 fixture × 127 个 subTopic：#605205 vs #605305 等 3 组）。
-    let fontColor: string | undefined
-    if (nodeType === 'subTopic') {
-      const branchHsl = hexToHslSb(color)
-      const dark = branchHsl ? hslToHex(branchHsl.h, branchHsl.s, 20) : SMART_TEXT_BLACK
-      fontColor = getSmartTextColorSb(fill, [SMART_TEXT_WHITE, dark])
-    } else {
-      fontColor = getSmartTextColorSb(fill, [SMART_TEXT_WHITE, '#000000'])
-    }
-
+    const derived = this.applySmartColors(result, state, topicId, theme, nodeType, color)
     return {
-      ...result,
-      lineColor: color,
-      borderColor: color,
-      fillColor: fill,
-      fontColor,
+      ...derived,
       // 供 ConnectionRenderer 按 mainTopic 分支索引取色
       multiLineColors: colors.join(' '),
     }
+  }
+
+  /**
+   * 没有 mainTopic 祖先的分支（挂在中央主题上的 callout 子树 / detached 自己及其子树）：
+   * 用**已解析（含父继承）的 lineColor** 当分支色，跑同一套 smart color 派生。
+   *
+   * SB 侧对应 `smartcolordescriptor[BEFORE_THEME]`：它的 test 只要求
+   * `isBranch && isInMultiLineColorsMode && !isTopicFillColorNone && hasColorTheme`，
+   * 派生用的 `branchView.figure.lineColor` 就是级联（含 protectedParentStyleValue 的父继承）
+   * 之后的值 —— 与「有没有 mainTopic 祖先」无关。
+   */
+  private applyOrphanBranchColors(
+    result: ResolvedStyle,
+    state: SheetState,
+    topicId: string,
+    theme: ThemeData,
+    nodeType: NodeType,
+    options: StyleComputeOptions,
+  ): ResolvedStyle {
+    if (!SMART_COLOR_TOPIC_CLASSES.has(nodeType)) return result
+    // 有 mainTopic 祖先的节点已经由层 4.6 处理（别重复派生）
+    const ancestor = getMainTopicAncestor(state.doc, topicId, (id) => {
+      const node = findById(state.doc, id)
+      return getAttr<Record<string, unknown>>(node?.attrs ?? {}, 'style')
+    })
+    if (ancestor) return result
+    // SB isInMultiLineColorsMode / hasColorTheme：TM 用「主题里有 map 类」近似（与层 4.6 同口径）
+    if (!isThemeClassEntry(theme['map'])) return result
+    const branchColor = result.lineColor
+    if (typeof branchColor !== 'string' || !branchColor || branchColor === 'none') return result
+    void options
+    return this.applySmartColors(result, state, topicId, theme, nodeType, branchColor)
+  }
+
+  /**
+   * SB 的 smart color 派生（`utils/style.getSmartFillColorByLineColor` +
+   * `modules/overridedstyle/smartcolordescriptor[BEFORE_THEME]`）。
+   *
+   * @param branchColor 分支色：multiLineColors 路径 = colors[mainTopicIndex]，
+   *                    orphan 路径 = 已解析的 lineColor（SB 都是拿 figure.lineColor 派生）
+   *
+   * 三个键各自的优先级（**主题值先命中，smart 派生只在主题没给值时生效**）：
+   * - FILL_COLOR：SB 的 `parent(BEFORE_THEME_GROUP)` 分支直接 `return getThemeStyleValue(target, key)`，
+   *   排在 BEFORE_THEME 层之前 → 主题给了 fill（含 'none' 透明填充）就用主题的；
+   *   没给才走 getSmartFillColorByLineColor：mainTopic → lineColor、
+   *   subTopic → blendingColor({...lineColor, a: 0.2}, sheetFillColor)、其他 → lineColor。
+   *   （旧实现无条件覆盖 fillColor → 挂在主分支上的 callout 被涂成分支色 #F9423A，
+   *     而 SB 用主题的 calloutTopic fill #000229；test-callout-branch 3 个节点 fill+border 全错）
+   * - BORDER_LINE_COLOR：theme(border-line-color) || 自己的 line-color(ignoreDefault) || 父的 || default
+   * - TEXT_COLOR：theme(fo:color) 优先，否则按 smartcolordescriptor 的四条规则取候选色表
+   */
+  private applySmartColors(
+    result: ResolvedStyle,
+    state: SheetState,
+    topicId: string,
+    theme: ThemeData,
+    nodeType: NodeType,
+    branchColor: string,
+  ): ResolvedStyle {
+    const mapEntry = theme['map']
+    const mapFill = isThemeClassEntry(mapEntry) ? String(mapEntry.properties.fillColor ?? '#ffffff') : '#ffffff'
+    const themeClass = this.getClassStyle(theme, nodeType)
+    const next: ResolvedStyle = { ...result, lineColor: branchColor }
+
+    const themeFill = themeClass?.fillColor
+    if (typeof themeFill !== 'string' || themeFill === '') {
+      next.fillColor = nodeType === 'subTopic' ? blendAlpha(branchColor, 0.2, mapFill) : branchColor
+    }
+
+    const themeBorder = themeClass?.borderColor
+    if (typeof themeBorder !== 'string' || themeBorder === '') {
+      next.borderColor = branchColor
+    }
+
+    const themeText = themeClass?.fontColor
+    if (typeof themeText !== 'string' || themeText === '') {
+      // SB smartcolordescriptor_getSmartTextColor：fill === 'none' → 用 sheet 背景色
+      const fill = typeof next.fillColor === 'string' && next.fillColor && next.fillColor !== 'none'
+        ? next.fillColor
+        : mapFill
+      next.fontColor = getSmartTextColorSb(fill, this.smartTextCandidates(theme, nodeType, branchColor, state, topicId))
+    }
+    return next
+  }
+
+  /**
+   * smartcolordescriptor[BEFORE_THEME] 里 TEXT_COLOR 的四条规则（互斥，按 className 分派）：
+   * - rule 3 mainTopic（multiLineColors 模式）→ [white, #000000]
+   * - rule 4 subTopic 且**祖先不是 floating** → [white, hsl(分支色 h/s, l=20)]
+   *   ⚠️ hsl 要用 SB 的浮点版（hexToHslSb/hslToHex），colord 的 toHsl() 会取整 → 每通道差 ±1
+   * - rule 2 其余（boundary / relationship / 非 multiLineColors 模式 / 祖先 floating 的 subTopic /
+   *   floatingTopic / calloutTopic / summaryTopic）→ 主题的 color-list，缺省 [#000000, #ffffff]
+   * （rule 1 是「centralTopic 且 fill 为 none」的特例，需要 colorTheme 的中央主题填充色，未实现）
+   */
+  private smartTextCandidates(
+    theme: ThemeData,
+    nodeType: NodeType,
+    branchColor: string,
+    state: SheetState,
+    topicId: string,
+  ): string[] {
+    if (nodeType === 'mainTopic') return [SMART_TEXT_WHITE, '#000000']
+    if (nodeType === 'subTopic' && !isAncestorFloating(state.doc, topicId)) {
+      const branchHsl = hexToHslSb(branchColor)
+      const dark = branchHsl ? hslToHex(branchHsl.h, branchHsl.s, 20) : SMART_TEXT_BLACK
+      return [SMART_TEXT_WHITE, dark]
+    }
+    const mapEntry = theme['map']
+    const colorList = isThemeClassEntry(mapEntry) ? mapEntry.properties.colorList : undefined
+    const parsed = typeof colorList === 'string' ? colorList.split(' ').filter(Boolean) : []
+    // SB: colorList ?? [smartcolordescriptor_blackTextColor(#000000), whiteTextColor(#ffffff)]
+    return parsed.length > 0 ? parsed : ['#000000', '#ffffff']
   }
 }
 

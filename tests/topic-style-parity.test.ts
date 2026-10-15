@@ -32,13 +32,21 @@ const node = (
 
 const RAINBOW = '#F9423A #F6A04D #F3D321 #00BC7B #486AFF #4D49BE'
 
-/** 带 multiLineColors 的主题（与 fixture 用的 Rainbow-#000229 同结构） */
+/**
+ * 带 multiLineColors 的主题（与 fixture 用的 Rainbow-#000229 同结构）。
+ *
+ * ⚠️ mainTopic / subTopic **不能**写 fillColor：真实主题（demo.xmind）里这两类都没有 svg:fill，
+ * 正因为「主题没给 fill」SB 的 smartcolordescriptor 才会用分支色派生填充
+ * （getSmartFillColorByLineColor：mainTopic → lineColor、subTopic → blendAlpha(lineColor, 0.2, map.fill)）。
+ * 主题给了 fill 就用主题的 —— 实测 calloutTopic（主题 svg:fill #000229，挂在 #F9423A 的主分支上，
+ * SB 仍是 #000229）与 floatingTopic（#EEEBEE）。
+ */
 function themeWithMultiLineColors() {
   return {
     map: { id: 'map', properties: { multiLineColors: RAINBOW, fillColor: '#FFFFFF' } },
     centralTopic: { id: 'c', properties: { fillColor: '#000229', lineColor: '#000229' } },
-    mainTopic: { id: 'm', properties: { fillColor: '#FFFFFF' } },
-    subTopic: { id: 's', properties: { fillColor: '#FFFFFF' } },
+    mainTopic: { id: 'm', properties: { lineColor: '#000229' } },
+    subTopic: { id: 's', properties: { lineColor: '#000229' } },
   }
 }
 
@@ -75,9 +83,29 @@ describe('subTopic fontColor：SB 浮点 HSL（l = 20）', () => {
     },
   )
 
-  it('mainTopic（实心填充）走 getSmartTextColor：白字', () => {
+  it('mainTopic（主题没给 fill → 用分支色实心填充）走 getSmartTextColor：白字', () => {
     const style = engine.computeStyle(state, 'm0')
+    // SB getSmartFillColorByLineColor：className === MAIN_TOPIC → return lineColor（分支色）
+    expect(style.fillColor).toBe('#F9423A')
     expect(style.fontColor).toBe('#ffffff')
+  })
+
+  it('主题给了 fill 就用主题的（smart fill 不覆盖）—— calloutTopic #000229 实测', () => {
+    const doc2 = node('root', 'root', {
+      title: 'R',
+      theme: {
+        ...themeWithMultiLineColors(),
+        calloutTopic: { id: 'co', properties: { fillColor: '#000229' } },
+      },
+    }, {
+      attached: [node('m0', 'topic', { title: 'M0' })],
+      callout: [node('co0', 'callout', { title: 'CO0', position: { x: 400, y: -400 } })],
+    })
+    const st = buildState(doc2)
+    const style = engine.computeStyle(st, 'co0')
+    // 挂在 #F9423A 的主分支上，但主题的 calloutTopic fill 优先（SB parent(BEFORE_THEME_GROUP)
+    // 对 FILL_COLOR 直接 return getThemeStyleValue → 排在 BEFORE_THEME 的 smart fill 之前）
+    expect(style.fillColor).toBe('#000229')
   })
 
   it('不是 colord 的取整结果（旧实现会得到 #605305 / #603105 / #1c1b4a）', () => {
