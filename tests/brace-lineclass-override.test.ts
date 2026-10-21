@@ -87,6 +87,79 @@ describe('brace lineClass 结构覆盖', () => {
   })
 })
 
+describe('brace 的 lineClass 覆盖按**继承下来的生效结构**逐层生效', () => {
+  /**
+   * SB `structuredescriptor[BEFORE_USER]` 的判据是 `isBraceStructure(branchView)` =
+   * **这个分支自己的 getStructureClass()**，而生效结构在 preset 缺失时**继承父结构**
+   * （AbstractStructure.getChildStructure = `return parentStructure`）。
+   *
+   * TM 旧的 resolveStructureClass 只有「自己的 structureClass || skeleton[role] ?? sk.mainTopic」，
+   * 没有继承 ⇒ 深层节点判不出 brace：
+   *   - test-brace-inherit（root=brace.right、**没有 skeleton**）：222 条边 SB brace / TM roundedElbow，
+   *     连线几何 mean 6.40 / max 60.00
+   *   - test-org-brace-branch（skeleton 两层都写 org-chart.down、某个 d1 显式声明 brace.right）：
+   *     它的后代被 skeleton.mainTopic 挡住 ⇒ 28 条边错、几何 0.38 / 13.00
+   */
+  const deep = (rootAttrs: Record<string, unknown>, branchAttrs: Record<string, unknown> = {}) => {
+    const doc = node('root', 'root', { title: 'Root', ...rootAttrs }, {
+      attached: [
+        node('d1', 'topic', { title: 'D1', ...branchAttrs }, {
+          attached: [node('d2', 'topic', { title: 'D2' }, {
+            attached: [node('d3', 'topic', { title: 'D3' })],
+          })],
+        }),
+      ],
+    })
+    const state = SheetState.create({ doc })
+    const engine = new StyleEngine()
+    return {
+      root: engine.computeStyle(state, 'root'),
+      d1: engine.computeStyle(state, 'd1'),
+      d2: engine.computeStyle(state, 'd2'),
+      d3: engine.computeStyle(state, 'd3'),
+    }
+  }
+
+  it('没有 skeleton 时，brace.right 一直继承到 d3（每一层的连接线都是 brace）', () => {
+    const r = deep({ structureClass: 'org.xmind.ui.brace.right' })
+    expect(r.root.lineClass).toBe(BRACE)
+    expect(r.d1.lineClass).toBe(BRACE)
+    expect(r.d2.lineClass).toBe(BRACE)
+    expect(r.d3.lineClass).toBe(BRACE)
+  })
+
+  it('skeleton 写了别的结构时，**显式声明**的那一支及其后代仍是 brace（精确 preset + 继承）', () => {
+    const r = deep(
+      {
+        structureClass: 'org.xmind.ui.org-chart.down',
+        skeletonStructure: { centralTopic: 'org.xmind.ui.org-chart.down', mainTopic: 'org.xmind.ui.org-chart.down' },
+      },
+      { structureClass: 'org.xmind.ui.brace.right' },
+    )
+    expect(r.root.lineClass).not.toBe(BRACE)
+    expect(r.d1.lineClass).toBe(BRACE)
+    expect(r.d2.lineClass).toBe(BRACE)
+    expect(r.d3.lineClass).toBe(BRACE)
+  })
+
+  it('skeleton 的 mainTopic 命中时不继承父结构（d1 起是 logic.right，不是 brace）', () => {
+    const r = deep({
+      structureClass: 'org.xmind.ui.brace.right',
+      skeletonStructure: { centralTopic: 'org.xmind.ui.brace.right', mainTopic: 'org.xmind.ui.logic.right' },
+    })
+    expect(r.root.lineClass).toBe(BRACE)
+    expect(r.d1.lineClass).not.toBe(BRACE)
+    expect(r.d2.lineClass).not.toBe(BRACE)
+  })
+
+  it('through.vertical 的子分支**不**继承轴结构（SB getChildStructure 给的是 logic.left/right）', () => {
+    const r = deep({ structureClass: THROUGH_VERTICAL })
+    expect(r.root.lineClass).toBe(STRAIGHT)
+    expect(r.d1.lineClass).not.toBe(STRAIGHT)
+    expect(r.d3.lineClass).not.toBe(STRAIGHT)
+  })
+})
+
 describe('timeline.through.vertical 强制 straight 连接线', () => {
   it('轴头（生效结构类 = through.vertical）的 lineClass 被改成 straight', () => {
     const { root } = resolve({ structureClass: THROUGH_VERTICAL })

@@ -173,6 +173,68 @@ function resolveStructureClass(doc: NodeDesc, topicId: string, depth: number): s
 }
 
 /**
+ * SB `getViewStructure` 的**继承**语义：preset 缺失时 `getChildStructure(parentStructure, …)`，
+ * 而 AbstractStructure 的默认实现就是 `return parentStructure` ⇒ 生效结构会一路往下传。
+ *
+ * `resolveStructureClass` 没有这一步（它只有 `sk[role] ?? sk.mainTopic` 的兜底），
+ * 于是「skeleton 没写 subTopic、父分支显式声明 brace.right」时深层节点拿不到 brace ⇒
+ * `structuredescriptor[BEFORE_USER]` 的 line-class 覆盖只命中最外层。
+ * 实测 test-brace-inherit（root=brace.right、**没有 skeleton**）：**222 条边**
+ * SB lineClass=brace / TM=roundedElbow，连线几何 mean 6.40 / max 60.00（布局侧 Δ 全 0，
+ * 因为布局用的是 @tomind/layout 自己那份 resolveStructures，早就按继承算了）。
+ *
+ * 实现取「最近的、有确定结构（自身声明或 skeleton 精确命中）的祖先」，
+ * 与 SB 的逐层 available/镜像过滤在**本函数的用途上**等价：这一层只判
+ * 「是不是 brace.*」和「是不是 timeline.through.vertical」，而镜像/available 只会在
+ * 同族内部换向（logic.right↔left、brace.right↔left），不会跨族变成/变不成 brace。
+ *
+ * ⚠️ 唯一会错的是 `getChildStructure` 被覆写过、**子结构与父结构不同族**的宿主：
+ * timeline.through.vertical 的子分支在 SB 里是 logic.left/right（交替），
+ * timeline.horizontal 的是 timeline.horizontal.up/down，map 的是 logic.left/right。
+ * 继承下来会误判成父结构（through.vertical 会把整棵子树的轴线都强制 straight）
+ * ⇒ 这几类宿主**不参与继承**（返回 null = 不覆盖），需要时按 index/侧向另行解析。
+ */
+const NO_INHERIT_PARENT_STRUCTURES: readonly string[] = [
+  'org.xmind.ui.timeline.through.vertical',
+  'org.xmind.ui.timeline.horizontal',
+  'org.xmind.ui.timeline.horizontal.up',
+  'org.xmind.ui.timeline.horizontal.down',
+  'org.xmind.ui.timeline.sided.horizontal',
+  'org.xmind.ui.timeline.vertical',
+  'org.xmind.ui.spreadsheet',
+  'org.xmind.ui.spreadsheet.column',
+]
+
+/**
+ * SB `getViewStructure` 的 presetStructure —— **按 className 精确取，没有 subTopic→mainTopic 兜底**
+ * （`resolveStructureClass` 那个 `?? sk.mainTopic` 是 TM 自己的近似，会把继承挡掉：
+ *  实测 test-org-brace-branch 的 d2+ 拿到 skeleton.mainTopic = org-chart.down ⇒ 判不出 brace，
+ *  28 条边 lineClass 仍错、几何 0.38/13.00）。
+ */
+function structurePresetExact(doc: NodeDesc, topicId: string, depth: number): string | null {
+  const own = structureClassOf(doc, topicId)
+  if (own) return own
+  const sk = getAttr<Record<string, unknown>>(doc.attrs ?? {}, 'skeletonStructure')
+  if (!sk) return null
+  const role = depth === 0 ? 'centralTopic' : depth === 1 ? 'mainTopic' : 'subTopic'
+  const sc = sk[role]
+  return typeof sc === 'string' && sc ? sc : null
+}
+
+function resolveStructureClassInherited(state: SheetState, topicId: string): string | null {
+  const doc = state.doc
+  const own = structurePresetExact(doc, topicId, getDepthFromDoc(state, topicId))
+  if (own) return own
+  let id: string | null = getParentId(doc, topicId)
+  while (id) {
+    const sc = structurePresetExact(doc, id, getDepthFromDoc(state, id))
+    if (sc) return NO_INHERIT_PARENT_STRUCTURES.includes(sc) ? null : sc
+    id = getParentId(doc, id)
+  }
+  return null
+}
+
+/**
  * 对齐 snowbrush js_utils.isTreeTableCell：
  * 自身结构属于 treetable 组，或直接父级属于 treetable 组（SB 只向上看一层）。
  */
@@ -485,7 +547,8 @@ export class StyleEngine {
     // brace 线不翻倍（brace-right 中央分支 spacingMajor = 50 + 16 = 66，而非 50*2 + 16）。
     if (!options.ignoreUser) {
       const lineClass = result.lineClass
-      const sc = resolveStructureClass(state.doc, topicId, getDepthFromDoc(state, topicId))
+      // 用**带继承**的版本：SB isBraceStructure / structureClassIs 看的是 branchView.getStructureClass()
+      const sc = resolveStructureClassInherited(state, topicId)
       if (typeof lineClass === 'string') {
         const isBraceStructure = sc !== null && BRACE_STRUCTURE_CLASSES.includes(sc)
         // 主题里可能是完整 URI，DEFAULT_STYLES 里是短名，统一归一化后比较

@@ -34,6 +34,28 @@ export type { ThemePackage } from './style-engine'
 
 // 工具函数
 export { classifyNode, getParentId, findById } from './classify'
+
+// SB 的结构类常量表 + 子分支生效结构解析（layout 的 child-structure.ts 从这里 re-export）
+export {
+  SC,
+  EXPOSED_STRUCTURE,
+  MAP_LIKE_STRUCTURES,
+  ATTACHED_EXPOSED_STRUCTURE,
+  LEFT_EXPOSED_STRUCTURE,
+  RIGHT_EXPOSED_STRUCTURE,
+  TOP_EXPOSED_STRUCTURE,
+  DOWN_EXPOSED_STRUCTURE,
+  TREE_LEFT_EXPOSED_STRUCTURE,
+  TREE_RIGHT_EXPOSED_STRUCTURE,
+  TREE_TABLE_EXPOSED_STRUCTURE,
+  TREE_TABLE_GROUP_LIST,
+  SIMILAR_STRUCTURE_MAP,
+  getAvailableChildStructure,
+  resolveChildStructure,
+  getStartDirectionOf,
+  isHorizontalStart,
+} from './structure-class'
+export type { StructureClass } from './structure-class'
 export { isThemeClassEntry, resolveColorVariables } from './style-types'
 
 // 默认样式
