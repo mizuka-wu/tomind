@@ -35,6 +35,8 @@ import {
   delegationOf,
   ATTACHED_EXPOSED_STRUCTURE,
   TOP_EXPOSED_STRUCTURE,
+  LEFT_EXPOSED_STRUCTURE,
+  RIGHT_EXPOSED_STRUCTURE,
 } from '@tomind/layout'
 import type { NodeDesc } from '@tomind/schema'
 
@@ -94,6 +96,18 @@ describe('child-structure：SB 的 available 表与 getViewStructure 解析', ()
     expect(getAvailableChildStructure(SC.TOP_TITLE_TREE_TABLE)).toContain(SC.TOP_TITLE_TREE_TABLE)
     expect(getAvailableChildStructure(SC.TREE_TABLE)).toContain(SC.TREE_RIGHT)
     expect(getAvailableChildStructure(SC.TREE_TABLE)).not.toContain(SC.SPREADSHEET)
+  })
+
+  it('brace.left/right 继承 logic 的 available 表（SB `BraceLeft = Object.assign({}, logicLeft, …)`）', () => {
+    // 探针实测 test-brace-left（skeleton mainTopic = logic.right）：brace.left 给 d1 的 available
+    // 只有 13 项 = LEFT_EXPOSED，preset logic.right 不在里面 → 镜像 ⇒ **eff = logic.left**
+    expect(getAvailableChildStructure(SC.BRACE_LEFT)).toEqual(LEFT_EXPOSED_STRUCTURE)
+    expect(getAvailableChildStructure(SC.BRACE_RIGHT)).toEqual(RIGHT_EXPOSED_STRUCTURE)
+    expect(getAvailableChildStructure(SC.BRACE_LEFT)).not.toContain(SC.LOGIC_RIGHT)
+    expect(resolveChildStructure(SC.BRACE_LEFT, SC.LOGIC_RIGHT)).toBe(SC.LOGIC_LEFT)
+    expect(resolveChildStructure(SC.BRACE_RIGHT, SC.LOGIC_LEFT)).toBe(SC.LOGIC_RIGHT)
+    // 同向的 logic 就在表里，不用镜像
+    expect(resolveChildStructure(SC.BRACE_LEFT, SC.LOGIC_LEFT)).toBe(SC.LOGIC_LEFT)
   })
 
   it('preset 不在 available 里时试 SIMILAR_STRUCTURE_MAP 的镜像（logic.right → logic.left）', () => {

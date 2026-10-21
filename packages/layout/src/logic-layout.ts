@@ -11,10 +11,15 @@ import type { StyleEngine, ResolvedStyle } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
-import { isCollapsed, getAttachedChildren, findRootTopic, getAttr, getEffectiveStructureClass, isElbowLineClass } from './layout-utils'
+import { isCollapsed, getAttachedChildren, findRootTopic, getAttr, getEffectiveStructureClass, getStructurePreset, isElbowLineClass } from './layout-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 import { getLineEndSpacingPatchGap, hasLineEndArrow } from './spacing-utils'
+import { SC } from './child-structure'
+import type { DelegableStructure } from './child-structure'
+import { resolveStructures } from './structure-resolve'
+import { layoutDelegatedSubtree, placeDelegatedSubtree } from './subtree-delegate'
+import type { DelegatedSubtreeLayout } from './subtree-delegate'
 
 /**
  * 对齐 snowbrush calcOutwardDistanceByAttachedChildren：
@@ -179,12 +184,15 @@ function measureSubtree(node: NodeDesc, options: LayoutOptions, sizeMap: Map<str
  * 实测 logic.right 的 d2 节点（lineWidth 2 + triangle）SB calcSpacingMajor = 26 + 24 = **50**，
  * TM 只有 26 → 委派子树每层窄 24px，在 timeline 轴上累积成 -48 / -96 / -192。
  *
- * `extra > 0` 就是 brace 路径（createLogicLikeAlgorithm 传的 BRACE_LINE_SPACING=16，
- * 且只作用于中央分支自身 —— 与 SB 一致：只有结构类是 brace.* 的那一层
- * shouldPatchLineSpacing 才恒真，更深层是 logic.right）。所以直接把它当 isBrace 交给
- * 共享 helper：无箭头时 helper 返回 16（与旧行为逐字相同），有箭头时返回 lw*4+16。
+ * `isBrace` 的判据是 SB `utils/line.shouldPatchLineSpacing` 的第一句
+ * `isBraceStructure(startBranchView)` —— 看的是**这个分支自己的生效结构类**，不是「算法入口是不是 brace」。
+ * 旧实现用 `extra > 0`（= createLogicLikeAlgorithm 传的 BRACE_LINE_SPACING，只作用于最外层调用）
+ * 近似它：test-brace-right 的 skeleton 写了 `mainTopic: logic.right`，深层 eff 确实是 logic.right，
+ * 所以量到 0；但 skeleton 没写 mainTopic（或写的就是 brace.right）时，SB 里 d1+ 的 preset 缺失
+ * ⇒ **继承父结构 brace.right** ⇒ 每一层都要加这 16px（实测 noskel-brace.right：TM 少 51.5px）。
+ * 现在按 `structs.eff` 逐节点判定，`extra` 只作为拿不到生效结构时的兜底。
  */
-function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null, extra: number = 0): number {
+function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: StyleEngine | null, state: SheetState | null, extra: number = 0, isBrace: boolean = extra > 0): number {
   // 对齐 snowbrush calcSpacingMajor：curve/straight 线 ×2
   const gap = getNodeSpacing(node, options, styleEngine, state).horizontalGap
   const DOUBLE = ['curve', 'straight', 'fold', 'bight']
@@ -196,7 +204,7 @@ function getSpacingMajor(node: NodeDesc, options: LayoutOptions, styleEngine: St
   }
   const patch = styleEngine && state
     ? getLineEndSpacingPatchGap({
-      isBrace: extra > 0,
+      isBrace,
       // logic/brace 结构的分支永远不是 timeline.horizontal / timeline.through.vertical
       isTimelineThrough: false,
       hasArrow: hasLineEndArrow(styleEngine.getStyleValue(state, node.id, 'arrowEndClass')),
@@ -221,7 +229,11 @@ function getMinorStep(node: NodeDesc, options: LayoutOptions, styleEngine: Style
   return getSpacingMinor(node, options, styleEngine, state) + bw
 }
 
-function usesOutwardOffset(node: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null): boolean {
+function usesOutwardOffset(node: NodeDesc, styleEngine: StyleEngine | null, state: SheetState | null, effStructure?: string | null): boolean {
+  // SB braceleftandright 自己覆写了 calAttachedChildrenPos，**根本不调用**
+  // calcOutwardDistanceByAttachedChildren ⇒ 生效结构是 brace.* 的分支一律不外扩
+  //（不看线型：skeleton 把整棵树都声明成 brace.right 时主题的 line-class 未必是 brace）。
+  if (effStructure === SC.BRACE_RIGHT || effStructure === SC.BRACE_LEFT) return false
   if (!styleEngine || !state) return true
   const v = styleEngine.getStyleValue(state, node.id, 'lineClass')
   const s = typeof v === 'string' ? v : ''
@@ -247,12 +259,80 @@ function calcOutwardDistance(
   subtreeHeight: (c: NodeDesc) => number,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
+  effStructure?: string | null,
 ): number {
   if (children.length < OUTWARD_CHILDREN_LIMIT) return 0
-  if (!usesOutwardOffset(node, styleEngine, state)) return 0
+  if (!usesOutwardOffset(node, styleEngine, state, effStructure)) return 0
   const totalHeight = children.reduce((sum, c) => sum + subtreeHeight(c), 0)
   if (totalHeight <= OUTWARD_MIN) return 0
   return OUTWARD_K * (Math.min(totalHeight, OUTWARD_MAX) - OUTWARD_MIN)
+}
+
+// ─── 生效结构 / 委派表（SB utils/branch.getViewStructure）───
+
+/** 宿主算法属于哪一族：决定「哪些生效结构是本宿主自己的递归、不用委派」 */
+export type LogicHostFamily = 'logic' | 'brace'
+
+interface LogicStructures {
+  /** nodeId → 生效结构类（含「preset 缺失 → 继承父结构」） */
+  eff: Map<string, string>
+  /** nodeId → 该子分支整棵交给别的结构布局（缺省 = 本宿主自己递归） */
+  delegate: Map<string, DelegableStructure>
+  /** nodeId → 文档深度（委派 tree 子树时给它当 skeleton 角色基准） */
+  depth: Map<string, number>
+  /** computePlacement 阶段算好的委派子树，layoutSubtree 阶段平移复用 */
+  cache: Map<string, DelegatedSubtreeLayout>
+  options: LayoutOptions
+  styleEngine: StyleEngine | null
+  state: SheetState | null
+}
+
+/**
+ * 宿主自己就是这一族 ⇒ 不委派，走本地递归。
+ * brace 也算 logic 族的本地递归：SB `BraceLeftAndRight` 与 `logicLeftAndRight` 是同一套堆叠公式
+ * （差异只有 calcSpacingMajor 的 LINE_SPACING 补丁与不走 outward，两者都已按**生效结构**逐节点判），
+ * 所以「logic 宿主下某个子分支声明 brace.right」不需要换布局器，只需要那一层多补 16px。
+ * 只有 side 不同（右宿主里长出左子树）或换族（tree.*）才真的委派出去。
+ */
+function isHostOwnFamily(side: 'right' | 'left', d: DelegableStructure): boolean {
+  if (d.kind === 'tree') return false
+  return d.side === side
+}
+
+function buildLogicStructures(
+  root: NodeDesc,
+  rootEff: string,
+  side: 'right' | 'left',
+  options: LayoutOptions,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+  rootDepth = 0,
+): LogicStructures {
+  const r = resolveStructures(root, rootEff, state, (d) => isHostOwnFamily(side, d), rootDepth)
+  return { eff: r.eff, delegate: r.delegate, depth: r.depth, cache: new Map(), options, styleEngine, state }
+}
+
+/** 取（并缓存）某个子分支的委派布局结果，坐标帧 = child 原点 (0,0) */
+function delegatedOf(structs: LogicStructures, child: NodeDesc): DelegatedSubtreeLayout {
+  const hit = structs.cache.get(child.id)
+  if (hit) return hit
+  const d = structs.delegate.get(child.id)!
+  const res = layoutDelegatedSubtree(
+    child,
+    d,
+    structs.options,
+    structs.styleEngine,
+    structs.state,
+    structs.depth.get(child.id) ?? 1,
+  )
+  structs.cache.set(child.id, res)
+  return res
+}
+
+/** 子树在堆叠轴上的高度：委派的取 SB child.boundaryBounds.height，本地递归的取 placement */
+function childStackHeight(structs: LogicStructures, placement: Map<string, LogicPlacement>, c: NodeDesc): number {
+  if (structs.delegate.has(c.id)) return delegatedOf(structs, c).bb.height
+  return placement.get(c.id)!.bb.height
 }
 
 interface LocalBB {
@@ -284,6 +364,7 @@ function computePlacement(
   placement: Map<string, LogicPlacement>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
+  structs: LogicStructures,
 ): LocalBB {
   const size = sizeMap.get(node.id)!
   const h = size.height
@@ -297,7 +378,11 @@ function computePlacement(
     return bb
   }
 
-  const childBBs = children.map((c) => computePlacement(c, options, sizeMap, placement, styleEngine, state))
+  // 被委派的子分支：bb 直接用 SB 的 child.boundaryBounds（由那个结构自己算），
+  // 宿主只负责按它堆叠 —— 这正是 SB 「父结构用 child.boundaryBounds 摆位」的分工。
+  const childBBs = children.map((c) => structs.delegate.has(c.id)
+    ? { y: delegatedOf(structs, c).bb.y, height: delegatedOf(structs, c).bb.height }
+    : computePlacement(c, options, sizeMap, placement, styleEngine, state, structs))
   const ms = getMinorStep(node, options, styleEngine, state)
   const totalH = childBBs.reduce((s2, b) => s2 + b.height, 0) + (children.length - 1) * ms
 
@@ -344,6 +429,7 @@ function layoutSubtree(
   nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
+  structs: LogicStructures,
   side: 'right' | 'left',
   spacingMajorExtra: number = 0,
 ): void {
@@ -365,17 +451,32 @@ function layoutSubtree(
   const children = isCollapsed(node) ? [] : getAttachedChildren(node)
   if (children.length === 0) return
 
+  const effStructure = structs.eff.get(node.id) ?? null
   const outwardOffset = calcOutwardDistance(
     node,
     children,
-    (c) => placement.get(c.id)!.bb.height,
+    (c) => childStackHeight(structs, placement, c),
     styleEngine,
     state,
+    effStructure,
   )
-  const spacingMajor = getSpacingMajor(node, options, styleEngine, state, spacingMajorExtra)
+  // SB shouldPatchLineSpacing 的第一句看的是**本分支自己的生效结构类**是不是 brace.*
+  const isBrace = effStructure === SC.BRACE_RIGHT || effStructure === SC.BRACE_LEFT
+  const spacingMajor = getSpacingMajor(node, options, styleEngine, state, spacingMajorExtra, isBrace)
 
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
+    // 生效结构不是本宿主族的子分支 ⇒ 整棵交出去（SB：那个分支的 calAttachedChildrenPos
+    // 由它自己的 structure 对象跑，父结构只用 child.boundaryBounds 把它摆到位）
+    if (structs.delegate.has(child.id)) {
+      const del = delegatedOf(structs, child)
+      const boxLeft = side === 'right'
+        ? x + size.width + spacingMajor + outwardOffset
+        : x - spacingMajor - outwardOffset - del.own.width
+      // 原点 X = 盒左 + 盒宽/2；原点 Y = 堆叠算出来的中心（SB posY 定位的就是原点）
+      placeDelegatedSubtree(del, boxLeft + del.own.width / 2, centerY + pl.centers[i], nodes)
+      continue
+    }
     const cs = sizeMap.get(child.id)!
     let childX: number
     if (side === 'right') {
@@ -383,8 +484,7 @@ function layoutSubtree(
     } else {
       childX = x - spacingMajor - outwardOffset - cs.width
     }
-    // spacingMajorExtra（brace 的 line-spacing patch）只作用于中央分支自身
-    layoutSubtree(child, childX, centerY + pl.centers[i], options, sizeMap, placement, nodes, styleEngine, state, side, 0)
+    layoutSubtree(child, childX, centerY + pl.centers[i], options, sizeMap, placement, nodes, styleEngine, state, structs, side, 0)
   }
 }
 
@@ -399,8 +499,18 @@ export interface LogicNodeLayout {
   partBounds?: Map<string, { x: number; y: number; width: number; height: number }>
 }
 
+export interface LogicSubtreeOptions {
+  /**
+   * 这棵子树根的**生效结构类**（SB getViewStructure 的结果）。缺省按 side 取 logic.right/left。
+   * 宿主委派 brace.* 子树时传 brace.right/left ⇒ 那一层（及其继承者）才会加 LINE_SPACING 补丁。
+   */
+  rootEff?: string
+  /** 子树根在文档中的深度（skeleton 角色基准） */
+  baseDepth?: number
+}
+
 /**
- * 独立布局一棵 logic 子树（供其他结构按 skeleton 委派使用）。
+ * 独立布局一棵 logic 子树（供其他结构按 skeleton / 生效结构委派使用）。
  * 返回绝对坐标节点表（child 主题左上角 = (x, centerY - h/2)）与子树包围盒（相对 child 中心）。
  */
 export function layoutLogicSubtree(
@@ -411,13 +521,23 @@ export function layoutLogicSubtree(
   styleEngine: StyleEngine | null,
   state: SheetState | null,
   side: 'right' | 'left',
+  extra: LogicSubtreeOptions = {},
 ): { nodes: Map<string, LogicNodeLayout>; bb: LocalBB; bbX: number; bbW: number; originY: number } {
   const sizeMap = new Map<string, NodeSize>()
   measureSubtree(node, options, sizeMap, styleEngine, state)
   const placement = new Map<string, LogicPlacement>()
-  const bb = computePlacement(node, options, sizeMap, placement, styleEngine, state)
+  const structs = buildLogicStructures(
+    node,
+    extra.rootEff ?? (side === 'right' ? SC.LOGIC_RIGHT : SC.LOGIC_LEFT),
+    side,
+    options,
+    styleEngine,
+    state,
+    extra.baseDepth ?? 1,
+  )
+  const bb = computePlacement(node, options, sizeMap, placement, styleEngine, state, structs)
   const nodes = new Map<string, LogicNodeLayout>()
-  layoutSubtree(node, x, centerY, options, sizeMap, placement, nodes, styleEngine, state, side)
+  layoutSubtree(node, x, centerY, options, sizeMap, placement, nodes, styleEngine, state, structs, side)
   let minX = Infinity
   let maxX = -Infinity
   const own = nodes.get(node.id)!
@@ -432,11 +552,16 @@ export function layoutLogicSubtree(
   return { nodes, bb, bbX: minX - centerX, bbW: maxX - minX, originY: sizeMap.get(node.id)!.originY }
 }
 
-export function createLogicLikeAlgorithm(name: string, side: 'right' | 'left', spacingMajorExtra: number = 0): LayoutAlgorithm {
+export function createLogicLikeAlgorithm(
+  name: string,
+  side: 'right' | 'left',
+  spacingMajorExtra: number = 0,
+  hostStructure: string = side === 'right' ? SC.LOGIC_RIGHT : SC.LOGIC_LEFT,
+): LayoutAlgorithm {
   return {
     name,
     layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
-      return runLogicLayout(doc, options, styleEngine, state, side, spacingMajorExtra)
+      return runLogicLayout(doc, options, styleEngine, state, side, spacingMajorExtra, hostStructure)
     },
   }
 }
@@ -452,6 +577,7 @@ function runLogicLayout(
   state: SheetState | null,
   side: 'right' | 'left',
   spacingMajorExtra: number = 0,
+  hostStructure: string = side === 'right' ? SC.LOGIC_RIGHT : SC.LOGIC_LEFT,
 ): LayoutResult {
   const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number; partBounds?: Map<string, { x: number; y: number; width: number; height: number }> }>()
   const root = findRootTopic(doc)
@@ -460,11 +586,16 @@ function runLogicLayout(
   const sizeMap = new Map<string, NodeSize>()
   measureSubtree(root, options, sizeMap, styleEngine, state)
 
+  // 中央分支的生效结构：SB getViewStructure 的 `isCentralBranch()` 分支
+  //   = modelStructure || skeleton[centralTopic] || MAP；TM 兜底用算法自己的结构族
+  const rootEff = (state ? getStructurePreset(state.doc, root) : getAttr<string>(root, 'structureClass')) ?? hostStructure
+  const structs = buildLogicStructures(root, rootEff, side, options, styleEngine, state, 0)
+
   const placement = new Map<string, LogicPlacement>()
-  computePlacement(root, options, sizeMap, placement, styleEngine, state)
+  computePlacement(root, options, sizeMap, placement, styleEngine, state, structs)
 
   const rootX = side === 'right' ? options.rootOffsetX : 0
-  layoutSubtree(root, rootX, 0, options, sizeMap, placement, nodes, styleEngine, state, side, spacingMajorExtra)
+  layoutSubtree(root, rootX, 0, options, sizeMap, placement, nodes, styleEngine, state, structs, side, spacingMajorExtra)
 
   let minX = Infinity
   let maxX = -Infinity

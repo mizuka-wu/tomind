@@ -167,8 +167,12 @@ export const SIMILAR_STRUCTURE_MAP: Record<string, StructureClass> = {
  * | spreadsheet / spreadsheet.column | **[]** |
  * | fishbone.leftHeaded / rightHeaded | 只有自己的 top/bone 私有结构 |
  * | fishbone 主骨 | RIGHT_EXPOSED / LEFT_EXPOSED（按 direction） |
- * | brace.left / brace.right（无覆写） | ATTACHED_EXPOSED |
- * | 其它无覆写 | ATTACHED_EXPOSED |
+ * | brace.left / brace.right | **LEFT_EXPOSED / RIGHT_EXPOSED** —— `BraceLeft = Object.assign({}, logicLeft, …)`，
+ *   自己没写 getAvailableChildStructure ⇒ 继承 logicLeft/logicRight 的那张表。
+ *   实测 test-brace-left（skeleton mainTopic = logic.right）：SB 给 d1 的 available 只有 13 项
+ *   = LEFT_EXPOSED，preset logic.right 不在里面 → 镜像 logic.left ⇒ **eff = logic.left**。
+ *   （曾按「无覆写 = ATTACHED_EXPOSED」实现 ⇒ 判成 logic.right ⇒ test-brace-left 0 → 240.4） |
+ * | spreadsheet.row 等私有/无覆写 | ATTACHED_EXPOSED（AbstractStructure 默认） |
  *
  * ⚠️ `[]` 的那几个 ⇒ **任何 preset 都不可用** ⇒ 子结构一律走 getChildStructure
  * （timeline.horizontal → .up/.down；through.vertical / sided.horizontal → logic.left/right 交替）。
@@ -179,8 +183,10 @@ export function getAvailableChildStructure(
 ): readonly StructureClass[] {
   switch (parentStructure) {
     case SC.LOGIC_RIGHT:
+    case SC.BRACE_RIGHT: // BraceRight = Object.assign({}, logicRight, …) → 继承它的表
       return RIGHT_EXPOSED_STRUCTURE
     case SC.LOGIC_LEFT:
+    case SC.BRACE_LEFT: // BraceLeft = Object.assign({}, logicLeft, …)
       return LEFT_EXPOSED_STRUCTURE
     case SC.TREE_RIGHT:
       return TREE_RIGHT_EXPOSED_STRUCTURE
@@ -257,11 +263,17 @@ export function resolveChildStructure(
 /** TM 已有「独立子树布局入口」的结构（宿主可以把整棵子树交出去） */
 export type DelegableStructure =
   | { kind: 'logic'; side: 'right' | 'left' }
+  | { kind: 'brace'; side: 'right' | 'left' }
   | { kind: 'tree'; dir: 'right' | 'left' }
 
 /**
- * 生效结构类 → TM 的委派方式；TM 没有对应子树入口的（timeline.* / treetable / brace.* /
+ * 生效结构类 → TM 的委派方式；TM 没有对应子树入口的（timeline.* / treetable /
  * org-chart 反向 / map 系 / fishbone）返回 null，由宿主自己递归（已知差距，见 skill）。
+ *
+ * brace.left/right 也算有入口：SB `braceleftandright` 就是 `underscore.extend({}, logicLeftAndRight, …)`，
+ * 堆叠/居中公式与 logic 逐字相同，唯一差异是 calcSpacingMajor 里
+ * `isBraceStructure(branch) && !hasArrow → LINE.LINE_SPACING(16)`（utils/line.getLineEndSpacing）。
+ * ⇒ 复用 logic 的子树入口，只多传一个「本层是 brace」的标记。
  */
 export function delegationOf(eff: StructureClass | null): DelegableStructure | null {
   switch (eff) {
@@ -269,6 +281,10 @@ export function delegationOf(eff: StructureClass | null): DelegableStructure | n
       return { kind: 'logic', side: 'right' }
     case SC.LOGIC_LEFT:
       return { kind: 'logic', side: 'left' }
+    case SC.BRACE_RIGHT:
+      return { kind: 'brace', side: 'right' }
+    case SC.BRACE_LEFT:
+      return { kind: 'brace', side: 'left' }
     case SC.TREE_RIGHT:
       return { kind: 'tree', dir: 'right' }
     case SC.TREE_LEFT:
