@@ -23,7 +23,12 @@ export type TreeDirection = 'right' | 'left' | 'down' | 'up'
 import { computeOutsidePadding, computeMasterOutsidePadding } from './boundary-padding'
 import type { OutsidePadding } from './boundary-padding'
 import { computeChildrenTotalHeight } from './spacing-utils'
-import { layoutLogicSubtree } from './logic-layout'
+import { SC } from './child-structure'
+import type { DelegableStructure } from './child-structure'
+import { resolveStructures, structurePresetOf } from './structure-resolve'
+import type { StructureResolution } from './structure-resolve'
+import { layoutDelegatedSubtree } from './subtree-delegate'
+import type { DelegatedSubtreeLayout } from './subtree-delegate'
 
 /** Snowbrush: PADDING * 2 = 40, 用于父子垂直间距 */
 const PARENT_GAP = 40
@@ -43,18 +48,6 @@ function getTreeLineEndPatchGap(ctx: TreeLayoutContext, node: NodeDesc): number 
   const lwRaw = ctx.styleEngine.getStyleValue(ctx.state, node.id, 'lineWidth')
   const lw = typeof lwRaw === 'number' ? lwRaw : parseFloat(String(lwRaw ?? '')) || 0
   return lw * 4 + 16
-}
-
-/** skeleton 结构样式：子层级若为 logic.* 则委派 logic 布局（对齐 snowbrush skeleton/getAvailableChildStructure） */
-function getChildLogicSide(ctx: TreeLayoutContext, depth: number, direction: 'right' | 'left'): 'right' | 'left' | null {
-  const sk = (ctx.state?.doc?.attrs as Record<string, unknown> | undefined)?.skeletonStructure as Record<string, string> | undefined
-  if (!sk) return null
-  const role = depth === 0 ? 'mainTopic' : 'subTopic'
-  const sc = sk[role] ?? sk.mainTopic
-  if (typeof sc !== 'string') return null
-  if (!sc.startsWith('org.xmind.ui.logic')) return null
-  // 方向由父结构 coerce（tree-left 的子分支只能是 logic.left），skeleton 只决定结构族
-  return direction
 }
 
 function getParentBorderWidth(ctx: TreeLayoutContext, node: NodeDesc): number {
@@ -135,6 +128,11 @@ interface TreeLayoutContext {
   state: SheetState | null
   styleCache: Map<string, ResolvedStyle>
   spacingCache: Map<string, ReturnType<typeof getNodeSpacing>>
+  /**
+   * 逐节点的生效结构 + 委派表（SB getViewStructure）。down/up 方向 SB 没有对应结构，
+   * 保持 null（= 不委派，与旧行为一致）。
+   */
+  structs: StructureResolution | null
 }
 
 function getNodeStyle(ctx: TreeLayoutContext, nodeId: string): ResolvedStyle | undefined {
@@ -390,46 +388,85 @@ function layoutSubtree(
     // 被宿主委派进来的 tree 子树根**不是**中央分支（endPointLineOffset=15、无 centerPadding=30）。
     const lineGap = getTreeLineEndPatchGap(ctx, node)
     const childrenXOffset = TREE_BOUNDARY_GAP + (isCentral ? TREE_CENTER_PADDING : TREE_END_POINT_LINE_OFFSET) + lineGap
-    let childrenY = y + size.height + TREE_PADDING * 2
+    const parentBw = getParentBorderWidth(ctx, node)
     const lineClass = ctx.styleEngine && ctx.state
       ? String(ctx.styleEngine.getStyleValue(ctx.state, node.id, 'lineClass') ?? '')
       : ''
-    if (TREE_SPECIAL_LINE_CLASSES.some((c) => lineClass.includes(c)) && regularChildren.length > 0) {
-      const triangleOffset = Math.tan((Math.PI * 30) / 180) * Math.abs(childrenXOffset)
-      const halfOfFirstChildHeight = sizeMap.get(regularChildren[0].id)!.height / 2
-      if (triangleOffset > halfOfFirstChildHeight) {
-        childrenY += triangleOffset - halfOfFirstChildHeight
-      }
-    }
-    const parentBw = getParentBorderWidth(ctx, node)
-    const logicSide = getChildLogicSide(ctx, depth, direction === 'left' ? 'left' : 'right')
 
-    const provs: { nodes: Map<string, NodeLayoutOutput>; bbY: number; bbH: number; top: number; left: number; h: number; originY: number }[] = []
+    // ── 每个子分支先按**它自己的生效结构**布局好（SB：父结构只拿 child.boundaryBounds 摆位）──
+    const provs: { nodes: Map<string, NodeLayoutOutput>; bbX: number; bbW: number; bbY: number; bbH: number; top: number; left: number; w: number; h: number; originY: number }[] = []
     for (const child of regularChildren) {
       const childSize = sizeMap.get(child.id)!
       childSize.outsidePadding = { top: 0, bottom: 0, left: 0, right: 0 }
       const provNodes = new Map<string, NodeLayoutOutput>()
-      let bbY: number
-      let bbH: number
-      if (logicSide) {
-        const res = layoutLogicSubtree(child, 0, 0, ctx.options, ctx.styleEngine, ctx.state, logicSide)
-        for (const [id, nl] of res.nodes) provNodes.set(id, nl as unknown as NodeLayoutOutput)
+      const del: DelegableStructure | undefined = ctx.structs?.delegate.get(child.id)
+      let bbX = 0
+      let bbW = 0
+      let bbY = 0
+      let bbH = 0
+      let ownH = childSize.height
+      let ownOriginY = childSize.originY
+      if (del) {
+        // 生效结构不是 tree.<同向> ⇒ 整棵交出去（logic.* / brace.* / tree.<反向>）
+        const res: DelegatedSubtreeLayout = layoutDelegatedSubtree(
+          child,
+          del,
+          ctx.options,
+          ctx.styleEngine,
+          ctx.state,
+          ctx.structs?.depth.get(child.id) ?? depth + 1,
+        )
+        for (const [id, nl] of res.nodes) provNodes.set(id, nl as NodeLayoutOutput)
+        bbX = res.bb.x
+        bbW = res.bb.width
         bbY = res.bb.y
         bbH = res.bb.height
+        ownH = res.own.height
+        ownOriginY = res.originY
       } else {
         layoutSubtree(ctx, child, 0, 0, direction, sizeMap, provNodes, depth + 1, false)
+        let minX = Infinity
+        let maxX = -Infinity
         let minY = Infinity
         let maxY = -Infinity
         for (const nl of provNodes.values()) {
+          minX = Math.min(minX, nl.x)
+          maxX = Math.max(maxX, nl.x + nl.width)
           minY = Math.min(minY, nl.y)
           maxY = Math.max(maxY, nl.y + nl.height)
         }
+        const me = provNodes.get(child.id)!
+        bbW = maxX - minX
         bbH = maxY - minY
-        // bb 相对**主题盒原点**（shape 中心）= 盒顶 + originY
-        bbY = minY - childSize.originY
+        // bb 相对**主题盒原点**（shape 中心）：X 相对盒中心、Y 相对盒顶 + originY
+        bbX = minX - (me.x + me.width / 2)
+        bbY = minY - me.y - childSize.originY
       }
       const own = provNodes.get(child.id)!
-      provs.push({ nodes: provNodes, bbY, bbH, top: own.y, left: own.x, h: childSize.height, originY: childSize.originY })
+      provs.push({ nodes: provNodes, bbX, bbW, bbY, bbH, top: own.y, left: own.x, w: own.width, h: ownH, originY: ownOriginY })
+    }
+
+    // ── SB maxOffset：子树朝**父节点那一侧**超出自己主题盒的最大距离 ──
+    //   isRight : max(child.topicView.bounds.x - child.boundaryBounds.x)          = max(-w/2 - bbX)
+    //   !isRight: max(bb.x + bb.width - bounds.x - bounds.width)                  = max(bbX + bbW - w/2)
+    // 同向的 tree/logic 子树这一项恒为 0（bb 的靠父侧就是自己的盒），只有被委派成
+    // **反向**生长（tree.right 宿主里长出 tree.left 分支）时才 >0，此时 SB 会把
+    // 所有子节点整体往外推 maxOffset。旧实现完全没有这一项。
+    const maxOffset = provs.reduce(
+      (res, pv) => direction === 'right'
+        ? Math.max(res, -pv.w / 2 - pv.bbX)
+        : Math.max(res, pv.bbX + pv.bbW - pv.w / 2),
+      Number.MIN_SAFE_INTEGER,
+    )
+
+    let childrenY = y + size.height + TREE_PADDING * 2
+    if (TREE_SPECIAL_LINE_CLASSES.some((c) => lineClass.includes(c)) && provs.length > 0) {
+      // SB: triangleOffset = tan(30°) * (|childrenX| + |maxOffset|)  ← 旧实现漏了 |maxOffset|
+      const triangleOffset = Math.tan((Math.PI * 30) / 180) * (Math.abs(childrenXOffset) + Math.abs(maxOffset))
+      const halfOfFirstChildHeight = provs[0].h / 2
+      if (triangleOffset > halfOfFirstChildHeight) {
+        childrenY += triangleOffset - halfOfFirstChildHeight
+      }
     }
 
     let cum = childrenY
@@ -442,15 +479,16 @@ function layoutSubtree(
       // 盒顶 = 原点 - originY（有 labels 时 ≠ 原点 - h/2）
       const center = cum - pv.bbY
       const desiredTop = center - pv.originY
-      const childW = pv.nodes.get(child.id)!.width
+      const childW = pv.w
       // SB treeleftandright: childBranch.setPosition(posX, …) 的 posX 是相对**父分支原点
-      // （= 主题盒中心）**的偏移，posX = childrenX - topicView.bounds.x + maxOffset，
-      // 故子主题盒左边缘 = 父中心 + childrenX（右侧）/ 父中心 - childrenX - 子宽（左侧）。
+      // （= 主题盒中心）**的偏移，posX = childrenX ∓ topicView.bounds.x ∓ maxOffset，
+      // 故子主题盒左边缘 = 父中心 + childrenX + maxOffset（右侧）
+      //                / 父中心 - childrenX - maxOffset - 子宽（左侧）。
       // 之前按父主题盒右边缘起算，整棵子树多偏移了 父宽/2（root 208 → 偏 104px）。
       const parentCenterX = x + size.width / 2
       const childX = direction === 'right'
-        ? parentCenterX + childrenXOffset
-        : parentCenterX - childrenXOffset - childW
+        ? parentCenterX + childrenXOffset + maxOffset
+        : parentCenterX - childrenXOffset - maxOffset - childW
       const dx = childX - pv.left
       const dy = desiredTop - pv.top
       for (const [id, nl] of pv.nodes) {
@@ -488,6 +526,30 @@ function layoutSubtree(
 
   // Position summary nodes after regular children are laid out
   positionSummaries(node, regularChildren, nodes, direction, sizeMap)
+}
+
+/**
+ * tree 宿主的生效结构表（SB getViewStructure）。
+ *
+ * SB 只有 tree.left / tree.right 两种 tree 结构，`down/up` 是 TM 自己的扩展方向
+ * （SB 里朝上/朝下的堆叠是 org-chart.up/down），保持 null = 不委派，与旧行为一致。
+ *
+ * isSelf = 「同族**且同向**」：tree.right 宿主里声明 tree.left 的分支要真的委派出去
+ * （SB TREE_RIGHT_EXPOSED_STRUCTURE = RIGHT_EXPOSED_STRUCTURE，**含 tree.left**，
+ *   实测 probe-tree.right+tree.left：SB eff = tree.left，TM 旧实现按 tree.right 递归
+ *   ⇒ 265.9 / 4.8）；声明 logic.* / brace.* 同样委派。
+ */
+function buildTreeStructures(
+  root: NodeDesc,
+  direction: TreeDirection,
+  state: SheetState | null,
+  rootDepth: number,
+): StructureResolution | null {
+  if (direction !== 'right' && direction !== 'left') return null
+  const nominal = direction === 'right' ? SC.TREE_RIGHT : SC.TREE_LEFT
+  const preset = structurePresetOf(root, state)
+  const rootEff = (preset === SC.TREE_RIGHT || preset === SC.TREE_LEFT) ? preset : nominal
+  return resolveStructures(root, rootEff, state, (d) => d.kind === 'tree' && d.dir === direction, rootDepth)
 }
 
 // ─── 通用委派入口 ───
@@ -545,6 +607,8 @@ export function layoutTreeSubtree(
     state,
     styleCache: new Map(),
     spacingCache: new Map(),
+    // 宿主已经解析出这个分支的生效结构 = tree.<direction>，直接当 rootEff
+    structs: buildTreeStructures(node, direction, state, baseDepth),
   }
   const sizeMap = new Map<string, NodeSize>()
   measureSubtree(ctx, node, sizeMap, direction)
@@ -605,15 +669,16 @@ export function createTreeLayoutAlgorithm(name: string, direction: TreeDirection
       state: SheetState | null = null,
     ): LayoutResult {
       const nodes = new Map<string, NodeLayoutOutput>()
+      const root = findRootTopic(doc)
       const ctx: TreeLayoutContext = {
         options,
         styleEngine,
         state,
         styleCache: new Map(),
         spacingCache: new Map(),
+        structs: root ? buildTreeStructures(root, direction, state, 0) : null,
       }
 
-      const root = findRootTopic(doc)
       if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
 
       const sizeMap = new Map<string, NodeSize>()
