@@ -11,8 +11,27 @@ export { LayoutEngine } from './default-layout-engine'
 export { BaseLayout } from './base-layout'
 export type { BoundaryBounds } from './base-layout'
 
-export { createTreeLayoutAlgorithm } from './tree-layout'
-export type { TreeDirection } from './tree-layout'
+export { createTreeLayoutAlgorithm, layoutTreeSubtree } from './tree-layout'
+export type { TreeDirection, TreeSubtreeResult, TreeSubtreeBB, NodeLayoutOutput } from './tree-layout'
+
+// 子分支生效结构解析（SB getViewStructure / getAvailableChildStructure）
+export {
+  SC,
+  EXPOSED_STRUCTURE,
+  ATTACHED_EXPOSED_STRUCTURE,
+  LEFT_EXPOSED_STRUCTURE,
+  RIGHT_EXPOSED_STRUCTURE,
+  TOP_EXPOSED_STRUCTURE,
+  DOWN_EXPOSED_STRUCTURE,
+  TREE_LEFT_EXPOSED_STRUCTURE,
+  TREE_RIGHT_EXPOSED_STRUCTURE,
+  TREE_TABLE_EXPOSED_STRUCTURE,
+  SIMILAR_STRUCTURE_MAP,
+  getAvailableChildStructure,
+  resolveChildStructure,
+  delegationOf,
+} from './child-structure'
+export type { DelegableStructure, StructureClass } from './child-structure'
 
 export { matrixLayoutAlgorithm } from './matrix-layout'
 export { treeTableLayoutAlgorithm } from './treetable-layout'

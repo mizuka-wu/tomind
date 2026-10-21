@@ -18,6 +18,9 @@ import { getNodeSpacing, parseStyleValue } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 import { layoutLogicSubtree } from './logic-layout'
+import { layoutTreeSubtree } from './tree-layout'
+import { SC, resolveChildStructure, delegationOf } from './child-structure'
+import type { DelegableStructure } from './child-structure'
 
 interface NodeSize {
   width: number
@@ -127,37 +130,35 @@ function skeletonStructureAt(state: SheetState | null, depth: number): string | 
   return typeof sc === 'string' && sc ? sc : null
 }
 
-/** 结构类 → logic 侧向（URI 与短名都认）；非 logic.* 返回 null */
-function logicSideOf(structureClass: string | null): 'right' | 'left' | null {
-  if (!structureClass) return null
-  if (structureClass === 'org.xmind.ui.logic.right' || structureClass === 'logic-right') return 'right'
-  if (structureClass === 'org.xmind.ui.logic.left' || structureClass === 'logic-left') return 'left'
-  return null
-}
-
 /**
- * 子层级结构为 logic.* 时委派 logic 布局 —— **逐个子节点**判定。
- *
- * SB `utils/branch.getViewStructure` 对 attached 子分支：
+ * 子分支该按哪种结构长 —— **逐个子节点**走 SB `utils/branch.getViewStructure`：
  *   preset = 节点自己的 structure-class || skeleton[getActivedClassName(view)]
  *   preset ∈ parentStruct.getAvailableChildStructure(parent, view) → 用 preset
  *   否则试 SIMILAR_STRUCTURE_MAP 镜像，再否则 getChildStructure(= 父结构)
- * 而 `orgchartupanddown` **没有**覆写 getAvailableChildStructure / getChildStructure，
- * 继承 AbstractStructure 的：available = ATTACHED_EXPOSED_STRUCTURE（**含 logic.left/right**）、
- * getChildStructure = parentStructure。
- * ⇒ org-chart 下单个分支显式声明 logic.right，它整棵子树就该横向长。
+ * `orgchartupanddown` 没有覆写 getChildStructure（= 继承父结构），但 up/down 的 available 不同：
+ *   org-chart.down = ATTACHED_EXPOSED 去掉 `org-chart.up*` ⇒ **含 logic.left/right 与 tree.left/right**
+ *   org-chart.up   = TOP_EXPOSED_STRUCTURE ⇒ 排除 org-chart.down / timeline.vertical /
+ *                    tree.left / tree.right / through.vertical（⇒ up 下声明 tree.* 不是差距，
+ *                    声明 org-chart.up 也不是 —— 两者都退回父结构，实测 test-org-up-branch 0.1）
  *
- * 旧实现只读 skeleton、而且按层取**一个**值套给全部子节点，忽略节点自身显式声明的
+ * 旧实现只读 skeleton、按层取**一个**值套给全部子节点，忽略节点自身显式声明的
  * structureClass（探针实测 test-org-mixed：SB 给 mains[1] eff=logic.right、
  * 它的 4 个后代也跟着 logic.right；TM 全按 org-chart.down 递归 → avgΔX 188.4 / avgΔY 84.3）。
+ * 第二版只认 logic.* ⇒ org-chart 下显式声明 tree.right 的分支退回 org 递归
+ * （量尺 test-org-tree-branch：29.1 / 40.9，234/235 个节点错位，单点最大 dx -483）。
  *
- * 只识别 logic.*：TM 的 org-chart 目前只能委派 logic 子树。显式声明 tree.* /
- * org-chart.up 等其它 available 结构时仍退回 org 递归（已知差距，见 skill）。
+ * 返回 null = TM 没有该结构的子树入口，宿主自己递归（timeline.* / treetable / brace.* /
+ * org-chart 反向等，见 skill 的「已知潜在差距」）。
  */
-function getOrgChildLogicSide(child: NodeDesc, state: SheetState | null, depth: number): 'right' | 'left' | null {
+function getOrgChildDelegation(
+  child: NodeDesc,
+  state: SheetState | null,
+  depth: number,
+  parentStructure: string,
+): DelegableStructure | null {
   const own = getAttr<string>(child, 'structureClass')
   const preset = (typeof own === 'string' && own) ? own : skeletonStructureAt(state, depth)
-  return logicSideOf(preset)
+  return delegationOf(resolveChildStructure(parentStructure, preset))
 }
 
 /**
@@ -242,19 +243,27 @@ function layoutSubtreeDown(
   // 子树 provisional 布局（子节点自身结构 / skeleton 委派 logic，否则递归 org）
   const provs: OrgProv[] = []
   for (const child of children) {
-    const logicSide = getOrgChildLogicSide(child, state, depth)
+    const del = getOrgChildDelegation(child, state, depth, SC.ORG_CHART_DOWN)
     const provNodes = new Map<string, NodeLayout>()
     let bbX = 0
     let bbW = 0
     let bbY = 0
     let bbH = 0
-    if (logicSide) {
-      const res = layoutLogicSubtree(child, 0, 0, options, styleEngine, state, logicSide)
+    if (del?.kind === 'logic') {
+      const res = layoutLogicSubtree(child, 0, 0, options, styleEngine, state, del.side)
       for (const [id, nl] of res.nodes) provNodes.set(id, nl as unknown as NodeLayout)
       bbY = res.bb.y
       bbH = res.bb.height
       bbX = res.bbX
       bbW = res.bbW
+    } else if (del?.kind === 'tree') {
+      // tree.left/right 在 org-chart.down 的 available 里 ⇒ 整棵子树按 tree 长
+      const res = layoutTreeSubtree(child, 0, 0, options, styleEngine, state, del.dir, depth + 1)
+      for (const [id, nl] of res.nodes) provNodes.set(id, nl as unknown as NodeLayout)
+      bbX = res.bb.x
+      bbW = res.bb.width
+      bbY = res.bb.y
+      bbH = res.bb.height
     } else {
       layoutSubtreeDown(child, 0, 0, options, sizeMap, provNodes, styleEngine, state, depth + 1)
       const cs = sizeMap.get(child.id)!
@@ -385,13 +394,15 @@ function layoutSubtreeUp(
   // 子树 provisional 布局（子节点自身结构 / skeleton 委派 logic，否则递归 org-up）
   const provs: OrgProv[] = []
   for (const child of children) {
-    const logicSide = getOrgChildLogicSide(child, state, depth)
+    // org-chart.up 的 available = TOP_EXPOSED_STRUCTURE，**不含 tree.left/right**
+    // ⇒ 这里只可能拿到 logic（或 null = 继承 org-chart.up）
+    const del = getOrgChildDelegation(child, state, depth, SC.ORG_CHART_UP)
     const provNodes = new Map<string, NodeLayout>()
     let bb: OrgBB
     /** SB getStartDirection(child)：LEFT/RIGHT → 水平生长，currentAllHeight 走 restSize 口径 */
     let horizontal: boolean
-    if (logicSide) {
-      const res = layoutLogicSubtree(child, 0, 0, options, styleEngine, state, logicSide)
+    if (del?.kind === 'logic') {
+      const res = layoutLogicSubtree(child, 0, 0, options, styleEngine, state, del.side)
       for (const [id, nl] of res.nodes) provNodes.set(id, nl)
       bb = { bbX: res.bbX, bbW: res.bbW, bbY: res.bb.y, bbH: res.bb.height }
       horizontal = true

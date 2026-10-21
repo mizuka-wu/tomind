@@ -235,7 +235,7 @@ function isHorizontal(dir: TreeDirection): boolean {
   return dir === 'right' || dir === 'left'
 }
 
-interface NodeLayoutOutput {
+export interface NodeLayoutOutput {
   x: number
   y: number
   width: number
@@ -349,6 +349,7 @@ function layoutSubtree(
   sizeMap: Map<string, NodeSize>,
   nodes: Map<string, NodeLayoutOutput>,
   depth = 0,
+  isCentral = depth === 0,
 ): void {
   const size = sizeMap.get(node.id)!
   const spacing = getNodeSpacingCached(ctx, node.id, direction)
@@ -385,7 +386,8 @@ function layoutSubtree(
   if (h) {
     // ── 水平布局（right/left）── 对齐 snowbrush treeleftandright.calAttachedChildrenPos
     // 子树先以临时原点布局（skeleton 委派 logic 或递归 tree），再按 boundary 顶边堆叠平移
-    const isCentral = depth === 0
+    // isCentral 由调用方给：SB 用的是 `branch.isCentralBranch()`（只有中央主题那个 branchView 为真），
+    // 被宿主委派进来的 tree 子树根**不是**中央分支（endPointLineOffset=15、无 centerPadding=30）。
     const lineGap = getTreeLineEndPatchGap(ctx, node)
     const childrenXOffset = TREE_BOUNDARY_GAP + (isCentral ? TREE_CENTER_PADDING : TREE_END_POINT_LINE_OFFSET) + lineGap
     let childrenY = y + size.height + TREE_PADDING * 2
@@ -415,7 +417,7 @@ function layoutSubtree(
         bbY = res.bb.y
         bbH = res.bb.height
       } else {
-        layoutSubtree(ctx, child, 0, 0, direction, sizeMap, provNodes, depth + 1)
+        layoutSubtree(ctx, child, 0, 0, direction, sizeMap, provNodes, depth + 1, false)
         let minY = Infinity
         let maxY = -Infinity
         for (const nl of provNodes.values()) {
@@ -479,13 +481,115 @@ function layoutSubtree(
       const childY = direction === 'down'
         ? y + size.height + spacing.verticalGap
         : y - childNodeSize.height - spacing.verticalGap
-      layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes, depth + 1)
+      layoutSubtree(ctx, child, childX, childY, direction, sizeMap, nodes, depth + 1, false)
       childX += childSubtreeW + spacing.horizontalGap + PARENT_GAP
     }
   }
 
   // Position summary nodes after regular children are laid out
   positionSummaries(node, regularChildren, nodes, direction, sizeMap)
+}
+
+// ─── 通用委派入口 ───
+
+export interface TreeSubtreeBB {
+  /** 相对 node 主题盒**原点**（shape 中心）的 X —— SB boundaryBounds.x */
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export interface TreeSubtreeResult {
+  /** 绝对坐标节点表（node 主题盒左上角 = (x, y)） */
+  nodes: Map<string, NodeLayoutOutput>
+  /** SB `branch.boundaryBounds` —— 相对 node 原点（X 相对盒中心、Y 相对 shape 中心） */
+  bb: TreeSubtreeBB
+  /** node 主题盒原点到盒顶的距离 = shapeHeight/2（有 labels 时 ≠ height/2） */
+  originY: number
+}
+
+/**
+ * 独立布局一棵 tree.left / tree.right 子树 —— **通用委派入口**，与 `layoutLogicSubtree` 对称。
+ *
+ * SB 里「子分支按别的结构长」不是一个特例：`utils/branch.getViewStructure` 对每个 attached
+ * 子分支都跑一遍「preset ∈ 父结构的 getAvailableChildStructure ? preset : 镜像 : 继承父结构」，
+ * 而 tree.left/right 在几乎所有 available 表里（org-chart.down 的 = ATTACHED_EXPOSED 去掉
+ * org-chart.up；logic.left/right、tree.left/right、brace.*、treetable、map 系全都有）
+ * ⇒ 任何宿主都可能要把整棵子树交给 tree 布局。
+ *
+ * bb 口径（实测 test-org-tree-branch 的「误差」分支，sb-internals 探针）：
+ *   SB treeleftandright 收尾是 `newBounds = getUnionBoundingBox(topicView.bounds, getChildrenSize(branch))`，
+ *   `getChildrenSize` = 所有 ATTACHED 子分支 `vector(child.boundaryBounds, child.position)` 的并集
+ *   ⇒ **就是全部后代主题盒的真实并集**（summary 是另一类，不算）。
+ *   探针核对：误差 origin=(-9088.1875,211)，13 个盒并集 = x[-9124.1875,-8915.1875] y[189,809]
+ *   ⇒ bb = {-36, -22, 209, 620}，与 SB 的 boundaryBounds 逐项一致。
+ *
+ * @param x  node 主题盒左上角（绝对）
+ * @param y  node 主题盒顶边（绝对）
+ * @param baseDepth node 在文档中的深度（skeleton 角色判定用；被委派的子分支至少是 1）
+ */
+export function layoutTreeSubtree(
+  node: NodeDesc,
+  x: number,
+  y: number,
+  options: LayoutOptions,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+  direction: 'right' | 'left',
+  baseDepth = 1,
+): TreeSubtreeResult {
+  const ctx: TreeLayoutContext = {
+    options,
+    styleEngine,
+    state,
+    styleCache: new Map(),
+    spacingCache: new Map(),
+  }
+  const sizeMap = new Map<string, NodeSize>()
+  measureSubtree(ctx, node, sizeMap, direction)
+
+  const nodes = new Map<string, NodeLayoutOutput>()
+  // 被委派进来的子树根不是中央分支（isCentral=false）
+  layoutSubtree(ctx, node, x, y, direction, sizeMap, nodes, baseDepth, false)
+
+  // SB getChildrenSize 只并 ATTACHED 子分支，summary 节点另算（不进 boundaryBounds）
+  const attachedIds = new Set<string>()
+  const collect = (n: NodeDesc): void => {
+    if (n.type !== 'summary') attachedIds.add(n.id)
+    if (isCollapsed(n)) return
+    for (const c of getAttachedChildren(n)) collect(c)
+  }
+  collect(node)
+
+  const own = nodes.get(node.id)!
+  const originX = own.x + own.width / 2
+  const originY = sizeMap.get(node.id)!.originY
+  const originYPoint = own.y + originY
+
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+  for (const [id, nl] of nodes) {
+    if (!attachedIds.has(id)) continue
+    minX = Math.min(minX, nl.x)
+    maxX = Math.max(maxX, nl.x + nl.width)
+    minY = Math.min(minY, nl.y)
+    maxY = Math.max(maxY, nl.y + nl.height)
+  }
+  if (!Number.isFinite(minX)) {
+    minX = own.x
+    maxX = own.x + own.width
+    minY = own.y
+    maxY = own.y + own.height
+  }
+
+  return {
+    nodes,
+    bb: { x: minX - originX, y: minY - originYPoint, width: maxX - minX, height: maxY - minY },
+    originY,
+  }
 }
 
 // ─── 公开工厂 ───
