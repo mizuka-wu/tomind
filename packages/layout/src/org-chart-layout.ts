@@ -17,10 +17,9 @@ import { isCollapsed, getAttachedChildren, findRootTopic, getAttr, isElbowLineCl
 import { getNodeSpacing, parseStyleValue } from './spacing-utils'
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
-import { layoutLogicSubtree } from './logic-layout'
-import { layoutTreeSubtree } from './tree-layout'
-import { SC, resolveChildStructure, delegationOf } from './child-structure'
+import { SC, resolveChildStructure, delegationOf, isHorizontalStart } from './child-structure'
 import type { DelegableStructure } from './child-structure'
+import { layoutDelegatedSubtree } from './subtree-delegate'
 
 interface NodeSize {
   width: number
@@ -150,15 +149,18 @@ function skeletonStructureAt(state: SheetState | null, depth: number): string | 
  * 返回 null = TM 没有该结构的子树入口，宿主自己递归（timeline.* / treetable / brace.* /
  * org-chart 反向等，见 skill 的「已知潜在差距」）。
  */
-function getOrgChildDelegation(
+function getOrgChildStructure(
   child: NodeDesc,
   state: SheetState | null,
   depth: number,
   parentStructure: string,
-): DelegableStructure | null {
+): { eff: string | null; del: DelegableStructure | null } {
   const own = getAttr<string>(child, 'structureClass')
   const preset = (typeof own === 'string' && own) ? own : skeletonStructureAt(state, depth)
-  return delegationOf(resolveChildStructure(parentStructure, preset))
+  const eff = resolveChildStructure(parentStructure, preset)
+  const d = delegationOf(eff)
+  // kind === 'org' = 继承父结构（preset 不可用时镜像回来也是它）⇒ 本宿主自己递归，不委派
+  return { eff, del: d && d.kind === 'org' ? null : d }
 }
 
 /**
@@ -226,12 +228,14 @@ function layoutSubtreeDown(
   styleEngine: StyleEngine | null,
   state: SheetState | null,
   depth = 0,
-): void {
+): OrgBB {
   const size = sizeMap.get(node.id)!
+  const halfW = size.width / 2
   nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight: size.height, partBounds: size.partBounds })
 
   const children = isCollapsed(node) ? [] : getAttachedChildren(node)
-  if (children.length === 0) return
+  // 无子节点时 SB 不进 calAttachedChildrenPos 主体，newBounds 就是 topicView.bounds
+  if (children.length === 0) return { bbX: -halfW, bbW: size.width, bbY: -size.originY, bbH: size.height }
 
   const style = styleEngine && state ? styleEngine.computeStyle(state, node.id) : null
   const spacingMinor = parseStyleValue(style?.spacingMinor, 0)
@@ -243,48 +247,25 @@ function layoutSubtreeDown(
   // 子树 provisional 布局（子节点自身结构 / skeleton 委派 logic，否则递归 org）
   const provs: OrgProv[] = []
   for (const child of children) {
-    const del = getOrgChildDelegation(child, state, depth, SC.ORG_CHART_DOWN)
+    const { eff, del } = getOrgChildStructure(child, state, depth, SC.ORG_CHART_DOWN)
     const provNodes = new Map<string, NodeLayout>()
-    let bbX = 0
-    let bbW = 0
-    let bbY = 0
-    let bbH = 0
-    if (del?.kind === 'logic') {
-      const res = layoutLogicSubtree(child, 0, 0, options, styleEngine, state, del.side)
-      for (const [id, nl] of res.nodes) provNodes.set(id, nl as unknown as NodeLayout)
-      bbY = res.bb.y
-      bbH = res.bb.height
-      bbX = res.bbX
-      bbW = res.bbW
-    } else if (del?.kind === 'tree') {
-      // tree.left/right 在 org-chart.down 的 available 里 ⇒ 整棵子树按 tree 长
-      const res = layoutTreeSubtree(child, 0, 0, options, styleEngine, state, del.dir, depth + 1)
-      for (const [id, nl] of res.nodes) provNodes.set(id, nl as unknown as NodeLayout)
-      bbX = res.bb.x
-      bbW = res.bb.width
-      bbY = res.bb.y
-      bbH = res.bb.height
+    let bb: OrgBB
+    if (del) {
+      const res = layoutDelegatedSubtree(child, del, options, styleEngine, state, depth + 1)
+      for (const [id, nl] of res.nodes) provNodes.set(id, nl)
+      bb = { bbX: res.bb.x, bbW: res.bb.width, bbY: res.bb.y, bbH: res.bb.height }
     } else {
-      layoutSubtreeDown(child, 0, 0, options, sizeMap, provNodes, styleEngine, state, depth + 1)
-      const cs = sizeMap.get(child.id)!
-      const own = provNodes.get(child.id)!
-      let minX = Infinity
-      let maxX = -Infinity
-      let minY = Infinity
-      let maxY = -Infinity
-      for (const nl of provNodes.values()) {
-        minX = Math.min(minX, nl.x)
-        maxX = Math.max(maxX, nl.x + nl.width)
-        minY = Math.min(minY, nl.y)
-        maxY = Math.max(maxY, nl.y + nl.height)
-      }
-      bbW = maxX - minX
-      bbX = minX - (own.x + cs.width / 2)
-      bbH = maxY - minY
-      // bb 相对**主题盒原点**（shape 中心）= 盒顶 + originY
-      bbY = minY - own.y - cs.originY
+      bb = layoutSubtreeDown(child, 0, 0, options, sizeMap, provNodes, styleEngine, state, depth + 1)
     }
-    provs.push({ nodes: provNodes, bbX, bbW, bbY, bbH, originY: sizeMap.get(child.id)!.originY, own: provNodes.get(child.id)! })
+    provs.push({
+      nodes: provNodes,
+      ...bb,
+      originY: sizeMap.get(child.id)!.originY,
+      own: provNodes.get(child.id)!,
+      // SB getStartDirection(child, undefined) 判的是**子分支自己的生效结构**；
+      // 没委派出去（= 本宿主 org 递归）时生效结构就是 org-chart.down → DOWN → 纵向
+      horizontal: del ? isHorizontalStart(eff) : false,
+    })
   }
 
   // childrenSize.width = Σ bbW + gaps
@@ -314,11 +295,9 @@ function layoutSubtreeDown(
   // posXoffsetToClosestChild 重对齐（endAnchor 在 top-middle → rel x = 0）
   const offset = orgRealignOffset(posXs, cur - childGap, n)
 
-  const parentCenterX = x + size.width / 2
+  const parentCenterX = x + halfW
   let bbTop = 0
   let bbBottom = size.height
-  let bbLeft = 0
-  let bbRight = size.width
   for (let i = 0; i < n; i++) {
     const pv = provs[i]
     const centerX = parentCenterX + posXs[i] - offset
@@ -330,13 +309,75 @@ function layoutSubtreeDown(
     const relTop = childrenY - y + pv.bbY
     bbTop = Math.min(bbTop, relTop)
     bbBottom = Math.max(bbBottom, relTop + pv.bbH)
-    const relLeft = centerX - pv.own.width / 2 - x + pv.bbX
-    bbLeft = Math.min(bbLeft, relLeft)
-    bbRight = Math.max(bbRight, relLeft + pv.bbW)
   }
   const ownLayout = nodes.get(node.id)
   if (ownLayout) {
     ownLayout.branchHeight = bbBottom - bbTop
+  }
+
+  /**
+   * 本分支的 boundaryBounds —— **SB orgchartupanddown.calAttachedChildrenPos 的收尾原式**
+   * （down 侧），不是「子节点盒的真实并集」：
+   *
+   *   newBounds.x      = min(minChildX, -w/2) **-= posXoffsetToClosestChild**   ← 触发重对齐时
+   *   newBounds.width  = max(childrenW/2, w/2) - min(-childrenW/2, -w/2) = max(childrenW, w)
+   *   newBounds.y      = topicView.bounds.y = -originY                          （down 侧不改 y）
+   *   newBounds.height = h + spacingMajor + outward + max(currentAllHeight)
+   *   currentAllHeight = maxOffset + (getStartDirection(child) ∈ {LEFT,RIGHT}
+   *                        ? topicBounds.height/2 + (bb.height + bb.y)          ← down 侧 restSize
+   *                        : bb.height)
+   *
+   * 差在 `x -= offset` 这一步：宽度**没有**跟着改，所以 bb 会比真实内容偏 offset。
+   * 实测 test-org-nested 的 d4「石英晶体…」（w=306 h=48、3 个 d5 子节点、minor 8）：
+   *   childrenW=178 levelWidth=122 minChildX=-85.5 posXs=[-61,-3.5,61] childrenWidth=92.5
+   *   → offset=-3.5（3 个子节点、|−3.5| < min(30, 13.875) ⇒ 触发）
+   *   → bb = {-153-(-3.5), -24, max(178,306), 48+26+0+30} = **{-149.5, -24, 306, 104}**
+   *   与 sb-internals 探针的 boundaryBounds 逐项一致；真实并集给的是 x=-153（差 3.5）。
+   * 父级用 posX = cur - bb.x 摆位 ⇒ 旧实现让这 4 个节点整体右偏 3.4875px
+   * （test-org-nested / -mixed / -up-branch / -tree-branch 各 4 个节点，avgΔX 0.1）。
+   */
+  const currentAllHeight = Math.max(
+    ...provs.map((p) => maxOffset + (p.horizontal ? p.own.height / 2 + (p.bbH + p.bbY) : p.bbH)),
+  )
+  return {
+    bbX: Math.min(minChildX, -halfW) - offset,
+    bbW: Math.max(childrenW, size.width),
+    bbY: -size.originY,
+    bbH: size.height + spacingMajor + outward + currentAllHeight,
+  }
+}
+
+/**
+ * 独立布局一棵 org-chart 子树 —— 通用委派入口（与 layoutLogicSubtree / layoutTreeSubtree 对称）。
+ *
+ * org-chart.down / org-chart.up 都在 ATTACHED_EXPOSED_STRUCTURE 里（down 的 available 只排除
+ * org-chart.up*），所以 logic / tree / brace / treetable / map 宿主下的某个分支显式声明
+ * org-chart.* 时，SB 会让它整棵朝下/朝上长。TM 此前没有这个入口：
+ *   probe-logic.right+org-chart.down 625.4 / 201.5、probe-tree.right+org-chart.down 419.1 / 615.1。
+ *
+ * @param x 主题盒左上角（绝对）  @param y 主题盒顶边（绝对）
+ * @param baseDepth node 在文档中的深度（skeleton 角色判定用；被委派的子分支至少是 1）
+ */
+export function layoutOrgSubtree(
+  node: NodeDesc,
+  x: number,
+  y: number,
+  options: LayoutOptions,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+  dir: 'down' | 'up',
+  baseDepth = 1,
+): { nodes: Map<string, NodeLayout>; bb: { x: number; y: number; width: number; height: number }; originY: number } {
+  const sizeMap = new Map<string, NodeSize>()
+  measureSubtree(node, options, sizeMap, styleEngine, state)
+  const nodes = new Map<string, NodeLayout>()
+  const bb = dir === 'down'
+    ? layoutSubtreeDown(node, x, y, options, sizeMap, nodes, styleEngine, state, baseDepth)
+    : layoutSubtreeUp(node, x, y, options, sizeMap, nodes, styleEngine, state, baseDepth)
+  return {
+    nodes,
+    bb: { x: bb.bbX, y: bb.bbY, width: bb.bbW, height: bb.bbH },
+    originY: sizeMap.get(node.id)!.originY,
   }
 }
 
@@ -396,21 +437,24 @@ function layoutSubtreeUp(
   for (const child of children) {
     // org-chart.up 的 available = TOP_EXPOSED_STRUCTURE，**不含 tree.left/right**
     // ⇒ 这里只可能拿到 logic（或 null = 继承 org-chart.up）
-    const del = getOrgChildDelegation(child, state, depth, SC.ORG_CHART_UP)
+    const { eff, del } = getOrgChildStructure(child, state, depth, SC.ORG_CHART_UP)
     const provNodes = new Map<string, NodeLayout>()
     let bb: OrgBB
-    /** SB getStartDirection(child)：LEFT/RIGHT → 水平生长，currentAllHeight 走 restSize 口径 */
-    let horizontal: boolean
-    if (del?.kind === 'logic') {
-      const res = layoutLogicSubtree(child, 0, 0, options, styleEngine, state, del.side)
+    if (del) {
+      const res = layoutDelegatedSubtree(child, del, options, styleEngine, state, depth + 1)
       for (const [id, nl] of res.nodes) provNodes.set(id, nl)
-      bb = { bbX: res.bbX, bbW: res.bbW, bbY: res.bb.y, bbH: res.bb.height }
-      horizontal = true
+      bb = { bbX: res.bb.x, bbW: res.bb.width, bbY: res.bb.y, bbH: res.bb.height }
     } else {
       bb = layoutSubtreeUp(child, 0, 0, options, sizeMap, provNodes, styleEngine, state, depth + 1)
-      horizontal = false // org-chart.up → getStartDirection = UP
     }
-    provs.push({ nodes: provNodes, own: provNodes.get(child.id)!, originY: sizeMap.get(child.id)!.originY, horizontal, ...bb })
+    provs.push({
+      nodes: provNodes,
+      own: provNodes.get(child.id)!,
+      originY: sizeMap.get(child.id)!.originY,
+      // SB getStartDirection(child, undefined)：LEFT/RIGHT → 水平生长，currentAllHeight 走 restSize 口径
+      horizontal: del ? isHorizontalStart(eff) : false,
+      ...bb,
+    })
   }
 
   // childrenSize.width = Σ child.bb.width + gaps

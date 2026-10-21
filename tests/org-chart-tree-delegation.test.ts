@@ -26,6 +26,8 @@ import { describe, it, expect } from 'vitest'
 import {
   orgChartDownLayoutAlgorithm,
   orgChartUpLayoutAlgorithm,
+  logicRightLayoutAlgorithm,
+  braceRightLayoutAlgorithm,
   createTreeLayoutAlgorithm,
   layoutTreeSubtree,
   DEFAULT_LAYOUT_OPTIONS,
@@ -37,6 +39,8 @@ import {
   TOP_EXPOSED_STRUCTURE,
   LEFT_EXPOSED_STRUCTURE,
   RIGHT_EXPOSED_STRUCTURE,
+  getStartDirectionOf,
+  isHorizontalStart,
 } from '@tomind/layout'
 import type { NodeDesc } from '@tomind/schema'
 
@@ -120,12 +124,32 @@ describe('child-structure：SB 的 available 表与 getViewStructure 解析', ()
     expect(resolveChildStructure(SC.ORG_CHART_UP, SC.TREE_RIGHT)).toBe(SC.ORG_CHART_UP)
   })
 
-  it('preset 缺失 → 继承父结构；delegationOf 只认 TM 有子树入口的 logic.* / tree.*', () => {
+  it('preset 缺失 → 继承父结构；delegationOf 只认 TM 有子树入口的那几个', () => {
     expect(resolveChildStructure(SC.TREE_RIGHT, null)).toBe(SC.TREE_RIGHT)
     expect(delegationOf(SC.TREE_RIGHT)).toEqual({ kind: 'tree', dir: 'right' })
     expect(delegationOf(SC.LOGIC_LEFT)).toEqual({ kind: 'logic', side: 'left' })
-    expect(delegationOf(SC.ORG_CHART_DOWN)).toBeNull()
+    // brace = logic 的堆叠公式 + LINE_SPACING 补丁（SB BraceLeftAndRight 覆写 calAttachedChildrenPos）
+    expect(delegationOf(SC.BRACE_RIGHT)).toEqual({ kind: 'brace', side: 'right' })
+    expect(delegationOf(SC.ORG_CHART_DOWN)).toEqual({ kind: 'org', dir: 'down' })
+    expect(delegationOf(SC.ORG_CHART_UP)).toEqual({ kind: 'org', dir: 'up' })
+    // TM 没有子树入口的：宿主自己递归（已知差距，量化数字见 skill）
     expect(delegationOf(SC.TIMELINE_HORIZONTAL)).toBeNull()
+    expect(delegationOf(SC.TREE_TABLE)).toBeNull()
+    expect(delegationOf(SC.MAP_CLOCKWISE)).toBeNull()
+  })
+
+  it('getStartDirectionOf：SB 的调用点是 getStartDirection(**child**, undefined) ⇒ 判子分支自己的结构', () => {
+    // tree.left/tree.right 在 SB 这张表里算 **DOWN**（纵向）；brace.* 落 default ⇒ RIGHT（横向）
+    expect(getStartDirectionOf(SC.TREE_RIGHT)).toBe('down')
+    expect(getStartDirectionOf(SC.TREE_LEFT)).toBe('down')
+    expect(getStartDirectionOf(SC.ORG_CHART_DOWN)).toBe('down')
+    expect(getStartDirectionOf(SC.ORG_CHART_UP)).toBe('up')
+    expect(getStartDirectionOf(SC.LOGIC_RIGHT)).toBe('right')
+    expect(getStartDirectionOf(SC.LOGIC_LEFT)).toBe('left')
+    expect(getStartDirectionOf(SC.BRACE_RIGHT)).toBe('right')
+    expect(isHorizontalStart(SC.TREE_RIGHT)).toBe(false)
+    expect(isHorizontalStart(SC.BRACE_LEFT)).toBe(true)
+    expect(isHorizontalStart(SC.LOGIC_RIGHT)).toBe(true)
   })
 })
 
@@ -268,6 +292,53 @@ describe('org-chart.up：声明 tree.* 不生效（TOP_EXPOSED 排除 tree.left/
     // org-chart.up：b1/b2 横排在 b 的**上方**（同一 y），不是 tree 的纵向堆叠
     expect(b1.y).toBeLessThan(b.y)
     expect(b1.y).toBe(b2.y)
+  })
+})
+
+describe('brace 分支：SB BraceLeftAndRight 覆写了 calAttachedChildrenPos', () => {
+  /**
+   * SB `braceleftandright.ts` 只有 81 行，是 logic 那份的**整段覆写**：
+   * 没有 posYoffsetToClosestChild / isNeedRedolayout（重对齐）、没有
+   * calcOutwardDistanceByAttachedChildren（外扩）、也没有 logic 的 X 侧 maxOffset。
+   * TM 的 brace = logic 算法 + LINE_SPACING 补丁，所以这三项都要按生效结构关掉。
+   *
+   * 实测 probe-org-chart.down+brace.right 的 d3「变换力的弹性敏感元件」（5 个子节点，
+   * bb 高 [68,30,68,30,30]、minor 8）：childrenY = -138.5、posY = [-104.5,-47.5,9.5,66.5,104.5]、
+   * childrenHeight = 119.5 ⇒ logic 的判据 |9.5| < min(30, 17.925) 会重对齐，
+   * 而 SB 实测 kid0.pos.y = -104.5（**原值**）⇒ TM 多减 9.5，逐层放大成 2.375 / 4.75 / 9.5。
+   */
+  const buildDoc = () => {
+    // 5 个子分支，孙节点数 [2,1,2,1,1] ⇒ bb 高不对称 ⇒ 最靠近父中心线的那个不在 0 上
+    const kidCounts = [2, 1, 2, 1, 1]
+    return node('root', 'ROOT', {}, kidCounts.map((k, i) => node(
+      `c${i}`,
+      `C${i}`,
+      {},
+      Array.from({ length: k }, (_, j) => node(`c${i}-${j}`, `C${i}-${j}`)),
+    )))
+  }
+
+  const centersOf = (m: Map<string, { x: number; y: number; width: number; height: number }>) => {
+    const root = m.get('root')!
+    const rc = root.y + root.height / 2
+    return [0, 1, 2, 3, 4].map((i) => {
+      const n = m.get(`c${i}`)!
+      return n.y + n.height / 2 - rc
+    })
+  }
+
+  it('logic 会把最靠近的子节点吸到父中心线，brace 不吸（保持 SB 的原值）', () => {
+    const doc = buildDoc()
+    const logic = centersOf(logicRightLayoutAlgorithm.layout(doc, DEFAULT_LAYOUT_OPTIONS).nodes)
+    const brace = centersOf(braceRightLayoutAlgorithm.layout(doc, DEFAULT_LAYOUT_OPTIONS).nodes)
+    const minAbs = (v: number[]) => Math.min(...v.map(Math.abs))
+    // 前提：这一层确实满足 logic 的重对齐条件（n>=3 且 |最近| < min(30, 0.15*childrenHeight)）
+    expect(minAbs(brace)).toBeGreaterThan(0)
+    expect(minAbs(brace)).toBeLessThan(30)
+    // logic 重对齐后最近的那个子节点正好落在父中心线上
+    expect(minAbs(logic)).toBe(0)
+    // 两者的差 = 被吸过去的那个偏移量（brace 保持原样）
+    expect(logic.map((v) => v - brace[0] + brace[0])).not.toEqual(brace)
   })
 })
 

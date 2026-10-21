@@ -295,7 +295,7 @@ interface LogicStructures {
  * 只有 side 不同（右宿主里长出左子树）或换族（tree.*）才真的委派出去。
  */
 function isHostOwnFamily(side: 'right' | 'left', d: DelegableStructure): boolean {
-  if (d.kind === 'tree') return false
+  if (d.kind !== 'logic' && d.kind !== 'brace') return false
   return d.side === side
 }
 
@@ -403,7 +403,16 @@ function computePlacement(
   for (const c of centers) minAbs = Math.min(minAbs, Math.abs(c))
   if (minAbs === Infinity) minAbs = 0
   const maxOffset = Math.min(MAX_BRANCH_POSITION_REALIGN_OFFSET, childrenHeight * BRANCH_POSITION_REALIGN_RATIO)
-  if (children.length >= 3 && minAbs < maxOffset) {
+  // ⚠️ brace **不重对齐**：SB `BraceLeftAndRight.calAttachedChildrenPos` 是整段覆写
+  // （81 行），里面既没有 posYoffsetToClosestChild / isNeedRedolayout，也没有
+  // calcOutwardDistanceByAttachedChildren 和 logic 那个 X 侧 maxOffset。
+  // 实测 probe-org-chart.down+brace.right 的 d3「变换力的弹性敏感元件」：
+  //   childrenY = -138.5、5 个子节点 posY = [-104.5,-47.5,9.5,66.5,104.5]、childrenHeight = 119.5
+  //   ⇒ logic 的判据 |9.5| < min(30, 17.925) 会触发重对齐，而 SB 实测 kid0.pos.y = **-104.5**（原值）
+  //   ⇒ TM 多减了 9.5，逐层放大成 d1 2.375 / d2 4.75 / d3 9.5（avgΔY 1.8）
+  const nodeEff = structs.eff.get(node.id) ?? null
+  const nodeIsBrace = nodeEff === SC.BRACE_RIGHT || nodeEff === SC.BRACE_LEFT
+  if (!nodeIsBrace && children.length >= 3 && minAbs < maxOffset) {
     offset = centers.reduce((best, c) => (Math.abs(c) < Math.abs(best) ? c : best), centers[0])
   }
   for (let i = 0; i < centers.length; i++) centers[i] -= offset
@@ -464,6 +473,36 @@ function layoutSubtree(
   const isBrace = effStructure === SC.BRACE_RIGHT || effStructure === SC.BRACE_LEFT
   const spacingMajor = getSpacingMajor(node, options, styleEngine, state, spacingMajorExtra, isBrace)
 
+  /**
+   * SB logicleftandright.calAttachedChildrenPos 的 X 侧 maxOffset（TM 此前**完全缺失**）：
+   *
+   *   xOffset_i = isRight ? child.topicView.bounds.x - child.boundaryBounds.x
+   *                       : bb.x + bb.width - bounds.x - bounds.width
+   *   posX      = childrenX ∓ bounds.x + maxOffset + outwardOffset      ← maxOffset 对**所有**子节点生效
+   *   maxOffset = max(getMaxOffsetForNormalChildren(...), Number.MIN_VALUE)  ⇒ 实际下限 0
+   *
+   * 语义（SB 源码里那张 ASCII 图）：子树朝父节点那一侧超出主题盒多少，就把**整层**子节点往外推多少。
+   * 本地递归的 logic 子分支这一项恒为 0 —— SB 的 logic 收尾对 isRight 根本不改 newBounds.x
+   * （bb.x 恒 = -w/2 = bounds.x），isLeft 对称 ⇒ 只有被**委派出去**的子树（org-chart 这种
+   * 以自身盒为中心左右对称生长的）才会给出正的 xOffset。
+   *
+   * 实测 probe-logic.right+org-chart.down：漏掉这一项 ⇒ 整层子节点少推 1174.5px
+   * （234/235 个节点 dx 恒为 -1174.5，avgΔX 29.3 只是质心对齐吃掉一半的残影）。
+   *
+   * ⚠️ brace 分支**没有**这一项（BraceLeftAndRight 覆写了 calAttachedChildrenPos，
+   * `childPositionX = childrenBaseX - bounds.x`，不含 maxOffset）。
+   */
+  let maxOffset = 0
+  for (const c of isBrace ? [] : children) {
+    if (!structs.delegate.has(c.id)) continue
+    const del = delegatedOf(structs, c)
+    const cw = del.own.width
+    const xOff = side === 'right'
+      ? (-cw / 2 - del.bb.x)
+      : (del.bb.x + del.bb.width - cw / 2)
+    if (xOff > maxOffset) maxOffset = xOff
+  }
+
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
     // 生效结构不是本宿主族的子分支 ⇒ 整棵交出去（SB：那个分支的 calAttachedChildrenPos
@@ -471,8 +510,8 @@ function layoutSubtree(
     if (structs.delegate.has(child.id)) {
       const del = delegatedOf(structs, child)
       const boxLeft = side === 'right'
-        ? x + size.width + spacingMajor + outwardOffset
-        : x - spacingMajor - outwardOffset - del.own.width
+        ? x + size.width + spacingMajor + outwardOffset + maxOffset
+        : x - spacingMajor - outwardOffset - maxOffset - del.own.width
       // 原点 X = 盒左 + 盒宽/2；原点 Y = 堆叠算出来的中心（SB posY 定位的就是原点）
       placeDelegatedSubtree(del, boxLeft + del.own.width / 2, centerY + pl.centers[i], nodes)
       continue
@@ -480,9 +519,9 @@ function layoutSubtree(
     const cs = sizeMap.get(child.id)!
     let childX: number
     if (side === 'right') {
-      childX = x + size.width + spacingMajor + outwardOffset
+      childX = x + size.width + spacingMajor + outwardOffset + maxOffset
     } else {
-      childX = x - spacingMajor - outwardOffset - cs.width
+      childX = x - spacingMajor - outwardOffset - maxOffset - cs.width
     }
     layoutSubtree(child, childX, centerY + pl.centers[i], options, sizeMap, placement, nodes, styleEngine, state, structs, side, 0)
   }

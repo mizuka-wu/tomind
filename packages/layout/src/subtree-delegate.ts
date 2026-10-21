@@ -20,6 +20,7 @@ import { SC } from './child-structure'
 import type { DelegableStructure } from './child-structure'
 import { layoutLogicSubtree } from './logic-layout'
 import { layoutTreeSubtree } from './tree-layout'
+import { layoutOrgSubtree } from './org-chart-layout'
 
 export interface SubtreeNodeLayout {
   x: number
@@ -60,8 +61,10 @@ export function layoutDelegatedSubtree(
   state: SheetState | null,
   baseDepth = 1,
 ): DelegatedSubtreeLayout {
-  if (del.kind === 'tree') {
-    const res = layoutTreeSubtree(child, 0, 0, options, styleEngine, state, del.dir, baseDepth)
+  if (del.kind === 'tree' || del.kind === 'org') {
+    const res = del.kind === 'tree'
+      ? layoutTreeSubtree(child, 0, 0, options, styleEngine, state, del.dir, baseDepth)
+      : layoutOrgSubtree(child, 0, 0, options, styleEngine, state, del.dir, baseDepth)
     const raw = res.nodes.get(child.id)!
     const ox = raw.x + raw.width / 2
     const oy = raw.y + res.originY

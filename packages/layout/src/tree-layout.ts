@@ -473,7 +473,6 @@ function layoutSubtree(
     let bbTop = 0
     let bbBottom = size.height
     for (let i = 0; i < regularChildren.length; i++) {
-      const child = regularChildren[i]
       const pv = provs[i]
       // SB posY = childrenY - child.boundaryBounds.y 定位的是子分支**原点**，
       // 盒顶 = 原点 - originY（有 labels 时 ≠ 原点 - h/2）

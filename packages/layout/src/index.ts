@@ -12,6 +12,10 @@ export { BaseLayout } from './base-layout'
 export type { BoundaryBounds } from './base-layout'
 
 export { createTreeLayoutAlgorithm, layoutTreeSubtree } from './tree-layout'
+export { layoutDelegatedSubtree, placeDelegatedSubtree } from './subtree-delegate'
+export type { DelegatedSubtreeLayout, SubtreeNodeLayout } from './subtree-delegate'
+export { resolveStructures, structurePresetOf } from './structure-resolve'
+export type { StructureResolution } from './structure-resolve'
 export type { TreeDirection, TreeSubtreeResult, TreeSubtreeBB, NodeLayoutOutput } from './tree-layout'
 
 // 子分支生效结构解析（SB getViewStructure / getAvailableChildStructure）
@@ -30,6 +34,8 @@ export {
   getAvailableChildStructure,
   resolveChildStructure,
   delegationOf,
+  getStartDirectionOf,
+  isHorizontalStart,
 } from './child-structure'
 export type { DelegableStructure, StructureClass } from './child-structure'
 
@@ -52,7 +58,7 @@ export type { DelegatedSubtree } from './skeleton-delegate'
 export { braceRightLayoutAlgorithm, braceLeftLayoutAlgorithm } from './brace-layout'
 
 // Org Chart 布局
-export { orgChartDownLayoutAlgorithm, orgChartUpLayoutAlgorithm, orgRealignOffset } from './org-chart-layout'
+export { orgChartDownLayoutAlgorithm, orgChartUpLayoutAlgorithm, orgRealignOffset, layoutOrgSubtree } from './org-chart-layout'
 
 // Timeline 布局
 export { timelineHorizontalLayoutAlgorithm, timelineVerticalLayoutAlgorithm } from './timeline-layout'

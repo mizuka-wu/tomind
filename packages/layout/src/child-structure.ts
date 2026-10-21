@@ -265,10 +265,11 @@ export type DelegableStructure =
   | { kind: 'logic'; side: 'right' | 'left' }
   | { kind: 'brace'; side: 'right' | 'left' }
   | { kind: 'tree'; dir: 'right' | 'left' }
+  | { kind: 'org'; dir: 'down' | 'up' }
 
 /**
  * 生效结构类 → TM 的委派方式；TM 没有对应子树入口的（timeline.* / treetable /
- * org-chart 反向 / map 系 / fishbone）返回 null，由宿主自己递归（已知差距，见 skill）。
+ * map 系 / fishbone）返回 null，由宿主自己递归（已知差距，见 skill）。
  *
  * brace.left/right 也算有入口：SB `braceleftandright` 就是 `underscore.extend({}, logicLeftAndRight, …)`，
  * 堆叠/居中公式与 logic 逐字相同，唯一差异是 calcSpacingMajor 里
@@ -289,7 +290,50 @@ export function delegationOf(eff: StructureClass | null): DelegableStructure | n
       return { kind: 'tree', dir: 'right' }
     case SC.TREE_LEFT:
       return { kind: 'tree', dir: 'left' }
+    case SC.ORG_CHART_DOWN:
+      return { kind: 'org', dir: 'down' }
+    case SC.ORG_CHART_UP:
+      return { kind: 'org', dir: 'up' }
     default:
       return null
   }
+}
+
+/**
+ * SB `figures/renderengine/svg/topicshapes/utils.getStartDirection(parentBranchView, childBranchView)`。
+ *
+ * ⚠️ org-chart 的调用点是 `getStartDirection(childBranch, undefined)` —— **第一个参数传的是子分支**，
+ * 所以 switch 判的是「子分支自己的生效结构」，第二参数 undefined ⇒ default 分支直接 `return RIGHT`。
+ * org-chart 用它决定 `currentAllHeight` 走哪套口径（水平生长的子分支要把主题盒切一半）：
+ *   LEFT/RIGHT → maxOffset + topicBounds.height/2 + restSize；UP/DOWN → maxOffset + bb.height
+ * 注意 **tree.left/tree.right 在这里算 DOWN**（纵向），brace.* 落到 default ⇒ RIGHT（横向）。
+ */
+export function getStartDirectionOf(eff: StructureClass | null): 'right' | 'left' | 'up' | 'down' {
+  switch (eff) {
+    case SC.LOGIC_RIGHT:
+    case SC.TIMELINE_HORIZONTAL:
+    case SC.TIMELINE_SIDED_HORIZONTAL:
+      return 'right'
+    case SC.LOGIC_LEFT:
+      return 'left'
+    case SC.ORG_CHART_UP:
+    case SC.TIMELINE_HORIZONTAL_UP:
+      return 'up'
+    case SC.ORG_CHART_DOWN:
+    case SC.TREE_LEFT:
+    case SC.TREE_RIGHT:
+    case SC.TIMELINE_VERTICAL:
+    case SC.TIMELINE_HORIZONTAL_DOWN:
+    case SC.TIMELINE_THROUGH_VERTICAL:
+      return 'down'
+    default:
+      // brace.* / treetable / map 系 / fishbone…：SB 走到 `if (!childBranchView) return RIGHT`
+      return 'right'
+  }
+}
+
+/** getStartDirection 是 LEFT/RIGHT ⇒ 子分支水平生长（org-chart 的 currentAllHeight 走 restSize 口径） */
+export function isHorizontalStart(eff: StructureClass | null): boolean {
+  const d = getStartDirectionOf(eff)
+  return d === 'left' || d === 'right'
 }
