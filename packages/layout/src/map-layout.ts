@@ -14,7 +14,7 @@ import type { NodeDesc } from '@tomind/schema'
 import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
 import { findById } from '@tomind/style'
-import type { LayoutResult, LayoutOptions } from './layout-engine'
+import type { LayoutResult, LayoutOptions, NodeLayout } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { BaseLayout } from './base-layout'
 import type { BoundaryBounds } from './base-layout'
@@ -33,6 +33,9 @@ import { computeOutsidePadding } from './boundary-padding'
 import type { OutsidePadding } from './boundary-padding'
 import { layoutSummaries, getSummaryChildren } from './summary-layout'
 import { layoutLogicSubtree } from './logic-layout'
+import { SC, resolveChildStructure, delegationOf } from './child-structure'
+import { structurePresetOf } from './structure-resolve'
+import { layoutDelegatedSubtree } from './subtree-delegate'
 import type { LogicNodeLayout } from './logic-layout'
 
 
@@ -620,8 +623,40 @@ class MapLayout extends BaseLayout {
     }
 
     // Step b: Layout each child at temp Y=0 (bottom-up: recursively lays out grandchildren first)
+    //
+    // 子分支的生效结构不是本宿主的（tree.* / org-chart.* / brace.*）时整棵交出去
+    // （SB `basemap.getAvailableChildStructure` = 按侧的 RIGHT/LEFT_EXPOSED_STRUCTURE，
+    //  里面**含 tree.left/right、org-chart.down/up、brace.\*、treetable、timeline.\***）。
+    // ⚠️ eff = logic.<同侧> 时**不**委派：map 宿主的非根层级本来就走 logicleftandright 那套
+    // （见 Step e 的两套口径注释），委派出去反而会绕开 outsidePadding / callout / summary 的处理。
+    // 实测 probe-map.clockwise+tree.right：201.2 / 135.5 → 见 skill 第五轮记录。
+    const mapParentEff = isMapRoot
+      ? SC.MAP_CLOCKWISE // map / map.clockwise / map.anticlockwise / map.unbalanced 都继承 basemap 的表
+      : (side === 'right' ? SC.LOGIC_RIGHT : SC.LOGIC_LEFT)
     for (let i = 0; i < n; i++) {
-      this.layoutNode(children[i], startX, 0, options, sizeMap, nodes, styleEngine, state, localBBMap, undefined, false, childForceSide, calloutCtx)
+      const child = children[i]
+      const childEff = resolveChildStructure(mapParentEff, structurePresetOf(child, state ?? null), { childIsRight: side === 'right' })
+      const d = delegationOf(childEff)
+      const useDelegate = d !== null && !(d.kind === 'logic' && d.side === side)
+      if (useDelegate && d) {
+        const res = layoutDelegatedSubtree(child, d, options, styleEngine ?? null, state ?? null, 1)
+        // 委派结果的原点帧 → Step b 的临时帧（child 盒左上角 = (startX, 0)）
+        const dx = startX - res.own.x
+        const dy = -res.own.y
+        for (const [id, nl] of res.nodes) {
+          nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy } as NodeLayout)
+        }
+        // localBBMap 的 bb 相对**盒左上角**（见下面 mergeBounds 那段），
+        // 委派结果相对**原点** ⇒ x + w/2、y + originY
+        localBBMap.set(child.id, {
+          x: res.bb.x + res.own.width / 2,
+          y: res.bb.y + res.originY,
+          width: res.bb.width,
+          height: res.bb.height,
+        })
+        continue
+      }
+      this.layoutNode(child, startX, 0, options, sizeMap, nodes, styleEngine, state, localBBMap, undefined, false, childForceSide, calloutCtx)
     }
 
     // Step c: Read each child's boundaryBounds from localBBMap
