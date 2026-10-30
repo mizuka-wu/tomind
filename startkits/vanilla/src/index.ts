@@ -55,6 +55,7 @@ import {
   FishboneRightHeadedExtension,
   SpreadsheetExtension,
   TreeTableExtension,
+  TreeTableTopTitleExtension,
   NumberingExtension,
 } from '@tomind/extensions'
 
@@ -88,6 +89,7 @@ const builtInExtensions: Extension<any, any, any>[] = [
   FishboneRightHeadedExtension,
   SpreadsheetExtension,
   TreeTableExtension,
+  TreeTableTopTitleExtension,
 
   // 核心编辑
   KeymapExtension,

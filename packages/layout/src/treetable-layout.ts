@@ -422,6 +422,38 @@ function expandTableRowInfoToRight(tableInfo: CellItem[][], level: number): Cell
   return newTableInfo
 }
 
+/**
+ * SB `treetabletoptitle.treeInfoToTableInfo`：标题在**上面一行**（跨所有列），
+ * 表体从 head 的子分支各自起一行。
+ */
+function topTitleTableInfo(treeInfo: CellItem): CellItem[][] {
+  if (!treeInfo.children.length) return [[treeInfo]]
+  const body = supplyTableRowInfoToRight(expandTableRowInfoToRight(treeInfo.children.map((child) => [child]), 0))
+  const cols = body[0]?.length ?? 0
+  return [new Array<CellItem>(cols).fill(treeInfo), ...body]
+}
+
+/**
+ * SB `treetabletoptitle.calcTableBounds`：先跑 treetable 的那份，
+ * 再把标题格的高度改成「自己的 cellHeight + 表体第一列所有格子的 cellHeight 之和」
+ * （标题行横跨整张表，高度要盖住表体）。
+ */
+function calcTableBoundsTopTitle(tableInfo: CellItem[][]): void {
+  calcTableBounds(tableInfo)
+  const mainTableInfo = tableInfo.slice(1)
+  const headCellItem = tableInfo[0][0]
+  if (!headCellItem) return
+  let total = headCellItem.externalInfo.cellHeight ?? 0
+  const seen = new Set<CellItem>()
+  for (const row of mainTableInfo) {
+    const item = row[0]
+    if (!item || seen.has(item)) continue
+    seen.add(item)
+    total += item.externalInfo.cellHeight ?? 0
+  }
+  headCellItem.bounds.height = total
+}
+
 /** SB `supplyTableRowInfoToRight`：短行用最后一个 item 重复补齐 ⇒ 它成为跨列的 expand item */
 function supplyTableRowInfoToRight(tableInfo: CellItem[][]): CellItem[][] {
   const maxColNumber = Math.max(...tableInfo.map((row) => row.length))
@@ -516,13 +548,19 @@ function runTreeTable(
   styleEngine: StyleEngine | null,
   state: SheetState | null,
   baseDepth: number,
+  topTitle: boolean,
 ): TreeTableRunResult {
     const nodes = new Map<string, NodeLayout>()
 
     // 逐节点解析生效结构（skeleton 只是其中一条 preset 来源，深层靠继承）。
-    // isSelf：生效结构还是 treetable 的子分支**不委派**，它们继续摊进同一张表
-    // （漏了这条 = 自己委派自己 ⇒ 无限递归）。
-    const resolved = resolveStructures(root, selfEff, state, (d) => d.kind === 'treetable', baseDepth)
+    // isSelf：生效结构还是**本表**（treetable / toptitle 中的同一个）的子分支不委派，
+    // 它们继续摊进同一张表（漏了这条 = 自己委派自己 ⇒ 无限递归）。
+    // 同组的另一张表（SB TREE_TABLE_GROUP_LIST 里 available 互相排除）是 stop 格 ⇒ 要委派。
+    const resolved = resolveStructures(
+      root, selfEff, state,
+      (d) => d.kind === 'treetable' && Boolean(d.topTitle) === topTitle,
+      baseDepth,
+    )
 
     /**
      * SB `figures/layoutengine/titlelayoutworker.getResolvedText`：
@@ -569,12 +607,15 @@ function runTreeTable(
     const treeInfo = buildCellItem(root, ctx)
 
     // SB treeTable.startLayout 的顺序（一步都不能换）
-    const tableInfo = supplyTableRowInfoToRight(expandTableRowInfoToRight([[treeInfo]], 0))
+    const tableInfo = topTitle
+      ? topTitleTableInfo(treeInfo)
+      : supplyTableRowInfoToRight(expandTableRowInfoToRight([[treeInfo]], 0))
     calcTableCellWidth(tableInfo)
     calcTableCellHeight(tableInfo)
     calcTableCellPosition(tableInfo)
     calcTableCellItemPosition(treeInfo)
-    calcTableBounds(tableInfo)
+    if (topTitle) calcTableBoundsTopTitle(tableInfo)
+    else calcTableBounds(tableInfo)
 
     // 落位：SB 的 root.realPosition = (0,0)，position 是相对父格 item 原点的偏移
     const place = (item: CellItem, originX: number, originY: number): void => {
@@ -614,23 +655,36 @@ export function layoutTreetableSubtree(
   styleEngine: StyleEngine | null,
   state: SheetState | null,
   baseDepth = 1,
+  topTitle = false,
 ): TreeTableRunResult {
   // classifyNode 要靠**整份文档**判层级（mainTopic / subTopic）⇒ 有 state 就用 state.doc
-  return runTreeTable(state?.doc ?? node, node, SC.TREE_TABLE, options, styleEngine, state, baseDepth)
+  return runTreeTable(
+    state?.doc ?? node, node,
+    topTitle ? SC.TOP_TITLE_TREE_TABLE : SC.TREE_TABLE,
+    options, styleEngine, state, baseDepth, topTitle,
+  )
 }
 
-export const treeTableLayoutAlgorithm: LayoutAlgorithm = {
-  name: 'treetable',
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
-    const root = findRootTopic(doc)
-    if (!root) return { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
-    const res = runTreeTable(doc, root, SC.TREE_TABLE, options, styleEngine, state, 0)
-    let totalWidth = 0
-    let totalHeight = 0
-    for (const layout of res.nodes.values()) {
-      totalWidth = Math.max(totalWidth, layout.x + layout.width)
-      totalHeight = Math.max(totalHeight, layout.y + layout.height)
-    }
-    return { nodes: res.nodes, totalWidth, totalHeight }
-  },
+function createTreeTableAlgorithm(name: string, selfEff: string, topTitle: boolean): LayoutAlgorithm {
+  return {
+    name,
+    layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
+      const root = findRootTopic(doc)
+      if (!root) return { nodes: new Map(), totalWidth: 0, totalHeight: 0 }
+      const res = runTreeTable(doc, root, selfEff, options, styleEngine, state, 0, topTitle)
+      let totalWidth = 0
+      let totalHeight = 0
+      for (const layout of res.nodes.values()) {
+        totalWidth = Math.max(totalWidth, layout.x + layout.width)
+        totalHeight = Math.max(totalHeight, layout.y + layout.height)
+      }
+      return { nodes: res.nodes, totalWidth, totalHeight }
+    },
+  }
 }
+
+export const treeTableLayoutAlgorithm: LayoutAlgorithm = createTreeTableAlgorithm('treetable', SC.TREE_TABLE, false)
+
+/** SB `structures/treetabletoptitle.ts`（`Object.assign({}, structuresTreetable, …)`，direction DOWN） */
+export const treeTableTopTitleLayoutAlgorithm: LayoutAlgorithm =
+  createTreeTableAlgorithm('treetable-toptitle', SC.TOP_TITLE_TREE_TABLE, true)

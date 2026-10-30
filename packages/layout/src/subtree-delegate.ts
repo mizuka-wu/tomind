@@ -72,7 +72,7 @@ export function layoutDelegatedSubtree(
 
   if (del.kind === 'treetable') {
     // runTreeTable 本来就把表格根的原点放在 (0,0) ⇒ 不用再平移
-    const res = layoutTreetableSubtree(child, options, styleEngine, state, baseDepth)
+    const res = layoutTreetableSubtree(child, options, styleEngine, state, baseDepth, del.topTitle === true)
     return { nodes: res.nodes, bb: res.bb, originY: res.originY, own: res.nodes.get(child.id)! }
   }
 

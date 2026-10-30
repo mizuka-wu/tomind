@@ -17,7 +17,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { SheetState } from '@tomind/state'
-import { treeTableLayoutAlgorithm, DEFAULT_LAYOUT_OPTIONS } from '@tomind/layout'
+import { treeTableLayoutAlgorithm, treeTableTopTitleLayoutAlgorithm, DEFAULT_LAYOUT_OPTIONS } from '@tomind/layout'
 import type { NodeDesc } from '@tomind/schema'
 
 const node = (
@@ -150,5 +150,36 @@ describe('treetable 宿主：stop 格（生效结构变了的分支）整棵子�
     // 深的那份里 a 的子树占两行 ⇒ b 被推得更下
     expect(originY(d.get('b')!) - originY(d.get('a')!)).toBeGreaterThan(
       originY(s.get('b')!) - originY(s.get('a')!))
+  })
+})
+
+describe('treetable.toptitle：标题在整张表最上面一行（SB treetabletoptitle）', () => {
+  const build = () => node('root', 'ROOT', { structureClass: 'org.xmind.ui.treetable.toptitle' }, [
+    node('a', 'A', {}, [node('a1', 'A1'), node('a2', 'A2')]),
+    node('b', 'B', {}, [node('b1', 'B1')]),
+  ])
+
+  const lay = (doc: NodeDesc) =>
+    treeTableTopTitleLayoutAlgorithm.layout(doc, DEFAULT_LAYOUT_OPTIONS, null, noSkeleton(doc)).nodes
+
+  it('每个节点都被布局，且标题行在表体上方、横跨整张表', () => {
+    const nodes = lay(build())
+    expect([...nodes.keys()].sort()).toEqual(['a', 'a1', 'a2', 'b', 'b1', 'root'].sort())
+    // 标题（root）在所有表体节点的上方
+    for (const id of ['a', 'a1', 'a2', 'b', 'b1']) {
+      expect(originY(nodes.get('root')!)).toBeLessThan(originY(nodes.get(id)!))
+    }
+    // 标题格跨所有列 ⇒ 它的 branchHeight（= SB bounds.height）盖住整张表
+    expect(nodes.get('root')!.branchHeight).toBeGreaterThan(nodes.get('a')!.branchHeight)
+  })
+
+  it('表体仍然按「每行 = 一条根到叶子的路径」摊开（a1/a2 两行、b1 一行）', () => {
+    const nodes = lay(build())
+    // a 跨 a1/a2 两行 ⇒ a 的原点是两子节点原点的中点
+    expect(originY(nodes.get('a')!)).toBeCloseTo(
+      (originY(nodes.get('a1')!) + originY(nodes.get('a2')!)) / 2, 6)
+    // 列对齐：a 与 b 同列，a1/a2 与 b1 同列
+    expect(nodes.get('a')!.x).toBe(nodes.get('b')!.x)
+    expect(nodes.get('a1')!.x).toBe(nodes.get('b1')!.x)
   })
 })

@@ -140,8 +140,10 @@ describe('child-structure：SB 的 available 表与 getViewStructure 解析', ()
     // TM 没有子树入口的：宿主自己递归（已知差距，量化数字见 skill）
     expect(delegationOf(SC.TIMELINE_SIDED_HORIZONTAL)).toBeNull()
     expect(delegationOf(SC.TIMELINE_THROUGH_VERTICAL)).toBeNull()
-    expect(delegationOf(SC.TOP_TITLE_TREE_TABLE)).toBeNull()
     expect(delegationOf(SC.MAP_CLOCKWISE)).toBeNull()
+    expect(delegationOf(SC.SPREADSHEET)).toBeNull()
+    // treetable.toptitle = 同一套表格机器的变体（标题行横跨整张表）
+    expect(delegationOf(SC.TOP_TITLE_TREE_TABLE)).toEqual({ kind: 'treetable', topTitle: true })
   })
 
   it('getStartDirectionOf：SB 的调用点是 getStartDirection(**child**, undefined) ⇒ 判子分支自己的结构', () => {

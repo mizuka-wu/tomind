@@ -33,6 +33,7 @@ const STRUCTURE_CLASS_TO_LAYOUT: Record<string, string> = {
   'org.xmind.ui.timeline.sided.horizontal': 'timeline-sided-horizontal',
   'org.xmind.ui.timeline.through.vertical': 'timeline-through-vertical',
   'org.xmind.ui.treetable': 'treetable',
+  'org.xmind.ui.treetable.toptitle': 'treetable-toptitle',
   'org.xmind.ui.spreadsheet': 'matrix',
   'org.xmind.ui.spreadsheet.column': 'matrix',
   // SB allstructures.getStructure: 不支持的结构类回退 LOGICRIGHT

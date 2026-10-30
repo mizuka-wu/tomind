@@ -40,7 +40,7 @@ export {
 export type { DelegableStructure, StructureClass } from './child-structure'
 
 export { matrixLayoutAlgorithm } from './matrix-layout'
-export { treeTableLayoutAlgorithm } from './treetable-layout'
+export { treeTableLayoutAlgorithm, treeTableTopTitleLayoutAlgorithm, layoutTreetableSubtree } from './treetable-layout'
 
 export { Matrix, MatrixContainer, MatrixCell, ColumnMap, LEFT, MIDDLE, RIGHT } from './matrix'
 
