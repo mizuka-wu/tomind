@@ -21,7 +21,9 @@ import {
 import { measureTextSize } from './layout-engine'
 import { DEFAULT_LAYOUT_OPTIONS } from './layout-engine'
 import { getNodeSpacing } from './spacing-utils'
-import { delegateLogicSubtree } from './skeleton-delegate'
+import { SC, delegationOf, resolveChildStructure } from './child-structure'
+import { structurePresetOf } from './structure-resolve'
+import { layoutDelegatedSubtree } from './subtree-delegate'
 import { measureTitleOnlyNode } from './part-node-size'
 import type { PartAwareNodeSize } from './part-node-size'
 
@@ -112,18 +114,19 @@ export const matrixLayoutAlgorithm: LayoutAlgorithm = {
     // 才是 topicView），所以 cell 的 minSize / getAbsPos 针对的是**整棵子树的 bounds**：
     //   getAbsPos = cellPos + itemPos - bounds{x,y}  →  子树包围盒左上角
     // 主题盒要在子树包围盒内居中，而不是贴着包围盒左上角。
-    //委派子树的 provisional 坐标里主题盒左上角 = (0,0)，bb{X,Y} 相对主题盒中心，
-    // 故 topicCenter = subtreeTopLeft - bb{X,Y}，topicTopLeft = topicCenter - topicSize/2。
+    // 委派子树的坐标帧以 child **原点**（shape 中心）为 (0,0)，bb{X,Y} 也相对原点，
+    // 故 origin = subtreeTopLeft - bb{X,Y}，topicTopLeft = origin - (topicW/2, originY)。
+    // ⚠️ Y 要用 originY（part-aware：有 labels 时 ≠ topicH/2），否则带 labels 的子树整体上移 12。
     for (const del of delegations) {
       const placed = nodes.get(del.id)
       if (!placed) continue
-      const topicLeft = placed.x - del.bbX - del.topicW / 2
-      const topicTop = placed.y - del.bbY - del.topicH / 2
-      placed.x = topicLeft
-      placed.y = topicTop
+      const originX = placed.x - del.bbX
+      const originY = placed.y - del.bbY
+      placed.x = originX - del.topicW / 2
+      placed.y = originY - del.originY
       for (const [id, nl] of del.nodes) {
         if (id === del.id) continue
-        nodes.set(id, { ...nl, x: nl.x + topicLeft, y: nl.y + topicTop })
+        nodes.set(id, { ...nl, x: nl.x + originX, y: nl.y + originY })
       }
     }
 
@@ -192,12 +195,15 @@ function createLabelRow(columnMap: ColumnMap): MatrixCell[] {
 
 export interface MatrixDelegation {
   id: string
+  /** 委派结果：以 child **原点**（shape 中心）为 (0,0) */
   nodes: Map<string, any>
   bbX: number
   bbY: number
   cell: MatrixCell
   topicW: number
   topicH: number
+  /** child 原点到主题盒顶的距离 = shapeHeight/2（part-aware；无 labels 时 = topicH/2） */
+  originY: number
 }
 
 /**
@@ -226,12 +232,27 @@ function createBranchRows(columnMap: ColumnMap, mainCell: MatrixCell, branches: 
         const { items } = column.cells[i]
         const cells = items.map((item: any) => {
           // SB: 列内 cell 的 minSize = 子树 boundaryBounds（cell 内嵌子结构）
-          const del = delegateLogicSubtree(withoutLabels(item), 0, 0, depthOf?.get(item.id) ?? 2, options, styleEngine, state)
+          //
+          // cell 的生效结构由 SB `spreadsheetrow`（/ `spreadsheetcolumn`，
+          // `underscore.extend({}, spreadsheetRow, …)`）决定：
+          //   getAvailableChildStructure 未覆写 ⇒ 继承 AbstractStructure 的 ATTACHED_EXPOSED
+          //   getChildStructure() ⇒ **LOGICRIGHT**（与 skeleton 无关！）
+          // ⚠️ 2026-10-30 第六轮之前这里走 `delegateLogicSubtree`（读 skeleton）：
+          //   test-matrix 的 skeleton 写着 mainTopic: logic.right ⇒ 一直委派 ⇒ 假 0；
+          //   对照组 noskel-spreadsheet（skeleton = spreadsheet）拿不到 logic ⇒ fallback
+          //   只放 cell 自己一个盒 ⇒ **n=63/235**（172 个节点不存在）、avgΔY 2745.9。
+          const cellEff = resolveChildStructure(SC.SPREADSHEET_ROW, structurePresetOf(item, state ?? null), {
+            defaultChildStructure: SC.LOGIC_RIGHT,
+          })
+          const delegation = delegationOf(cellEff)
+          const del = delegation
+            ? layoutDelegatedSubtree(withoutLabels(item), delegation, options, styleEngine ?? null, state ?? null, depthOf?.get(item.id) ?? 2)
+            : null
           let minSize: { width: number; height: number }
           if (del) {
-            const own = del.nodes.get(item.id)!
+            const own = del.own
             minSize = { width: del.bb.width, height: del.bb.height }
-            delegations.push({ id: item.id, nodes: del.nodes, bbX: del.bb.x, bbY: del.bb.y, cell: null as any, topicW: own.width, topicH: own.height })
+            delegations.push({ id: item.id, nodes: del.nodes, bbX: del.bb.x, bbY: del.bb.y, cell: null as any, topicW: own.width, topicH: own.height, originY: del.originY })
           } else {
             minSize = measureMinSize(item, options, styleEngine, state)
           }

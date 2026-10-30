@@ -41,6 +41,9 @@ export const SC = {
   BRACE_LEFT: 'org.xmind.ui.brace.left',
   TREE_TABLE: 'org.xmind.ui.treetable',
   TOP_TITLE_TREE_TABLE: 'org.xmind.ui.treetable.toptitle',
+  /** SB 的 private 结构类（不在 EXPOSED 里，只能由宿主的 getChildStructure 给出） */
+  SPREADSHEET_ROW: 'org.xmind.ui.structure.spreadsheet.row',
+  SPREADSHEET_COLUMN: 'org.xmind.ui.structure.column.spreadsheet',
 } as const
 
 export type StructureClass = string
@@ -261,14 +264,20 @@ export function getAvailableChildStructure(
 export function resolveChildStructure(
   parentStructure: StructureClass | null,
   preset: StructureClass | null,
-  opts: { childIsRight?: boolean } = {},
+  opts: { childIsRight?: boolean; defaultChildStructure?: StructureClass } = {},
 ): StructureClass | null {
-  if (!preset) return parentStructure
+  // 第三分支 = `parentStructObj.getChildStructure(parentStructure, index, parentBranchView)`：
+  // AbstractStructure 的默认实现是「继承父结构」，但**覆写了的宿主**要由调用方给出
+  // （timeline.horizontal → .up/.down；timeline.horizontal.up/down → logic.right；
+  //   spreadsheet.row / spreadsheet.column → logic.right；fishbone 的上下骨 → logic.<方向>；
+  //   map 系 / timelinevertical → 按 index 定侧）⇒ 用 opts.defaultChildStructure 传进来。
+  const fallback = opts.defaultChildStructure ?? parentStructure
+  if (!preset) return fallback
   const available = getAvailableChildStructure(parentStructure, opts)
   if (available.includes(preset)) return preset
   const similar = SIMILAR_STRUCTURE_MAP[preset]
   if (similar && available.includes(similar)) return similar
-  return parentStructure
+  return fallback
 }
 
 /**

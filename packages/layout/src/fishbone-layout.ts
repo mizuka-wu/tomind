@@ -15,7 +15,9 @@ import { isCollapsed, getAttachedChildren, findRootTopic, getAttr } from './layo
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 import { DEFAULT_STYLES, classifyNode } from '@tomind/style'
-import { delegateLogicSubtree } from './skeleton-delegate'
+import { SC, delegationOf, resolveChildStructure } from './child-structure'
+import { structurePresetOf } from './structure-resolve'
+import { layoutDelegatedSubtree } from './subtree-delegate'
 
 function parseStyleValue(value: unknown, fallback: number): number {
   if (typeof value === 'number') return value
@@ -247,13 +249,33 @@ function layoutBone(
   let boundsMaxX = w / 2
   let boundsHeight = h + bonePadV
 
+  /**
+   * 骨的子分支的生效结构（SB `fishbone{left,right}head{top,bottom}bone`）：
+   *   `direction` = RIGHT（leftHeaded 的上下骨）/ LEFT（rightHeaded 的上下骨）
+   *   `getAvailableChildStructure()`（继承 FishBoneBaseMainBone）= RIGHT_EXPOSED / LEFT_EXPOSED
+   *   `getChildStructure()` = **LOGICRIGHT / LOGICLEFT**（与 skeleton 无关）
+   * TM 的 dirSign 正是这个 direction（leftHeaded → 1、rightHeaded → -1）。
+   *
+   * ⚠️ 2026-10-30 第六轮之前这里走 `delegateLogicSubtree`（读 skeleton）：
+   * demo-fishbone 的 skeleton 写着 mainTopic: logic.right ⇒ 一直委派 ⇒ 假 0；
+   * 对照组 noskel-fishbone.leftHeaded（skeleton = fishbone.leftHeaded）拿不到 logic
+   * ⇒ fallback 只放子分支自己一个盒 ⇒ **n=63/235**（172 个节点不存在）、avgΔX 2239。
+   */
+  const boneEff = dirSign === 1 ? SC.LOGIC_RIGHT : SC.LOGIC_LEFT
   for (const child of children) {
-    const del = delegateLogicSubtree(child, 0, 0, depth + 1, options, styleEngine, state)
+    const childEff = resolveChildStructure(boneEff, structurePresetOf(child, state), {
+      defaultChildStructure: boneEff,
+    })
+    const delegation = delegationOf(childEff)
+    const res = delegation
+      ? layoutDelegatedSubtree(child, delegation, options, styleEngine, state, depth + 1)
+      : null
     let bb: FBB
     let provNodes: Map<string, FBNode>
-    if (del) {
-      bb = { x: del.bb.x, y: del.bb.y, width: del.bb.width, height: del.bb.height }
-      provNodes = del.nodes as Map<string, FBNode>
+    if (res) {
+      bb = { x: res.bb.x, y: res.bb.y, width: res.bb.width, height: res.bb.height }
+      provNodes = new Map<string, FBNode>()
+      for (const [id, nl] of res.nodes) provNodes.set(id, nl)
     } else {
       const cs = sizeMap.get(child.id)!
       provNodes = new Map<string, FBNode>()
