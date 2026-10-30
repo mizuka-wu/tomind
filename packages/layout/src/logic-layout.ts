@@ -15,7 +15,7 @@ import { isCollapsed, getAttachedChildren, findRootTopic, getAttr, getEffectiveS
 import { hasNonTitleParts } from './part-measure'
 import { measurePartAwareNode, measureTitleOnlyNode } from './part-node-size'
 import { getLineEndSpacingPatchGap, hasLineEndArrow } from './spacing-utils'
-import { SC } from './child-structure'
+import { SC, TABLE_LIKE_STRUCTURE_LIST } from './child-structure'
 import type { DelegableStructure } from './child-structure'
 import { resolveStructures } from './structure-resolve'
 import { layoutDelegatedSubtree, placeDelegatedSubtree } from './subtree-delegate'
@@ -492,7 +492,22 @@ function layoutSubtree(
    * ⚠️ brace 分支**没有**这一项（BraceLeftAndRight 覆写了 calAttachedChildrenPos，
    * `childPositionX = childrenBaseX - bounds.x`，不含 maxOffset）。
    */
+  /**
+   * ⚠️ SB 的 maxOffset 是**逐子节点**取的（`abstractstructure.getOffsetForChildBranchView`）：
+   *
+   *   isSpecialOffSetBranchView(child) = isMatrixMainBranch(child) || isTreeTableHeadBranch(child)
+   *     （= 生效结构 ∈ MATRIX_GROUP_LIST / TREE_TABLE_GROUP_LIST；宿主是 logic·brace·map ⇒
+   *       父结构不是表格类 ⇒ 「头分支」条件自动成立）
+   *   特殊  → 用**它自己的** xOffset，且不参与下面那个 max
+   *   普通  → getMaxOffsetForNormalChildren = 所有普通子节点 xOffset 的 max
+   *
+   * 表格类子分支的 bb.x 比主题盒左边缘多出 extendW/2（格子 padding），xOffset 恒为正；
+   * 一刀切地把它算进整层的 max ⇒ 同层其它分支被多推 extendW/2。
+   * 实测 probe-logic.right+treetable：12.2/33.3 →（补了 treetable 子树入口后）1.1/0，
+   * 残差就是这条：201/235 个节点 dx 恒为 +3.333 = (6pt*10/18pt*2)/2 → 分流后归零。
+   */
   let maxOffset = 0
+  const specialXOffset = new Map<string, number>()
   for (const c of isBrace ? [] : children) {
     if (!structs.delegate.has(c.id)) continue
     const del = delegatedOf(structs, c)
@@ -500,7 +515,12 @@ function layoutSubtree(
     const xOff = side === 'right'
       ? (-cw / 2 - del.bb.x)
       : (del.bb.x + del.bb.width - cw / 2)
-    if (xOff > maxOffset) maxOffset = xOff
+    const eff = structs.eff.get(c.id)
+    if (eff !== undefined && TABLE_LIKE_STRUCTURE_LIST.includes(eff)) {
+      specialXOffset.set(c.id, Math.max(xOff, 0))
+    } else if (xOff > maxOffset) {
+      maxOffset = xOff
+    }
   }
 
   for (let i = 0; i < children.length; i++) {
@@ -509,9 +529,11 @@ function layoutSubtree(
     // 由它自己的 structure 对象跑，父结构只用 child.boundaryBounds 把它摆到位）
     if (structs.delegate.has(child.id)) {
       const del = delegatedOf(structs, child)
+      // SB getOffsetForChildBranchView：表格类子分支用自己的 xOffset，其余用整层的 max
+      const childMaxOffset = specialXOffset.get(child.id) ?? maxOffset
       const boxLeft = side === 'right'
-        ? x + size.width + spacingMajor + outwardOffset + maxOffset
-        : x - spacingMajor - outwardOffset - maxOffset - del.own.width
+        ? x + size.width + spacingMajor + outwardOffset + childMaxOffset
+        : x - spacingMajor - outwardOffset - childMaxOffset - del.own.width
       // 原点 X = 盒左 + 盒宽/2；原点 Y = 堆叠算出来的中心（SB posY 定位的就是原点）
       placeDelegatedSubtree(del, boxLeft + del.own.width / 2, centerY + pl.centers[i], nodes)
       continue

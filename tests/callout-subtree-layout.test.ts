@@ -109,13 +109,20 @@ describe('SB getCalloutStructure 的定侧规则', () => {
 })
 
 describe('callout 的 boundaryBounds 并进父分支 bounds', () => {
-  it('朝父分支反方向伸出的 callout 会把同侧分支整体推出去', () => {
+  it('朝父分支反方向伸出的 callout 会把该侧分支整体推出去', () => {
     const a = lay(branchCalloutDoc(true))
     const b = lay(branchCalloutDoc(false))
-    // SB：m1 的 bb.x 因为 callout 变负 → Step g 的 X 对齐偏移变化 → 同侧的 m2 也跟着平移
+    // SB：m1 的 bb.x 因为 callout 变负 → Step g 的 X 对齐偏移变化 → 同侧分支整体平移
     // （探针实测 demo 内容整侧平移 286px；这里的合成 doc 是 299.5px）
-    expect(a.get('m2')!.x).toBeGreaterThan(b.get('m2')!.x + 100)
-    // 左侧分支不受影响
+    expect(a.get('m1')!.x - b.get('m1')!.x).toBeCloseTo(299.5, 6)
+    // ⚠️ 2026-10-30 第六轮：calcNumRight 的权重源改成 SB 的 `boundaryBounds.height + 30`
+    // （此前是「Σ 子节点盒高」的近似值）之后，带 callout 的 m1 权重从 58 涨到 186
+    // ⇒ 分侧点 numRight 从 2 变 1，m2 被分到左侧。这是 SB getWeight 的直接后果
+    // （callout 的 bb 已经并进 m1 的 bounds），不是回归：真实 fixture
+    // test-callout-branch（244 节点）与 demo 逐项仍为 0。
+    expect(b.get('m2')!.x).toBeGreaterThan(0) // 无 callout：m2 在右侧
+    expect(a.get('m2')!.x).toBeLessThan(0) // 有 callout：m2 被分到左侧
+    // 左侧分支的 x 不受影响
     expect(a.get('m3')!.x).toBe(b.get('m3')!.x)
   })
 })

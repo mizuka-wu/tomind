@@ -15,6 +15,7 @@ import type { SheetState } from '@tomind/state'
 import type { StyleEngine } from '@tomind/style'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions, NodeLayout } from './layout-engine'
 import { isCollapsed, getAttachedChildren } from './layout-utils'
+import { TABLE_LIKE_STRUCTURE_LIST } from './child-structure'
 
 // ─── 公共类型 ───
 
@@ -184,21 +185,29 @@ export abstract class BaseLayout implements LayoutAlgorithm {
    * 每层递归都会叠加一份虚假偏移（实测每层 +635px，逐层累加）。
    *
    * SB getOffsetForChildBranchView：
-   * - 特殊分支（matrix 主分支 / treetable 头分支）用自身 xOffset
+   * - 特殊分支（`isSpecialOffSetBranchView` = matrix 主分支 / treetable 头分支，
+   *   即生效结构 ∈ TABLE_LIKE_STRUCTURE_LIST）用**自身** xOffset，且不参与 max
    * - 普通分支统一用同侧所有普通分支的 max xOffset
-   * map 布局下不存在这两类特殊分支，故全部按普通分支处理。
+   *
+   * ⚠️ 2026-10-30 第六轮之前这里写着「map 布局下不存在这两类特殊分支」——那是 treetable
+   * 还没有子树入口时的说法。有了 `layoutTreetableSubtree` 之后 map 下声明 treetable 的分支
+   * 会被委派出去，它的 bb.x 比主题盒左边缘多出 extendW/2（格子 padding）⇒ xOffset 恒为正，
+   * 一刀切算进整层 max 会把同层其它分支多推一份
+   * （实测 probe-map.clockwise+treetable：avgΔX 277.7，全部 11 个非委派主分支同向偏）。
    *
    * @param children 子节点列表
    * @param localBBMap 相对子节点原点的 boundaryBounds（须已由 bottom-up 递归填好）
    * @param sizeMap 子节点尺寸（left 侧需要主题盒宽度）
    * @param side 'right' 或 'left'
-   * @returns 每个子节点应叠加的偏移量数组和同侧最大值
+   * @param effMap 子节点的**生效结构类**（缺省时全部按普通分支处理）
+   * @returns 每个子节点应叠加的偏移量数组和同侧普通分支的最大值
    */
   protected calcSideXOffsets(
     children: readonly NodeDesc[],
     localBBMap: Map<string, BoundaryBounds>,
     sizeMap: Map<string, { width: number }>,
     side: 'right' | 'left',
+    effMap?: ReadonlyMap<string, string>,
   ): { offsets: number[]; maxOffset: number } {
     const xOffset: number[] = children.map((child) => {
       const bb = localBBMap.get(child.id)
@@ -211,10 +220,18 @@ export abstract class BaseLayout implements LayoutAlgorithm {
       return Math.max(0, raw)
     })
 
-    let maxOffset = 0
-    for (const o of xOffset) maxOffset = Math.max(maxOffset, o)
+    const isSpecial = (child: NodeDesc): boolean => {
+      const eff = effMap?.get(child.id)
+      return eff !== undefined && TABLE_LIKE_STRUCTURE_LIST.includes(eff)
+    }
 
-    return { offsets: xOffset.map(() => maxOffset), maxOffset }
+    let maxOffset = 0
+    children.forEach((child, i) => {
+      if (isSpecial(child)) return
+      maxOffset = Math.max(maxOffset, xOffset[i])
+    })
+
+    return { offsets: xOffset.map((o, i) => (isSpecial(children[i]) ? o : maxOffset)), maxOffset }
   }
 
   // ── boundaryBounds 计算 ──

@@ -369,31 +369,46 @@ class MapLayout extends BaseLayout {
   }
 
 
-  private getWeight(node: NodeDesc, sizeMap: Map<string, NodeSize>): number {
+  /**
+   * SB `basemap.getWeight(branch) = branch.boundaryBounds.height + (PADDING/2)*3`。
+   *
+   * ⚠️ 权重源必须是**子树布局完之后的 boundaryBounds.height**：
+   * `bbHeightOf` 优先给 localBBMap（bottom-up 阶段已填好，含被委派子树的 bb）/ subtreeHeightMap，
+   * 拿不到才退回 sizeMap 里那个「Σ 子节点盒高」的近似值。
+   * 近似值对纯 logic 子树凑巧能给出同样的分侧点（demo 等 38 个 fixture 一直是 0），
+   * 但**被委派出去的子树**形状完全不同（org-chart 横向生长 ⇒ bb 矮而宽）⇒ 分侧点会错。
+   * 实测 probe-map.clockwise+org-chart.down：近似权重把该分支算到右侧（SB 在左侧），
+   * 234/235 个节点错位、avgΔ 329.1 / 317.5。
+   */
+  private getWeight(node: NodeDesc, sizeMap: Map<string, NodeSize>, bbHeight?: number): number {
     // snowbrush calcNumRight: weight = boundaryBounds.height + (PADDING/2)*3
     const size = sizeMap.get(node.id)
-    return (size?.subtreeHeight ?? size?.height ?? 0) + 30
+    return (bbHeight ?? size?.subtreeHeight ?? size?.height ?? 0) + 30
   }
 
   private calcNumRight(
     children: readonly NodeDesc[],
     sizeMap: Map<string, NodeSize>,
+    bbHeightOf?: (id: string) => number | undefined,
   ): number {
     if (children.length <= 1) return children.length
 
+    const weightOf = (node: NodeDesc): number =>
+      this.getWeight(node, sizeMap, bbHeightOf?.(node.id))
+
     let totalWeight = 0
     for (const child of children) {
-      totalWeight += this.getWeight(child, sizeMap)
+      totalWeight += weightOf(child)
     }
 
     const halfWeight = totalWeight / 2
     let accWeight = 0
 
     for (let i = 0; i < children.length; i++) {
-      accWeight += this.getWeight(children[i], sizeMap)
+      accWeight += weightOf(children[i])
       if (accWeight >= halfWeight) {
         const diffAt = Math.abs(accWeight - halfWeight)
-        const prevWeight = accWeight - this.getWeight(children[i], sizeMap)
+        const prevWeight = accWeight - weightOf(children[i])
         const diffBefore = Math.abs(prevWeight - halfWeight)
         return diffAt < diffBefore ? i + 1 : i
       }
@@ -489,16 +504,19 @@ class MapLayout extends BaseLayout {
         rightChildren = []
       }
     } else {
+      // SB getWeight 的权重源 = child.boundaryBounds.height（见 getWeight 注释）
+      const bbHeightOf = (id: string): number | undefined =>
+        localBBMap.get(id)?.height ?? subtreeHeightMap?.get(id)
       let numRight: number
       if (!this.config.balanced) {
         const attrsNumRight = node.attrs.numRight
         if (typeof attrsNumRight === 'number' && attrsNumRight >= 0 && attrsNumRight <= regularChildren.length) {
           numRight = attrsNumRight
         } else {
-          numRight = this.calcNumRight(regularChildren, sizeMap)
+          numRight = this.calcNumRight(regularChildren, sizeMap, bbHeightOf)
         }
       } else {
-        numRight = this.calcNumRight(regularChildren, sizeMap)
+        numRight = this.calcNumRight(regularChildren, sizeMap, bbHeightOf)
       }
 
       const isClockwise = this.config.direction === 'clockwise'
@@ -633,9 +651,12 @@ class MapLayout extends BaseLayout {
     const mapParentEff = isMapRoot
       ? SC.MAP_CLOCKWISE // map / map.clockwise / map.anticlockwise / map.unbalanced 都继承 basemap 的表
       : (side === 'right' ? SC.LOGIC_RIGHT : SC.LOGIC_LEFT)
+    // Step g 的 xOffset 分流要用（SB isSpecialOffSetBranchView 判的是子分支的生效结构）
+    const childEffMap = new Map<string, string>()
     for (let i = 0; i < n; i++) {
       const child = children[i]
       const childEff = resolveChildStructure(mapParentEff, structurePresetOf(child, state ?? null), { childIsRight: side === 'right' })
+      if (childEff) childEffMap.set(child.id, childEff)
       const d = delegationOf(childEff)
       const useDelegate = d !== null && !(d.kind === 'logic' && d.side === side)
       if (useDelegate && d) {
@@ -784,7 +805,7 @@ class MapLayout extends BaseLayout {
     // xOffset 是 branch 局部量（topicView.bounds 与 boundaryBounds 同帧相减），
     // 与绝对坐标无关；普通分支统一取同侧 max。
     {
-      const { offsets } = this.calcSideXOffsets(children, localBBMap, sizeMap, side)
+      const { offsets } = this.calcSideXOffsets(children, localBBMap, sizeMap, side, childEffMap)
       for (let i = 0; i < n; i++) {
         const offset = offsets[i] ?? 0
         if (offset > 0) {
