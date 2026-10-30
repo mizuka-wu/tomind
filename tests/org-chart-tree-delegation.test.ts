@@ -132,9 +132,11 @@ describe('child-structure：SB 的 available 表与 getViewStructure 解析', ()
     expect(delegationOf(SC.BRACE_RIGHT)).toEqual({ kind: 'brace', side: 'right' })
     expect(delegationOf(SC.ORG_CHART_DOWN)).toEqual({ kind: 'org', dir: 'down' })
     expect(delegationOf(SC.ORG_CHART_UP)).toEqual({ kind: 'org', dir: 'up' })
+    // treetable 也有了（2026-10-30 第六轮：宿主改成 SB 的通用表格算法后抽出 layoutTreetableSubtree）
+    expect(delegationOf(SC.TREE_TABLE)).toEqual({ kind: 'treetable' })
     // TM 没有子树入口的：宿主自己递归（已知差距，量化数字见 skill）
     expect(delegationOf(SC.TIMELINE_HORIZONTAL)).toBeNull()
-    expect(delegationOf(SC.TREE_TABLE)).toBeNull()
+    expect(delegationOf(SC.TOP_TITLE_TREE_TABLE)).toBeNull()
     expect(delegationOf(SC.MAP_CLOCKWISE)).toBeNull()
   })
 

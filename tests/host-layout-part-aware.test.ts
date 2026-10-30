@@ -96,16 +96,21 @@ describe('treetable：head 子树按原点接进单元格', () => {
     node('h1', 'HEAD', labels ? { labels: ['L1'] } : {}, [node('h1c', 'CHILD')]),
   ])
 
-  it('带 labels 的 head 主题盒高 +24，且首行内容顶边仍对齐（旧实现整棵子树上移 12）', () => {
+  it('带 labels 的 head 主题盒高 +24，整棵子树相对 root 上移 12（SB 实测口径）', () => {
     const plainDoc = build(false)
     const labeledDoc = build(true)
     const plain = treeTableLayoutAlgorithm.layout(plainDoc, DEFAULT_LAYOUT_OPTIONS, null, withSkeleton(plainDoc)).nodes
     const labeled = treeTableLayoutAlgorithm.layout(labeledDoc, DEFAULT_LAYOUT_OPTIONS, null, withSkeleton(labeledDoc)).nodes
 
     expect(labeled.get('h1')!.height).toBe(plain.get('h1')!.height + LABELS_EXTRA)
-    // 第一行 rowY = 0、extendH = 0 → head 子树的 bb 顶边 = 0；
-    // head 是子树最上面的节点，所以它的盒顶就是 0（旧实现：-12）
-    expect(labeled.get('h1')!.y).toBeCloseTo(plain.get('h1')!.y, 6)
-    expect(labeled.get('h1c')!.y).toBeCloseTo(plain.get('h1c')!.y, 6)
+    // SB 口径（2026-10-30 第六轮用 /tmp/tt-syn-{plain,labels}.xmind 实测，3 个节点 Δ 全 0）：
+    //   plain  HEAD y=-22 / CHILD y=-15；labels HEAD y=-34 / CHILD y=-27 ⇒ 整体上移 12
+    // 机制：head 是 stop 格，bb 向下长出 24 ⇒ 行高 +24 ⇒ root（跨该行的 expand 格）
+    //   cellHeight +24 ⇒ root 在表内的中心 y +12，而 head 的中心 y（extendH/2 + |bb.y|）不变
+    //   ⇒ position.y = head − root = −12。
+    // ⚠️ 旧实现（bb 顶边对齐内容区顶边）给出「加 labels 后 y 不变」，与 SB 差 12；
+    //   test-treetable-labels 因为 12 个 head 全带 labels 而被质心对齐掩盖，看不出来。
+    expect(labeled.get('h1')!.y).toBeCloseTo(plain.get('h1')!.y - LABELS_EXTRA / 2, 6)
+    expect(labeled.get('h1c')!.y).toBeCloseTo(plain.get('h1c')!.y - LABELS_EXTRA / 2, 6)
   })
 })

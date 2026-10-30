@@ -137,6 +137,19 @@ export const TREE_TABLE_EXPOSED_STRUCTURE: readonly StructureClass[] = without(A
 /** SB TREE_TABLE_GROUP_LIST */
 export const TREE_TABLE_GROUP_LIST: readonly StructureClass[] = [SC.TREE_TABLE, SC.TOP_TITLE_TREE_TABLE]
 
+/** SB MATRIX_GROUP_LIST（spreadsheet / spreadsheet.column） */
+export const MATRIX_GROUP_LIST: readonly StructureClass[] = [SC.SPREADSHEET, SC.COLUMN_SPREADSHEET]
+
+/**
+ * SB TABLE_LIKE_STRUCTURE_LIST = TREE_TABLE_GROUP_LIST + MATRIX_GROUP_LIST。
+ * `abstractstructure.isSpecialOffSetBranchView` 判的就是这两组
+ * （matrix 主分支 / treetable 头分支）⇒ logic·map 宿主的 X maxOffset 要按它分流。
+ */
+export const TABLE_LIKE_STRUCTURE_LIST: readonly StructureClass[] = [
+  ...TREE_TABLE_GROUP_LIST,
+  ...MATRIX_GROUP_LIST,
+]
+
 /** SB SIMILAR_STRUCTURE_MAP（preset 不在 available 里时试它的镜像） */
 export const SIMILAR_STRUCTURE_MAP: Record<string, StructureClass> = {
   [SC.FISHBONE_LEFT_HEADED]: SC.FISHBONE_RIGHT_HEADED,

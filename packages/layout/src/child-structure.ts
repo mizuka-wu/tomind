@@ -4,7 +4,7 @@
  *
  * 这里只回答一个问题：**某个生效结构类，TM 有没有「独立子树布局入口」可以整棵交出去？**
  * 有 → 返回委派方式，宿主调用 `subtree-delegate.layoutDelegatedSubtree`；
- * 没有（timeline.* / treetable / map 系 / fishbone）→ 返回 null，宿主自己递归（已知差距，见 skill）。
+ * 没有（timeline.* / map 系 / fishbone / treetable.toptitle）→ 返回 null，宿主自己递归（已知差距，见 skill）。
  */
 export {
   SC,
@@ -19,6 +19,8 @@ export {
   TREE_RIGHT_EXPOSED_STRUCTURE,
   TREE_TABLE_EXPOSED_STRUCTURE,
   TREE_TABLE_GROUP_LIST,
+  MATRIX_GROUP_LIST,
+  TABLE_LIKE_STRUCTURE_LIST,
   SIMILAR_STRUCTURE_MAP,
   getAvailableChildStructure,
   resolveChildStructure,
@@ -37,10 +39,11 @@ export type DelegableStructure =
   | { kind: 'brace'; side: 'right' | 'left' }
   | { kind: 'tree'; dir: 'right' | 'left' }
   | { kind: 'org'; dir: 'down' | 'up' }
+  | { kind: 'treetable' }
 
 /**
- * 生效结构类 → TM 的委派方式；TM 没有对应子树入口的（timeline.* / treetable /
- * map 系 / fishbone）返回 null，由宿主自己递归（已知差距，见 skill）。
+ * 生效结构类 → TM 的委派方式；TM 没有对应子树入口的（timeline.* / map 系 / fishbone /
+ * treetable.toptitle）返回 null，由宿主自己递归（已知差距，见 skill）。
  *
  * brace.left/right 也算有入口：SB `braceleftandright` 就是 `underscore.extend({}, logicLeftAndRight, …)`，
  * 堆叠/居中公式与 logic 逐字相同，唯一差异是 calcSpacingMajor 里
@@ -65,6 +68,10 @@ export function delegationOf(eff: StructureClass | null): DelegableStructure | n
       return { kind: 'org', dir: 'down' }
     case SC.ORG_CHART_UP:
       return { kind: 'org', dir: 'up' }
+    // treetable 有子树入口（2026-10-30 第六轮：宿主改成 SB 的通用表格算法后顺手抽出来的）。
+    // ⚠️ toptitle 没有（TM 没实现那张表的 treeInfoToTableInfo / calcTableBounds 变体）
+    case SC.TREE_TABLE:
+      return { kind: 'treetable' }
     default:
       return null
   }
