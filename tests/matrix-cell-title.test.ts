@@ -47,8 +47,10 @@ const layoutMatrix = (doc: NodeDesc) =>
 describe('matrix cell 的 titleWidth/titleHeight 是标题盒，不是主题盒', () => {
   it('每个 matrix cell 都给出标题量测值', () => {
     const nodes = layoutMatrix(matrixDoc())
-    // 注：不带 styleEngine 时 delegateLogicSubtree 拿不到 skeleton → cell 的子树不参与布局，
-    // 所以这里只校验矩阵自己的三个 cell（root/row/cell）
+    // 2026-10-31 第六轮起 cell 的子树按**生效结构**委派（SB spreadsheetrow.getChildStructure
+    // = LOGICRIGHT，与 skeleton / styleEngine 无关）⇒ 不带 styleEngine 也会布局孙节点。
+    // （旧实现读 skeleton，拿不到就只放 cell 一个盒 ⇒ 对照组 noskel-spreadsheet n=63/235）
+    expect(nodes.has('gc'), 'cell 的子树要参与布局（丢节点回归）').toBe(true)
     for (const id of ['root', 'row', 'cell']) {
       const nl = nodes.get(id)!
       expect(nl, id).toBeTruthy()

@@ -1,6 +1,15 @@
 /**
  * Skeleton 结构委派 — 对齐 snowbrush 的 skeleton structure style
  *
+ * ⚠️ **2026-10-31 第六轮起已无内部调用方**（只剩 index.ts 的公开 re-export）：
+ * treetable / timeline / matrix / fishbone 四个宿主原先都靠这里的
+ * `delegateLogicSubtree`（读 skeleton 判是不是 logic.*），拿不到就 fallback
+ * **只放一个盒、不递归** ⇒ 四条 n 造假（treetable 13/235、matrix 63/235、
+ * matrix.column 63/235、fishbone 63/235）。现在一律走
+ * `structure-resolve.resolveStructures` + `child-structure.delegationOf`
+ * + `subtree-delegate.layoutDelegatedSubtree`（按**生效结构**委派）。
+ * 新代码不要再用这个模块。
+ *
  * xmind extensions（provider=org.xmind.ui.skeleton.structure.style）按角色指定结构：
  *   { centralTopic: 'org.xmind.ui.map.clockwise', mainTopic: 'org.xmind.ui.logic.right' }
  * snowbrush 中每个 branch 的结构由其 class 决定（root 用 centralTopic，主分支用 mainTopic，
