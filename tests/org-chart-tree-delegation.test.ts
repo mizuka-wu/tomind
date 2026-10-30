@@ -134,8 +134,12 @@ describe('child-structure：SB 的 available 表与 getViewStructure 解析', ()
     expect(delegationOf(SC.ORG_CHART_UP)).toEqual({ kind: 'org', dir: 'up' })
     // treetable 也有了（2026-10-30 第六轮：宿主改成 SB 的通用表格算法后抽出 layoutTreetableSubtree）
     expect(delegationOf(SC.TREE_TABLE)).toEqual({ kind: 'treetable' })
+    // timeline.horizontal（轴布局）也有入口了；.up/.down 不在 EXPOSED_STRUCTURE 里
+    // ⇒ 生效结构不可能是它们（只有轴自己的 getChildStructure 会给）
+    expect(delegationOf(SC.TIMELINE_HORIZONTAL)).toEqual({ kind: 'timeline' })
     // TM 没有子树入口的：宿主自己递归（已知差距，量化数字见 skill）
-    expect(delegationOf(SC.TIMELINE_HORIZONTAL)).toBeNull()
+    expect(delegationOf(SC.TIMELINE_SIDED_HORIZONTAL)).toBeNull()
+    expect(delegationOf(SC.TIMELINE_THROUGH_VERTICAL)).toBeNull()
     expect(delegationOf(SC.TOP_TITLE_TREE_TABLE)).toBeNull()
     expect(delegationOf(SC.MAP_CLOCKWISE)).toBeNull()
   })

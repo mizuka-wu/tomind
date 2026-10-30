@@ -40,6 +40,7 @@ export type DelegableStructure =
   | { kind: 'tree'; dir: 'right' | 'left' }
   | { kind: 'org'; dir: 'down' | 'up' }
   | { kind: 'treetable' }
+  | { kind: 'timeline' }
 
 /**
  * 生效结构类 → TM 的委派方式；TM 没有对应子树入口的（timeline.* / map 系 / fishbone /
@@ -72,6 +73,12 @@ export function delegationOf(eff: StructureClass | null): DelegableStructure | n
     // ⚠️ toptitle 没有（TM 没实现那张表的 treeInfoToTableInfo / calcTableBounds 变体）
     case SC.TREE_TABLE:
       return { kind: 'treetable' }
+    // timeline.horizontal 有子树入口（轴布局本身）。
+    // ⚠️ .up / .down 不在 EXPOSED_STRUCTURE 里 ⇒ 生效结构不可能是它们（只有轴自己的
+    //    getChildStructure 会给），所以这里不需要分方向；sided.horizontal /
+    //    through.vertical / vertical 仍是 null（TM 没抽子树入口，见 skill）
+    case SC.TIMELINE_HORIZONTAL:
+      return { kind: 'timeline' }
     default:
       return null
   }

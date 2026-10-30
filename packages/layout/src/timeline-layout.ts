@@ -10,7 +10,7 @@ import type { StyleEngine } from '@tomind/style'
 import { DEFAULT_STYLES, classifyNode } from '@tomind/style'
 import type { SheetState } from '@tomind/state'
 import type { LayoutAlgorithm, LayoutResult, LayoutOptions, NodeLayout } from './layout-engine'
-import { delegateLogicSubtree } from './skeleton-delegate'
+import { layoutDelegatedSubtree } from './subtree-delegate'
 import { DEFAULT_LAYOUT_OPTIONS, measureTextSize } from './layout-engine'
 import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic } from './layout-utils'
 import { measureStyledSubtree, getLineEndSpacingPatchGap, hasLineEndArrow } from './spacing-utils'
@@ -145,29 +145,31 @@ function layoutTimelineBranch(
   const lineCorner = styleEngine && state ? parseNum(styleEngine.getStyleValue(state, node.id, 'lineCorner'), 0) : 0
   const ext = nextBrotherHeight > h ? (nextBrotherHeight - h) / 2 : 0
 
+  /**
+   * 轴分支（timeline.horizontal.up / .down）的子树**一律是 logic.right**：
+   * SB `timelinehorizontalup/down` 同时写死了两件事 ——
+   *   `getChildStructure() { return STRUCTURECLASS.LOGICRIGHT }`
+   *   `getAvailableChildStructure() { return [] }`
+   * ⇒ available 为空 ⇒ 任何 preset（节点自己的 structureClass、skeleton 的 mainTopic/subTopic）
+   *   都不可用 ⇒ 连镜像都不试，直接落到 getChildStructure = logic.right；
+   *   再往下（d3+）的父结构对象就是 logicRight 了，preset 才重新生效（RIGHT_EXPOSED）。
+   *
+   * ⚠️ 2026-10-30 第六轮之前这里是「skeleton 是 logic.* 才委派，否则**递归回轴布局**」：
+   * test-timeline-horizontal / -labels 的 skeleton 写着 mainTopic: logic.right ⇒ 一直走委派 ⇒ 假 0；
+   * 对照组 noskel-timeline.horizontal（skeleton = timeline.horizontal）走的是轴递归
+   * ⇒ avgΔX 1736.6 / avgΔY 133.8（第五轮量到的第二条宿主差距）。
+   */
   const provs: TlProv[] = []
   for (const child of children) {
-    const del = delegateLogicSubtree(child, 0, 0, depth, options, styleEngine, state)
-    if (del) {
-      const own = del.nodes.get(child.id)!
-      provs.push({ nodes: del.nodes, bb: { x: del.bb.x, y: del.bb.y, width: del.bb.width, height: del.bb.height }, own, originY: del.originY })
-    } else {
-      const provNodes = new Map<string, NodeLayout>()
-      layoutTimelineHorizontal(child, 0, 0, node, options, sizeMap, provNodes, styleEngine, state, depth + 1)
-      const cs = sizeMap.get(child.id)!
-      const own = provNodes.get(child.id)!
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-      for (const nl of provNodes.values()) {
-        minX = Math.min(minX, nl.x); maxX = Math.max(maxX, nl.x + nl.width)
-        minY = Math.min(minY, nl.y); maxY = Math.max(maxY, nl.y + nl.height)
-      }
-      provs.push({
-        nodes: provNodes,
-        bb: { x: minX - (own.x + cs.width / 2), y: minY - (own.y + originYOf(cs)), width: maxX - minX, height: maxY - minY },
-        own,
-        originY: originYOf(cs),
-      })
-    }
+    const del = layoutDelegatedSubtree(child, { kind: 'logic', side: 'right' }, options, styleEngine, state, depth + 1)
+    const provNodes = new Map<string, NodeLayout>()
+    for (const [id, nl] of del.nodes) provNodes.set(id, nl)
+    provs.push({
+      nodes: provNodes,
+      bb: { x: del.bb.x, y: del.bb.y, width: del.bb.width, height: del.bb.height },
+      own: del.own,
+      originY: del.originY,
+    })
   }
 
   const childrenH = provs.reduce((a, p) => a + p.bb.height, 0) + (provs.length - 1) * PAD
@@ -214,7 +216,11 @@ function layoutTimelineBranch(
   return { x: -w / 2, y: bbY, width: bbW, height: bbH }
 }
 
-/** axis 层，对齐 snowbrush timelinehorizontal.calAttachedChildrenPos */
+/**
+ * axis 层，对齐 snowbrush timelinehorizontal.calAttachedChildrenPos。
+ * 返回 SB 的 `branch.bounds`（= `getUnionBoundingBox(topicView.bounds, getChildrenSize(branch))`，
+ * 相对本节点原点）—— 作为根布局时没人消费，被别的结构委派时它就是宿主要的 bb。
+ */
 function layoutTimelineHorizontal(
   node: NodeDesc,
   x: number,
@@ -226,7 +232,7 @@ function layoutTimelineHorizontal(
   styleEngine: StyleEngine | null,
   state: SheetState | null,
   depth = 0,
-): void {
+): TlBB {
   void parent
   const size = sizeMap.get(node.id)!
   const h = size.height
@@ -239,7 +245,8 @@ function layoutTimelineHorizontal(
   })
 
   const children = isCollapsed(node) ? [] : getAttachedChildren(node)
-  if (children.length === 0) return
+  const selfOriginY = originYOf(size)
+  if (children.length === 0) return { x: -w / 2, y: -selfOriginY, width: w, height: h }
 
   const PAD = getAxisSpacing(node, styleEngine, state)
   const parentCenterX = x + w / 2
@@ -300,6 +307,50 @@ function layoutTimelineHorizontal(
   }
   const ownLayout = nodes.get(node.id)
   if (ownLayout) ownLayout.branchHeight = Math.max(h, bbBottom) - Math.min(0, bbTop)
+
+  // SB 收尾：childrenSize = ∪ vector(child.boundaryBounds, child.position)，
+  //         newBounds   = getUnionBoundingBox(topicView.bounds, childrenSize)
+  let minX = -w / 2
+  let minY = -selfOriginY
+  let maxX = w / 2
+  let maxY = h - selfOriginY
+  for (let i = 0; i < children.length; i++) {
+    const own = nodes.get(children[i].id)!
+    const cs = sizeMap.get(children[i].id)!
+    const relOriginX = own.x + own.width / 2 - (x + w / 2)
+    const relOriginY = own.y + originYOf(cs) - (y + selfOriginY)
+    const cbb = provs[i].bb
+    minX = Math.min(minX, relOriginX + cbb.x)
+    maxX = Math.max(maxX, relOriginX + cbb.x + cbb.width)
+    minY = Math.min(minY, relOriginY + cbb.y)
+    maxY = Math.max(maxY, relOriginY + cbb.y + cbb.height)
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
+
+/**
+ * 独立布局一棵 timeline.horizontal 子树（供其它结构按生效结构委派使用）。
+ * 契约同 `subtree-delegate.layoutDelegatedSubtree`：节点表以 child 原点为 (0,0)、
+ * bb = SB 的 `child.boundaryBounds`（无 boundary 时 == child.bounds）。
+ */
+export function layoutTimelineSubtree(
+  node: NodeDesc,
+  options: LayoutOptions,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+  baseDepth = 1,
+): { nodes: Map<string, NodeLayout>; bb: TlBB; originY: number } {
+  const sizeMap = new Map<string, NodeSize>()
+  measureStyledSubtree(node, options, sizeMap, 'horizontal', styleEngine, state)
+  const raw = new Map<string, NodeLayout>()
+  const bb = layoutTimelineHorizontal(node, 0, 0, null, options, sizeMap, raw, styleEngine, state, baseDepth)
+  const own = raw.get(node.id)!
+  const originY = originYOf(sizeMap.get(node.id)!)
+  const ox = own.x + own.width / 2
+  const oy = own.y + originY
+  const nodes = new Map<string, NodeLayout>()
+  for (const [id, nl] of raw) nodes.set(id, { ...nl, x: nl.x - ox, y: nl.y - oy })
+  return { nodes, bb, originY }
 }
 
 export const timelineHorizontalLayoutAlgorithm: LayoutAlgorithm = {

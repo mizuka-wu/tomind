@@ -22,6 +22,7 @@ import { layoutLogicSubtree } from './logic-layout'
 import { layoutTreeSubtree } from './tree-layout'
 import { layoutOrgSubtree } from './org-chart-layout'
 import { layoutTreetableSubtree } from './treetable-layout'
+import { layoutTimelineSubtree } from './timeline-layout'
 
 export interface SubtreeNodeLayout {
   x: number
@@ -50,6 +51,7 @@ export interface DelegatedSubtreeLayout {
  *
  * - `tree.left/right` → `layoutTreeSubtree`
  * - `treetable` → `layoutTreetableSubtree`（SB 里它也是「整棵子树摊成一张表」的独立结构）
+ * - `timeline.horizontal` → `layoutTimelineSubtree`（轴布局；它的子分支是 up/down，再往下是 logic.right）
  * - `logic.left/right` / `brace.left/right` → `layoutLogicSubtree`
  *   （SB `BraceLeftAndRight = Object.assign({}, logicLeftAndRight, { calAttachedChildrenPos, … })`，
  *    堆叠公式同源，差别是 calcSpacingMajor 的 `isBraceStructure → LINE_SPACING(16)` 补丁
@@ -63,6 +65,11 @@ export function layoutDelegatedSubtree(
   state: SheetState | null,
   baseDepth = 1,
 ): DelegatedSubtreeLayout {
+  if (del.kind === 'timeline') {
+    const res = layoutTimelineSubtree(child, options, styleEngine, state, baseDepth)
+    return { nodes: res.nodes, bb: res.bb, originY: res.originY, own: res.nodes.get(child.id)! }
+  }
+
   if (del.kind === 'treetable') {
     // runTreeTable 本来就把表格根的原点放在 (0,0) ⇒ 不用再平移
     const res = layoutTreetableSubtree(child, options, styleEngine, state, baseDepth)
