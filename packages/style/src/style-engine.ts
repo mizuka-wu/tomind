@@ -38,6 +38,7 @@ import { numberingKey } from '@tomind/state'
 import type { ResolvedStyle, ThemeData, StyleComputeOptions, NodeType, StyleValue, LeaferStyle } from './style-types'
 import { isThemeClassEntry, resolveColorVariables } from './style-types'
 import { classifyNode, getParentId, findById, getMainTopicAncestor, isAncestorFloating } from './classify'
+import { getAvailableChildStructure, SIMILAR_STRUCTURE_MAP } from './structure-class'
 import { DEFAULT_STYLES, getDefaultStyle } from './default-styles'
 import { normalizeStyleObject, serializeStyleObject, normalizeClassName } from './style-converter'
 import { parseClassList, getClassStyles } from '@tomind/state'
@@ -221,10 +222,37 @@ function structurePresetExact(doc: NodeDesc, topicId: string, depth: number): st
   return typeof sc === 'string' && sc ? sc : null
 }
 
+/**
+ * SB `getViewStructure` 的第一关：preset 必须在**父结构**的 `getAvailableChildStructure` 里
+ * （或它的镜像在），否则 preset 作废、走父结构的 `getChildStructure`。
+ *
+ * 侧向在这一层是未知的（要按 index / 落位才知道），所以两侧任一可用就算可用 ——
+ * 镜像只在**同族**内换向（logic.left↔right、brace.left↔right、org-chart.up↔down、fishbone 左右），
+ * 而本函数的消费方只判「是不是 brace.*」和「是不是 timeline.through.vertical」，同族换向不影响结论。
+ */
+function isPresetAvailableUnder(parentEff: string, preset: string): boolean {
+  const usable = (childIsRight: boolean): boolean => {
+    const available = getAvailableChildStructure(parentEff, { childIsRight })
+    if (available.includes(preset)) return true
+    const similar = SIMILAR_STRUCTURE_MAP[preset]
+    return similar !== undefined && available.includes(similar)
+  }
+  return usable(true) || usable(false)
+}
+
 function resolveStructureClassInherited(state: SheetState, topicId: string): string | null {
   const doc = state.doc
   const own = structurePresetExact(doc, topicId, getDepthFromDoc(state, topicId))
-  if (own) return own
+  if (own) {
+    const parentId = getParentId(doc, topicId)
+    // 中央分支没有父结构 ⇒ preset 就是它自己的生效结构
+    const parentEff = parentId ? resolveStructureClassInherited(state, parentId) : null
+    if (parentEff === null || isPresetAvailableUnder(parentEff, own)) return own
+    // preset 被父结构的 available 表否掉 ⇒ 生效结构由父结构的 getChildStructure 决定
+    // （through.vertical → logic.left/right 交替、timeline.horizontal → .up/.down、
+    //   sided.horizontal → .up/.down、spreadsheet → row → logic.right）
+    // ⇒ 都不是 brace.*、也都不是 through.vertical ⇒ 落到下面的祖先继承（NO_INHERIT → null）
+  }
   let id: string | null = getParentId(doc, topicId)
   while (id) {
     const sc = structurePresetExact(doc, id, getDepthFromDoc(state, id))

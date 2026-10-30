@@ -158,6 +158,35 @@ describe('brace 的 lineClass 覆盖按**继承下来的生效结构**逐层生�
     expect(r.d1.lineClass).not.toBe(STRAIGHT)
     expect(r.d3.lineClass).not.toBe(STRAIGHT)
   })
+
+  /**
+   * SB `getViewStructure` 的第一关：preset 还得过父结构的 `getAvailableChildStructure`。
+   * through.vertical / timeline.horizontal / sided.horizontal / spreadsheet 的 available = **[]**
+   * ⇒ skeleton 写的宿主结构对子分支**一律无效**，生效结构走宿主的 getChildStructure
+   * （through.vertical → logic.left/right 交替）。
+   * 漏了这条 ⇒ d1 被判成 through.vertical ⇒ lineClass 强制 straight ⇒
+   * 布局侧 calcSpacingMajor 把 spacingMajor 翻倍（26 → 52），
+   * 实测对照组 noskel-timeline.through.vertical：avgΔX 24.4（222/235 个节点 dx = ±26）。
+   */
+  it('skeleton 把宿主结构写给子分支时也要过 available 表（available = [] ⇒ preset 作废）', () => {
+    const r = deep({
+      structureClass: THROUGH_VERTICAL,
+      skeletonStructure: { centralTopic: THROUGH_VERTICAL, mainTopic: THROUGH_VERTICAL },
+    })
+    expect(r.root.lineClass).toBe(STRAIGHT) // 中央分支自己就是轴 ⇒ 仍然 straight
+    expect(r.d1.lineClass).not.toBe(STRAIGHT)
+    expect(r.d2.lineClass).not.toBe(STRAIGHT)
+    expect(r.d3.lineClass).not.toBe(STRAIGHT)
+  })
+
+  it('treetable 宿主下 skeleton 写 treetable 是**可用**的（同组只排除另一张表）⇒ 不影响 brace 判定', () => {
+    const r = deep({
+      structureClass: 'org.xmind.ui.treetable',
+      skeletonStructure: { centralTopic: 'org.xmind.ui.treetable', mainTopic: 'org.xmind.ui.treetable' },
+    })
+    // treetable 不是 brace ⇒ 主题里那条 brace 线要被回落成 roundedElbow（BEFORE_USER 第二条）
+    expect(r.d1.lineClass).not.toBe(BRACE)
+  })
 })
 
 describe('timeline.through.vertical 强制 straight 连接线', () => {
