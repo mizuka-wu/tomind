@@ -43,9 +43,15 @@ import type { LogicNodeLayout } from './logic-layout'
 
 interface MapLayoutConfig {
   name: string
-  /** clockwise: 前 numRight 个子节点在右侧；anticlockwise: 前 numRight 个在左侧 */
-  direction: 'clockwise' | 'anticlockwise'
-  /** false = 允许从节点 attrs.numRight 读取手动分割点 */
+  /**
+   * clockwise: 前 numRight 个子节点在右侧、左侧 **reverse**、左 isUpToDown=false；
+   * anticlockwise: 前 numRight 个在左侧、右侧 reverse、右 isUpToDown=false；
+   * map（SB `structures/map.ts`，structureClass `org.xmind.ui.map`）: 前 numRight 个在右侧、
+   *   左侧 **不 reverse**、两侧 isUpToDown 都是 true。
+   * ⚠️ `isUpToDown` 在 SB `basemap.calSidePos` 里**只**被「only one child, treat special」那一处消费。
+   */
+  direction: 'clockwise' | 'anticlockwise' | 'map'
+  /** false = 允许从节点 attrs.numRight 读取手动分割点（SB 只有 MapUnbalanced 读扩展） */
   balanced: boolean
 }
 
@@ -385,6 +391,40 @@ class MapLayout extends BaseLayout {
     const size = sizeMap.get(node.id)
     return (bbHeight ?? size?.subtreeHeight ?? size?.height ?? 0) + 30
   }
+  /**
+   * SB `structures/mapunbalanced.calcNumRight`：
+   * ```js
+   * const unBalancedInfo = branch.model.unBalancedInfo()      // extensions['org.xmind.ui.map.unbalanced']
+   * let numRight = -1
+   * if (unBalancedInfo?.name === 'right-number') numRight = branch.figure.unbalanceRightNumber
+   * if (numRight < 0 || isNaN(numRight)) {
+   *   numRight = mapClockWise.calcNumRight.bind(this)(branch)  // 权重口径
+   *   branch.model.setUnBalancedInfoContent(numRight, true)    // ← **写回模型**
+   * }
+   * ```
+   *
+   * ⚠️ 第二分支的兜底值**不是**权重口径的结果（探针实测，2026-10-31 第七轮）：
+   * `calcNumRight` 第一次被调用是在 **branchView 构造期**，调用栈
+   * `getStructureClass → updateStructure → utils/branch.getViewStructure →
+   *  basemap.getAvailableChildStructure → _isRight → calcNumRight`，
+   * 此刻中央分支**只挂了第 1 个子分支**（`attaches.length === 1`）⇒
+   * `basemap.calcNumRight` 走到 `index === 0` 那条：`newRightWeight >= halfWeight` 成立、
+   * 但 `length === 2 || length > 2` 的守卫不成立 ⇒ **return num = 1**，
+   * 然后 `setUnBalancedInfoContent(1, true)` 把 1 写进模型扩展；
+   * 之后每次调用都命中第一分支（`figure.unbalanceRightNumber = 1`）⇒ 整棵树恒定「1 右 N-1 左」。
+   * 实测：4 个子分支 → content "1"、8 个 → "1"、demo 12 个（totalWeight 6610、权重口径应给 6）→ "1"。
+   * ⇒ **没有该扩展的 map.unbalanced 文档，SB 的分侧数恒为 1**，与子树权重无关。
+   * （test-map-unbalanced 量尺 479.2 / 1792.3 的真身；TM 此前走权重口径给 6 = map.clockwise 的布局。）
+   *
+   * @param attrsNumRight `attrs.numRight` = 解析层从 topic extensions 读到的 right-number
+   *   （SB 只排除 `< 0` 与 NaN，不做上界裁剪 —— `slice(0, pos)` 自己会收敛）
+   */
+  private calcUnbalancedNumRight(node: NodeDesc, childCount: number): number {
+    const raw = node.attrs?.numRight
+    if (typeof raw === 'number' && raw >= 0 && !Number.isNaN(raw)) return raw
+    return childCount > 0 ? 1 : 0
+  }
+
 
   private calcNumRight(
     children: readonly NodeDesc[],
@@ -509,18 +549,16 @@ class MapLayout extends BaseLayout {
         localBBMap.get(id)?.height ?? subtreeHeightMap?.get(id)
       let numRight: number
       if (!this.config.balanced) {
-        const attrsNumRight = node.attrs.numRight
-        if (typeof attrsNumRight === 'number' && attrsNumRight >= 0 && attrsNumRight <= regularChildren.length) {
-          numRight = attrsNumRight
-        } else {
-          numRight = this.calcNumRight(regularChildren, sizeMap, bbHeightOf)
-        }
+        numRight = this.calcUnbalancedNumRight(node, regularChildren.length)
       } else {
         numRight = this.calcNumRight(regularChildren, sizeMap, bbHeightOf)
       }
 
-      const isClockwise = this.config.direction === 'clockwise'
-      if (isClockwise) {
+      if (this.config.direction === 'map') {
+        // SB structures/map.calAttachedChildrenPos：左侧是 `slice(numRight)` —— **没有 .reverse()**
+        rightChildren = regularChildren.slice(0, numRight)
+        leftChildren = regularChildren.slice(numRight)
+      } else if (this.config.direction === 'clockwise') {
         rightChildren = regularChildren.slice(0, numRight)
         leftChildren = regularChildren.slice(numRight).reverse()
       } else {
@@ -729,6 +767,8 @@ class MapLayout extends BaseLayout {
       if (n > 2) {
         for (let i = 1; i < n - 1; i++) sumTopicSpacing -= spans[i]
       }
+      /** SB `getMinSumTopicSpacing(children, newBounds)` 的返回值（yPos 循环会边走边扣，先存一份） */
+      const minSumTopicSpacing = sumTopicSpacing
       const yPos: number[] = [0]
       for (let i = 1; i < n; i++) {
         const preTopicY = topicYs[i - 1]
@@ -738,8 +778,34 @@ class MapLayout extends BaseLayout {
         yPos[i] = Math.max(boundaryConstraint, topicConstraint)
         sumTopicSpacing -= yPos[i] + nowTopicY - (yPos[i - 1] + preTopicY + heights[i - 1])
       }
-      const parentPosRelativeToFirstChild = (yPos[0] + yPos[n - 1]) / 2
-      for (let i = 0; i < n; i++) centers.push(yPos[i] - parentPosRelativeToFirstChild)
+      /**
+       * SB `basemap.calSidePos` 的**单子节点特例**（原文 `//only one child, treat special`）：
+       * ```js
+       * if (firstChild === lastChild) {
+       *   firstChildY = ((isUpToDown ? -1 : 1) * minSumTopicSpacing) / 2
+       *               - firstChild.topicView.bounds.y
+       *               - (isUpToDown ? 1 : 0) * firstChild.topicView.bounds.height
+       * }
+       * ```
+       * 通用路径（`(firstEndAnchorY + yPos[0] + lastEndAnchorY + yPos[n-1]) / 2` 取中）在 n=1 时
+       * 会给出 centers[0] = 0（子节点与父同轴），SB 反而把它整盒推到轴外 minSumTopicSpacing/2。
+       * `isUpToDown` 按结构定：clockwise → 右 true / 左 false；anticlockwise → 右 false / 左 true。
+       * 实测 map.unbalanced（SB 的分侧数恒为 1 ⇒ 右侧只有 1 条）：残差 13 个节点 dy 恒为 +62
+       * = minSumTopicSpacing(80)/2 + 盒高(44)/2。
+       */
+      if (n === 1) {
+        const isUpToDown = this.config.direction === 'map'
+          ? true // SB structures/map：左右两侧都传 isUpToDown: true
+          : this.config.direction === 'clockwise' ? side === 'right' : side === 'left'
+        centers.push(
+          ((isUpToDown ? -1 : 1) * minSumTopicSpacing) / 2
+          - topicYs[0]
+          - (isUpToDown ? 1 : 0) * heights[0],
+        )
+      } else {
+        const parentPosRelativeToFirstChild = (yPos[0] + yPos[n - 1]) / 2
+        for (let i = 0; i < n; i++) centers.push(yPos[i] - parentPosRelativeToFirstChild)
+      }
       realignChildrenHeight = spans.reduce((a, b, i) => a + b + (i < n - 1 ? spacingMinor : 0), 0)
     } else {
       // snowbrush logicleftandright.calAttachedChildrenPos（非中央层级）
@@ -1059,4 +1125,16 @@ export const mapUnbalancedLayoutAlgorithm = new MapLayout({
   name: 'map-unbalanced',
   direction: 'clockwise',
   balanced: false,
+})
+
+/**
+ * SB `structures/map.ts`（structureClass `org.xmind.ui.map`，allstructures 里 MAPFLOATING 也用它）。
+ * 与 map.clockwise 的唯一差别：左侧 `slice(numRight)` **不 reverse**、两侧 isUpToDown 都是 true。
+ * ⚠️ 2026-10-31 第七轮之前 TM 没有这个算法 ⇒ 引擎按「不支持的结构类回退 logic-right」处理
+ * （实测 noskel-map：avgΔY **678.8**，12 个主分支全被摆到右侧）。
+ */
+export const mapLayoutAlgorithm = new MapLayout({
+  name: 'map',
+  direction: 'map',
+  balanced: true,
 })

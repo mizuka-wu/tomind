@@ -9,9 +9,16 @@ export const LEFT = 'LEFT'
 export const MIDDLE = 'MIDDLE'
 export const RIGHT = 'RIGHT'
 
-/** snowbrush matrixutils CELL_PADDING = 5 */
+/** snowbrush matrixutils CELL_PADDING = layoutConstant.MATRIX_CELL_PADDING = 5 */
 const CELL_PADDING = 5
-const CELL_DEFAULT_WIDTH = 120
+/**
+ * snowbrush `layoutConstant.MATRIX_CELL_DEFAULT_WIDTH` = **40**（TM 此前写死 120）。
+ * 只在 cell 没有 item 时用到（`createCell(NULL_CELL)` ⇒ 标签行/列的第一格），
+ * 非转置表里那一格被同列的 head 撑住 ⇒ 看不出差别；
+ * **转置表（spreadsheet.column）里它是第 0 列的宽度决定项** ⇒ 整张表右移 80
+ * （实测 test-matrix-column-inherit 全 234 个节点 dx 恒为 +80.0）。
+ */
+const CELL_DEFAULT_WIDTH = 40
 
 // ============== 工具函数 ==============
 const copy = (obj: any) => Array.isArray(obj) ? obj.slice() : { ...obj }

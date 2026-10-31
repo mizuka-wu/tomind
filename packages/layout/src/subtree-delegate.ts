@@ -23,6 +23,11 @@ import { layoutTreeSubtree } from './tree-layout'
 import { layoutOrgSubtree } from './org-chart-layout'
 import { layoutTreetableSubtree } from './treetable-layout'
 import { layoutTimelineSubtree } from './timeline-layout'
+import { layoutThroughVerticalSubtree } from './timeline-through-vertical-layout'
+import { layoutTimelineSidedSubtree } from './timeline-sided-horizontal-layout'
+import { layoutTimelineVerticalSubtree } from './timeline-vertical-sided-layout'
+import { layoutMatrixSubtree } from './matrix-layout'
+import { layoutFishboneSubtree } from './fishbone-layout'
 
 export interface SubtreeNodeLayout {
   x: number
@@ -52,6 +57,11 @@ export interface DelegatedSubtreeLayout {
  * - `tree.left/right` → `layoutTreeSubtree`
  * - `treetable` → `layoutTreetableSubtree`（SB 里它也是「整棵子树摊成一张表」的独立结构）
  * - `timeline.horizontal` → `layoutTimelineSubtree`（轴布局；它的子分支是 up/down，再往下是 logic.right）
+ * - `timeline.through.vertical` → `layoutThroughVerticalSubtree`（竖轴一层；轴子节点是 logic.left/right 交替）
+ * - `timeline.sided.horizontal` → `layoutTimelineSidedSubtree`（横轴上下分侧；子分支是 timeline.horizontal.up/down）
+ * - `timeline.vertical`（treesided）→ `layoutTimelineVerticalSubtree`（竖轴左右分侧；子树默认 tree.right/left）
+ * - `spreadsheet` / `spreadsheet.column` → `layoutMatrixSubtree`（整张表；column 是转置版）
+ * - `fishbone.leftHeaded` / `.rightHeaded` → `layoutFishboneSubtree`（鱼头 + 上下骨）
  * - `logic.left/right` / `brace.left/right` → `layoutLogicSubtree`
  *   （SB `BraceLeftAndRight = Object.assign({}, logicLeftAndRight, { calAttachedChildrenPos, … })`，
  *    堆叠公式同源，差别是 calcSpacingMajor 的 `isBraceStructure → LINE_SPACING(16)` 补丁
@@ -65,6 +75,31 @@ export function layoutDelegatedSubtree(
   state: SheetState | null,
   baseDepth = 1,
 ): DelegatedSubtreeLayout {
+  if (del.kind === 'fishbone') {
+    const res = layoutFishboneSubtree(child, options, styleEngine, state, baseDepth, del.headed)
+    return { nodes: res.nodes, bb: res.bb, originY: res.originY, own: res.nodes.get(child.id)! }
+  }
+
+  if (del.kind === 'matrix') {
+    const res = layoutMatrixSubtree(child, options, styleEngine, state, baseDepth, del.transpose === true)
+    return { nodes: res.nodes, bb: res.bb, originY: res.originY, own: res.nodes.get(child.id)! }
+  }
+
+  if (del.kind === 'timelineVertical') {
+    const res = layoutTimelineVerticalSubtree(child, options, styleEngine, state, baseDepth)
+    return { nodes: res.nodes, bb: res.bb, originY: res.originY, own: res.nodes.get(child.id)! }
+  }
+
+  if (del.kind === 'sidedHorizontal') {
+    const res = layoutTimelineSidedSubtree(child, options, styleEngine, state, baseDepth)
+    return { nodes: res.nodes, bb: res.bb, originY: res.originY, own: res.nodes.get(child.id)! }
+  }
+
+  if (del.kind === 'throughVertical') {
+    const res = layoutThroughVerticalSubtree(child, options, styleEngine, state, baseDepth)
+    return { nodes: res.nodes, bb: res.bb, originY: res.originY, own: res.nodes.get(child.id)! }
+  }
+
   if (del.kind === 'timeline') {
     const res = layoutTimelineSubtree(child, options, styleEngine, state, baseDepth)
     return { nodes: res.nodes, bb: res.bb, originY: res.originY, own: res.nodes.get(child.id)! }

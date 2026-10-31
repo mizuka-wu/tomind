@@ -16,28 +16,6 @@ import { getTitle, getFontSize, isCollapsed, getAttachedChildren, findRootTopic 
 import { measureStyledSubtree, getLineEndSpacingPatchGap, hasLineEndArrow } from './spacing-utils'
 type NodeSize = import('./layout-utils').SimpleNodeSize
 
-function getSpacing(node: NodeDesc, key: 'spacingMajor' | 'spacingMinor', fallback: number, styleEngine: StyleEngine | null, state: SheetState | null): number {
-  if (styleEngine && state) {
-    const val = styleEngine.getStyleValue(state, node.id, key)
-    if (typeof val === 'number') return val
-  }
-  return fallback
-}
-
-/** 递归计算子树总高度（垂直方向的总跨度） */
-function subtreeTotalHeight(node: NodeDesc, options: LayoutOptions, sizeMap: Map<string, NodeSize>, styleEngine: StyleEngine | null, state: SheetState | null, gapKey: 'spacingMajor' | 'spacingMinor'): number {
-  const size = sizeMap.get(node.id)!
-  if (isCollapsed(node)) return size.height
-  const children = getAttachedChildren(node)
-  if (children.length === 0) return size.height
-  let total = 0
-  for (let i = 0; i < children.length; i++) {
-    total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, gapKey)
-    if (i < children.length - 1) total += getSpacing(node, gapKey, options.verticalGap, styleEngine, state)
-  }
-  return Math.max(size.height, total)
-}
-
 // ─── 水平时间线 ───
 
 /** 解析样式数值（'26pt' → 26） */
@@ -90,7 +68,7 @@ function getBranchSpacing(node: NodeDesc, styleEngine: StyleEngine | null, state
 
 const LINECOLPOS = 13
 
-interface TlBB { x: number; y: number; width: number; height: number }
+export interface TlBB { x: number; y: number; width: number; height: number }
 
 /**
  * 主题盒原点（shape 中心）到盒顶的距离。measureStyledSubtree 现在是 part-aware 的，
@@ -112,7 +90,7 @@ interface TlProv {
  * timelinehorizontalup/down.calAttachedChildrenPos：
  * 子节点列在父中心右侧 PADDING 处垂直堆叠（up 向上 / down 向下），更深层委派 logic。
  */
-function layoutTimelineBranch(
+export function layoutTimelineBranch(
   node: NodeDesc,
   left: number,
   centerY: number,
@@ -364,84 +342,6 @@ export const timelineHorizontalLayoutAlgorithm: LayoutAlgorithm = {
     measureStyledSubtree(root, options, sizeMap, 'horizontal', styleEngine, state)
 
     layoutTimelineHorizontal(root, options.rootOffsetX, 200, null, options, sizeMap, nodes, styleEngine, state)
-
-    let maxX = 0, maxY = 0
-    for (const l of nodes.values()) {
-      maxX = Math.max(maxX, l.x + l.width)
-      maxY = Math.max(maxY, l.y + l.height)
-    }
-
-    // 居中根节点
-    const rootLayout = nodes.get(root.id)
-    if (rootLayout) {
-      const ox = maxX / 2 - (rootLayout.x + rootLayout.width / 2)
-      const oy = maxY / 2 - (rootLayout.y + rootLayout.height / 2)
-      if (Math.abs(ox) > 0.5 || Math.abs(oy) > 0.5) {
-        for (const l of nodes.values()) { l.x += ox; l.y += oy }
-        maxX += ox; maxY += oy
-      }
-    }
-
-    return { nodes, totalWidth: maxX, totalHeight: maxY }
-  },
-}
-
-// ─── 垂直时间线 ───
-
-function layoutTimelineVertical(
-  node: NodeDesc,
-  x: number,
-  y: number,
-  options: LayoutOptions,
-  sizeMap: Map<string, NodeSize>,
-  nodes: Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>,
-  styleEngine: StyleEngine | null,
-  state: SheetState | null,
-): void {
-  const size = sizeMap.get(node.id)!
-  const { width: titleWidth, height: titleHeight } = measureTextSize(getTitle(node), getFontSize(node), options)
-
-  // 分支高度 = 子节点沿垂直轴排列的总跨度
-  let branchHeight = size.height
-  const children = getAttachedChildren(node)
-  if (!isCollapsed(node) && children.length > 0) {
-    let total = 0
-    for (let i = 0; i < children.length; i++) {
-      total += subtreeTotalHeight(children[i], options, sizeMap, styleEngine, state, 'spacingMajor')
-      if (i < children.length - 1) total += getSpacing(node, 'spacingMajor', options.verticalGap, styleEngine, state)
-    }
-    branchHeight = Math.max(size.height, total)
-  }
-
-  nodes.set(node.id, { x, y, width: size.width, height: size.height, titleWidth, titleHeight, branchHeight })
-
-  if (isCollapsed(node)) return
-  if (children.length === 0) return
-
-  // 子节点沿垂直轴排列，交替左右
-  let childY = y + size.height + getSpacing(node, 'spacingMajor', options.verticalGap, styleEngine, state)
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i]
-    const cs = sizeMap.get(child.id)!
-    const childX = (i % 2 === 0)
-      ? x - cs.width - getSpacing(node, 'spacingMinor', options.horizontalGap, styleEngine, state)  // 左侧
-      : x + size.width + getSpacing(node, 'spacingMinor', options.horizontalGap, styleEngine, state)  // 右侧
-    layoutTimelineVertical(child, childX, childY, options, sizeMap, nodes, styleEngine, state)
-    childY += subtreeTotalHeight(child, options, sizeMap, styleEngine, state, 'spacingMajor') + getSpacing(node, 'spacingMajor', options.verticalGap, styleEngine, state)
-  }
-}
-
-export const timelineVerticalLayoutAlgorithm: LayoutAlgorithm = {
-  name: 'timeline-vertical',
-  layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
-    const nodes = new Map<string, { x: number; y: number; width: number; height: number; titleWidth: number; titleHeight: number; branchHeight: number }>()
-    const root = findRootTopic(doc)
-    if (!root) return { nodes, totalWidth: 0, totalHeight: 0 }
-
-    const sizeMap = new Map<string, NodeSize>()
-    measureStyledSubtree(root, options, sizeMap, 'horizontal', styleEngine, state)
-
-    layoutTimelineVertical(root, 200, options.rootOffsetX, options, sizeMap, nodes, styleEngine, state)
 
     let maxX = 0, maxY = 0
     for (const l of nodes.values()) {

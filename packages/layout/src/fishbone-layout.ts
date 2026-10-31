@@ -171,6 +171,7 @@ const FISH_BONE = {
   BONE_CONNECTION_DISTANCE: 30,
   BONE_CONNECTION_TAN: Math.tan((Math.PI / 180) * 60),
   HEAD_BONE_LINE_EXTEND_BODY_WIDTH: 60,
+  HEAD_BONE_LINE_MIN_BODY_WIDTH: 0,
 }
 
 interface FBB { x: number; y: number; width: number; height: number }
@@ -283,8 +284,23 @@ function layoutBone(
       bb = { x: -cs.width / 2, y: -cs.originY, width: cs.width, height: cs.height }
     }
     const childXToBase = dirSign === 1 ? Math.abs(bb.x) : -(bb.width + bb.x)
-    const childX = baseX + childXToBase
     const childYDist = sideSign === 1 ? Math.abs(bb.y) : Math.abs(bb.height + bb.y)
+    /**
+     * SB `fishbonebasemainbone._calcAttachedChildrenPositiconAndSelfBounds` 的
+     * 「optimize baseX for similar structure fishbone」：
+     * ```js
+     * if (getParentFishBoneStructureClass(this.STRUCTURECLASS) === childInfo.currentBranchStructure) {
+     *   childX = childX - (childYToBaseYDistance / BONE_CONNECTION_TAN) * isToRightMultiplicationParam
+     * }
+     * ```
+     * `getParentFishBoneStructureClass(LEFTHEADTOP/BOTTOMBONE) = FISHBONELEFTHEADED`
+     * （RIGHTHEAD* → FISHBONERIGHTHEADED）⇒ 判据是「骨上这个子分支自己也是一条**同向鱼骨**」。
+     * 调整后 childX 同时用于 position 与 boundsMinX/boundsMaxX。
+     * 实测 probe-fishbone.leftHeaded × fishbone.leftHeaded：漏这条 ⇒ 整棵嵌套鱼骨
+     * （40 个节点）dx 恒为 **+240.2**（= childYDist 416 / tan60）。
+     */
+    const sameFishbone = childEff === (dirSign === 1 ? SC.FISHBONE_LEFT_HEADED : SC.FISHBONE_RIGHT_HEADED)
+    const childX = baseX + childXToBase - (sameFishbone ? (childYDist / FISH_BONE.BONE_CONNECTION_TAN) * dirSign : 0)
     const childY = baseY + childYDist * sideSign
     const dx = boneCenterX + childX - (bb.width / 2 + bb.x) - (provNodes.get(child.id)!.x + provNodes.get(child.id)!.width / 2 - (provNodes.get(child.id)!.x + provNodes.get(child.id)!.width / 2)) - 0
     // 子节点中心目标 = 骨中心 + (childX, childY)；provisional 中心 = (own.x + w/2, own.y + h/2)
@@ -310,7 +326,27 @@ function layoutBone(
   return { nodes: out, bb: { x: boundsMinX, y: bbY, width: bbWidth, height: bbHeight } }
 }
 
-/** SB fishbonebasehead._calcAttachedChildrenPosition */
+/**
+ * SB `fishbonebasehead._calcAttachedChildrenPosition` + `_calcBounds`。
+ *
+ * 返回值 = SB 的 `branchLayoutTreeInfo.bounds`（鱼头分支的 bounds，相对**鱼头主题盒原点**）：
+ * ```js
+ * maxSideWidth = max(topSide.width, bottomSide.width)      // 两侧同值 = 最后一次 _updateSideSize 的 sideWidth
+ * width  = topicBounds.width + (maxSideWidth !== 0
+ *            ? max(maxSideWidth + HEAD_BONE_LINE_EXTEND_BODY_WIDTH(60),
+ *                  HEAD_BONE_LINE_MIN_BODY_WIDTH(0)) : 0)
+ * height = max(halfH + startAnchorPositionY, topSide.height)
+ *        + max(halfH - startAnchorPositionY, bottomSide.height)
+ * x = direction === LEFT ? -(width - topicBounds.width/2) : topicBounds.x
+ * y = -max(halfH, topSide.height - startAnchorPositionY)
+ * ```
+ * `startAnchorPositionY` 只有 underline 形状才非 0（TM 的 fixture 全是 roundedRect ⇒ 0）。
+ * 半高用 **topicBounds.height / 2**（SB 原文），不是 originY。
+ *
+ * ⚠️ 第七轮补：没有这个 bounds，fishbone 就没法当「被委派方」——宿主的 stop 格/cell
+ * 拿不到子树包围盒 ⇒ `delegationOf(FISHBONE_*)` 只能返回 null ⇒ 丢节点
+ * （实测 probe-treetable×fishbone.leftHeaded n=203/235、probe-spreadsheet× n=220/235）。
+ */
 function layoutHead(
   head: NodeDesc,
   left: number,
@@ -321,27 +357,32 @@ function layoutHead(
   nodes: Map<string, FBNode>,
   styleEngine: StyleEngine | null,
   state: SheetState | null,
-): void {
+  baseDepth = 0,
+): FBB {
   const size = sizeMap.get(head.id)!
   const h = size.height
   const w = size.width
   nodes.set(head.id, { x: left, y: centerY - h / 2, width: w, height: h, titleWidth: size.titleWidth, titleHeight: size.titleHeight, branchHeight: h, partBounds: size.partBounds })
 
   const children = isCollapsed(head) ? [] : getAttachedChildren(head)
-  if (children.length === 0) return
+  if (children.length === 0) return { x: -w / 2, y: -h / 2, width: w, height: h }
 
   const headCenterX = left + w / 2
   const bonePadH = bonePaddingHorizon(head, styleEngine, state)
   const padV = bonePaddingVertical(head, styleEngine, state)
   const baseY = 0 // shape != underline → startAnchorPositionY = 0
   let baseX = (w / 2 + bonePadH) * dirSign
+  // SB fishBoneSideSize（_updateSideSize 每组分完更新：宽度是**赋值**、高度是 max）
+  let sideWidth = 0
+  let topSideHeight = 0
+  let bottomSideHeight = 0
 
   for (let i = 0; i < children.length; i += 2) {
     const top = children[i]
     const bottom = children[i + 1]
     const topSize = sizeMap.get(top.id)!
-    const topProv = layoutBone(top, 0, 0, 1, dirSign, 1, head, options, sizeMap, styleEngine, state)
-    const bottomProv = bottom ? layoutBone(bottom, 0, 0, -1, dirSign, 1, head, options, sizeMap, styleEngine, state) : null
+    const topProv = layoutBone(top, 0, 0, 1, dirSign, baseDepth + 1, head, options, sizeMap, styleEngine, state)
+    const bottomProv = bottom ? layoutBone(bottom, 0, 0, -1, dirSign, baseDepth + 1, head, options, sizeMap, styleEngine, state) : null
 
     const topConnW = boneConnectionWidth(topProv.bb, topSize.height, padV)
     const topDist = Math.max(topSize.width / 2, topConnW)
@@ -383,7 +424,57 @@ function layoutHead(
     for (const [id, nl] of topProv.nodes) {
       nodes.set(id, { ...nl, x: nl.x + tdx, y: nl.y + tdy })
     }
+
+    // SB _updateSideSize(baseX, topBoneInfo, bottomBoneInfo)
+    sideWidth = Math.abs(baseX) - bonePadH - w / 2
+    topSideHeight = Math.max(topProv.bb.height + padV, topSideHeight)
+    if (bottomProv) bottomSideHeight = Math.max(bottomProv.bb.height + padV, bottomSideHeight)
   }
+
+  // SB _calcBounds()
+  const maxSideWidth = Math.max(sideWidth, sideWidth)
+  let boundsW = w
+  if (maxSideWidth !== 0) {
+    boundsW += Math.max(
+      maxSideWidth + FISH_BONE.HEAD_BONE_LINE_EXTEND_BODY_WIDTH,
+      FISH_BONE.HEAD_BONE_LINE_MIN_BODY_WIDTH,
+    )
+  }
+  const halfH = h / 2
+  const boundsH = Math.max(halfH + baseY, topSideHeight) + Math.max(halfH - baseY, bottomSideHeight)
+  const boundsX = dirSign === 1 ? -w / 2 : -(boundsW - w / 2)
+  const boundsY = -Math.max(halfH, topSideHeight - baseY)
+  return { x: boundsX, y: boundsY, width: boundsW, height: boundsH }
+}
+
+/**
+ * 独立布局一棵 fishbone 子树（供其它结构按生效结构委派使用）。
+ * 契约同 `subtree-delegate.layoutDelegatedSubtree`：节点表以 child 原点为 (0,0)、
+ * bb = SB 的 `child.boundaryBounds`（无 boundary 时 == `fishbonebasehead._calcBounds` 的 bounds）。
+ *
+ * @param headed 'left' = fishbone.leftHeaded（鱼头在左、骨往右长，dirSign = 1）；
+ *               'right' = fishbone.rightHeaded（dirSign = -1）
+ */
+export function layoutFishboneSubtree(
+  node: NodeDesc,
+  options: LayoutOptions,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+  baseDepth = 1,
+  headed: 'left' | 'right' = 'left',
+): { nodes: Map<string, FBNode>; bb: FBB; originY: number } {
+  const sizeMap = new Map<string, NodeSize>()
+  measureSubtree(node, options, sizeMap, styleEngine, state)
+  const raw = new Map<string, FBNode>()
+  const dirSign: 1 | -1 = headed === 'left' ? 1 : -1
+  const bb = layoutHead(node, 0, 0, dirSign, options, sizeMap, raw, styleEngine, state, baseDepth)
+  const own = raw.get(node.id)!
+  const originY = sizeMap.get(node.id)!.originY
+  const ox = own.x + own.width / 2
+  const oy = own.y + originY
+  const nodes = new Map<string, FBNode>()
+  for (const [id, nl] of raw) nodes.set(id, { ...nl, x: nl.x - ox, y: nl.y - oy })
+  return { nodes, bb, originY }
 }
 
 export const fishboneLeftHeadedLayoutAlgorithm: LayoutAlgorithm = {

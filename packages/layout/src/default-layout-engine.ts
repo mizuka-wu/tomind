@@ -8,6 +8,8 @@ import type { ILayoutEngine, LayoutResult, LayoutAlgorithm, LayoutOptions } from
 
 /** XMind structureClass → 布局算法名 */
 const STRUCTURE_CLASS_TO_LAYOUT: Record<string, string> = {
+  // SB allstructures：`org.xmind.ui.map` → structures/map.ts（左侧不 reverse、两侧 isUpToDown）
+  'org.xmind.ui.map': 'map',
   'org.xmind.ui.map.clockwise': 'map-clockwise',
   'org.xmind.ui.map.anticlockwise': 'map-anticlockwise',
   'org.xmind.ui.map.unbalanced': 'map-unbalanced',
@@ -35,7 +37,8 @@ const STRUCTURE_CLASS_TO_LAYOUT: Record<string, string> = {
   'org.xmind.ui.treetable': 'treetable',
   'org.xmind.ui.treetable.toptitle': 'treetable-toptitle',
   'org.xmind.ui.spreadsheet': 'matrix',
-  'org.xmind.ui.spreadsheet.column': 'matrix',
+  // SB `columnSpreadsheet = extend({}, structuresSpreadsheet, { _needTranspose: true })`
+  'org.xmind.ui.spreadsheet.column': 'matrix-column',
   // SB allstructures.getStructure: 不支持的结构类回退 LOGICRIGHT
   // （legacy 'org.xmind.ui.fishbone.left/right' 在 SB 中不存在）
   'org.xmind.ui.fishbone.left': 'logic-right',

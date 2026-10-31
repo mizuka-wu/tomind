@@ -41,11 +41,23 @@ export type DelegableStructure =
   | { kind: 'org'; dir: 'down' | 'up' }
   | { kind: 'treetable'; topTitle?: boolean }
   | { kind: 'timeline' }
+  | { kind: 'throughVertical' }
+  | { kind: 'sidedHorizontal' }
+  | { kind: 'timelineVertical' }
+  | { kind: 'matrix'; transpose?: boolean }
+  | { kind: 'fishbone'; headed: 'left' | 'right' }
 
 /**
- * 生效结构类 → TM 的委派方式；TM 没有对应子树入口的（timeline.sided.horizontal /
- * timeline.through.vertical / timeline.vertical / map 系 / fishbone / spreadsheet 系）
- * 返回 null，由宿主自己递归（已知差距，见 skill）。
+ * 生效结构类 → TM 的委派方式。**只有 map 系返回 null**（2026-10-31 第七轮把
+ * sided.horizontal / through.vertical / timeline.vertical / spreadsheet(.column) / fishbone
+ * 五个入口全补齐了），由宿主自己递归。
+ * ⚠️ map 系其实**到不了这里**：MAP_LIKE_STRUCTURES 被 ATTACHED_EXPOSED 排除 ⇒
+ * 任何 attached 子分支的生效结构都不可能是 map.*（实测 probe-treetable×map.clockwise
+ * 声明无效、n=235/235、Δ 全 0）。
+ *
+ * ⚠️ 返回 null 对「宿主自己递归」的那几个（logic / tree / org / brace / map）只是 Δ 差距，
+ * 但对**有 stop 格/cell 的宿主**（treetable / spreadsheet / fishbone）就是**丢节点**
+ * （n 造假）⇒ 每补一个入口都要回头看那三处 fallback。
  *
  * brace.left/right 也算有入口：SB `braceleftandright` 就是 `underscore.extend({}, logicLeftAndRight, …)`，
  * 堆叠/居中公式与 logic 逐字相同，唯一差异是 calcSpacingMajor 里
@@ -82,6 +94,29 @@ export function delegationOf(eff: StructureClass | null): DelegableStructure | n
     //    through.vertical / vertical 仍是 null（TM 没抽子树入口，见 skill）
     case SC.TIMELINE_HORIZONTAL:
       return { kind: 'timeline' }
+    // timeline.through.vertical 有子树入口（2026-10-31 第七轮）：轴只有**一层**
+    // （available = [] ⇒ 轴子节点一律 logic.left/right 交替），抽入口的成本极低，
+    // 而不抽的代价是宿主的 stop 格/cell/骨子分支 fallback **只放一个盒**⇒ 丢节点
+    // （实测 treetable× n=203/235、spreadsheet× n=220/235、fishbone× n=220/235）。
+    case SC.TIMELINE_THROUGH_VERTICAL:
+      return { kind: 'throughVertical' }
+    // timeline.sided.horizontal 有子树入口（2026-10-31 第七轮：轴布局按 SB 整条重写后抽出来的）
+    case SC.TIMELINE_SIDED_HORIZONTAL:
+      return { kind: 'sidedHorizontal' }
+    // timeline.vertical（SB TREESIDED，同一个字符串）有子树入口（2026-10-31 第七轮）
+    case SC.TIMELINE_VERTICAL:
+      return { kind: 'timelineVertical' }
+    // spreadsheet / spreadsheet.column 有子树入口（2026-10-31 第七轮）：
+    // SB 两张表是同一套机器，只差 `_needTranspose`（columnSpreadsheet = true）
+    case SC.SPREADSHEET:
+      return { kind: 'matrix' }
+    case SC.COLUMN_SPREADSHEET:
+      return { kind: 'matrix', transpose: true }
+    // fishbone 有子树入口（2026-10-31 第七轮：补了 SB `_calcBounds` 的鱼头 bounds）
+    case SC.FISHBONE_LEFT_HEADED:
+      return { kind: 'fishbone', headed: 'left' }
+    case SC.FISHBONE_RIGHT_HEADED:
+      return { kind: 'fishbone', headed: 'right' }
     default:
       return null
   }

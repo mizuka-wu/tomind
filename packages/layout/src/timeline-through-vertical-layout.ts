@@ -92,6 +92,145 @@ interface ThroughProv {
   originY: number
 }
 
+interface TvBB { x: number; y: number; width: number; height: number }
+
+/**
+ * 轴布局本体（SB `timelinethroughvertical.calAttachedChildrenPos`），坐标帧 = **本节点原点**
+ * 平移到 (originX, originY)。返回 SB 的 `branch.bounds`
+ * （= `getUnionBoundingBox(topicView.bounds, getChildrenSize(branch))`，相对本节点原点）——
+ * 作为根布局时没人消费，被别的结构委派时它就是宿主要的 bb。
+ *
+ * ⚠️ 轴只有**一层**：available = [] ⇒ 轴子节点的生效结构一律是
+ * `getChildStructure` 给的 logic.left / logic.right（从 LEFT 起交替），
+ * 再往下由 logic 结构自己解析 preset。
+ */
+function layoutThroughVerticalAxis(
+  node: NodeDesc,
+  originX: number,
+  originY: number,
+  options: LayoutOptions,
+  sizeMap: Map<string, NodeSize>,
+  nodes: Map<string, NodeLayout>,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+  depth: number,
+): TvBB {
+  const rootSize = sizeMap.get(node.id)!
+  const rootW = rootSize.width
+  const rootH = rootSize.height
+  const rootOriginY = originYOf(rootSize)
+  const rootTitle = measureTextSize(getTitle(node), getFontSize(node, styleEngine, state), options)
+  nodes.set(node.id, {
+    x: originX - rootW / 2,
+    y: originY - rootOriginY,
+    width: rootW,
+    height: rootH,
+    titleWidth: rootSize.titleWidth ?? rootTitle.width,
+    titleHeight: rootSize.titleHeight ?? rootTitle.height,
+    branchHeight: rootH,
+    partBounds: rootSize.partBounds,
+  })
+
+  const children = isCollapsed(node) ? [] : getAttachedChildren(node)
+  if (children.length === 0) {
+    return { x: -rootW / 2, y: -rootOriginY, width: rootW, height: rootH }
+  }
+
+  const TOPIC_SPACING = getTopicSpacing(node, styleEngine, state)
+
+  // 轴子节点的子树整棵委派 logic（side 从 LEFT 起交替，SB getFinalTimelineChildDirection）
+  const provs: ThroughProv[] = children.map((child, i) => {
+    const side: 'left' | 'right' = i % 2 === 0 ? 'left' : 'right'
+    const res = layoutLogicSubtree(child, 0, 0, options, styleEngine, state, side, { baseDepth: depth + 1 })
+    const own = res.nodes.get(child.id)!
+    return {
+      nodes: res.nodes,
+      bb: { x: res.bbX, y: res.bb.y, width: res.bbW, height: res.bb.height },
+      own,
+      originY: res.originY,
+    }
+  })
+
+  // SB posList 递推（index 0 是父分支自己，位置 (0,0)）
+  let prevPosX = 0
+  let prevPosY = 0
+  // getBasePoint(prev, DOWN).y = shapeBounds.y + shapeBounds.height = -originY + shapeHeight = originY
+  let prevBaseDownY = rootOriginY
+  // index === 1 时 prevBounds 用父的 topicView.shapeBounds：y = -originY、height = shapeHeight = 2×originY
+  let prevBoundsY = -rootOriginY
+  let prevBoundsH = 2 * rootOriginY
+
+  // SB 收尾：childrenSize = ∪ vector(child.boundaryBounds, child.position)，
+  //         newBounds   = getUnionBoundingBox(topicView.bounds, childrenSize)
+  let minX = -rootW / 2
+  let minY = -rootOriginY
+  let maxX = rootW / 2
+  let maxY = rootH - rootOriginY
+
+  for (let i = 0; i < provs.length; i++) {
+    const p = provs[i]
+    if (i > 0) {
+      const prev = provs[i - 1]
+      prevBaseDownY = prev.originY
+      prevBoundsY = prev.bb.y
+      prevBoundsH = prev.bb.height
+    }
+    const currBoundsY = p.bb.y
+    // getBasePoint(prev, DOWN).x 与 getBasePoint(prev, UP).x 都是 0 → x 恒等于 prevPosX
+    const posX = prevPosX
+    const offsetYOfTopics = prevBaseDownY + TOPIC_SPACING - currBoundsY
+    const offsetYOfBounds = prevBaseDownY + prevBoundsH + prevBoundsY - currBoundsY
+    const posY = prevPosY + Math.max(offsetYOfBounds, offsetYOfTopics)
+
+    // 把子树从局部帧（own 盒左上在 (0, -originY)）平移到「原点在 (originX+posX, originY+posY)」
+    const dx = (originX + posX - p.own.width / 2) - p.own.x
+    const dy = (originY + posY) - (p.own.y + p.originY)
+    for (const [id, nl] of p.nodes) {
+      nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy })
+    }
+
+    minX = Math.min(minX, posX + p.bb.x)
+    maxX = Math.max(maxX, posX + p.bb.x + p.bb.width)
+    minY = Math.min(minY, posY + p.bb.y)
+    maxY = Math.max(maxY, posY + p.bb.y + p.bb.height)
+
+    prevPosX = posX
+    prevPosY = posY
+  }
+
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
+
+/**
+ * 独立布局一棵 timeline.through.vertical 子树（供其它结构按生效结构委派使用）。
+ * 契约同 `subtree-delegate.layoutDelegatedSubtree`：节点表以 child 原点为 (0,0)、
+ * bb = SB 的 `child.boundaryBounds`（无 boundary 时 == child.bounds）。
+ *
+ * ⚠️ 2026-10-31 第七轮补：此前 `delegationOf(TIMELINE_THROUGH_VERTICAL)` 返回 null，
+ * treetable 的 stop 格 / matrix 的 cell / fishbone 的骨子分支遇到它时 fallback
+ * **只放一个盒**⇒ 丢节点（实测 probe-treetable×through.vertical n=203/235、
+ * spreadsheet× n=220/235、fishbone× n=220/235）。
+ */
+export function layoutThroughVerticalSubtree(
+  node: NodeDesc,
+  options: LayoutOptions,
+  styleEngine: StyleEngine | null,
+  state: SheetState | null,
+  baseDepth = 1,
+): { nodes: Map<string, NodeLayout>; bb: TvBB; originY: number } {
+  const sizeMap = new Map<string, NodeSize>()
+  measureStyledSubtree(node, options, sizeMap, 'horizontal', styleEngine, state)
+  const raw = new Map<string, NodeLayout>()
+  const bb = layoutThroughVerticalAxis(node, 0, 0, options, sizeMap, raw, styleEngine, state, baseDepth)
+  const own = raw.get(node.id)!
+  const originY = originYOf(sizeMap.get(node.id)!)
+  const ox = own.x + own.width / 2
+  const oy = own.y + originY
+  const nodes = new Map<string, NodeLayout>()
+  for (const [id, nl] of raw) nodes.set(id, { ...nl, x: nl.x - ox, y: nl.y - oy })
+  return { nodes, bb, originY }
+}
+
 export const timelineThroughVerticalLayoutAlgorithm: LayoutAlgorithm = {
   name: 'timeline-through-vertical',
   layout(doc: NodeDesc, options: LayoutOptions = DEFAULT_LAYOUT_OPTIONS, styleEngine: StyleEngine | null = null, state: SheetState | null = null): LayoutResult {
@@ -103,76 +242,7 @@ export const timelineThroughVerticalLayoutAlgorithm: LayoutAlgorithm = {
     measureStyledSubtree(root, options, sizeMap, 'horizontal', styleEngine, state)
 
     // 先把根放在自己的原点上（原点 = shape 中心；盒左上 = (-w/2, -originY)），最后统一平移到正数区
-    const rootSize = sizeMap.get(root.id)!
-    const rootW = rootSize.width
-    const rootH = rootSize.height
-    const rootOriginY = originYOf(rootSize)
-    const rootTitle = measureTextSize(getTitle(root), getFontSize(root, styleEngine, state), options)
-    nodes.set(root.id, {
-      x: -rootW / 2,
-      y: -rootOriginY,
-      width: rootW,
-      height: rootH,
-      titleWidth: rootSize.titleWidth ?? rootTitle.width,
-      titleHeight: rootSize.titleHeight ?? rootTitle.height,
-      branchHeight: rootH,
-      partBounds: rootSize.partBounds,
-    })
-
-    const children = isCollapsed(root) ? [] : getAttachedChildren(root)
-    if (children.length === 0) {
-      return { nodes, totalWidth: rootW, totalHeight: rootH }
-    }
-
-    const TOPIC_SPACING = getTopicSpacing(root, styleEngine, state)
-
-    // 轴子节点的子树整棵委派 logic（side 从 LEFT 起交替，SB getFinalTimelineChildDirection）
-    const provs: ThroughProv[] = children.map((child, i) => {
-      const side: 'left' | 'right' = i % 2 === 0 ? 'left' : 'right'
-      const res = layoutLogicSubtree(child, 0, 0, options, styleEngine, state, side)
-      const own = res.nodes.get(child.id)!
-      return {
-        nodes: res.nodes,
-        bb: { x: res.bbX, y: res.bb.y, width: res.bbW, height: res.bb.height },
-        own,
-        originY: res.originY,
-      }
-    })
-
-    // SB posList 递推（index 0 是父分支自己，位置 (0,0)）
-    let prevPosX = 0
-    let prevPosY = 0
-    // getBasePoint(prev, DOWN).y = shapeBounds.y + shapeBounds.height = -originY + shapeHeight = originY
-    let prevBaseDownY = rootOriginY
-    // index === 1 时 prevBounds 用父的 topicView.shapeBounds：y = -originY、height = shapeHeight = 2×originY
-    let prevBoundsY = -rootOriginY
-    let prevBoundsH = 2 * rootOriginY
-
-    for (let i = 0; i < provs.length; i++) {
-      const p = provs[i]
-      if (i > 0) {
-        const prev = provs[i - 1]
-        prevBaseDownY = prev.originY
-        prevBoundsY = prev.bb.y
-        prevBoundsH = prev.bb.height
-      }
-      const currBoundsY = p.bb.y
-      // getBasePoint(prev, DOWN).x 与 getBasePoint(prev, UP).x 都是 0 → x 恒等于 prevPosX
-      const posX = prevPosX
-      const offsetYOfTopics = prevBaseDownY + TOPIC_SPACING - currBoundsY
-      const offsetYOfBounds = prevBaseDownY + prevBoundsH + prevBoundsY - currBoundsY
-      const posY = prevPosY + Math.max(offsetYOfBounds, offsetYOfTopics)
-
-      // 把子树从局部帧（own 盒左上在 (0, -originY)）平移到「原点在 (posX, posY)」
-      const dx = (posX - p.own.width / 2) - p.own.x
-      const dy = posY - (p.own.y + p.originY)
-      for (const [id, nl] of p.nodes) {
-        nodes.set(id, { ...nl, x: nl.x + dx, y: nl.y + dy })
-      }
-
-      prevPosX = posX
-      prevPosY = posY
-    }
+    layoutThroughVerticalAxis(root, 0, 0, options, sizeMap, nodes, styleEngine, state, 0)
 
     // 平移到正数区
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity

@@ -39,13 +39,13 @@ export {
 } from './child-structure'
 export type { DelegableStructure, StructureClass } from './child-structure'
 
-export { matrixLayoutAlgorithm } from './matrix-layout'
+export { matrixLayoutAlgorithm, matrixColumnLayoutAlgorithm, layoutMatrixSubtree } from './matrix-layout'
 export { treeTableLayoutAlgorithm, treeTableTopTitleLayoutAlgorithm, layoutTreetableSubtree } from './treetable-layout'
 
 export { Matrix, MatrixContainer, MatrixCell, ColumnMap, LEFT, MIDDLE, RIGHT } from './matrix'
 
 // Map 布局
-export { mapClockwiseLayoutAlgorithm } from './map-layout'
+export { mapClockwiseLayoutAlgorithm, mapLayoutAlgorithm } from './map-layout'
 export { mapAnticlockwiseLayoutAlgorithm, mapUnbalancedLayoutAlgorithm } from './map-layout'
 
 // Logic 布局
@@ -61,14 +61,15 @@ export { braceRightLayoutAlgorithm, braceLeftLayoutAlgorithm } from './brace-lay
 export { orgChartDownLayoutAlgorithm, orgChartUpLayoutAlgorithm, orgRealignOffset, layoutOrgSubtree } from './org-chart-layout'
 
 // Timeline 布局
-export { timelineHorizontalLayoutAlgorithm, timelineVerticalLayoutAlgorithm } from './timeline-layout'
+export { timelineHorizontalLayoutAlgorithm, layoutTimelineSubtree } from './timeline-layout'
+export { timelineVerticalLayoutAlgorithm, layoutTimelineVerticalSubtree } from './timeline-vertical-sided-layout'
 export { timelineHorizontalUpLayoutAlgorithm } from './timeline-horizontal-up-layout'
 export { timelineHorizontalDownLayoutAlgorithm } from './timeline-horizontal-down-layout'
-export { timelineSidedHorizontalLayoutAlgorithm } from './timeline-sided-horizontal-layout'
-export { timelineThroughVerticalLayoutAlgorithm } from './timeline-through-vertical-layout'
+export { timelineSidedHorizontalLayoutAlgorithm, layoutTimelineSidedSubtree } from './timeline-sided-horizontal-layout'
+export { timelineThroughVerticalLayoutAlgorithm, layoutThroughVerticalSubtree } from './timeline-through-vertical-layout'
 
 // Fishbone 布局
-export { fishboneLeftHeadedLayoutAlgorithm, fishboneRightHeadedLayoutAlgorithm } from './fishbone-layout'
+export { fishboneLeftHeadedLayoutAlgorithm, fishboneRightHeadedLayoutAlgorithm, layoutFishboneSubtree } from './fishbone-layout'
 
 // Part-Aware Layout 系统
 export { CellLayout, CellGridLayout } from './cell-layout'
