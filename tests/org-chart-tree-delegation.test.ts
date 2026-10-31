@@ -137,11 +137,19 @@ describe('child-structure：SB 的 available 表与 getViewStructure 解析', ()
     // timeline.horizontal（轴布局）也有入口了；.up/.down 不在 EXPOSED_STRUCTURE 里
     // ⇒ 生效结构不可能是它们（只有轴自己的 getChildStructure 会给）
     expect(delegationOf(SC.TIMELINE_HORIZONTAL)).toEqual({ kind: 'timeline' })
-    // TM 没有子树入口的：宿主自己递归（已知差距，量化数字见 skill）
-    expect(delegationOf(SC.TIMELINE_SIDED_HORIZONTAL)).toBeNull()
-    expect(delegationOf(SC.TIMELINE_THROUGH_VERTICAL)).toBeNull()
+    // 2026-10-31 第七轮：timeline 的其余三个变体 + spreadsheet(.column) + fishbone 全补齐了入口。
+    // 少了它们 ⇒ treetable 的 stop 格 / matrix 的 cell / fishbone 的骨子分支 fallback
+    // **只放一个盒**⇒ 丢节点（实测 n=203/235 与 220/235）。
+    expect(delegationOf(SC.TIMELINE_SIDED_HORIZONTAL)).toEqual({ kind: 'sidedHorizontal' })
+    expect(delegationOf(SC.TIMELINE_THROUGH_VERTICAL)).toEqual({ kind: 'throughVertical' })
+    expect(delegationOf(SC.TIMELINE_VERTICAL)).toEqual({ kind: 'timelineVertical' })
+    expect(delegationOf(SC.SPREADSHEET)).toEqual({ kind: 'matrix' })
+    expect(delegationOf(SC.COLUMN_SPREADSHEET)).toEqual({ kind: 'matrix', transpose: true })
+    expect(delegationOf(SC.FISHBONE_LEFT_HEADED)).toEqual({ kind: 'fishbone', headed: 'left' })
+    expect(delegationOf(SC.FISHBONE_RIGHT_HEADED)).toEqual({ kind: 'fishbone', headed: 'right' })
+    // 只剩 map 系没有入口 —— 而且它**到不了这里**：MAP_LIKE 被 ATTACHED_EXPOSED 排除
+    // ⇒ 任何 attached 子分支的生效结构都不可能是 map.*（probe-treetable×map.clockwise 声明无效）
     expect(delegationOf(SC.MAP_CLOCKWISE)).toBeNull()
-    expect(delegationOf(SC.SPREADSHEET)).toBeNull()
     // treetable.toptitle = 同一套表格机器的变体（标题行横跨整张表）
     expect(delegationOf(SC.TOP_TITLE_TREE_TABLE)).toEqual({ kind: 'treetable', topTitle: true })
   })
