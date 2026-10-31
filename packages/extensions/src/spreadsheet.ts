@@ -1,5 +1,5 @@
 import { createExtension } from '@tomind/core'
-import { matrixLayoutAlgorithm } from '@tomind/layout'
+import { matrixLayoutAlgorithm, matrixColumnLayoutAlgorithm } from '@tomind/layout'
 
 export const SpreadsheetExtension = createExtension({
   name: 'spreadsheetLayout',
@@ -7,5 +7,15 @@ export const SpreadsheetExtension = createExtension({
   defaultOptions: { enabled: true },
   addLayout() {
     return matrixLayoutAlgorithm
+  },
+})
+
+/** SB `structures/columnspreadsheet.ts` —— 同一套表格机器，`_needTranspose: true` */
+export const SpreadsheetColumnExtension = createExtension({
+  name: 'spreadsheetColumnLayout',
+  type: 'extension',
+  defaultOptions: { enabled: true },
+  addLayout() {
+    return matrixColumnLayoutAlgorithm
   },
 })

@@ -36,11 +36,11 @@ export { LegendExtension } from './legend'
 
 // ─── 布局扩展（一个大类一个文件夹） ───
 export { TreeRightExtension, TreeLeftExtension, TreeDownExtension, TreeUpExtension } from './tree'
-export { MapClockwiseExtension, MapAnticlockwiseExtension, MapUnbalancedExtension } from './map'
+export { MapExtension, MapClockwiseExtension, MapAnticlockwiseExtension, MapUnbalancedExtension } from './map'
 export { LogicRightExtension, LogicLeftExtension } from './logic'
 export { BraceRightExtension, BraceLeftExtension } from './brace'
 export { OrgChartDownExtension, OrgChartUpExtension } from './org-chart'
 export { TimelineHorizontalExtension, TimelineHorizontalUpExtension, TimelineHorizontalDownExtension, TimelineSidedHorizontalExtension, TimelineThroughVerticalExtension, TimelineVerticalExtension } from './timeline'
 export { FishboneLeftHeadedExtension, FishboneRightHeadedExtension } from './fishbone'
-export { SpreadsheetExtension } from './spreadsheet'
+export { SpreadsheetExtension, SpreadsheetColumnExtension } from './spreadsheet'
 export { TreeTableExtension, TreeTableTopTitleExtension } from './treetable'

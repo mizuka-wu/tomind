@@ -75,6 +75,41 @@ interface XMindTopic {
   href?: string
   style?: { properties?: Record<string, string> }
   comments?: Array<{ author: string; content: string; time?: number }>
+  /**
+   * topic 级扩展（与 sheet 级同名不同物）。目前只消费 map.unbalanced 的分侧数：
+   * SB `models/topic.unBalancedInfo()` = `extensions().getExtension('org.xmind.ui.map.unbalanced')`
+   * 的 `content[0]`（`{ name: 'right-number', content: '<n>' }`）。
+   */
+  extensions?: Array<{ provider?: string; content?: unknown }>
+}
+
+/** SB EXTENSION_PROVIDER.UNBALANCED_MAP */
+const UNBALANCED_MAP_PROVIDER = 'org.xmind.ui.map.unbalanced'
+
+/**
+ * SB `models/topic.unBalancedInfo()` + `view/branchview` 构造函数里的那段：
+ * ```js
+ * if (this.model.unBalancedInfo()) {
+ *   const info = this.model.unBalancedInfo()
+ *   if (info.name === 'right-number') {
+ *     const content = parseInt(info.content)
+ *     this.setUnbalanceRightNumber(isNaN(content) ? 0 : content)
+ *   }
+ * }
+ * ```
+ * 没有这个扩展 ⇒ 返回 undefined（由布局侧走 SB 的兜底口径）。
+ */
+function parseUnbalancedRightNumber(topic: XMindTopic): number | undefined {
+  const exts = topic.extensions
+  if (!Array.isArray(exts)) return undefined
+  const ext = exts.find((e) => e?.provider === UNBALANCED_MAP_PROVIDER)
+  const content = ext?.content
+  if (!Array.isArray(content) || content.length === 0) return undefined
+  const info = content[0] as { name?: string; content?: string }
+  if (!info?.name || info.content === undefined || info.content === null || info.content === '') return undefined
+  if (info.name !== 'right-number') return undefined
+  const n = parseInt(String(info.content), 10)
+  return Number.isNaN(n) ? 0 : n
 }
 
 interface XMindThemeEntry {
@@ -272,6 +307,9 @@ function convertTopic(topic: XMindTopic): ModelNode {
     ...(boundaries.length ? { boundaries } : {}),
     ...(relationships.length ? { relationships } : {}),
     ...(topic.structureClass ? { structureClass: topic.structureClass } : {}),
+    ...(parseUnbalancedRightNumber(topic) !== undefined
+      ? { unbalancedRightNumber: parseUnbalancedRightNumber(topic) }
+      : {}),
     // XMind 原生折叠表示为 branch: 'folded'（snowbrush topic.isCollapse 同）
     ...((topic.collapsed || (topic as any).branch === 'folded') ? { collapsed: true } : {}),
     ...(topic.markers?.length ? { markers: topic.markers.map((m) => m.markerId) } : {}),

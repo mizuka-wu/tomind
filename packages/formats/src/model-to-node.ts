@@ -47,6 +47,11 @@ export interface ModelNode {
   href?: string
   /** 结构类型 */
   structureClass?: string
+  /**
+   * map.unbalanced 的分侧数（SB `model.unBalancedInfo()` 的 `right-number`）。
+   * 布局侧落到 `attrs.numRight`（`MapUnbalanced.calcNumRight` 的第一优先来源）。
+   */
+  unbalancedRightNumber?: number
   /** 折叠状态 */
   collapsed?: boolean
   position?: { x: number; y: number }
@@ -150,6 +155,7 @@ function modelNodeToNodeDesc(node: ModelNode): NodeDesc {
       ...(node.note || node.noteHtml ? { note: buildNoteData(node.note, node.noteHtml) } : {}),
       ...(node.href ? { href: node.href } : {}),
       ...(node.structureClass ? { structureClass: node.structureClass } : {}),
+      ...(typeof node.unbalancedRightNumber === 'number' ? { numRight: node.unbalancedRightNumber } : {}),
       ...(node.collapsed ? { collapsed: true } : {}),
       ...(node.position ? { position: node.position } : {}),
       ...(node.numbering ? { numbering: node.numbering } : {}),
